@@ -9,8 +9,6 @@
 
 class Token {
 public:
-    using Value = std::optional<std::string_view>;
-
     enum class Type {
         Number,
         Identifier,
@@ -44,9 +42,14 @@ public:
     };
 
 public:
-    explicit Token(Type type, Value value = std::nullopt) : _value(value), _type(type) {}
+    explicit Token(Type type, size_t column, size_t row, std::string_view value)
+            : _value(value), _column(column), _row(row), _type(type) {}
 
-    [[nodiscard]] const Value &value() const { return _value; }
+    [[nodiscard]] const size_t &column() const { return _column; }
+
+    [[nodiscard]] const size_t &row() const { return _row; }
+
+    [[nodiscard]] const std::string_view &value() const { return _value; }
 
     [[nodiscard]] const Type &type() const { return _type; }
 
@@ -57,7 +60,8 @@ public:
     static std::optional<Token::Type> lookup_special_1(char value);
 
 private:
-    Value _value;
+    std::string_view _value;
+    size_t _column, _row;
     Type _type;
 };
 

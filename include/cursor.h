@@ -15,14 +15,20 @@ public:
     explicit UnexpectedChar(const std::string &error) : std::runtime_error(error) {}
 };
 
+struct Location {
+    size_t column, row;
+};
+
 class Cursor {
 public:
-    explicit Cursor(std::string_view data) : _position(0), _start(0), _data(data) {}
+    explicit Cursor(std::string_view data) : _position(0), _start(0), _data(data), _column(0), _row(0) {}
 
 protected:
-    [[nodiscard]] char _current() { return _data[_position]; }
+    [[nodiscard]] char _current_char() { return _data[_position]; }
 
     [[nodiscard]] bool _is_eof();
+
+    Location _current_location();
 
     void _mark_start();
 
@@ -41,6 +47,7 @@ protected:
 private:
     size_t _position, _start;
     std::string_view _data;
+    size_t _column, _row;
 };
 
 

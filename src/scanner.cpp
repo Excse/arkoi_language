@@ -24,13 +24,14 @@ std::vector<Token> Scanner::tokenize() {
 }
 
 Token Scanner::_next_token() {
+    Location start = _current_location();
     if (_is_eof()) {
-        return Token{Token::Type::EndOfFile};
+        return Token{Token::Type::EndOfFile, start.column, start.row, ""};
     }
 
     while (_try_consume(_is_space));
 
-    char current = _current();
+    char current = _current_char();
     if (std::isalpha(current)) {
         return _lex_identifier();
     } else if (current == '\'' || std::isdigit(current)) {
@@ -43,15 +44,17 @@ Token Scanner::_next_token() {
 }
 
 Token Scanner::_lex_comment() {
+    Location start = _current_location();
     _mark_start();
 
     _consume('#');
     while (_try_consume(_is_not_newline));
 
-    return Token{Token::Type::Comment, _view()};
+    return Token{Token::Type::Comment, start.column, start.row, _view()};
 }
 
 Token Scanner::_lex_identifier() {
+    Location start = _current_location();
     _mark_start();
 
     _consume(_is_ident_start, "Expected _, a-z or A-Z");
@@ -59,13 +62,14 @@ Token Scanner::_lex_identifier() {
 
     std::string_view value = _view();
     if (auto keyword = Token::lookup_keyword(value)) {
-        return Token{*keyword};
+        return Token{*keyword, start.column, start.row, value};
     }
 
-    return Token{Token::Type::Identifier, value};
+    return Token{Token::Type::Identifier, start.column, start.row, value};
 }
 
 Token Scanner::_lex_number() {
+    Location start = _current_location();
     _mark_start();
 
     _consume(_is_digit, "Expected 0-9");
@@ -77,18 +81,21 @@ Token Scanner::_lex_number() {
         while (_try_consume(_is_digit));
     }
 
-    return Token(Token::Type::Number, _view());
+    return Token(Token::Type::Number, start.column, start.row, _view());
 }
 
 Token Scanner::_lex_special() {
-    char current = _current();
+    Location start = _current_location();
+    _mark_start();
+
+    char current = _current_char();
     _next();
 
     if (auto special = Token::lookup_special_1(current)) {
-        return Token{*special};
+        return Token{*special, start.column, start.row, _view()};
     }
 
-    throw UnexpectedChar("Didn't expect " + std::string(1, current));
+    throw UnexpectedChar("Didn't expect " + std::string(_view()));
 }
 
 bool Scanner::_is_digit(char input) {

@@ -4,6 +4,10 @@ bool Cursor::_is_eof() {
     return _position >= _data.size();
 }
 
+Location Cursor::_current_location() {
+    return Location{_column, _row};
+}
+
 void Cursor::_mark_start() {
     _start = _position;
 }
@@ -13,6 +17,13 @@ std::string_view Cursor::_view() {
 }
 
 void Cursor::_next() {
+    if (_current_char() == '\n') {
+        _column++;
+        _row = 0;
+    } else {
+        _row++;
+    }
+
     _position += 1;
 }
 
@@ -30,7 +41,7 @@ bool Cursor::_try_consume(char expected) {
 }
 
 void Cursor::_consume(const std::function<bool(char)> &predicate, const std::string &error) {
-    char current = _current();
+    char current = _current_char();
     if (_position >= _data.size()) {
         throw UnexpectedEndOfFile();
     }
@@ -39,7 +50,7 @@ void Cursor::_consume(const std::function<bool(char)> &predicate, const std::str
         throw UnexpectedChar(error);
     }
 
-    _position += 1;
+    _next();
 }
 
 bool Cursor::_try_consume(const std::function<bool(char)> &predicate) {

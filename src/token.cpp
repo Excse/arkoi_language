@@ -101,10 +101,8 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
     os << token.name();
-
-    if (token.value()) {
-        os << ": " << *token.value();
-    }
-
+    os << ", value: " << token.value();
+    os << ", column: " << token.column();
+    os << ", row: " << token.row();
     return os;
 }
