@@ -16,7 +16,7 @@ std::vector<Token> Scanner::tokenize() {
             break;
         } catch (const UnexpectedChar &error) {
             std::cerr << error.what() << std::endl;
-            _position += 1;
+            _next();
         }
     }
 
@@ -24,11 +24,11 @@ std::vector<Token> Scanner::tokenize() {
 }
 
 Token Scanner::_next_token() {
-    while (_try_consume(_is_space));
-
-    if (_position >= _data.size()) {
+    if (_is_eof()) {
         return Token{Token::Type::EndOfFile};
     }
+
+    while (_try_consume(_is_space));
 
     char current = _current();
     if (std::isalpha(current)) {
@@ -43,22 +43,21 @@ Token Scanner::_next_token() {
 }
 
 Token Scanner::_lex_comment() {
-    size_t start = _position;
+    _mark_start();
 
     _consume('#');
     while (_try_consume(_is_not_newline));
 
-    std::string_view value = _data.substr(start, _position - start - 1);
-    return Token{Token::Type::Comment, value};
+    return Token{Token::Type::Comment, _view()};
 }
 
 Token Scanner::_lex_identifier() {
-    size_t start = _position;
+    _mark_start();
 
     _consume(_is_ident_start, "Expected _, a-z or A-Z");
     while (_try_consume(_is_ident));
 
-    std::string_view value = _data.substr(start, _position - start);
+    std::string_view value = _view();
     if (auto keyword = Token::lookup_keyword(value)) {
         return Token{*keyword};
     }
@@ -67,7 +66,7 @@ Token Scanner::_lex_identifier() {
 }
 
 Token Scanner::_lex_number() {
-    size_t start = _position;
+    _mark_start();
 
     _consume(_is_digit, "Expected 0-9");
 
@@ -78,55 +77,18 @@ Token Scanner::_lex_number() {
         while (_try_consume(_is_digit));
     }
 
-    std::string_view value = _data.substr(start, _position - start);
-    return Token(Token::Type::Number, value);
+    return Token(Token::Type::Number, _view());
 }
 
 Token Scanner::_lex_special() {
     char current = _current();
-    _position += 1;
+    _next();
 
     if (auto special = Token::lookup_special_1(current)) {
         return Token{*special};
     }
 
-    return Token{Token::Type::Unknown};
-}
-
-
-void Scanner::_consume(char expected) {
-    _consume([&](char input) { return input == expected; }, "Expected " + std::string(1, expected));
-}
-
-bool Scanner::_try_consume(char expected) {
-    try {
-        _consume(expected);
-        return true;
-    } catch (...) {
-        return false;
-    }
-}
-
-void Scanner::_consume(const std::function<bool(char)> &predicate, const std::string &error) {
-    char current = _current();
-    if (_position >= _data.size()) {
-        throw UnexpectedEndOfFile();
-    }
-
-    if (!predicate(current)) {
-        throw UnexpectedChar(error);
-    }
-
-    _position += 1;
-}
-
-bool Scanner::_try_consume(const std::function<bool(char)> &predicate) {
-    try {
-        _consume(predicate, "");
-        return true;
-    } catch (...) {
-        return false;
-    }
+    throw UnexpectedChar("Didn't expect " + std::string(1, current));
 }
 
 bool Scanner::_is_digit(char input) {

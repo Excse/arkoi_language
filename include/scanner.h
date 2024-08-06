@@ -1,25 +1,16 @@
-#ifndef SPL_LEXER_H
-#define SPL_LEXER_H
+#ifndef ARKOI_LANGUAGE_SCANNER_H
+#define ARKOI_LANGUAGE_SCANNER_H
 
 #include <functional>
 #include <string>
 #include <vector>
 
+#include "cursor.h"
 #include "token.h"
 
-class UnexpectedEndOfFile : public std::runtime_error {
+class Scanner : Cursor {
 public:
-    UnexpectedEndOfFile() : std::runtime_error("Unexpectedly reached the End Of File") {}
-};
-
-class UnexpectedChar : public std::runtime_error {
-public:
-    explicit UnexpectedChar(const std::string &error) : std::runtime_error(error) {}
-};
-
-class Scanner {
-public:
-    explicit Scanner(std::string_view data) : _data(data), _position(0) {}
+    explicit Scanner(std::string_view data) : Cursor(data) {}
 
     std::vector<Token> tokenize();
 
@@ -34,16 +25,6 @@ private:
 
     Token _lex_special();
 
-    void _consume(char expected);
-
-    void _consume(const std::function<bool(char)> &predicate, const std::string &error);
-
-    bool _try_consume(char expected);
-
-    bool _try_consume(const std::function<bool(char)> &predicate);
-
-    [[nodiscard]] char _current() { return _data[_position]; }
-
     static bool _is_digit(char input);
 
     static bool _is_ident_start(char input);
@@ -55,10 +36,6 @@ private:
     static bool _is_space(char input);
 
     static bool _is_hex(char input);
-
-private:
-    std::string_view _data;
-    size_t _position;
 };
 
-#endif //SPL_LEXER_H
+#endif //ARKOI_LANGUAGE_SCANNER_H

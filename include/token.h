@@ -1,5 +1,5 @@
-#ifndef SPL_TOKEN_H
-#define SPL_TOKEN_H
+#ifndef ARKOI_LANGUAGE_TOKEN_H
+#define ARKOI_LANGUAGE_TOKEN_H
 
 #include <unordered_map>
 #include <iostream>
@@ -63,4 +63,4 @@ private:
 
 std::ostream &operator<<(std::ostream &os, const Token &token);
 
-#endif //SPL_TOKEN_H
+#endif //ARKOI_LANGUAGE_TOKEN_H
