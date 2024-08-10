@@ -38,17 +38,16 @@ std::unique_ptr<Node> Parser::_parse_program_statement() {
 }
 
 void Parser::_recover_program() {
-    _next_token();
-
     while (true) {
+        _next_token();
+
         auto current = _current_token();
         switch (current.type()) {
             case Token::Type::Fun:
             case Token::Type::EndOfFile:
                 return;
             default:
-                _next_token();
-                break;
+                continue;
         }
     }
 }
@@ -80,6 +79,10 @@ std::vector<Argument> Parser::_parse_arguments() {
             break;
         }
 
+        if (!arguments.empty()) {
+            _consume(Token::Type::Comma);
+        }
+
         try {
             arguments.push_back(_parse_argument());
         } catch (const UnexpectedToken &error) {
@@ -97,18 +100,17 @@ std::vector<Argument> Parser::_parse_arguments() {
 }
 
 void Parser::_recover_arguments() {
-    _next_token();
-
     while (true) {
+        _next_token();
+
         auto current = _current_token();
         switch (current.type()) {
-            case Token::Type::Identifier:
+            case Token::Type::Comma:
             case Token::Type::RParent:
             case Token::Type::EndOfFile:
                 return;
             default:
-                _next_token();
-                break;
+                continue;
         }
     }
 }
@@ -187,17 +189,17 @@ std::unique_ptr<Node> Parser::_parse_block_statement() {
 }
 
 void Parser::_recover_block() {
-    _next_token();
-
     while (true) {
+        _next_token();
+
         auto current = _current_token();
         switch (current.type()) {
             case Token::Type::RCBracket:
+            case Token::Type::Return:
             case Token::Type::EndOfFile:
                 return;
             default:
-                _next_token();
-                break;
+                continue;
         }
     }
 }
