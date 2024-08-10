@@ -8,7 +8,7 @@ Program Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
 
     while (true) {
-        auto current = _current_token();
+        auto &current = _current_token();
         if (current.type() == Token::Type::EndOfFile) {
             break;
         }
@@ -28,7 +28,7 @@ Program Parser::parse_program() {
 }
 
 std::unique_ptr<Node> Parser::_parse_program_statement() {
-    auto current = _current_token();
+    auto &current = _current_token();
     switch (current.type()) {
         case Token::Type::Fun:
             return _parse_function();
@@ -41,7 +41,7 @@ void Parser::_recover_program() {
     while (true) {
         _next_token();
 
-        auto current = _current_token();
+        auto &current = _current_token();
         switch (current.type()) {
             case Token::Type::Fun:
             case Token::Type::EndOfFile:
@@ -55,13 +55,13 @@ void Parser::_recover_program() {
 std::unique_ptr<Function> Parser::_parse_function() {
     _consume(Token::Type::Fun);
 
-    const Token &name = _consume(Token::Type::Identifier);
+    auto &name = _consume(Token::Type::Identifier);
 
-    std::vector<Argument> arguments = _parse_arguments();
+    auto arguments = _parse_arguments();
 
-    Type return_type = _parse_type();
+    auto return_type = _parse_type();
 
-    Block block = _parse_block();
+    auto block = _parse_block();
 
     return std::make_unique<Function>(name, return_type, std::move(block));
 }
@@ -72,7 +72,7 @@ std::vector<Argument> Parser::_parse_arguments() {
     _consume(Token::Type::LParent);
 
     while (true) {
-        auto current = _current_token();
+        auto &current = _current_token();
         if (current.type() == Token::Type::EndOfFile) {
             throw UnexpectedEndOfTokens();
         } else if (current.type() == Token::Type::RParent) {
@@ -103,7 +103,7 @@ void Parser::_recover_arguments() {
     while (true) {
         _next_token();
 
-        auto current = _current_token();
+        auto &current = _current_token();
         switch (current.type()) {
             case Token::Type::Comma:
             case Token::Type::RParent:
@@ -116,9 +116,9 @@ void Parser::_recover_arguments() {
 }
 
 Argument Parser::_parse_argument() {
-    const Token &name = _consume(Token::Type::Identifier);
+    auto &name = _consume(Token::Type::Identifier);
 
-    Type type = _parse_type();
+    auto type = _parse_type();
 
     return {name, type};
 }
@@ -145,8 +145,7 @@ Type Parser::_parse_type() {
         }
     };
 
-    const Token &type = _consume(is_type, "bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize");
-
+    auto &type = _consume(is_type, "bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize");
     return Type(type);
 }
 
@@ -156,7 +155,7 @@ Block Parser::_parse_block() {
     _consume(Token::Type::LCBracket);
 
     while (true) {
-        auto current = _current_token();
+        auto &current = _current_token();
         if (current.type() == Token::Type::EndOfFile) {
             throw UnexpectedEndOfTokens();
         } else if (current.type() == Token::Type::RCBracket) {
@@ -179,7 +178,7 @@ Block Parser::_parse_block() {
 }
 
 std::unique_ptr<Node> Parser::_parse_block_statement() {
-    auto current = _current_token();
+    auto &current = _current_token();
     switch (current.type()) {
         case Token::Type::Return:
             return _parse_return();
@@ -192,7 +191,7 @@ void Parser::_recover_block() {
     while (true) {
         _next_token();
 
-        auto current = _current_token();
+        auto &current = _current_token();
         switch (current.type()) {
             case Token::Type::RCBracket:
             case Token::Type::Return:
@@ -207,7 +206,7 @@ void Parser::_recover_block() {
 std::unique_ptr<Return> Parser::_parse_return() {
     _consume(Token::Type::Return);
 
-    std::unique_ptr<Node> expression = _parse_expression();
+    auto expression = _parse_expression();
 
     _consume(Token::Type::Semicolon);
 
@@ -219,11 +218,11 @@ std::unique_ptr<Node> Parser::_parse_expression() {
 }
 
 std::unique_ptr<Node> Parser::_parse_primary() {
-    if (const Token *number = _try_consume(Token::Type::Number)) {
+    if (auto *number = _try_consume(Token::Type::Number)) {
         return std::make_unique<Number>(*number);
     }
 
-    const Token &current = _current_token();
+    auto &current = _current_token();
     throw UnexpectedToken("number", current);
 }
 
@@ -241,7 +240,7 @@ const Token &Parser::_consume(Token::Type type) {
 
 const Token *Parser::_try_consume(Token::Type type) {
     try {
-        const Token &consumed = _consume(type);
+        auto &consumed = _consume(type);
         return &consumed;
     } catch (const ParserError &) {
         return nullptr;
@@ -249,7 +248,7 @@ const Token *Parser::_try_consume(Token::Type type) {
 }
 
 const Token &Parser::_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected) {
-    const Token &current = _current_token();
+    auto &current = _current_token();
     if (_position >= _tokens.size()) {
         throw UnexpectedEndOfTokens();
     }
@@ -265,7 +264,7 @@ const Token &Parser::_consume(const std::function<bool(const Token &)> &predicat
 
 const Token *Parser::_try_consume(const std::function<bool(const Token &)> &predicate) {
     try {
-        const Token &consumed = _consume(predicate, "");
+        auto &consumed = _consume(predicate, "");
         return &consumed;
     } catch (const ParserError &) {
         return nullptr;

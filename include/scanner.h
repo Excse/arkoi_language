@@ -7,48 +7,27 @@
 
 #include "token.h"
 
-class ScannerError : public std::runtime_error {
-public:
-    explicit ScannerError(const std::string &error) : std::runtime_error(error) {}
-};
-
-class UnexpectedEndOfFile : public ScannerError {
-public:
-    UnexpectedEndOfFile() : ScannerError("Unexpectedly reached the End Of File") {}
-};
-
-class UnexpectedChar : public ScannerError {
-public:
-    explicit UnexpectedChar(const std::string &expected, char got)
-            : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
-};
-
-class UnknownChar : public ScannerError {
-public:
-    explicit UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
-};
-
-struct Location {
-    size_t column, row;
-};
-
 class Scanner {
-public:
-    explicit Scanner(std::string_view data)
-            : _position(0), _start(0), _data(data), _column(0), _row(0) {}
+private:
+    struct Location {
+        size_t column, row;
+    };
 
-    std::vector<Token> tokenize();
+public:
+    explicit Scanner(std::string_view data) : _position(0), _start(0), _data(data), _column(0), _row(0) {}
+
+    [[nodiscard]] std::vector<Token> tokenize();
 
 private:
-    Token _next_token();
+    [[nodiscard]] Token _next_token();
 
-    Token _lex_comment();
+    [[nodiscard]] Token _lex_comment();
 
-    Token _lex_identifier();
+    [[nodiscard]] Token _lex_identifier();
 
-    Token _lex_number();
+    [[nodiscard]] Token _lex_number();
 
-    Token _lex_special();
+    [[nodiscard]] Token _lex_special();
 
     [[nodiscard]] Location _current_location();
 
@@ -86,6 +65,27 @@ private:
     size_t _position, _start;
     std::string_view _data;
     size_t _column, _row;
+};
+
+class ScannerError : public std::runtime_error {
+public:
+    explicit ScannerError(const std::string &error) : std::runtime_error(error) {}
+};
+
+class UnexpectedEndOfFile : public ScannerError {
+public:
+    UnexpectedEndOfFile() : ScannerError("Unexpectedly reached the End Of File") {}
+};
+
+class UnexpectedChar : public ScannerError {
+public:
+    explicit UnexpectedChar(const std::string &expected, char got)
+            : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
+};
+
+class UnknownChar : public ScannerError {
+public:
+    explicit UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
 };
 
 #endif //ARKOI_LANGUAGE_SCANNER_H

@@ -43,7 +43,7 @@ public:
     };
 
 public:
-    explicit Token(Type type, size_t column, size_t row, std::string_view value)
+    Token(Type type, size_t column, size_t row, std::string_view value)
             : _value(value), _column(column), _row(row), _type(type) {}
 
     [[nodiscard]] const std::string_view &value() const { return _value; }

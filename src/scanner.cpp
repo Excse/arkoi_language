@@ -5,7 +5,7 @@ std::vector<Token> Scanner::tokenize() {
 
     while (true) {
         try {
-            Token token = _next_token();
+            auto token = _next_token();
             tokens.push_back(token);
 
             if (token.type() == Token::Type::EndOfFile) {
@@ -29,12 +29,12 @@ std::vector<Token> Scanner::tokenize() {
 Token Scanner::_next_token() {
     while (_try_consume(_is_space));
 
-    Location start = _current_location();
+    auto start = _current_location();
     if (_is_eof()) {
-        return Token{Token::Type::EndOfFile, start.column, start.row, ""};
+        return {Token::Type::EndOfFile, start.column, start.row, ""};
     }
 
-    char current = _current_char();
+    auto current = _current_char();
     if (std::isalpha(current)) {
         return _lex_identifier();
     } else if (current == '\'' || std::isdigit(current)) {
@@ -47,32 +47,32 @@ Token Scanner::_next_token() {
 }
 
 Token Scanner::_lex_comment() {
-    Location start = _current_location();
+    auto start = _current_location();
     _mark_start();
 
     _consume('#');
     while (_try_consume(_is_not_newline));
 
-    return Token{Token::Type::Comment, start.column, start.row, _view()};
+    return {Token::Type::Comment, start.column, start.row, _view()};
 }
 
 Token Scanner::_lex_identifier() {
-    Location start = _current_location();
+    auto start = _current_location();
     _mark_start();
 
     _consume(_is_ident_start, "_, a-z or A-Z");
     while (_try_consume(_is_ident));
-
+    
     std::string_view value = _view();
     if (auto keyword = Token::lookup_keyword(value)) {
-        return Token{*keyword, start.column, start.row, value};
+        return {*keyword, start.column, start.row, value};
     }
 
-    return Token{Token::Type::Identifier, start.column, start.row, value};
+    return {Token::Type::Identifier, start.column, start.row, value};
 }
 
 Token Scanner::_lex_number() {
-    Location start = _current_location();
+    auto start = _current_location();
     _mark_start();
 
     _consume(_is_digit, "0-9");
@@ -84,18 +84,18 @@ Token Scanner::_lex_number() {
         while (_try_consume(_is_digit));
     }
 
-    return Token(Token::Type::Number, start.column, start.row, _view());
+    return {Token::Type::Number, start.column, start.row, _view()};
 }
 
 Token Scanner::_lex_special() {
-    Location start = _current_location();
+    auto start = _current_location();
     _mark_start();
 
-    char current = _current_char();
+    auto current = _current_char();
     _next();
 
     if (auto special = Token::lookup_special_1(current)) {
-        return Token{*special, start.column, start.row, _view()};
+        return {*special, start.column, start.row, _view()};
     }
 
     throw UnknownChar(current);
@@ -109,7 +109,7 @@ bool Scanner::_is_eof() {
     return _position >= _data.size();
 }
 
-Location Scanner::_current_location() {
+Scanner::Location Scanner::_current_location() {
     return Location{_column, _row};
 }
 
@@ -146,7 +146,7 @@ bool Scanner::_try_consume(char expected) {
 }
 
 char Scanner::_consume(const std::function<bool(char)> &predicate, const std::string &expected) {
-    char current = _current_char();
+    auto current = _current_char();
     if (_position >= _data.size()) {
         throw UnexpectedEndOfFile();
     }
@@ -162,7 +162,7 @@ char Scanner::_consume(const std::function<bool(char)> &predicate, const std::st
 
 std::optional<char> Scanner::_try_consume(const std::function<bool(char)> &predicate) {
     try {
-        char consumed = _consume(predicate, "");
+        auto consumed = _consume(predicate, "");
         return consumed;
     } catch (const ScannerError &) {
         return std::nullopt;
