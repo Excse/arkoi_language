@@ -11,15 +11,20 @@
 #include "token.h"
 #include "ast.h"
 
-class UnexpectedEndOfTokens : public std::runtime_error {
+class ParserError : public std::runtime_error {
 public:
-    UnexpectedEndOfTokens() : std::runtime_error("Unexpectedly reached the End Of Tokens") {}
+    explicit ParserError(const std::string &error) : std::runtime_error(error) {}
 };
 
-class UnexpectedToken : public std::runtime_error {
+class UnexpectedEndOfTokens : public ParserError {
+public:
+    UnexpectedEndOfTokens() : ParserError("Unexpectedly reached the End Of Tokens") {}
+};
+
+class UnexpectedToken : public ParserError {
 public:
     explicit UnexpectedToken(const std::string &expected, const Token &got)
-            : std::runtime_error("Expected " + expected + " but got " + Token::type_name(got.type())) {}
+            : ParserError("Expected " + expected + " but got " + Token::type_name(got.type())) {}
 };
 
 class Parser {

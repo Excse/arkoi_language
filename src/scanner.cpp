@@ -140,7 +140,7 @@ bool Scanner::_try_consume(char expected) {
     try {
         _consume(expected);
         return true;
-    } catch (...) {
+    } catch (const ScannerError &) {
         return false;
     }
 }
@@ -164,7 +164,7 @@ std::optional<char> Scanner::_try_consume(const std::function<bool(char)> &predi
     try {
         char consumed = _consume(predicate, "");
         return consumed;
-    } catch (...) {
+    } catch (const ScannerError &) {
         return std::nullopt;
     }
 }

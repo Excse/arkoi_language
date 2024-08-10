@@ -243,7 +243,7 @@ const Token *Parser::_try_consume(Token::Type type) {
     try {
         const Token &consumed = _consume(type);
         return &consumed;
-    } catch (...) {
+    } catch (const ParserError &) {
         return nullptr;
     }
 }
@@ -267,7 +267,7 @@ const Token *Parser::_try_consume(const std::function<bool(const Token &)> &pred
     try {
         const Token &consumed = _consume(predicate, "");
         return &consumed;
-    } catch (...) {
+    } catch (const ParserError &) {
         return nullptr;
     }
 }

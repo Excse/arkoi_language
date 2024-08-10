@@ -7,20 +7,25 @@
 
 #include "token.h"
 
-class UnexpectedEndOfFile : public std::runtime_error {
+class ScannerError : public std::runtime_error {
 public:
-    UnexpectedEndOfFile() : std::runtime_error("Unexpectedly reached the End Of File") {}
+    explicit ScannerError(const std::string &error) : std::runtime_error(error) {}
 };
 
-class UnexpectedChar : public std::runtime_error {
+class UnexpectedEndOfFile : public ScannerError {
+public:
+    UnexpectedEndOfFile() : ScannerError("Unexpectedly reached the End Of File") {}
+};
+
+class UnexpectedChar : public ScannerError {
 public:
     explicit UnexpectedChar(const std::string &expected, char got)
-            : std::runtime_error("Expected " + expected + " but got " + std::string(1, got)) {}
+            : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
 };
 
-class UnknownChar : public std::runtime_error {
+class UnknownChar : public ScannerError {
 public:
-    explicit UnknownChar(char got) : std::runtime_error("Didn't expect " + std::string(1, got)) {}
+    explicit UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
 };
 
 struct Location {
