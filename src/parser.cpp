@@ -29,12 +29,12 @@ Program Parser::parse_program() {
 
 std::unique_ptr<Node> Parser::_parse_program_statement() {
     auto current = _current_token();
-
-    if (current.type() == Token::Type::Fun) {
-        return _parse_function();
+    switch (current.type()) {
+        case Token::Type::Fun:
+            return _parse_function();
+        default:
+            throw UnexpectedToken("fun", current);
     }
-
-    throw UnexpectedToken("fun", current);
 }
 
 void Parser::_recover_program() {
@@ -143,9 +143,9 @@ Type Parser::_parse_type() {
         }
     };
 
-    const Token &token = _consume(is_type, "bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize");
+    const Token &type = _consume(is_type, "bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize");
 
-    return Type(token);
+    return Type(type);
 }
 
 Block Parser::_parse_block() {
@@ -176,6 +176,16 @@ Block Parser::_parse_block() {
     return Block(statements);
 }
 
+std::unique_ptr<Node> Parser::_parse_block_statement() {
+    auto current = _current_token();
+    switch (current.type()) {
+        case Token::Type::Return:
+            return _parse_return();
+        default:
+            throw UnexpectedToken("return", current);
+    }
+}
+
 void Parser::_recover_block() {
     _next_token();
 
@@ -192,10 +202,27 @@ void Parser::_recover_block() {
     }
 }
 
-std::unique_ptr<Node> Parser::_parse_block_statement() {
-    auto current = _current_token();
+std::unique_ptr<Return> Parser::_parse_return() {
+    _consume(Token::Type::Return);
 
-    throw UnexpectedToken("nothing", current);
+    std::unique_ptr<Node> expression = _parse_expression();
+
+    _consume(Token::Type::Semicolon);
+
+    return std::make_unique<Return>(expression);
+}
+
+std::unique_ptr<Node> Parser::_parse_expression() {
+    return _parse_primary();
+}
+
+std::unique_ptr<Node> Parser::_parse_primary() {
+    if (const Token *number = _try_consume(Token::Type::Number)) {
+        return std::make_unique<Number>(*number);
+    }
+
+    const Token &current = _current_token();
+    throw UnexpectedToken("number", current);
 }
 
 const Token &Parser::_current_token() {
@@ -210,12 +237,12 @@ const Token &Parser::_consume(Token::Type type) {
     return _consume([&](const Token &input) { return input.type() == type; }, Token::type_name(type));
 }
 
-bool Parser::_try_consume(Token::Type type) {
+const Token *Parser::_try_consume(Token::Type type) {
     try {
-        _consume(type);
-        return true;
+        const Token &consumed = _consume(type);
+        return &consumed;
     } catch (...) {
-        return false;
+        return nullptr;
     }
 }
 

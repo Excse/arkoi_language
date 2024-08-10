@@ -88,4 +88,28 @@ private:
     Token _name;
 };
 
+class Return : public Node {
+public:
+    explicit Return(std::unique_ptr<Node> &expression) : _expression(std::move(expression)) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] const Node &expression() { return *_expression; }
+
+private:
+    std::unique_ptr<Node> _expression;
+};
+
+class Number : public Node {
+public:
+    explicit Number(Token value) : _value(value) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] const Token &value() { return _value; }
+
+private:
+    Token _value;
+};
+
 #endif //ARKOI_LANGUAGE_AST_H

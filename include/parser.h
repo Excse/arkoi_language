@@ -44,11 +44,17 @@ private:
 
     Type _parse_type();
 
-    std::unique_ptr<Node> _parse_block_statement();
-
     Block _parse_block();
 
+    std::unique_ptr<Node> _parse_block_statement();
+
     void _recover_block();
+
+    std::unique_ptr<Return> _parse_return();
+
+    std::unique_ptr<Node> _parse_expression();
+
+    std::unique_ptr<Node> _parse_primary();
 
     [[nodiscard]] const Token &_current_token();
 
@@ -58,7 +64,7 @@ private:
 
     const Token &_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected);
 
-    [[nodiscard]] bool _try_consume(Token::Type type);
+    [[nodiscard]] const Token *_try_consume(Token::Type type);
 
     [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
 
