@@ -5,12 +5,32 @@
 #include <string>
 #include <vector>
 
-#include "cursor.h"
 #include "token.h"
 
-class Scanner : Cursor {
+class UnexpectedEndOfFile : public std::runtime_error {
 public:
-    explicit Scanner(std::string_view data) : Cursor(data) {}
+    UnexpectedEndOfFile() : std::runtime_error("Unexpectedly reached the End Of File") {}
+};
+
+class UnexpectedChar : public std::runtime_error {
+public:
+    explicit UnexpectedChar(const std::string &expected, char got)
+            : std::runtime_error("Expected " + expected + " but got " + std::string(1, got)) {}
+};
+
+class UnknownChar : public std::runtime_error {
+public:
+    explicit UnknownChar(char got) : std::runtime_error("Didn't expect " + std::string(1, got)) {}
+};
+
+struct Location {
+    size_t column, row;
+};
+
+class Scanner {
+public:
+    explicit Scanner(std::string_view data)
+            : _position(0), _start(0), _data(data), _column(0), _row(0) {}
 
     std::vector<Token> tokenize();
 
@@ -25,17 +45,42 @@ private:
 
     Token _lex_special();
 
-    static bool _is_digit(char input);
+    [[nodiscard]] Location _current_location();
 
-    static bool _is_ident_start(char input);
+    [[nodiscard]] std::string_view _view();
 
-    static bool _is_ident(char input);
+    [[nodiscard]] char _current_char();
 
-    static bool _is_not_newline(char input);
+    [[nodiscard]] bool _is_eof();
 
-    static bool _is_space(char input);
+    void _mark_start();
 
-    static bool _is_hex(char input);
+    void _next();
+
+    void _consume(char expected);
+
+    char _consume(const std::function<bool(char)> &predicate, const std::string &expected);
+
+    [[nodiscard]] bool _try_consume(char expected);
+
+    [[nodiscard]] std::optional<char> _try_consume(const std::function<bool(char)> &predicate);
+
+    [[nodiscard]] static bool _is_digit(char input);
+
+    [[nodiscard]] static bool _is_ident_start(char input);
+
+    [[nodiscard]] static bool _is_ident(char input);
+
+    [[nodiscard]] static bool _is_not_newline(char input);
+
+    [[nodiscard]] static bool _is_space(char input);
+
+    [[nodiscard]] static bool _is_hex(char input);
+
+private:
+    size_t _position, _start;
+    std::string_view _data;
+    size_t _column, _row;
 };
 
 #endif //ARKOI_LANGUAGE_SCANNER_H

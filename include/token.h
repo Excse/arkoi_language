@@ -36,6 +36,7 @@ public:
         RCBracket,
         At,
         Semicolon,
+        Comma,
 
         EndOfFile,
         Unknown,
@@ -45,19 +46,19 @@ public:
     explicit Token(Type type, size_t column, size_t row, std::string_view value)
             : _value(value), _column(column), _row(row), _type(type) {}
 
+    [[nodiscard]] const std::string_view &value() const { return _value; }
+
     [[nodiscard]] const size_t &column() const { return _column; }
 
     [[nodiscard]] const size_t &row() const { return _row; }
 
-    [[nodiscard]] const std::string_view &value() const { return _value; }
-
     [[nodiscard]] const Type &type() const { return _type; }
 
-    [[nodiscard]] std::string name() const;
+    [[nodiscard]] static std::string type_name(Type type);
 
-    static std::optional<Token::Type> lookup_keyword(const std::string_view &value);
+    [[nodiscard]] static std::optional<Token::Type> lookup_keyword(const std::string_view &value);
 
-    static std::optional<Token::Type> lookup_special_1(char value);
+    [[nodiscard]] static std::optional<Token::Type> lookup_special_1(char value);
 
 private:
     std::string_view _value;

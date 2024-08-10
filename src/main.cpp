@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "scanner.h"
+#include "parser.h"
 
 int main() {
     std::ifstream file("../example/test.ark");
@@ -13,9 +14,13 @@ int main() {
     Scanner scanner(source);
 
     std::vector<Token> tokens = scanner.tokenize();
-    for (auto &token: tokens) {
-        std::cout << token << std::endl;
-    }
+
+    auto is_useless = [](const Token &token) { return token.type() == Token::Type::Comment; };
+    tokens.erase(std::remove_if(tokens.begin(), tokens.end(), is_useless), tokens.end());
+
+    Parser parser(tokens);
+
+    Program program = parser.parse_program();
 
     return 0;
 }

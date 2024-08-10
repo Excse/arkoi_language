@@ -6,5 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 include_directories(include)
 add_executable(arkoi_language src/main.cpp src/scanner.cpp src/token.cpp
-        src/cursor.cpp
-        include/cursor.h)
+        src/parser.cpp
+        include/parser.h
+        include/ast.h
+        include/visitor.h)

@@ -1,7 +1,7 @@
 #include "token.h"
 
-std::string Token::name() const {
-    switch (_type) {
+std::string Token::type_name(Type type) {
+    switch (type) {
         case Type::Number:
             return "Number";
         case Type::Identifier:
@@ -48,6 +48,8 @@ std::string Token::name() const {
             return "@";
         case Type::Semicolon:
             return ";";
+        case Type::Comma:
+            return ",";
 
         case Type::EndOfFile:
             return "UnexpectedEndOfFile";
@@ -82,25 +84,28 @@ std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) 
 }
 
 std::optional<Token::Type> Token::lookup_special_1(char value) {
-    static const std::unordered_map<char, Token::Type> SPECIALS = {
-            {'(', Token::Type::LParent},
-            {')', Token::Type::RParent},
-            {'{', Token::Type::LCBracket},
-            {'}', Token::Type::RCBracket},
-            {'@', Token::Type::At},
-            {';', Token::Type::Semicolon},
-    };
-
-    const auto specials = SPECIALS.find(value);
-    if (specials != SPECIALS.end()) {
-        return {specials->second};
+    switch (value) {
+        case '(':
+            return Token::Type::LParent;
+        case ')':
+            return Token::Type::RParent;
+        case '{':
+            return Token::Type::LCBracket;
+        case '}':
+            return Token::Type::RCBracket;
+        case '@':
+            return Token::Type::At;
+        case ';':
+            return Token::Type::Semicolon;
+        case ',':
+            return Token::Type::Comma;
+        default:
+            return std::nullopt;
     }
-
-    return std::nullopt;
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
-    os << token.name();
+    os << Token::type_name(token.type());
     os << ", value: " << token.value();
     os << ", column: " << token.column();
     os << ", row: " << token.row();
