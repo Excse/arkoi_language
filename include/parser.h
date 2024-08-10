@@ -44,9 +44,9 @@ private:
 
     [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
-    [[nodiscard]] const Token &_current_token();
+    [[nodiscard]] const Token &_current();
 
-    void _next_token();
+    void _next();
 
     const Token &_consume(Token::Type type);
 

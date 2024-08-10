@@ -29,9 +29,9 @@ private:
 
     [[nodiscard]] Token _lex_special();
 
-    [[nodiscard]] Location _current_location();
+    [[nodiscard]] std::string_view _current_view();
 
-    [[nodiscard]] std::string_view _view();
+    [[nodiscard]] Location _current_location();
 
     [[nodiscard]] char _current_char();
 

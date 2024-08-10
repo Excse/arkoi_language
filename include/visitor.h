@@ -5,6 +5,8 @@
 #ifndef ARKOI_LANGUAGE_VISITOR_H
 #define ARKOI_LANGUAGE_VISITOR_H
 
+class Identifier;
+
 class Function;
 
 class Argument;
@@ -36,6 +38,8 @@ public:
     virtual void visit(Number &node) = 0;
 
     virtual void visit(Return &node) = 0;
+
+    virtual void visit(Identifier &node) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

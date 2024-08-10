@@ -20,7 +20,7 @@ public:
 
 class Program : public Node {
 public:
-    explicit Program(std::vector<std::unique_ptr<Node>> &statements) : _statements(std::move(statements)) {}
+    explicit Program(std::vector<std::unique_ptr<Node>> &&statements) : _statements(std::move(statements)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -44,7 +44,7 @@ private:
 
 class Block : public Node {
 public:
-    explicit Block(std::vector<std::unique_ptr<Node>> &statements) : _statements(std::move(statements)) {}
+    explicit Block(std::vector<std::unique_ptr<Node>> &&statements) : _statements(std::move(statements)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -56,7 +56,7 @@ private:
 
 class Argument : public Node {
 public:
-    Argument(Token name, Type type) : _name(name), _type(std::move(type)) {}
+    Argument(Token name, Type &&type) : _name(name), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -71,7 +71,7 @@ private:
 
 class Function : public Node {
 public:
-    Function(Token name, Type return_type, Block block)
+    Function(Token name, Type &&return_type, Block &&block)
             : _return_type(std::move(return_type)), _block(std::move(block)), _name(name) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -90,7 +90,7 @@ private:
 
 class Return : public Node {
 public:
-    explicit Return(std::unique_ptr<Node> &expression) : _expression(std::move(expression)) {}
+    explicit Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -103,6 +103,18 @@ private:
 class Number : public Node {
 public:
     explicit Number(Token value) : _value(value) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] const Token &value() { return _value; }
+
+private:
+    Token _value;
+};
+
+class Identifier : public Node {
+public:
+    explicit Identifier(Token value) : _value(value) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 

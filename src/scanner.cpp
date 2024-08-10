@@ -53,7 +53,7 @@ Token Scanner::_lex_comment() {
     _consume('#');
     while (_try_consume(_is_not_newline));
 
-    return {Token::Type::Comment, start.column, start.row, _view()};
+    return {Token::Type::Comment, start.column, start.row, _current_view()};
 }
 
 Token Scanner::_lex_identifier() {
@@ -62,8 +62,8 @@ Token Scanner::_lex_identifier() {
 
     _consume(_is_ident_start, "_, a-z or A-Z");
     while (_try_consume(_is_ident));
-    
-    std::string_view value = _view();
+
+    std::string_view value = _current_view();
     if (auto keyword = Token::lookup_keyword(value)) {
         return {*keyword, start.column, start.row, value};
     }
@@ -84,7 +84,7 @@ Token Scanner::_lex_number() {
         while (_try_consume(_is_digit));
     }
 
-    return {Token::Type::Number, start.column, start.row, _view()};
+    return {Token::Type::Number, start.column, start.row, _current_view()};
 }
 
 Token Scanner::_lex_special() {
@@ -95,7 +95,7 @@ Token Scanner::_lex_special() {
     _next();
 
     if (auto special = Token::lookup_special_1(current)) {
-        return {*special, start.column, start.row, _view()};
+        return {*special, start.column, start.row, _current_view()};
     }
 
     throw UnknownChar(current);
@@ -117,7 +117,7 @@ void Scanner::_mark_start() {
     _start = _position;
 }
 
-std::string_view Scanner::_view() {
+std::string_view Scanner::_current_view() {
     return _data.substr(_start, (_position - _start));
 }
 
