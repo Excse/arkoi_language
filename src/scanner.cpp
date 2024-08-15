@@ -29,9 +29,8 @@ std::vector<Token> Scanner::tokenize() {
 Token Scanner::_next_token() {
     while (_try_consume(_is_space));
 
-    auto start = _current_location();
     if (_is_eof()) {
-        return {Token::Type::EndOfFile, start.column, start.row, ""};
+        return {Token::Type::EndOfFile, 0, 0, ""};
     }
 
     auto current = _current_char();
@@ -47,8 +46,7 @@ Token Scanner::_next_token() {
 }
 
 Token Scanner::_lex_comment() {
-    auto start = _current_location();
-    _mark_start();
+    Location start = _mark_start();
 
     _consume('#');
     while (_try_consume(_is_not_newline));
@@ -57,8 +55,7 @@ Token Scanner::_lex_comment() {
 }
 
 Token Scanner::_lex_identifier() {
-    auto start = _current_location();
-    _mark_start();
+    Location start = _mark_start();
 
     _consume(_is_ident_start, "_, a-z or A-Z");
     while (_try_consume(_is_ident));
@@ -72,8 +69,7 @@ Token Scanner::_lex_identifier() {
 }
 
 Token Scanner::_lex_number() {
-    auto start = _current_location();
-    _mark_start();
+    Location start = _mark_start();
 
     _consume(_is_digit, "0-9");
 
@@ -88,13 +84,11 @@ Token Scanner::_lex_number() {
 }
 
 Token Scanner::_lex_special() {
-    auto start = _current_location();
-    _mark_start();
+    Location start = _mark_start();
 
     auto current = _current_char();
-    _next();
-
     if (auto special = Token::lookup_special_1(current)) {
+        _next();
         return {*special, start.column, start.row, _current_view()};
     }
 
@@ -109,12 +103,9 @@ bool Scanner::_is_eof() {
     return _position >= _data.size();
 }
 
-Scanner::Location Scanner::_current_location() {
-    return Location{_column, _row};
-}
-
-void Scanner::_mark_start() {
+Scanner::Location Scanner::_mark_start() {
     _start = _position;
+    return Location{_column, _row};
 }
 
 std::string_view Scanner::_current_view() {

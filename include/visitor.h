@@ -9,7 +9,7 @@ class Identifier;
 
 class Function;
 
-class Argument;
+class Parameter;
 
 class Program;
 
@@ -33,7 +33,7 @@ public:
 
     virtual void visit(Block &node) = 0;
 
-    virtual void visit(Argument &node) = 0;
+    virtual void visit(Parameter &node) = 0;
 
     virtual void visit(Number &node) = 0;
 

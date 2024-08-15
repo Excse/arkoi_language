@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "symbol_table.h"
 #include "scanner.h"
 #include "parser.h"
 

@@ -11,6 +11,8 @@
 
 #include "visitor.h"
 
+class SymbolTable;
+
 class Node {
 public:
     virtual ~Node() = default;
@@ -20,14 +22,18 @@ public:
 
 class Program : public Node {
 public:
-    explicit Program(std::vector<std::unique_ptr<Node>> &&statements) : _statements(std::move(statements)) {}
+    explicit Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+            : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const std::vector<std::unique_ptr<Node>> &statements() const { return _statements; };
 
+    [[nodiscard]] std::shared_ptr<SymbolTable> &table() { return _table; };
+
 private:
     std::vector<std::unique_ptr<Node>> _statements;
+    std::shared_ptr<SymbolTable> _table;
 };
 
 class Type : public Node {
@@ -44,19 +50,23 @@ private:
 
 class Block : public Node {
 public:
-    explicit Block(std::vector<std::unique_ptr<Node>> &&statements) : _statements(std::move(statements)) {}
+    explicit Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+            : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const std::vector<std::unique_ptr<Node>> &statements() const { return _statements; };
 
+    [[nodiscard]] std::shared_ptr<SymbolTable> &table() { return _table; };
+
 private:
     std::vector<std::unique_ptr<Node>> _statements;
+    std::shared_ptr<SymbolTable> _table;
 };
 
-class Argument : public Node {
+class Parameter : public Node {
 public:
-    Argument(Token name, Type &&type) : _name(name), _type(std::move(type)) {}
+    Parameter(Token name, Type type) : _name(name), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -71,10 +81,16 @@ private:
 
 class Function : public Node {
 public:
-    Function(Token name, Type &&return_type, Block &&block)
-            : _return_type(std::move(return_type)), _block(std::move(block)), _name(name) {}
+    Function(Token name, std::vector<Parameter> &&parameters, Type return_type,
+             Block block, std::shared_ptr<SymbolTable> table)
+            : _table(std::move(table)), _parameters(std::move(parameters)), _return_type(std::move(return_type)),
+              _block(std::move(block)), _name(name) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] const std::vector<Parameter> &parameters() const { return _parameters; }
+
+    [[nodiscard]] std::shared_ptr<SymbolTable> &table() { return _table; }
 
     [[nodiscard]] const Type &return_type() const { return _return_type; }
 
@@ -83,6 +99,8 @@ public:
     [[nodiscard]] const Token &name() const { return _name; }
 
 private:
+    std::shared_ptr<SymbolTable> _table;
+    std::vector<Parameter> _parameters;
     Type _return_type;
     Block _block;
     Token _name;

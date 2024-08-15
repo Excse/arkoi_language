@@ -5,8 +5,15 @@ project(arkoi_language)
 set(CMAKE_CXX_STANDARD 23)
 
 include_directories(include)
-add_executable(arkoi_language src/main.cpp src/scanner.cpp src/token.cpp
+add_executable(arkoi_language
+        src/main.cpp
+        src/scanner.cpp
+        include/scanner.h
+        src/token.cpp
+        include/token.h
         src/parser.cpp
         include/parser.h
         include/ast.h
-        include/visitor.h)
+        include/visitor.h
+        src/symbol_table.cpp
+        include/symbol_table.h)

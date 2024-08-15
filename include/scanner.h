@@ -31,13 +31,11 @@ private:
 
     [[nodiscard]] std::string_view _current_view();
 
-    [[nodiscard]] Location _current_location();
-
     [[nodiscard]] char _current_char();
 
     [[nodiscard]] bool _is_eof();
 
-    void _mark_start();
+    [[nodiscard]] Location _mark_start();
 
     void _next();
 

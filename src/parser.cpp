@@ -2,10 +2,12 @@
 // Created by timo on 8/6/24.
 //
 
+#include "symbol_table.h"
 #include "parser.h"
 
 Program Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
+    auto own_scope = _enter_scope();
 
     while (true) {
         auto &current = _current();
@@ -24,7 +26,9 @@ Program Parser::parse_program() {
         }
     }
 
-    return Program(std::move(statements));
+    _exit_scope();
+
+    return Program(std::move(statements), own_scope);
 }
 
 std::unique_ptr<Node> Parser::_parse_program_statement() {
@@ -57,17 +61,22 @@ std::unique_ptr<Function> Parser::_parse_function() {
 
     auto &name = _consume(Token::Type::Identifier);
 
-    auto arguments = _parse_arguments();
+    auto own_scope = _enter_scope();
+
+    auto parameters = _parse_parameters();
+
+    _exit_scope();
 
     auto return_type = _parse_type();
 
     auto block = _parse_block();
 
-    return std::make_unique<Function>(name, std::move(return_type), std::move(block));
+    return std::make_unique<Function>(name, std::move(parameters), std::move(return_type),
+                                      std::move(block), own_scope);
 }
 
-std::vector<Argument> Parser::_parse_arguments() {
-    std::vector<Argument> arguments;
+std::vector<Parameter> Parser::_parse_parameters() {
+    std::vector<Parameter> parameters;
 
     _consume(Token::Type::LParent);
 
@@ -79,15 +88,15 @@ std::vector<Argument> Parser::_parse_arguments() {
             break;
         }
 
-        if (!arguments.empty()) {
+        if (!parameters.empty()) {
             _consume(Token::Type::Comma);
         }
 
         try {
-            arguments.push_back(_parse_argument());
+            parameters.push_back(_parse_parameter());
         } catch (const UnexpectedToken &error) {
             std::cout << error.what() << std::endl;
-            _recover_arguments();
+            _recover_parameters();
         } catch (const UnexpectedEndOfTokens &error) {
             std::cout << error.what() << std::endl;
             break;
@@ -96,10 +105,10 @@ std::vector<Argument> Parser::_parse_arguments() {
 
     _consume(Token::Type::RParent);
 
-    return arguments;
+    return parameters;
 }
 
-void Parser::_recover_arguments() {
+void Parser::_recover_parameters() {
     while (true) {
         _next();
 
@@ -115,7 +124,7 @@ void Parser::_recover_arguments() {
     }
 }
 
-Argument Parser::_parse_argument() {
+Parameter Parser::_parse_parameter() {
     auto &name = _consume(Token::Type::Identifier);
 
     auto type = _parse_type();
@@ -152,6 +161,7 @@ Type Parser::_parse_type() {
 Block Parser::_parse_block() {
     std::vector<std::unique_ptr<Node>> statements;
 
+    auto own_scope = _enter_scope();
     _consume(Token::Type::LCBracket);
 
     while (true) {
@@ -173,8 +183,9 @@ Block Parser::_parse_block() {
     }
 
     _consume(Token::Type::RCBracket);
+    _exit_scope();
 
-    return Block(std::move(statements));
+    return Block(std::move(statements), own_scope);
 }
 
 std::unique_ptr<Node> Parser::_parse_block_statement() {
@@ -226,6 +237,28 @@ std::unique_ptr<Node> Parser::_parse_primary() {
 
     auto &current = _current();
     throw UnexpectedToken("number or identifier", current);
+}
+
+std::shared_ptr<SymbolTable> Parser::_current_scope() {
+    return _scopes.top();
+}
+
+std::shared_ptr<SymbolTable> Parser::_enter_scope() {
+    std::shared_ptr<SymbolTable> new_scope;
+    if (_scopes.empty()) {
+        _scopes.push(std::make_shared<SymbolTable>());
+    } else {
+        auto parent = _current_scope();
+        _scopes.push(std::make_shared<SymbolTable>(parent));
+    }
+
+    return _current_scope();
+}
+
+std::shared_ptr<SymbolTable> Parser::_exit_scope() {
+    auto current = _current_scope();
+    _scopes.pop();
+    return current;
 }
 
 const Token &Parser::_current() {

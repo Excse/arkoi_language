@@ -7,13 +7,14 @@
 
 #include <functional>
 #include <vector>
+#include <stack>
 
 #include "token.h"
 #include "ast.h"
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> &tokens) : _tokens(std::move(tokens)), _position(0) {}
+    explicit Parser(std::vector<Token> &tokens) : _scopes(), _tokens(std::move(tokens)), _position(0) {}
 
     [[nodiscard]] Program parse_program();
 
@@ -24,11 +25,11 @@ private:
 
     [[nodiscard]] std::unique_ptr<Function> _parse_function();
 
-    [[nodiscard]] std::vector<Argument> _parse_arguments();
+    [[nodiscard]] std::vector<Parameter> _parse_parameters();
 
-    void _recover_arguments();
+    void _recover_parameters();
 
-    [[nodiscard]] Argument _parse_argument();
+    [[nodiscard]] Parameter _parse_parameter();
 
     [[nodiscard]] Type _parse_type();
 
@@ -44,6 +45,12 @@ private:
 
     [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
+    std::shared_ptr<SymbolTable> _current_scope();
+
+    std::shared_ptr<SymbolTable> _enter_scope();
+
+    std::shared_ptr<SymbolTable> _exit_scope();
+
     [[nodiscard]] const Token &_current();
 
     void _next();
@@ -57,6 +64,7 @@ private:
     [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
 
 private:
+    std::stack<std::shared_ptr<SymbolTable>> _scopes;
     std::vector<Token> _tokens;
     size_t _position;
 };
