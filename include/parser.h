@@ -1,7 +1,3 @@
-//
-// Created by timo on 8/6/24.
-//
-
 #ifndef ARKOI_LANGUAGE_PARSER_H
 #define ARKOI_LANGUAGE_PARSER_H
 

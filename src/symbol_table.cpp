@@ -1,7 +1,3 @@
-//
-// Created by timo on 8/14/24.
-//
-
 #include "symbol_table.h"
 
 Symbol &SymbolTable::insert(const std::string &name) {
@@ -15,9 +11,13 @@ Symbol &SymbolTable::insert(const std::string &name) {
 
 Symbol &SymbolTable::lookup(const std::string &name) {
     auto found = _symbols.find(name);
-    if (found == _symbols.end()) {
-        throw IdentifierNotFound(name);
+    if (found != _symbols.end()) {
+        return found->second;
     }
 
-    return found->second;
+    if(_parent != nullptr) {
+        return _parent->lookup(name);
+    }
+
+    throw IdentifierNotFound(name);
 }

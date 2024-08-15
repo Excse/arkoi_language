@@ -1,9 +1,9 @@
-//
-// Created by timo on 8/6/24.
-//
-
 #ifndef ARKOI_LANGUAGE_VISITOR_H
 #define ARKOI_LANGUAGE_VISITOR_H
+
+#include <memory>
+
+class SymbolTable;
 
 class Identifier;
 
@@ -25,21 +25,21 @@ class Visitor {
 public:
     virtual ~Visitor() = default;
 
-    virtual void visit(Program &node) = 0;
+    virtual void visit(const Program &node) = 0;
 
-    virtual void visit(Function &node) = 0;
+    virtual void visit(const Function &node) = 0;
 
-    virtual void visit(Type &node) = 0;
+    virtual void visit(const Type &node) = 0;
 
-    virtual void visit(Block &node) = 0;
+    virtual void visit(const Block &node) = 0;
 
-    virtual void visit(Parameter &node) = 0;
+    virtual void visit(const Parameter &node) = 0;
 
-    virtual void visit(Number &node) = 0;
+    virtual void visit(const Number &node) = 0;
 
-    virtual void visit(Return &node) = 0;
+    virtual void visit(const Return &node) = 0;
 
-    virtual void visit(Identifier &node) = 0;
+    virtual void visit(const Identifier &node) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

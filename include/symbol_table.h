@@ -1,7 +1,3 @@
-//
-// Created by timo on 8/14/24.
-//
-
 #ifndef ARKOI_LANGUAGE_SYMBOL_TABLE_H
 #define ARKOI_LANGUAGE_SYMBOL_TABLE_H
 

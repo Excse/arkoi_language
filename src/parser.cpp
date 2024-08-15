@@ -1,7 +1,3 @@
-//
-// Created by timo on 8/6/24.
-//
-
 #include "symbol_table.h"
 #include "parser.h"
 
@@ -57,19 +53,19 @@ void Parser::_recover_program() {
 }
 
 std::unique_ptr<Function> Parser::_parse_function() {
+    auto own_scope = _enter_scope();
+
     _consume(Token::Type::Fun);
 
     auto &name = _consume(Token::Type::Identifier);
 
-    auto own_scope = _enter_scope();
-
     auto parameters = _parse_parameters();
-
-    _exit_scope();
 
     auto return_type = _parse_type();
 
     auto block = _parse_block();
+
+    _exit_scope();
 
     return std::make_unique<Function>(name, std::move(parameters), std::move(return_type),
                                       std::move(block), own_scope);

@@ -16,4 +16,6 @@ add_executable(arkoi_language
         include/ast.h
         include/visitor.h
         src/symbol_table.cpp
-        include/symbol_table.h)
+        include/symbol_table.h
+        src/name_resolution.cpp
+        include/name_resolution.h)

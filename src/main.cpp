@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "name_resolution.h"
 #include "symbol_table.h"
 #include "scanner.h"
 #include "parser.h"
@@ -22,6 +23,12 @@ int main() {
     Parser parser(tokens);
 
     Program program = parser.parse_program();
+
+    NameResolution resolution;
+    program.accept(resolution);
+    if(resolution.has_failed()) {
+        exit(1);
+    }
 
     return 0;
 }
