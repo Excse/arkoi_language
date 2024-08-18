@@ -13,14 +13,9 @@ int main() {
     buffer << file.rdbuf();
 
     std::string source = buffer.str();
+
     Scanner scanner(source);
-
-    std::vector<Token> tokens = scanner.tokenize();
-
-    auto is_useless = [](const Token &token) { return token.type() == Token::Type::Comment; };
-    tokens.erase(std::remove_if(tokens.begin(), tokens.end(), is_useless), tokens.end());
-
-    Parser parser(tokens);
+    Parser parser(scanner.tokenize());
 
     Program program = parser.parse_program();
 

@@ -18,7 +18,7 @@ public:
 
 class Program : public Node {
 public:
-    explicit Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+    Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
@@ -38,7 +38,7 @@ public:
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Token &token() { return _token; }
+    [[nodiscard]] const Token &token() const { return _token; }
 
 private:
     Token _token;
@@ -46,7 +46,7 @@ private:
 
 class Block : public Node {
 public:
-    explicit Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+    Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
@@ -77,8 +77,8 @@ private:
 
 class Function : public Node {
 public:
-    Function(Token name, std::vector<Parameter> &&parameters, Type return_type,
-             Block block, std::shared_ptr<SymbolTable> table)
+    Function(Token name, std::vector<Parameter> &&parameters, Type return_type, Block &&block,
+             std::shared_ptr<SymbolTable> table)
             : _table(std::move(table)), _parameters(std::move(parameters)), _return_type(std::move(return_type)),
               _block(std::move(block)), _name(name) {}
 
@@ -120,7 +120,7 @@ public:
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Token &value() { return _value; }
+    [[nodiscard]] const Token &value() const { return _value; }
 
 private:
     Token _value;

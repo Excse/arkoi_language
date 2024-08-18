@@ -2,29 +2,39 @@
 #define ARKOI_LANGUAGE_SYMBOL_TABLE_H
 
 #include <unordered_map>
+#include <functional>
 #include <optional>
 #include <utility>
 #include <memory>
 
 class Symbol {
 public:
-    explicit Symbol(std::string name) : _name(std::move(name)) {}
+    enum class Type {
+        Function,
+        Parameter,
+    };
 
-    [[nodiscard]] const std::string &name() { return _name; }
+public:
+    explicit Symbol(std::string name, Type type) : _name(std::move(name)), _type(type) {}
+
+    [[nodiscard]] const std::string &name() const { return _name; }
+
+    [[nodiscard]] const Type &type() const { return _type; }
 
 private:
     std::string _name;
+    Type _type;
 };
 
 class SymbolTable {
 public:
     explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _symbols(), _parent(std::move(parent)) {}
 
-    Symbol &insert(const std::string &name);
+    Symbol &insert(const std::string &name, Symbol::Type type);
 
-    [[nodiscard]] Symbol &lookup(const std::string &name);
+    [[nodiscard]] Symbol &lookup(const std::string &name, const std::function<bool(const Symbol &)> &predicate);
 
-    [[nodiscard]] const std::shared_ptr<SymbolTable> &parent() { return _parent; }
+    [[nodiscard]] const std::shared_ptr<SymbolTable> &parent() const { return _parent; }
 
 private:
     std::unordered_map<std::string, Symbol> _symbols;
@@ -33,14 +43,14 @@ private:
 
 class IdentifierAlreadyTaken : public std::runtime_error {
 public:
-    explicit IdentifierAlreadyTaken(const std::string &name) : std::runtime_error(
-            "The identifier " + name + " is already taken.") {}
+    explicit IdentifierAlreadyTaken(const std::string &name)
+            : std::runtime_error("The identifier " + name + " is already taken.") {}
 };
 
 class IdentifierNotFound : public std::runtime_error {
 public:
-    explicit IdentifierNotFound(const std::string &name) : std::runtime_error(
-            "The identifier " + name + " was not found.") {}
+    explicit IdentifierNotFound(const std::string &name)
+            : std::runtime_error("The identifier " + name + " was not found.") {}
 };
 
 #endif //ARKOI_LANGUAGE_SYMBOL_TABLE_H

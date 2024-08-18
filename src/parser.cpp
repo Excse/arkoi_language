@@ -1,6 +1,12 @@
 #include "symbol_table.h"
 #include "parser.h"
 
+Parser::Parser(std::vector<Token> &&tokens)
+        : _scopes(), _tokens(std::move(tokens)), _position(0) {
+    auto is_useless = [](const Token &token) { return token.type() == Token::Type::Comment; };
+    tokens.erase(std::remove_if(tokens.begin(), tokens.end(), is_useless), tokens.end());
+}
+
 Program Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
     auto own_scope = _enter_scope();
@@ -24,7 +30,7 @@ Program Parser::parse_program() {
 
     _exit_scope();
 
-    return Program(std::move(statements), own_scope);
+    return {std::move(statements), own_scope};
 }
 
 std::unique_ptr<Node> Parser::_parse_program_statement() {
@@ -67,8 +73,7 @@ std::unique_ptr<Function> Parser::_parse_function() {
 
     _exit_scope();
 
-    return std::make_unique<Function>(name, std::move(parameters), std::move(return_type),
-                                      std::move(block), own_scope);
+    return std::make_unique<Function>(name, std::move(parameters), return_type, std::move(block), own_scope);
 }
 
 std::vector<Parameter> Parser::_parse_parameters() {
@@ -125,7 +130,7 @@ Parameter Parser::_parse_parameter() {
 
     auto type = _parse_type();
 
-    return {name, std::move(type)};
+    return {name, type};
 }
 
 Type Parser::_parse_type() {
@@ -181,7 +186,7 @@ Block Parser::_parse_block() {
     _consume(Token::Type::RCBracket);
     _exit_scope();
 
-    return Block(std::move(statements), own_scope);
+    return {std::move(statements), own_scope};
 }
 
 std::unique_ptr<Node> Parser::_parse_block_statement() {
@@ -291,13 +296,4 @@ const Token &Parser::_consume(const std::function<bool(const Token &)> &predicat
     _next();
 
     return current;
-}
-
-const Token *Parser::_try_consume(const std::function<bool(const Token &)> &predicate) {
-    try {
-        auto &consumed = _consume(predicate, "");
-        return &consumed;
-    } catch (const ParserError &) {
-        return nullptr;
-    }
 }

@@ -77,7 +77,7 @@ public:
 
 class UnexpectedChar : public ScannerError {
 public:
-    explicit UnexpectedChar(const std::string &expected, char got)
+    UnexpectedChar(const std::string &expected, char got)
             : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
 };
 

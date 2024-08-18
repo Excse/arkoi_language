@@ -10,7 +10,7 @@
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> &tokens) : _scopes(), _tokens(std::move(tokens)), _position(0) {}
+    explicit Parser(std::vector<Token> &&tokens);
 
     [[nodiscard]] Program parse_program();
 
@@ -41,7 +41,7 @@ private:
 
     [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
-    std::shared_ptr<SymbolTable> _current_scope();
+    [[nodiscard]] std::shared_ptr<SymbolTable> _current_scope();
 
     std::shared_ptr<SymbolTable> _enter_scope();
 
@@ -56,8 +56,6 @@ private:
     const Token &_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected);
 
     [[nodiscard]] const Token *_try_consume(Token::Type type);
-
-    [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes;
@@ -77,7 +75,7 @@ public:
 
 class UnexpectedToken : public ParserError {
 public:
-    explicit UnexpectedToken(const std::string &expected, const Token &got)
+    UnexpectedToken(const std::string &expected, const Token &got)
             : ParserError("Expected " + expected + " but got " + Token::type_name(got.type())) {}
 };
 

@@ -7,6 +7,7 @@
 
 #include <stack>
 
+#include "symbol_table.h"
 #include "visitor.h"
 #include "token.h"
 
@@ -33,9 +34,9 @@ private:
 
     void visit(const Return &node) override;
 
-    void _check_non_existence(const Token &token);
+    void _check_non_existence(const Token &token, Symbol::Type type);
 
-    void _check_existence(const Token &token);
+    void _check_existence(const Token &token, const std::function<bool(const Symbol &)> &predicate);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes;
