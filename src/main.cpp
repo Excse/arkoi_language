@@ -3,7 +3,7 @@
 #include <sstream>
 
 #include "name_resolution.h"
-#include "symbol_table.h"
+#include "il_generator.h"
 #include "scanner.h"
 #include "parser.h"
 
@@ -24,6 +24,15 @@ int main() {
     if(resolution.has_failed()) {
         exit(1);
     }
+
+    IRGenerator generator;
+    program.accept(generator);
+
+    auto instructions = generator.instructions();
+    for (const auto &item: instructions) {
+        std::visit([&](const auto &item) { std::cout << item << std::endl; }, item);
+    }
+
 
     return 0;
 }

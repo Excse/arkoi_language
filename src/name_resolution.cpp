@@ -11,7 +11,7 @@ void NameResolution::visit(const Program &node) {
 }
 
 void NameResolution::visit(const Function &node) {
-    _check_non_existence(node.name(), Symbol::Type::Parameter);
+    _check_non_existence(node.name(), Symbol::Type::Function);
 
     _scopes.push(node.table());
     for (const auto &item: node.parameters()) {

@@ -4,7 +4,7 @@
 Parser::Parser(std::vector<Token> &&tokens)
         : _scopes(), _tokens(std::move(tokens)), _position(0) {
     auto is_useless = [](const Token &token) { return token.type() == Token::Type::Comment; };
-    tokens.erase(std::remove_if(tokens.begin(), tokens.end(), is_useless), tokens.end());
+    _tokens.erase(std::remove_if(_tokens.begin(), _tokens.end(), is_useless), _tokens.end());
 }
 
 Program Parser::parse_program() {
