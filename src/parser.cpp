@@ -7,7 +7,7 @@ Parser::Parser(std::vector<Token> &&tokens)
     _tokens.erase(std::remove_if(_tokens.begin(), _tokens.end(), is_useless), _tokens.end());
 }
 
-Program Parser::parse_program() {
+ProgramNode Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
     auto own_scope = _enter_scope();
 
@@ -58,7 +58,7 @@ void Parser::_recover_program() {
     }
 }
 
-std::unique_ptr<Function> Parser::_parse_function() {
+std::unique_ptr<FunctionNode> Parser::_parse_function() {
     auto own_scope = _enter_scope();
 
     _consume(Token::Type::Fun);
@@ -73,11 +73,11 @@ std::unique_ptr<Function> Parser::_parse_function() {
 
     _exit_scope();
 
-    return std::make_unique<Function>(name, std::move(parameters), return_type, std::move(block), own_scope);
+    return std::make_unique<FunctionNode>(name, std::move(parameters), return_type, std::move(block), own_scope);
 }
 
-std::vector<Parameter> Parser::_parse_parameters() {
-    std::vector<Parameter> parameters;
+std::vector<ParameterNode> Parser::_parse_parameters() {
+    std::vector<ParameterNode> parameters;
 
     _consume(Token::Type::LParent);
 
@@ -125,7 +125,7 @@ void Parser::_recover_parameters() {
     }
 }
 
-Parameter Parser::_parse_parameter() {
+ParameterNode Parser::_parse_parameter() {
     auto &name = _consume(Token::Type::Identifier);
 
     auto type = _parse_type();
@@ -133,7 +133,7 @@ Parameter Parser::_parse_parameter() {
     return {name, type};
 }
 
-Type Parser::_parse_type() {
+TypeNode Parser::_parse_type() {
     _consume(Token::Type::At);
 
     auto is_type = [](const Token &token) {
@@ -156,10 +156,10 @@ Type Parser::_parse_type() {
     };
 
     auto &type = _consume(is_type, "bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize");
-    return Type(type);
+    return TypeNode(type);
 }
 
-Block Parser::_parse_block() {
+BlockNode Parser::_parse_block() {
     std::vector<std::unique_ptr<Node>> statements;
 
     auto own_scope = _enter_scope();
@@ -215,14 +215,14 @@ void Parser::_recover_block() {
     }
 }
 
-std::unique_ptr<Return> Parser::_parse_return() {
+std::unique_ptr<ReturnNode> Parser::_parse_return() {
     _consume(Token::Type::Return);
 
     auto expression = _parse_expression();
 
     _consume(Token::Type::Semicolon);
 
-    return std::make_unique<Return>(std::move(expression));
+    return std::make_unique<ReturnNode>(std::move(expression));
 }
 
 std::unique_ptr<Node> Parser::_parse_expression() {
@@ -231,9 +231,9 @@ std::unique_ptr<Node> Parser::_parse_expression() {
 
 std::unique_ptr<Node> Parser::_parse_primary() {
     if (auto *number = _try_consume(Token::Type::Number)) {
-        return std::make_unique<Number>(*number);
+        return std::make_unique<NumberNode>(*number);
     } else if (auto *identifier = _try_consume(Token::Type::Identifier)) {
-        return std::make_unique<Identifier>(*identifier);
+        return std::make_unique<IdentifierNode>(*identifier);
     }
 
     auto &current = _current();

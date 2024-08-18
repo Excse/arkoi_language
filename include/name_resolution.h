@@ -18,21 +18,21 @@ public:
     [[nodiscard]] bool has_failed() const { return _failed; }
 
 private:
-    void visit(const Program &node) override;
+    void visit(const ProgramNode &node) override;
 
-    void visit(const Function &node) override;
+    void visit(const FunctionNode &node) override;
 
-    void visit(const Block &node) override;
+    void visit(const BlockNode &node) override;
 
-    void visit(const Parameter &node) override;
+    void visit(const ParameterNode &node) override;
 
-    void visit(const Identifier &node) override;
+    void visit(const IdentifierNode &node) override;
 
-    void visit(const Type &node) override;
+    void visit(const TypeNode &node) override;
 
-    void visit(const Number &node) override;
+    void visit(const NumberNode &node) override;
 
-    void visit(const Return &node) override;
+    void visit(const ReturnNode &node) override;
 
     void _check_non_existence(const Token &token, Symbol::Type type);
 

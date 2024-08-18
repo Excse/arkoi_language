@@ -5,41 +5,41 @@
 
 class SymbolTable;
 
-class Identifier;
+class IdentifierNode;
 
-class Function;
+class FunctionNode;
 
-class Parameter;
+class ParameterNode;
 
-class Program;
+class ProgramNode;
 
-class Return;
+class ReturnNode;
 
-class Number;
+class NumberNode;
 
-class Block;
+class BlockNode;
 
-class Type;
+class TypeNode;
 
 class Visitor {
 public:
     virtual ~Visitor() = default;
 
-    virtual void visit(const Program &node) = 0;
+    virtual void visit(const ProgramNode &node) = 0;
 
-    virtual void visit(const Function &node) = 0;
+    virtual void visit(const FunctionNode &node) = 0;
 
-    virtual void visit(const Type &node) = 0;
+    virtual void visit(const TypeNode &node) = 0;
 
-    virtual void visit(const Block &node) = 0;
+    virtual void visit(const BlockNode &node) = 0;
 
-    virtual void visit(const Parameter &node) = 0;
+    virtual void visit(const ParameterNode &node) = 0;
 
-    virtual void visit(const Number &node) = 0;
+    virtual void visit(const NumberNode &node) = 0;
 
-    virtual void visit(const Return &node) = 0;
+    virtual void visit(const ReturnNode &node) = 0;
 
-    virtual void visit(const Identifier &node) = 0;
+    virtual void visit(const IdentifierNode &node) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

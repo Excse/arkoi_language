@@ -2,7 +2,7 @@
 
 #include "ast.h"
 
-void NameResolution::visit(const Program &node) {
+void NameResolution::visit(const ProgramNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -10,7 +10,7 @@ void NameResolution::visit(const Program &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(const Function &node) {
+void NameResolution::visit(const FunctionNode &node) {
     _check_non_existence(node.name(), Symbol::Type::Function);
 
     _scopes.push(node.table());
@@ -22,7 +22,7 @@ void NameResolution::visit(const Function &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(const Block &node) {
+void NameResolution::visit(const BlockNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -30,20 +30,20 @@ void NameResolution::visit(const Block &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(const Parameter &node) {
+void NameResolution::visit(const ParameterNode &node) {
     _check_non_existence(node.name(), Symbol::Type::Parameter);
 }
 
-void NameResolution::visit(const Identifier &node) {
+void NameResolution::visit(const IdentifierNode &node) {
     auto is_parameter = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Parameter; };
     _check_existence(node.value(), is_parameter);
 }
 
-void NameResolution::visit(const Type &node) {}
+void NameResolution::visit(const TypeNode &node) {}
 
-void NameResolution::visit(const Number &node) {}
+void NameResolution::visit(const NumberNode &node) {}
 
-void NameResolution::visit(const Return &node) {
+void NameResolution::visit(const ReturnNode &node) {
     node.expression().accept(*this);
 }
 

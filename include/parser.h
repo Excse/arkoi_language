@@ -12,30 +12,30 @@ class Parser {
 public:
     explicit Parser(std::vector<Token> &&tokens);
 
-    [[nodiscard]] Program parse_program();
+    [[nodiscard]] ProgramNode parse_program();
 
 private:
     [[nodiscard]] std::unique_ptr<Node> _parse_program_statement();
 
     void _recover_program();
 
-    [[nodiscard]] std::unique_ptr<Function> _parse_function();
+    [[nodiscard]] std::unique_ptr<FunctionNode> _parse_function();
 
-    [[nodiscard]] std::vector<Parameter> _parse_parameters();
+    [[nodiscard]] std::vector<ParameterNode> _parse_parameters();
 
     void _recover_parameters();
 
-    [[nodiscard]] Parameter _parse_parameter();
+    [[nodiscard]] ParameterNode _parse_parameter();
 
-    [[nodiscard]] Type _parse_type();
+    [[nodiscard]] TypeNode _parse_type();
 
-    [[nodiscard]] Block _parse_block();
+    [[nodiscard]] BlockNode _parse_block();
 
     [[nodiscard]] std::unique_ptr<Node> _parse_block_statement();
 
     void _recover_block();
 
-    [[nodiscard]] std::unique_ptr<Return> _parse_return();
+    [[nodiscard]] std::unique_ptr<ReturnNode> _parse_return();
 
     [[nodiscard]] std::unique_ptr<Node> _parse_expression();
 

@@ -1,4 +1,4 @@
-# Type System
+# TypeNode System
 
 Any type declared in Arkoi is prefixed by a ``@``, this clearly differentiates identifiers from types. If you notice 
 this symbol you can always be sure that it is a type.
@@ -36,7 +36,7 @@ The type of integer constants are determined by the given type or using u64/s64.
 automatically if the arithmetic precision is lower and no data is getting lost. If this is not the case an explicit cast
 is necessary.
 
-| Name        | Prefix | Example      | Default Type |
+| Name        | Prefix | Example      | Default TypeNode |
 |-------------|--------|--------------|--------------|
 | Decimal     | -      | -123_141     | isize        |
 | Decimal     | -      | 123_141      | usize        |
@@ -63,7 +63,7 @@ will now be of the type given.
 
 The type of floating point constants will always be f64 if not specified.
 
-| Name        | Example      | Default Type |
+| Name        | Example      | Default TypeNode |
 |-------------|--------------|--------------|
 | Normal      | -1.02_24     | f64          |
 | Normal      | 1.02_24      | f64          |
@@ -75,14 +75,14 @@ Just like the integer constants a suffix can be provided using a ``@`` between t
 
 ***
 
-### Pointer Type
+### Pointer TypeNode
 
 A pointer points to a specific location in the computer's memory. Any type can be made to a pointer by adding ``*`` as a 
 suffix. Some examples are ``f32*``, ``usize*``, ``bool*`` etc. The size of this type will always be ``usize``.
 
 ***
 
-### String Type
+### String TypeNode
 
 For now there is no builtin string type and thus the returning type of a string constant is a ``u8*``. The standard
 library provides functionality to interact with this specific data type.

@@ -3,14 +3,14 @@
 The declaration of a function is always ``fun <name>(<parameter list>) <type>`` and can be divided between short and 
 long functions as described in the examples.
 
-### Long Function
+### Long FunctionNode
 ```c
 fun test() @i32 {
     return 1;
 }
 ```
 
-### Short Function
+### Short FunctionNode
 ```c
 fun test() @i32 => 1;
 ```

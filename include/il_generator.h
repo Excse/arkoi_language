@@ -14,21 +14,21 @@ class IRGenerator : public Visitor {
 public:
     IRGenerator() : _scopes(), _instructions(), _current_operand() {}
 
-    void visit(const Program &node) override;
+    void visit(const ProgramNode &node) override;
 
-    void visit(const Function &node) override;
+    void visit(const FunctionNode &node) override;
 
-    void visit(const Type &node) override;
+    void visit(const TypeNode &node) override;
 
-    void visit(const Block &node) override;
+    void visit(const BlockNode &node) override;
 
-    void visit(const Parameter &node) override;
+    void visit(const ParameterNode &node) override;
 
-    void visit(const Number &node) override;
+    void visit(const NumberNode &node) override;
 
-    void visit(const Return &node) override;
+    void visit(const ReturnNode &node) override;
 
-    void visit(const Identifier &node) override;
+    void visit(const IdentifierNode &node) override;
 
     [[nodiscard]] const std::vector<Instruction> &instructions() const { return _instructions; }
 

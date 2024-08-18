@@ -4,8 +4,10 @@
 
 #include "tac.h"
 
+#include "utils.h"
+
 std::ostream &operator<<(std::ostream &os, const TACLabel &instruction) {
-    os << "_" << instruction.name << ": ";
+    os << "LABEL " << instruction.name << ": ";
     return os;
 }
 
@@ -14,7 +16,10 @@ std::ostream &operator<<(std::ostream &os, const TACReturn &instruction) {
 
     if (instruction.value.has_value()) {
         os << " ";
-        std::visit([&](const auto &value) { os << value; }, instruction.value.value());
+        std::visit(match{
+                [&](const std::shared_ptr<Symbol> &symbol) { os << *symbol; },
+                [&](const auto &item) { os << item; }
+        }, instruction.value.value());
     }
 
     return os;

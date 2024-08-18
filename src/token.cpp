@@ -3,9 +3,9 @@
 std::string Token::type_name(Type type) {
     switch (type) {
         case Type::Number:
-            return "Number";
+            return "NumberNode";
         case Type::Identifier:
-            return "Identifier";
+            return "IdentifierNode";
         case Type::Comment:
             return "Comment";
 

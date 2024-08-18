@@ -22,4 +22,5 @@ add_executable(arkoi_language
         src/tac.cpp
         include/tac.h
         src/il_generator.cpp
-        include/il_generator.h)
+        include/il_generator.h
+        include/utils.h)

@@ -16,9 +16,9 @@ public:
     virtual void accept(Visitor &visitor) const = 0;
 };
 
-class Program : public Node {
+class ProgramNode : public Node {
 public:
-    Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+    ProgramNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
@@ -32,9 +32,9 @@ private:
     std::shared_ptr<SymbolTable> _table;
 };
 
-class Type : public Node {
+class TypeNode : public Node {
 public:
-    explicit Type(Token token) : _token(token) {}
+    explicit TypeNode(Token token) : _token(token) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
@@ -44,9 +44,9 @@ private:
     Token _token;
 };
 
-class Block : public Node {
+class BlockNode : public Node {
 public:
-    Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+    BlockNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
@@ -60,51 +60,51 @@ private:
     std::shared_ptr<SymbolTable> _table;
 };
 
-class Parameter : public Node {
+class ParameterNode : public Node {
 public:
-    Parameter(Token name, Type type) : _name(name), _type(std::move(type)) {}
+    ParameterNode(Token name, TypeNode type) : _name(name), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const Token &name() const { return _name; }
 
-    [[nodiscard]] const Type &type() const { return _type; }
+    [[nodiscard]] const TypeNode &type() const { return _type; }
 
 private:
     Token _name;
-    Type _type;
+    TypeNode _type;
 };
 
-class Function : public Node {
+class FunctionNode : public Node {
 public:
-    Function(Token name, std::vector<Parameter> &&parameters, Type return_type, Block &&block,
-             std::shared_ptr<SymbolTable> table)
+    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, TypeNode return_type, BlockNode &&block,
+                 std::shared_ptr<SymbolTable> table)
             : _table(std::move(table)), _parameters(std::move(parameters)), _return_type(std::move(return_type)),
               _block(std::move(block)), _name(name) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const std::vector<Parameter> &parameters() const { return _parameters; }
+    [[nodiscard]] const std::vector<ParameterNode> &parameters() const { return _parameters; }
 
     [[nodiscard]] const std::shared_ptr<SymbolTable> &table() const { return _table; }
 
-    [[nodiscard]] const Type &return_type() const { return _return_type; }
+    [[nodiscard]] const TypeNode &return_type() const { return _return_type; }
 
-    [[nodiscard]] const Block &block() const { return _block; }
+    [[nodiscard]] const BlockNode &block() const { return _block; }
 
     [[nodiscard]] const Token &name() const { return _name; }
 
 private:
     std::shared_ptr<SymbolTable> _table;
-    std::vector<Parameter> _parameters;
-    Type _return_type;
-    Block _block;
+    std::vector<ParameterNode> _parameters;
+    TypeNode _return_type;
+    BlockNode _block;
     Token _name;
 };
 
-class Return : public Node {
+class ReturnNode : public Node {
 public:
-    explicit Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
+    explicit ReturnNode(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
@@ -114,9 +114,9 @@ private:
     std::unique_ptr<Node> _expression;
 };
 
-class Number : public Node {
+class NumberNode : public Node {
 public:
-    explicit Number(Token value) : _value(value) {}
+    explicit NumberNode(Token value) : _value(value) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 
@@ -126,9 +126,9 @@ private:
     Token _value;
 };
 
-class Identifier : public Node {
+class IdentifierNode : public Node {
 public:
-    explicit Identifier(Token value) : _value(value) {}
+    explicit IdentifierNode(Token value) : _value(value) {}
 
     void accept(Visitor &visitor) const override { visitor.visit(*this); }
 

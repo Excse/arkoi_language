@@ -17,7 +17,7 @@ int main() {
     Scanner scanner(source);
     Parser parser(scanner.tokenize());
 
-    Program program = parser.parse_program();
+    ProgramNode program = parser.parse_program();
 
     NameResolution resolution;
     program.accept(resolution);
