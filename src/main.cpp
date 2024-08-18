@@ -3,7 +3,9 @@
 #include <sstream>
 
 #include "name_resolution.h"
+#include "gas_generator.h"
 #include "il_generator.h"
+#include "il_printer.h"
 #include "scanner.h"
 #include "parser.h"
 
@@ -21,18 +23,28 @@ int main() {
 
     NameResolution resolution;
     program.accept(resolution);
-    if(resolution.has_failed()) {
+    if (resolution.has_failed()) {
         exit(1);
     }
 
-    IRGenerator generator;
-    program.accept(generator);
+    IRGenerator ir_generator;
+    program.accept(ir_generator);
 
-    auto instructions = generator.instructions();
-    for (const auto &item: instructions) {
-        std::visit([&](const auto &item) { std::cout << item << std::endl; }, item);
+    std::cout << "~~~~~~~~~~~~ Intermediate Language ~~~~~~~~~~~~ " << std::endl;
+
+    ILPrinter il_printer;
+    for (const auto &item: ir_generator.instructions()) {
+        item->accept(il_printer);
     }
 
+    std::cout << "~~~~~~~~~~~~ GNU Assembler ~~~~~~~~~~~~ " << std::endl;
+
+    GASGenerator gas_generator;
+    for (const auto &item: ir_generator.instructions()) {
+        item->accept(gas_generator);
+    }
+
+    std::cout << gas_generator.output() << std::endl;
 
     return 0;
 }

@@ -21,9 +21,9 @@ class BlockNode;
 
 class TypeNode;
 
-class Visitor {
+class NodeVisitor {
 public:
-    virtual ~Visitor() = default;
+    virtual ~NodeVisitor() = default;
 
     virtual void visit(const ProgramNode &node) = 0;
 
@@ -40,6 +40,19 @@ public:
     virtual void visit(const ReturnNode &node) = 0;
 
     virtual void visit(const IdentifierNode &node) = 0;
+};
+
+class ReturnInstruction;
+
+class LabelInstruction;
+
+class InstructionVisitor {
+public:
+    virtual ~InstructionVisitor() = default;
+
+    virtual void visit(const LabelInstruction &node) = 0;
+
+    virtual void visit(const ReturnInstruction &node) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

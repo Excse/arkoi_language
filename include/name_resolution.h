@@ -11,7 +11,7 @@
 #include "visitor.h"
 #include "token.h"
 
-class NameResolution : public Visitor {
+class NameResolution : public NodeVisitor {
 public:
     NameResolution() : _scopes(), _failed(false) {}
 

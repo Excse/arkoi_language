@@ -1,7 +1,3 @@
-//
-// Created by timo on 8/18/24.
-//
-
 #ifndef ARKOI_LANGUAGE_IL_GENERATOR_H
 #define ARKOI_LANGUAGE_IL_GENERATOR_H
 
@@ -10,7 +6,7 @@
 #include "visitor.h"
 #include "tac.h"
 
-class IRGenerator : public Visitor {
+class IRGenerator : public NodeVisitor {
 public:
     IRGenerator() : _scopes(), _instructions(), _current_operand() {}
 
@@ -30,13 +26,12 @@ public:
 
     void visit(const IdentifierNode &node) override;
 
-    [[nodiscard]] const std::vector<Instruction> &instructions() const { return _instructions; }
+    [[nodiscard]] const std::vector<std::unique_ptr<Instruction>> &instructions() const { return _instructions; }
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes;
-    std::vector<Instruction> _instructions;
+    std::vector<std::unique_ptr<Instruction>> _instructions;
     Operand _current_operand;
 };
-
 
 #endif //ARKOI_LANGUAGE_IL_GENERATOR_H

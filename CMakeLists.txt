@@ -19,8 +19,11 @@ add_executable(arkoi_language
         include/symbol_table.h
         src/name_resolution.cpp
         include/name_resolution.h
-        src/tac.cpp
         include/tac.h
         src/il_generator.cpp
         include/il_generator.h
-        include/utils.h)
+        include/utils.h
+        src/il_printer.cpp
+        include/il_printer.h
+        src/gas_generator.cpp
+        include/gas_generator.h)

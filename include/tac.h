@@ -6,26 +6,45 @@
 #define ARKOI_LANGUAGE_TAC_H
 
 #include <optional>
+#include <utility>
 #include <variant>
 #include <memory>
 #include <string>
 
 #include "symbol_table.h"
+#include "visitor.h"
 
 using Operand = std::variant<std::shared_ptr<Symbol>, long long>;
 
-struct TACLabel {
-    std::string name;
+class Instruction {
+public:
+    virtual ~Instruction() = default;
+
+    virtual void accept(InstructionVisitor &visitor) const = 0;
 };
 
-std::ostream &operator<<(std::ostream &os, const TACLabel &instruction);
+struct LabelInstruction : public Instruction {
+public:
+    explicit LabelInstruction(std::string name) : _name(std::move(name)) {}
 
-struct TACReturn {
-    std::optional<Operand> value;
+    void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
+
+    [[nodiscard]] const std::string &name() const { return _name; }
+
+private:
+    std::string _name;
 };
 
-std::ostream &operator<<(std::ostream &os, const TACReturn &label);
+struct ReturnInstruction : public Instruction {
+public:
+    explicit ReturnInstruction(Operand &&value) : _value(std::move(value)) {}
 
-using Instruction = std::variant<TACLabel, TACReturn>;
+    void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
+
+    [[nodiscard]] const Operand &value() const { return _value; };
+
+private:
+    Operand _value;
+};
 
 #endif //ARKOI_LANGUAGE_TAC_H

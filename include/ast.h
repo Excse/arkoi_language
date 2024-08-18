@@ -13,7 +13,7 @@ class Node {
 public:
     virtual ~Node() = default;
 
-    virtual void accept(Visitor &visitor) const = 0;
+    virtual void accept(NodeVisitor &visitor) const = 0;
 };
 
 class ProgramNode : public Node {
@@ -21,7 +21,7 @@ public:
     ProgramNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const std::vector<std::unique_ptr<Node>> &statements() const { return _statements; };
 
@@ -36,7 +36,7 @@ class TypeNode : public Node {
 public:
     explicit TypeNode(Token token) : _token(token) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const Token &token() const { return _token; }
 
@@ -49,7 +49,7 @@ public:
     BlockNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const std::vector<std::unique_ptr<Node>> &statements() const { return _statements; };
 
@@ -64,7 +64,7 @@ class ParameterNode : public Node {
 public:
     ParameterNode(Token name, TypeNode type) : _name(name), _type(std::move(type)) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const Token &name() const { return _name; }
 
@@ -82,7 +82,7 @@ public:
             : _table(std::move(table)), _parameters(std::move(parameters)), _return_type(std::move(return_type)),
               _block(std::move(block)), _name(name) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const std::vector<ParameterNode> &parameters() const { return _parameters; }
 
@@ -106,7 +106,7 @@ class ReturnNode : public Node {
 public:
     explicit ReturnNode(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const Node &expression() const { return *_expression; }
 
@@ -118,7 +118,7 @@ class NumberNode : public Node {
 public:
     explicit NumberNode(Token value) : _value(value) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const Token &value() const { return _value; }
 
@@ -130,7 +130,7 @@ class IdentifierNode : public Node {
 public:
     explicit IdentifierNode(Token value) : _value(value) {}
 
-    void accept(Visitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
     [[nodiscard]] const Token &value() const { return _value; }
 

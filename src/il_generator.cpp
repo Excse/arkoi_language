@@ -1,10 +1,4 @@
-//
-// Created by timo on 8/18/24.
-//
-
 #include "il_generator.h"
-
-#include <charconv>
 
 #include "token.h"
 #include "ast.h"
@@ -18,7 +12,8 @@ void IRGenerator::visit(const ProgramNode &node) {
 }
 
 void IRGenerator::visit(const FunctionNode &node) {
-    _instructions.emplace_back(TACLabel{std::string(node.name().value())});
+    auto instruction = std::make_unique<LabelInstruction>(std::string(node.name().value()));
+    _instructions.emplace_back(std::move(instruction));
 
     _scopes.push(node.table());
     node.block().accept(*this);
@@ -50,7 +45,8 @@ void IRGenerator::visit(const ReturnNode &node) {
     // This will set _current_operand
     node.expression().accept(*this);
 
-    _instructions.emplace_back(TACReturn{_current_operand});
+    auto instruction = std::make_unique<ReturnInstruction>(std::move(_current_operand));
+    _instructions.emplace_back(std::move(instruction));
 }
 
 void IRGenerator::visit(const IdentifierNode &node) {
