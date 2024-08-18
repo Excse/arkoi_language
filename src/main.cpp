@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <filesystem>
 
 #include "name_resolution.h"
 #include "gas_generator.h"
@@ -45,6 +46,34 @@ int main() {
     }
 
     std::cout << gas_generator.output() << std::endl;
+
+    auto temp_dir = std::filesystem::temp_directory_path();
+    auto asm_file_path = temp_dir / "temp_asm.s";
+    auto obj_file_path = temp_dir / "temp_obj.o";
+    auto exe_file_path = temp_dir / "temp_executable";
+
+    std::ofstream asm_file(asm_file_path);
+    asm_file << gas_generator.output();
+    asm_file.close();
+
+    std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
+    int assemble_result = std::system(assemble_command.c_str());
+    if (assemble_result != 0) {
+        std::cerr << "Assembly failed" << std::endl;
+        return 1;
+    }
+
+    std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
+    int link_result = std::system(link_command.c_str());
+    if (link_result != 0) {
+        std::cerr << "Linking failed" << std::endl;
+        return 1;
+    }
+
+    std::cout << "~~~~~~~~~~~~ Execute ~~~~~~~~~~~~ " << std::endl;
+
+    int exec_result = std::system(exe_file_path.string().c_str());
+    std::cout << "Execute Code: " << WEXITSTATUS(exec_result)  << std::endl;
 
     return 0;
 }
