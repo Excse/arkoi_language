@@ -1,6 +1,6 @@
 #include "token.h"
 
-std::string Token::type_name(Type type) {
+std::string Token::type_to_string(Type type) {
     switch (type) {
         case Type::Number:
             return "NumberNode";
@@ -121,7 +121,7 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
-    os << Token::type_name(token.type());
+    os << Token::type_to_string(token.type());
     os << ", value: " << token.value();
     os << ", column: " << token.column();
     os << ", row: " << token.row();

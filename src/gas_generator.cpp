@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include "utils.h"
-#include "tac.h"
+#include "instruction.h"
 
 GASGenerator::GASGenerator() : _output() {
     _preamble();

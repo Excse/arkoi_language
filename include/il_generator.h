@@ -4,7 +4,7 @@
 #include <stack>
 
 #include "visitor.h"
-#include "tac.h"
+#include "instruction.h"
 
 class IRGenerator : public NodeVisitor {
 public:

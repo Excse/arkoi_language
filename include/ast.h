@@ -149,7 +149,7 @@ public:
     };
 
 public:
-    explicit BinaryNode(std::unique_ptr<Node> &&left, Type type, std::unique_ptr<Node> &&right)
+    BinaryNode(std::unique_ptr<Node> &&left, Type type, std::unique_ptr<Node> &&right)
             : _left(std::move(left)), _type(type), _right(std::move(right)) {}
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }

@@ -58,7 +58,7 @@ public:
 
     [[nodiscard]] const Type &type() const { return _type; }
 
-    [[nodiscard]] static std::string type_name(Type type);
+    [[nodiscard]] static std::string type_to_string(Type type);
 
     [[nodiscard]] static std::optional<Token::Type> lookup_keyword(const std::string_view &value);
 

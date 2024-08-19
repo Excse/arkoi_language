@@ -18,14 +18,10 @@ int main() {
     std::string source = buffer.str();
 
     Scanner scanner(source);
-    auto tokens = scanner.tokenize();
-    if(scanner.has_failed()) {
-        exit(1);
-    }
-
-    Parser parser(std::move(tokens));
+    Parser parser(scanner.tokenize());
     auto program = parser.parse_program();
-    if(parser.has_failed()) {
+
+    if(scanner.has_failed() || parser.has_failed()) {
         exit(1);
     }
 

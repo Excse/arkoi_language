@@ -1,7 +1,3 @@
-//
-// Created by timo on 8/15/24.
-//
-
 #ifndef ARKOI_LANGUAGE_NAME_RESOLUTION_H
 #define ARKOI_LANGUAGE_NAME_RESOLUTION_H
 

@@ -63,7 +63,13 @@ private:
 
     [[nodiscard]] const Token *_try_consume(Token::Type type);
 
-    const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
+    [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
+
+    [[nodiscard]] static BinaryNode::Type to_binary_operator(const Token& token);
+
+    [[nodiscard]] static bool is_factor_operator(const Token& token);
+
+    [[nodiscard]] static bool is_term_operator(const Token& token);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes;
@@ -85,7 +91,7 @@ public:
 class UnexpectedToken : public ParserError {
 public:
     UnexpectedToken(const std::string &expected, const Token &got)
-            : ParserError("Expected " + expected + " but got " + Token::type_name(got.type())) {}
+            : ParserError("Expected " + expected + " but got " + Token::type_to_string(got.type())) {}
 };
 
 #endif //ARKOI_LANGUAGE_PARSER_H

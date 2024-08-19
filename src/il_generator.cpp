@@ -77,7 +77,7 @@ void IRGenerator::visit(const BinaryNode &node) {
 std::shared_ptr<Symbol> IRGenerator::_make_temporary() {
     auto scope = _scopes.top();
 
-    auto name = "_temp" + std::to_string(_temp_index);
+    auto name = "$tmp" + std::to_string(_temp_index);
     auto symbol = scope->insert(name, Symbol::Type::Temporary);
     _temp_index++;
 

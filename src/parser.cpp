@@ -237,31 +237,10 @@ std::unique_ptr<Node> Parser::_parse_expression() {
 std::unique_ptr<Node> Parser::_parse_term() {
     auto expression = _parse_factor();
 
-    auto is_term_token = [](const Token &token) {
-        switch (token.type()) {
-            case Token::Type::Plus:
-            case Token::Type::Minus:
-                return true;
-            default:
-                return false;
-        }
-    };
+    while (auto *operator_token = _try_consume(is_term_operator)) {
+        auto type = to_binary_operator(*operator_token);
 
-    auto token_to_type = [](const Token &token) {
-        switch (token.type()) {
-            case Token::Type::Plus:
-                return BinaryNode::Type::Add;
-            case Token::Type::Minus:
-                return BinaryNode::Type::Sub;
-            default:
-                exit(1);
-        }
-    };
-
-    while (auto op = _try_consume(is_term_token)) {
-        auto right = _parse_factor();
-        auto type = token_to_type(*op);
-        expression = std::make_unique<BinaryNode>(std::move(expression), type, std::move(right));
+        expression = std::make_unique<BinaryNode>(std::move(expression), type, _parse_factor());
     }
 
     return expression;
@@ -270,31 +249,10 @@ std::unique_ptr<Node> Parser::_parse_term() {
 std::unique_ptr<Node> Parser::_parse_factor() {
     auto expression = _parse_primary();
 
-    auto is_factor_token = [](const Token &token) {
-        switch (token.type()) {
-            case Token::Type::Slash:
-            case Token::Type::Asterisk:
-                return true;
-            default:
-                return false;
-        }
-    };
+    while (auto operator_token = _try_consume(is_factor_operator)) {
+        auto type = to_binary_operator(*operator_token);
 
-    auto token_to_type = [](const Token &token) {
-        switch (token.type()) {
-            case Token::Type::Slash:
-                return BinaryNode::Type::Div;
-            case Token::Type::Asterisk:
-                return BinaryNode::Type::Mul;
-            default:
-                exit(1);
-        }
-    };
-
-    while (auto op = _try_consume(is_factor_token)) {
-        auto right = _parse_primary();
-        auto type = token_to_type(*op);
-        expression = std::make_unique<BinaryNode>(std::move(expression), type, std::move(right));
+        expression = std::make_unique<BinaryNode>(std::move(expression), type, _parse_primary());
     }
 
     return expression;
@@ -343,7 +301,7 @@ void Parser::_next() {
 }
 
 const Token &Parser::_consume(Token::Type type) {
-    return _consume([&](const Token &input) { return input.type() == type; }, Token::type_name(type));
+    return _consume([&](const Token &input) { return input.type() == type; }, Token::type_to_string(type));
 }
 
 const Token *Parser::_try_consume(Token::Type type) {
@@ -377,4 +335,27 @@ const Token *Parser::_try_consume(const std::function<bool(const Token &)> &pred
     } catch (const ParserError &) {
         return nullptr;
     }
+}
+
+BinaryNode::Type Parser::to_binary_operator(const Token &token) {
+    switch (token.type()) {
+        case Token::Type::Slash:
+            return BinaryNode::Type::Div;
+        case Token::Type::Asterisk:
+            return BinaryNode::Type::Mul;
+        case Token::Type::Plus:
+            return BinaryNode::Type::Add;
+        case Token::Type::Minus:
+            return BinaryNode::Type::Sub;
+        default:
+            throw std::runtime_error("This token is a invalid binary operator.");
+    }
+}
+
+bool Parser::is_factor_operator(const Token &token) {
+    return token.type() == Token::Type::Asterisk || token.type() == Token::Type::Slash;
+}
+
+bool Parser::is_term_operator(const Token &token) {
+    return token.type() == Token::Type::Plus || token.type() == Token::Type::Minus;
 }

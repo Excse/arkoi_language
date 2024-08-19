@@ -1,9 +1,5 @@
-//
-// Created by timo on 8/18/24.
-//
-
-#ifndef ARKOI_LANGUAGE_TAC_H
-#define ARKOI_LANGUAGE_TAC_H
+#ifndef ARKOI_LANGUAGE_INSTRUCTION_H
+#define ARKOI_LANGUAGE_INSTRUCTION_H
 
 #include <optional>
 #include <utility>
@@ -16,6 +12,8 @@
 #include "ast.h"
 
 using Operand = std::variant<std::shared_ptr<Symbol>, long long>;
+
+std::ostream &operator<<(std::ostream &os, const Operand &token);
 
 class Instruction {
 public:
@@ -58,7 +56,7 @@ public:
     };
 
 public:
-    explicit BinaryInstruction(Operand &&result, Operand &&left, Type type, Operand &&right)
+    BinaryInstruction(Operand &&result, Operand &&left, Type type, Operand &&right)
         : _result(std::move(result)), _left(std::move(left)), _type(type), _right(std::move(right)) {}
 
     void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
@@ -73,9 +71,11 @@ public:
 
     [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
 
+    [[nodiscard]] static std::string type_to_string(Type type);
+
 private:
     Operand _result, _left, _right;
     Type _type;
 };
 
-#endif //ARKOI_LANGUAGE_TAC_H
+#endif //ARKOI_LANGUAGE_INSTRUCTION_H
