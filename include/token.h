@@ -50,13 +50,13 @@ public:
     Token(Type type, size_t column, size_t row, std::string_view value)
             : _value(value), _column(column), _row(row), _type(type) {}
 
-    [[nodiscard]] const std::string_view &value() const { return _value; }
+    [[nodiscard]] const auto &value() const { return _value; }
 
-    [[nodiscard]] const size_t &column() const { return _column; }
+    [[nodiscard]] const auto &type() const { return _type; }
 
-    [[nodiscard]] const size_t &row() const { return _row; }
+    [[nodiscard]] auto column() const { return _column; }
 
-    [[nodiscard]] const Type &type() const { return _type; }
+    [[nodiscard]] auto row() const { return _row; }
 
     [[nodiscard]] static std::string type_to_string(Type type);
 

@@ -18,9 +18,9 @@ public:
 public:
     explicit Symbol(std::string name, Type type) : _name(std::move(name)), _type(type) {}
 
-    [[nodiscard]] const std::string &name() const { return _name; }
+    [[nodiscard]] const auto &name() const { return _name; }
 
-    [[nodiscard]] const Type &type() const { return _type; }
+    [[nodiscard]] const auto &type() const { return _type; }
 
 private:
     std::string _name;
@@ -40,7 +40,7 @@ public:
 
     [[nodiscard]] std::shared_ptr<Symbol> &lookup_any(const std::string &name);
 
-    [[nodiscard]] const std::shared_ptr<SymbolTable> &parent() const { return _parent; }
+    [[nodiscard]] const auto &parent() const { return _parent; }
 
 private:
     std::unordered_map<std::string, std::shared_ptr<Symbol>> _symbols;

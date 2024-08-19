@@ -63,6 +63,8 @@ std::string Token::type_to_string(Type type) {
             return "UnexpectedEndOfFile";
         case Type::Unknown:
             return "Unknown";
+        default:
+            throw std::runtime_error("Token type not implemented.");
     }
 }
 

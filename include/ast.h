@@ -24,9 +24,9 @@ public:
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const std::vector<std::unique_ptr<Node>> &statements() const { return _statements; };
+    [[nodiscard]] const auto &statements() const { return _statements; };
 
-    [[nodiscard]] const std::shared_ptr<SymbolTable> &table() const { return _table; };
+    [[nodiscard]] const auto &table() const { return _table; };
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
@@ -39,7 +39,7 @@ public:
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Token &token() const { return _token; }
+    [[nodiscard]] const auto &token() const { return _token; }
 
 private:
     Token _token;
@@ -52,9 +52,9 @@ public:
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const std::vector<std::unique_ptr<Node>> &statements() const { return _statements; };
+    [[nodiscard]] const auto &statements() const { return _statements; };
 
-    [[nodiscard]] const std::shared_ptr<SymbolTable> &table() const { return _table; };
+    [[nodiscard]] const auto &table() const { return _table; };
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
@@ -63,41 +63,41 @@ private:
 
 class ParameterNode : public Node {
 public:
-    ParameterNode(Token name, TypeNode type) : _name(name), _type(std::move(type)) {}
+    ParameterNode(Token name, TypeNode type) : _type(std::move(type)), _name(name) {}
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Token &name() const { return _name; }
+    [[nodiscard]] const auto &name() const { return _name; }
 
-    [[nodiscard]] const TypeNode &type() const { return _type; }
+    [[nodiscard]] const auto &type() const { return _type; }
 
 private:
-    Token _name;
     TypeNode _type;
+    Token _name;
 };
 
 class FunctionNode : public Node {
 public:
     FunctionNode(Token name, std::vector<ParameterNode> &&parameters, TypeNode return_type, BlockNode &&block,
                  std::shared_ptr<SymbolTable> table)
-            : _table(std::move(table)), _parameters(std::move(parameters)), _return_type(std::move(return_type)),
+            : _parameters(std::move(parameters)), _table(std::move(table)), _return_type(std::move(return_type)),
               _block(std::move(block)), _name(name) {}
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const std::vector<ParameterNode> &parameters() const { return _parameters; }
+    [[nodiscard]] const auto &return_type() const { return _return_type; }
 
-    [[nodiscard]] const std::shared_ptr<SymbolTable> &table() const { return _table; }
+    [[nodiscard]] const auto &parameters() const { return _parameters; }
 
-    [[nodiscard]] const TypeNode &return_type() const { return _return_type; }
+    [[nodiscard]] const auto &table() const { return _table; }
 
-    [[nodiscard]] const BlockNode &block() const { return _block; }
+    [[nodiscard]] const auto &block() const { return _block; }
 
-    [[nodiscard]] const Token &name() const { return _name; }
+    [[nodiscard]] const auto &name() const { return _name; }
 
 private:
-    std::shared_ptr<SymbolTable> _table;
     std::vector<ParameterNode> _parameters;
+    std::shared_ptr<SymbolTable> _table;
     TypeNode _return_type;
     BlockNode _block;
     Token _name;
@@ -109,7 +109,7 @@ public:
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Node &expression() const { return *_expression; }
+    [[nodiscard]] const auto &expression() const { return *_expression; }
 
 private:
     std::unique_ptr<Node> _expression;
@@ -121,7 +121,7 @@ public:
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Token &value() const { return _value; }
+    [[nodiscard]] const auto &value() const { return _value; }
 
 private:
     Token _value;
@@ -133,7 +133,7 @@ public:
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Token &value() const { return _value; }
+    [[nodiscard]] const auto &value() const { return _value; }
 
 private:
     Token _value;
@@ -150,15 +150,15 @@ public:
 
 public:
     BinaryNode(std::unique_ptr<Node> &&left, Type type, std::unique_ptr<Node> &&right)
-            : _left(std::move(left)), _type(type), _right(std::move(right)) {}
+            : _left(std::move(left)), _right(std::move(right)), _type(type) {}
 
     void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Node &right() const { return *_right; }
+    [[nodiscard]] const auto &right() const { return *_right; }
 
-    [[nodiscard]] const Node &left() const { return *_left; }
+    [[nodiscard]] const auto &left() const { return *_left; }
 
-    [[nodiscard]] const Type &type() const { return _type; }
+    [[nodiscard]] const auto &type() const { return _type; }
 
 private:
     std::unique_ptr<Node> _left, _right;

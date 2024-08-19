@@ -20,8 +20,7 @@ void IRGenerator::visit(const FunctionNode &node) {
     _scopes.pop();
 }
 
-// Not used
-void IRGenerator::visit(const TypeNode &node) {}
+void IRGenerator::visit(const TypeNode &) {}
 
 void IRGenerator::visit(const BlockNode &node) {
     _scopes.push(node.table());
@@ -31,8 +30,7 @@ void IRGenerator::visit(const BlockNode &node) {
     _scopes.pop();
 }
 
-// Not used
-void IRGenerator::visit(const ParameterNode &node) {}
+void IRGenerator::visit(const ParameterNode &) {}
 
 void IRGenerator::visit(const NumberNode &node) {
     auto value = std::string(node.value().value());
@@ -50,8 +48,8 @@ void IRGenerator::visit(const ReturnNode &node) {
 void IRGenerator::visit(const IdentifierNode &node) {
     auto is_parameter = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Parameter; };
 
-    auto scope = _scopes.top();
-    auto symbol = scope->lookup(std::string(node.value().value()), is_parameter);
+    auto current_scope = _scopes.top();
+    auto symbol = current_scope->lookup(std::string(node.value().value()), is_parameter);
 
     _current_operand = symbol;
 }

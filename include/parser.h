@@ -14,7 +14,7 @@ public:
 
     [[nodiscard]] ProgramNode parse_program();
 
-    [[nodiscard]] bool has_failed() const { return _failed; }
+    [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
     [[nodiscard]] std::unique_ptr<Node> _parse_program_statement();

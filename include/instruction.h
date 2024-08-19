@@ -22,31 +22,31 @@ public:
     virtual void accept(InstructionVisitor &visitor) const = 0;
 };
 
-struct LabelInstruction : public Instruction {
+class LabelInstruction : public Instruction {
 public:
     explicit LabelInstruction(std::string name) : _name(std::move(name)) {}
 
     void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const std::string &name() const { return _name; }
+    [[nodiscard]] const auto &name() const { return _name; }
 
 private:
     std::string _name;
 };
 
-struct ReturnInstruction : public Instruction {
+class ReturnInstruction : public Instruction {
 public:
     explicit ReturnInstruction(Operand &&value) : _value(std::move(value)) {}
 
     void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Operand &value() const { return _value; };
+    [[nodiscard]] const auto &value() const { return _value; };
 
 private:
     Operand _value;
 };
 
-struct BinaryInstruction : public Instruction {
+class BinaryInstruction : public Instruction {
 public:
     enum class Type {
         Add,
@@ -57,17 +57,17 @@ public:
 
 public:
     BinaryInstruction(Operand &&result, Operand &&left, Type type, Operand &&right)
-        : _result(std::move(result)), _left(std::move(left)), _type(type), _right(std::move(right)) {}
+            : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const Operand &result() const { return _result; };
+    [[nodiscard]] const auto &result() const { return _result; };
 
-    [[nodiscard]] const Operand &right() const { return _right; };
+    [[nodiscard]] const auto &right() const { return _right; };
 
-    [[nodiscard]] const Operand &left() const { return _left; };
+    [[nodiscard]] const auto &left() const { return _left; };
 
-    [[nodiscard]] const Type &type() const { return _type; };
+    [[nodiscard]] const auto &type() const { return _type; };
 
     [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
 

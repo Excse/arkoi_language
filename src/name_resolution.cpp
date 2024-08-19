@@ -39,9 +39,9 @@ void NameResolution::visit(const IdentifierNode &node) {
     _check_existence(node.value(), is_parameter);
 }
 
-void NameResolution::visit(const TypeNode &node) {}
+void NameResolution::visit(const TypeNode &) {}
 
-void NameResolution::visit(const NumberNode &node) {}
+void NameResolution::visit(const NumberNode &) {}
 
 void NameResolution::visit(const ReturnNode &node) {
     node.expression().accept(*this);

@@ -19,7 +19,7 @@ public:
 
     [[nodiscard]] std::vector<Token> tokenize();
 
-    [[nodiscard]] bool has_failed() const { return _failed; }
+    [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
     [[nodiscard]] Token _next_token();

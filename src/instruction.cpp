@@ -20,6 +20,8 @@ BinaryInstruction::Type BinaryInstruction::node_to_instruction(BinaryNode::Type 
             return BinaryInstruction::Type::Mul;
         case BinaryNode::Type::Div:
             return BinaryInstruction::Type::Div;
+        default:
+            throw std::runtime_error("Binary Instruction not implemented.");
     }
 }
 
@@ -33,5 +35,7 @@ std::string BinaryInstruction::type_to_string(BinaryInstruction::Type type) {
             return "*";
         case BinaryInstruction::Type::Div:
             return "/";
+        default:
+            throw std::runtime_error("Binary Instruction not implemented.");
     }
 }

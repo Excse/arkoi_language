@@ -8,7 +8,7 @@
 
 class IRGenerator : public NodeVisitor {
 public:
-    IRGenerator() : _scopes(), _instructions(), _current_operand(), _temp_index(0) {}
+    IRGenerator() : _instructions(), _scopes(), _current_operand(), _temp_index(0) {}
 
     void visit(const ProgramNode &node) override;
 
@@ -28,7 +28,7 @@ public:
 
     void visit(const BinaryNode &node) override;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<Instruction>> &instructions() const { return _instructions; }
+    [[nodiscard]] const auto &instructions() const { return _instructions; }
 
 private:
     std::shared_ptr<Symbol> _make_temporary();

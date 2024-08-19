@@ -13,7 +13,7 @@ public:
 
     void visit(const BinaryInstruction &node) override;
     
-    [[nodiscard]] const std::string &output() const { return _output; }
+    [[nodiscard]] const auto &output() const { return _output; }
 
 private:
     void _preamble();

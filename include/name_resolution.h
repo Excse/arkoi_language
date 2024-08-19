@@ -11,9 +11,6 @@ class NameResolution : public NodeVisitor {
 public:
     NameResolution() : _scopes(), _failed(false) {}
 
-    [[nodiscard]] bool has_failed() const { return _failed; }
-
-private:
     void visit(const ProgramNode &node) override;
 
     void visit(const FunctionNode &node) override;
@@ -32,6 +29,9 @@ private:
 
     void visit(const BinaryNode &node) override;
 
+    [[nodiscard]] auto has_failed() const { return _failed; }
+
+private:
     void _check_non_existence(const Token &token, Symbol::Type type);
 
     void _check_existence(const Token &token, const std::function<bool(const Symbol &)> &predicate);
