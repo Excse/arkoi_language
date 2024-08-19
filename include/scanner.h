@@ -14,9 +14,12 @@ private:
     };
 
 public:
-    explicit Scanner(std::string_view data) : _position(0), _start(0), _data(data), _column(0), _row(0) {}
+    explicit Scanner(std::string_view data)
+        : _position(0), _start(0), _data(data), _column(0), _row(0), _failed(false) {}
 
     [[nodiscard]] std::vector<Token> tokenize();
+
+    [[nodiscard]] bool has_failed() const { return _failed; }
 
 private:
     [[nodiscard]] Token _next_token();
@@ -63,6 +66,7 @@ private:
     size_t _position, _start;
     std::string_view _data;
     size_t _column, _row;
+    bool _failed;
 };
 
 class ScannerError : public std::runtime_error {

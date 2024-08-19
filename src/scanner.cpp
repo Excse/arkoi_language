@@ -13,12 +13,15 @@ std::vector<Token> Scanner::tokenize() {
             }
         } catch (const UnexpectedEndOfFile &error) {
             std::cerr << error.what() << std::endl;
+            _failed = true;
             break;
         } catch (const UnexpectedChar &error) {
             std::cerr << error.what() << std::endl;
+            _failed = true;
             _next();
         } catch (const UnknownChar &error) {
             std::cerr << error.what() << std::endl;
+            _failed = true;
             _next();
         }
     }

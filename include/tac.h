@@ -13,6 +13,7 @@
 
 #include "symbol_table.h"
 #include "visitor.h"
+#include "ast.h"
 
 using Operand = std::variant<std::shared_ptr<Symbol>, long long>;
 
@@ -45,6 +46,36 @@ public:
 
 private:
     Operand _value;
+};
+
+struct BinaryInstruction : public Instruction {
+public:
+    enum class Type {
+        Add,
+        Sub,
+        Mul,
+        Div,
+    };
+
+public:
+    explicit BinaryInstruction(Operand &&result, Operand &&left, Type type, Operand &&right)
+        : _result(std::move(result)), _left(std::move(left)), _type(type), _right(std::move(right)) {}
+
+    void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
+
+    [[nodiscard]] const Operand &result() const { return _result; };
+
+    [[nodiscard]] const Operand &right() const { return _right; };
+
+    [[nodiscard]] const Operand &left() const { return _left; };
+
+    [[nodiscard]] const Type &type() const { return _type; };
+
+    [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
+
+private:
+    Operand _result, _left, _right;
+    Type _type;
 };
 
 #endif //ARKOI_LANGUAGE_TAC_H

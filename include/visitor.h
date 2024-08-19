@@ -17,6 +17,8 @@ class ReturnNode;
 
 class NumberNode;
 
+class BinaryNode;
+
 class BlockNode;
 
 class TypeNode;
@@ -40,7 +42,11 @@ public:
     virtual void visit(const ReturnNode &node) = 0;
 
     virtual void visit(const IdentifierNode &node) = 0;
+
+    virtual void visit(const BinaryNode &node) = 0;
 };
+
+class BinaryInstruction;
 
 class ReturnInstruction;
 
@@ -53,6 +59,8 @@ public:
     virtual void visit(const LabelInstruction &node) = 0;
 
     virtual void visit(const ReturnInstruction &node) = 0;
+
+    virtual void visit(const BinaryInstruction &node) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

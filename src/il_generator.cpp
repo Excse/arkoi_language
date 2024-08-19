@@ -35,10 +35,8 @@ void IRGenerator::visit(const BlockNode &node) {
 void IRGenerator::visit(const ParameterNode &node) {}
 
 void IRGenerator::visit(const NumberNode &node) {
-    auto token_value = std::string(node.value().value());
-    auto value = std::stoll(token_value);
-
-    _current_operand = value;
+    auto value = std::string(node.value().value());
+    _current_operand = std::stoll(value);
 }
 
 void IRGenerator::visit(const ReturnNode &node) {
@@ -56,4 +54,32 @@ void IRGenerator::visit(const IdentifierNode &node) {
     auto symbol = scope->lookup(std::string(node.value().value()), is_parameter);
 
     _current_operand = symbol;
+}
+
+void IRGenerator::visit(const BinaryNode &node) {
+    // This will set _current_operand
+    node.left().accept(*this);
+    auto left = _current_operand;
+
+    // This will set _current_operand
+    node.right().accept(*this);
+    auto right = _current_operand;
+
+    auto type = BinaryInstruction::node_to_instruction(node.type());
+    auto result = _make_temporary();
+
+    auto instruction = std::make_unique<BinaryInstruction>(result, std::move(left), type, std::move(right));
+    _instructions.emplace_back(std::move(instruction));
+
+    _current_operand = result;
+}
+
+std::shared_ptr<Symbol> IRGenerator::_make_temporary() {
+    auto scope = _scopes.top();
+
+    auto name = "_temp" + std::to_string(_temp_index);
+    auto symbol = scope->insert(name, Symbol::Type::Temporary);
+    _temp_index++;
+
+    return symbol;
 }

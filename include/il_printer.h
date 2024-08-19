@@ -8,6 +8,8 @@ public:
     void visit(const LabelInstruction &node) override;
 
     void visit(const ReturnInstruction &node) override;
+
+    void visit(const BinaryInstruction &node) override;
 };
 
 #endif //ARKOI_LANGUAGE_IL_PRINTER_H

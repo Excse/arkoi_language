@@ -47,6 +47,11 @@ void NameResolution::visit(const ReturnNode &node) {
     node.expression().accept(*this);
 }
 
+void NameResolution::visit(const BinaryNode &node) {
+    node.left().accept(*this);
+    node.right().accept(*this);
+}
+
 void NameResolution::_check_non_existence(const Token &token, Symbol::Type type) {
     try {
         auto scope = _scopes.top();

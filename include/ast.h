@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "visitor.h"
+#include "token.h"
 
 class SymbolTable;
 
@@ -136,6 +137,32 @@ public:
 
 private:
     Token _value;
+};
+
+class BinaryNode : public Node {
+public:
+    enum class Type {
+        Add,
+        Sub,
+        Mul,
+        Div,
+    };
+
+public:
+    explicit BinaryNode(std::unique_ptr<Node> &&left, Type type, std::unique_ptr<Node> &&right)
+            : _left(std::move(left)), _type(type), _right(std::move(right)) {}
+
+    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+
+    [[nodiscard]] const Node &right() const { return *_right; }
+
+    [[nodiscard]] const Node &left() const { return *_left; }
+
+    [[nodiscard]] const Type &type() const { return _type; }
+
+private:
+    std::unique_ptr<Node> _left, _right;
+    Type _type;
 };
 
 #endif //ARKOI_LANGUAGE_AST_H

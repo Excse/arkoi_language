@@ -12,6 +12,7 @@ public:
     enum class Type {
         Function,
         Parameter,
+        Temporary,
     };
 
 public:

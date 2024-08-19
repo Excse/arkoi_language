@@ -37,6 +37,10 @@ public:
         At,
         Semicolon,
         Comma,
+        Plus,
+        Minus,
+        Slash,
+        Asterisk,
 
         EndOfFile,
         Unknown,

@@ -2,7 +2,7 @@
 #include "parser.h"
 
 Parser::Parser(std::vector<Token> &&tokens)
-        : _scopes(), _tokens(std::move(tokens)), _position(0) {
+        : _scopes(), _tokens(std::move(tokens)), _position(0), _failed(false) {
     auto is_useless = [](const Token &token) { return token.type() == Token::Type::Comment; };
     _tokens.erase(std::remove_if(_tokens.begin(), _tokens.end(), is_useless), _tokens.end());
 }
@@ -22,8 +22,10 @@ ProgramNode Parser::parse_program() {
         } catch (const UnexpectedToken &error) {
             std::cout << error.what() << std::endl;
             _recover_program();
+            _failed = true;
         } catch (const UnexpectedEndOfTokens &error) {
             std::cout << error.what() << std::endl;
+            _failed = true;
             break;
         }
     }
@@ -98,8 +100,10 @@ std::vector<ParameterNode> Parser::_parse_parameters() {
         } catch (const UnexpectedToken &error) {
             std::cout << error.what() << std::endl;
             _recover_parameters();
+            _failed = true;
         } catch (const UnexpectedEndOfTokens &error) {
             std::cout << error.what() << std::endl;
+            _failed = true;
             break;
         }
     }
@@ -178,6 +182,7 @@ BlockNode Parser::_parse_block() {
         } catch (const UnexpectedToken &error) {
             std::cout << error.what() << std::endl;
             _recover_block();
+            _failed = true;
         } catch (const UnexpectedEndOfTokens &error) {
             throw error;
         }
@@ -226,8 +231,75 @@ std::unique_ptr<ReturnNode> Parser::_parse_return() {
 }
 
 std::unique_ptr<Node> Parser::_parse_expression() {
-    return _parse_primary();
+    return _parse_term();
 }
+
+std::unique_ptr<Node> Parser::_parse_term() {
+    auto expression = _parse_factor();
+
+    auto is_term_token = [](const Token &token) {
+        switch (token.type()) {
+            case Token::Type::Plus:
+            case Token::Type::Minus:
+                return true;
+            default:
+                return false;
+        }
+    };
+
+    auto token_to_type = [](const Token &token) {
+        switch (token.type()) {
+            case Token::Type::Plus:
+                return BinaryNode::Type::Add;
+            case Token::Type::Minus:
+                return BinaryNode::Type::Sub;
+            default:
+                exit(1);
+        }
+    };
+
+    while (auto op = _try_consume(is_term_token)) {
+        auto right = _parse_factor();
+        auto type = token_to_type(*op);
+        expression = std::make_unique<BinaryNode>(std::move(expression), type, std::move(right));
+    }
+
+    return expression;
+}
+
+std::unique_ptr<Node> Parser::_parse_factor() {
+    auto expression = _parse_primary();
+
+    auto is_factor_token = [](const Token &token) {
+        switch (token.type()) {
+            case Token::Type::Slash:
+            case Token::Type::Asterisk:
+                return true;
+            default:
+                return false;
+        }
+    };
+
+    auto token_to_type = [](const Token &token) {
+        switch (token.type()) {
+            case Token::Type::Slash:
+                return BinaryNode::Type::Div;
+            case Token::Type::Asterisk:
+                return BinaryNode::Type::Mul;
+            default:
+                exit(1);
+        }
+    };
+
+    while (auto op = _try_consume(is_factor_token)) {
+        auto right = _parse_primary();
+        auto type = token_to_type(*op);
+        expression = std::make_unique<BinaryNode>(std::move(expression), type, std::move(right));
+    }
+
+    return expression;
+}
+
 
 std::unique_ptr<Node> Parser::_parse_primary() {
     if (auto *number = _try_consume(Token::Type::Number)) {
@@ -296,4 +368,13 @@ const Token &Parser::_consume(const std::function<bool(const Token &)> &predicat
     _next();
 
     return current;
+}
+
+const Token *Parser::_try_consume(const std::function<bool(const Token &)> &predicate) {
+    try {
+        auto &consumed = _consume(predicate, "");
+        return &consumed;
+    } catch (const ParserError &) {
+        return nullptr;
+    }
 }

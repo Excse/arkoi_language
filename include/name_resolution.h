@@ -34,6 +34,8 @@ private:
 
     void visit(const ReturnNode &node) override;
 
+    void visit(const BinaryNode &node) override;
+
     void _check_non_existence(const Token &token, Symbol::Type type);
 
     void _check_existence(const Token &token, const std::function<bool(const Symbol &)> &predicate);

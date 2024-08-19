@@ -10,6 +10,8 @@ public:
     void visit(const LabelInstruction &node) override;
 
     void visit(const ReturnInstruction &node) override;
+
+    void visit(const BinaryInstruction &node) override;
     
     [[nodiscard]] const std::string &output() const { return _output; }
 

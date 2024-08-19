@@ -18,9 +18,16 @@ int main() {
     std::string source = buffer.str();
 
     Scanner scanner(source);
-    Parser parser(scanner.tokenize());
+    auto tokens = scanner.tokenize();
+    if(scanner.has_failed()) {
+        exit(1);
+    }
 
-    ProgramNode program = parser.parse_program();
+    Parser parser(std::move(tokens));
+    auto program = parser.parse_program();
+    if(parser.has_failed()) {
+        exit(1);
+    }
 
     NameResolution resolution;
     program.accept(resolution);
@@ -58,16 +65,16 @@ int main() {
 
     std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
     int assemble_result = std::system(assemble_command.c_str());
-    if (assemble_result != 0) {
+    if (WEXITSTATUS(assemble_result) != 0) {
         std::cerr << "Assembly failed" << std::endl;
-        return 1;
+        exit(1);
     }
 
     std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
     int link_result = std::system(link_command.c_str());
-    if (link_result != 0) {
+    if (WEXITSTATUS(link_result) != 0) {
         std::cerr << "Linking failed" << std::endl;
-        return 1;
+        exit(1);
     }
 
     std::cout << "~~~~~~~~~~~~ Execute ~~~~~~~~~~~~ " << std::endl;

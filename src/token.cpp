@@ -50,6 +50,14 @@ std::string Token::type_name(Type type) {
             return ";";
         case Type::Comma:
             return ",";
+        case Type::Plus:
+            return "+";
+        case Type::Minus:
+            return "-";
+        case Type::Slash:
+            return "/";
+        case Type::Asterisk:
+            return "*";
 
         case Type::EndOfFile:
             return "UnexpectedEndOfFile";
@@ -99,6 +107,14 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
             return Token::Type::Semicolon;
         case ',':
             return Token::Type::Comma;
+        case '+':
+            return Token::Type::Plus;
+        case '-':
+            return Token::Type::Minus;
+        case '/':
+            return Token::Type::Slash;
+        case '*':
+            return Token::Type::Asterisk;
         default:
             return std::nullopt;
     }

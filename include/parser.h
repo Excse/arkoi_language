@@ -14,6 +14,8 @@ public:
 
     [[nodiscard]] ProgramNode parse_program();
 
+    [[nodiscard]] bool has_failed() const { return _failed; }
+
 private:
     [[nodiscard]] std::unique_ptr<Node> _parse_program_statement();
 
@@ -39,6 +41,10 @@ private:
 
     [[nodiscard]] std::unique_ptr<Node> _parse_expression();
 
+    [[nodiscard]] std::unique_ptr<Node> _parse_term();
+
+    [[nodiscard]] std::unique_ptr<Node> _parse_factor();
+
     [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
     [[nodiscard]] std::shared_ptr<SymbolTable> _current_scope();
@@ -57,10 +63,13 @@ private:
 
     [[nodiscard]] const Token *_try_consume(Token::Type type);
 
+    const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
+
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes;
     std::vector<Token> _tokens;
     size_t _position;
+    bool _failed;
 };
 
 class ParserError : public std::runtime_error {
