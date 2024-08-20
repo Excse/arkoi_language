@@ -8,7 +8,7 @@
 #include "instruction.h"
 
 void ILPrinter::visit(const LabelInstruction &node) {
-    std::cout << "LABEL " << node.name() << ": " << std::endl;
+    std::cout << "LABEL " << *node.symbol() << ": " << std::endl;
 }
 
 void ILPrinter::visit(const ReturnInstruction &node) {

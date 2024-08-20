@@ -12,7 +12,12 @@ void IRGenerator::visit(const ProgramNode &node) {
 }
 
 void IRGenerator::visit(const FunctionNode &node) {
-    auto instruction = std::make_unique<LabelInstruction>(std::string(node.name().value()));
+    auto is_function = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Function; };
+
+    auto current_scope = _scopes.top();
+    auto symbol = current_scope->lookup(std::string(node.name().value()), is_function);
+
+    auto instruction = std::make_unique<LabelInstruction>(symbol);
     _instructions.emplace_back(std::move(instruction));
 
     _scopes.push(node.table());

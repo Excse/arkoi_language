@@ -24,14 +24,14 @@ public:
 
 class LabelInstruction : public Instruction {
 public:
-    explicit LabelInstruction(std::string name) : _name(std::move(name)) {}
+    explicit LabelInstruction(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
 
     void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &name() const { return _name; }
+    [[nodiscard]] const auto &symbol() const { return _symbol; }
 
 private:
-    std::string _name;
+    std::shared_ptr<Symbol> _symbol;
 };
 
 class ReturnInstruction : public Instruction {

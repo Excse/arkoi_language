@@ -48,7 +48,7 @@ int main() {
         item->accept(gas_generator);
     }
 
-    std::cout << gas_generator.output() << std::endl;
+    std::cout << gas_generator.output().str() << std::endl;
 
     auto temp_dir = std::filesystem::temp_directory_path();
     auto asm_file_path = temp_dir / "temp_asm.s";
@@ -56,7 +56,7 @@ int main() {
     auto exe_file_path = temp_dir / "temp_executable";
 
     std::ofstream asm_file(asm_file_path);
-    asm_file << gas_generator.output();
+    asm_file << gas_generator.output().str();
     asm_file.close();
 
     std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
