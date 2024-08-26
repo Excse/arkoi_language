@@ -7,25 +7,25 @@
 #include "symbol_table.h"
 #include "instruction.h"
 
-void ILPrinter::visit(const LabelInstruction &node) {
+void ILPrinter::visit(LabelInstruction &node) {
     std::cout << "LABEL " << *node.symbol() << ": " << std::endl;
 }
 
-void ILPrinter::visit(const BeginInstruction &) {
+void ILPrinter::visit(BeginInstruction &) {
     std::cout << "BEGIN" << std::endl;
 }
 
-void ILPrinter::visit(const ReturnInstruction &node) {
+void ILPrinter::visit(ReturnInstruction &node) {
     std::cout << "RETURN " << node.value() << std::endl;
 }
 
-void ILPrinter::visit(const BinaryInstruction &node) {
+void ILPrinter::visit(BinaryInstruction &node) {
     assert(std::holds_alternative<std::shared_ptr<Symbol>>(node.result()));
 
     auto op = BinaryInstruction::type_to_string(node.type());
     std::cout << node.result() << " = " << node.left() << " " << op << " " << node.right() << std::endl;
 }
 
-void ILPrinter::visit(const EndInstruction &) {
+void ILPrinter::visit(EndInstruction &) {
     std::cout << "END" << std::endl;
 }

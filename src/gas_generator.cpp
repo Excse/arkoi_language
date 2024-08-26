@@ -10,20 +10,20 @@ GASGenerator::GASGenerator() : _output() {
     _preamble();
 }
 
-void GASGenerator::visit(const LabelInstruction &node) {
+void GASGenerator::visit(LabelInstruction &node) {
     _label(node.symbol());
 }
 
-void GASGenerator::visit(const BeginInstruction &) {
+void GASGenerator::visit(BeginInstruction &) {
     _push("rbp");
     _mov("rbp", "rsp");
 }
 
-void GASGenerator::visit(const ReturnInstruction &node) {
+void GASGenerator::visit(ReturnInstruction &node) {
     _load(node.value(), "rax");
 }
 
-void GASGenerator::visit(const BinaryInstruction &node) {
+void GASGenerator::visit(BinaryInstruction &node) {
     _load(node.left(), "rax");
     _load(node.right(), "r10");
 
@@ -45,7 +45,7 @@ void GASGenerator::visit(const BinaryInstruction &node) {
     _store(node.result(), "rax");
 }
 
-void GASGenerator::visit(const EndInstruction &) {
+void GASGenerator::visit(EndInstruction &) {
     _mov("rsp", "rbp");
     _pop("rbp");
     _ret();

@@ -2,7 +2,7 @@
 
 #include "ast.h"
 
-void NameResolution::visit(const ProgramNode &node) {
+void NameResolution::visit(ProgramNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -10,11 +10,11 @@ void NameResolution::visit(const ProgramNode &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(const FunctionNode &node) {
+void NameResolution::visit(FunctionNode &node) {
     _check_non_existence(node.name(), Symbol::Type::Function);
 
     _scopes.push(node.table());
-    for (const auto &item: node.parameters()) {
+    for (auto &item: node.parameters()) {
         item.accept(*this);
     }
 
@@ -22,7 +22,7 @@ void NameResolution::visit(const FunctionNode &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(const BlockNode &node) {
+void NameResolution::visit(BlockNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -30,24 +30,24 @@ void NameResolution::visit(const BlockNode &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(const ParameterNode &node) {
+void NameResolution::visit(ParameterNode &node) {
     _check_non_existence(node.name(), Symbol::Type::Parameter);
 }
 
-void NameResolution::visit(const IdentifierNode &node) {
+void NameResolution::visit(IdentifierNode &node) {
     auto is_parameter = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Parameter; };
     _check_existence(node.value(), is_parameter);
 }
 
-void NameResolution::visit(const TypeNode &) {}
+void NameResolution::visit(TypeNode &) {}
 
-void NameResolution::visit(const NumberNode &) {}
+void NameResolution::visit(NumberNode &) {}
 
-void NameResolution::visit(const ReturnNode &node) {
+void NameResolution::visit(ReturnNode &node) {
     node.expression().accept(*this);
 }
 
-void NameResolution::visit(const BinaryNode &node) {
+void NameResolution::visit(BinaryNode &node) {
     node.left().accept(*this);
     node.right().accept(*this);
 }

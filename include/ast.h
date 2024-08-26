@@ -14,7 +14,7 @@ class Node {
 public:
     virtual ~Node() = default;
 
-    virtual void accept(NodeVisitor &visitor) const = 0;
+    virtual void accept(NodeVisitor &visitor) = 0;
 };
 
 class ProgramNode : public Node {
@@ -22,7 +22,7 @@ public:
     ProgramNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &statements() const { return _statements; };
 
@@ -37,7 +37,7 @@ class TypeNode : public Node {
 public:
     explicit TypeNode(Token token) : _token(token) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &token() const { return _token; }
 
@@ -50,7 +50,7 @@ public:
     BlockNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
             : _statements(std::move(statements)), _table(std::move(table)) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &statements() const { return _statements; };
 
@@ -65,7 +65,7 @@ class ParameterNode : public Node {
 public:
     ParameterNode(Token name, TypeNode type) : _type(std::move(type)), _name(name) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &name() const { return _name; }
 
@@ -83,17 +83,17 @@ public:
             : _parameters(std::move(parameters)), _table(std::move(table)), _return_type(std::move(return_type)),
               _block(std::move(block)), _name(name) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &return_type() const { return _return_type; }
 
-    [[nodiscard]] const auto &parameters() const { return _parameters; }
-
     [[nodiscard]] const auto &table() const { return _table; }
 
-    [[nodiscard]] const auto &block() const { return _block; }
+    [[nodiscard]] auto &parameters()  { return _parameters; }
 
     [[nodiscard]] const auto &name() const { return _name; }
+
+    [[nodiscard]] auto &block() { return _block; }
 
 private:
     std::vector<ParameterNode> _parameters;
@@ -107,9 +107,9 @@ class ReturnNode : public Node {
 public:
     explicit ReturnNode(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &expression() const { return *_expression; }
+    [[nodiscard]] auto &expression() { return *_expression; }
 
 private:
     std::unique_ptr<Node> _expression;
@@ -119,7 +119,7 @@ class NumberNode : public Node {
 public:
     explicit NumberNode(Token value) : _value(value) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &value() const { return _value; }
 
@@ -131,7 +131,7 @@ class IdentifierNode : public Node {
 public:
     explicit IdentifierNode(Token value) : _value(value) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &value() const { return _value; }
 
@@ -152,13 +152,13 @@ public:
     BinaryNode(std::unique_ptr<Node> &&left, Type type, std::unique_ptr<Node> &&right)
             : _left(std::move(left)), _right(std::move(right)), _type(type) {}
 
-    void accept(NodeVisitor &visitor) const override { visitor.visit(*this); }
-
-    [[nodiscard]] const auto &right() const { return *_right; }
-
-    [[nodiscard]] const auto &left() const { return *_left; }
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] const auto &type() const { return _type; }
+
+    [[nodiscard]] auto &right() const { return *_right; }
+
+    [[nodiscard]] auto &left() { return *_left; }
 
 private:
     std::unique_ptr<Node> _left, _right;
