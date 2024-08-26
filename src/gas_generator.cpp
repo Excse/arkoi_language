@@ -12,40 +12,43 @@ GASGenerator::GASGenerator() : _output() {
 
 void GASGenerator::visit(const LabelInstruction &node) {
     _label(node.symbol());
+}
 
-    if (node.symbol()->type() == Symbol::Type::Function) {
-        _push("rbp");
-        _mov("rbp", "rsp");
-    }
+void GASGenerator::visit(const BeginInstruction &) {
+    _push("rbp");
+    _mov("rbp", "rsp");
 }
 
 void GASGenerator::visit(const ReturnInstruction &node) {
     _load(node.value(), "rax");
-    _mov("rsp", "rbp");
-    _pop("rbp");
-    _ret();
 }
 
 void GASGenerator::visit(const BinaryInstruction &node) {
     _load(node.left(), "rax");
-    _load(node.right(), "rbx");
+    _load(node.right(), "r10");
 
     switch (node.type()) {
         case BinaryInstruction::Type::Add:
-            _add("rax", "rbx");
+            _add("rax", "r10");
             break;
         case BinaryInstruction::Type::Sub:
-            _sub("rax", "rbx");
+            _sub("rax", "r10");
             break;
         case BinaryInstruction::Type::Mul:
-            _imul("rax", "rbx");
+            _imul("rax", "r10");
             break;
         case BinaryInstruction::Type::Div:
-            _idiv("rbx");
+            _idiv("r10");
             break;
     }
 
     _store(node.result(), "rax");
+}
+
+void GASGenerator::visit(const EndInstruction &) {
+    _mov("rsp", "rbp");
+    _pop("rbp");
+    _ret();
 }
 
 void GASGenerator::_preamble() {

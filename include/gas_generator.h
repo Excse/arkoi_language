@@ -13,9 +13,13 @@ public:
 
     void visit(const LabelInstruction &node) override;
 
+    void visit(const BeginInstruction &node) override;
+
     void visit(const ReturnInstruction &node) override;
 
     void visit(const BinaryInstruction &node) override;
+
+    void visit(const EndInstruction &node) override;
     
     [[nodiscard]] const auto &output() const { return _output; }
 

@@ -11,6 +11,10 @@ void ILPrinter::visit(const LabelInstruction &node) {
     std::cout << "LABEL " << *node.symbol() << ": " << std::endl;
 }
 
+void ILPrinter::visit(const BeginInstruction &) {
+    std::cout << "BEGIN" << std::endl;
+}
+
 void ILPrinter::visit(const ReturnInstruction &node) {
     std::cout << "RETURN " << node.value() << std::endl;
 }
@@ -20,4 +24,8 @@ void ILPrinter::visit(const BinaryInstruction &node) {
 
     auto op = BinaryInstruction::type_to_string(node.type());
     std::cout << node.result() << " = " << node.left() << " " << op << " " << node.right() << std::endl;
+}
+
+void ILPrinter::visit(const EndInstruction &) {
+    std::cout << "END" << std::endl;
 }

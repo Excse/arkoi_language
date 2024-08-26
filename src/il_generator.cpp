@@ -17,12 +17,18 @@ void IRGenerator::visit(const FunctionNode &node) {
     auto current_scope = _scopes.top();
     auto symbol = current_scope->lookup(std::string(node.name().value()), is_function);
 
-    auto instruction = std::make_unique<LabelInstruction>(symbol);
-    _instructions.emplace_back(std::move(instruction));
+    auto label = std::make_unique<LabelInstruction>(symbol);
+    _instructions.emplace_back(std::move(label));
+
+    auto begin = std::make_unique<BeginInstruction>();
+    _instructions.emplace_back(std::move(begin));
 
     _scopes.push(node.table());
     node.block().accept(*this);
     _scopes.pop();
+
+    auto end = std::make_unique<EndInstruction>();
+    _instructions.emplace_back(std::move(end));
 }
 
 void IRGenerator::visit(const TypeNode &) {}

@@ -13,8 +13,6 @@ std::string Token::type_to_string(Type type) {
             return "fun";
         case Type::Return:
             return "return";
-        case Type::Bool:
-            return "bool";
         case Type::U8:
             return "u8";
         case Type::S8:
@@ -71,7 +69,6 @@ std::string Token::type_to_string(Type type) {
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
     static const std::unordered_map<std::string_view, Token::Type> KEYWORDS = {
             {"fun",    Token::Type::Fun},
-            {"bool",   Token::Type::Bool},
             {"return", Token::Type::Return},
             {"u8",     Token::Type::U8},
             {"s8",     Token::Type::S8},

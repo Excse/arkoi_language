@@ -78,4 +78,14 @@ private:
     Type _type;
 };
 
+class BeginInstruction : public Instruction {
+public:
+    void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
+};
+
+class EndInstruction : public Instruction {
+public:
+    void accept(InstructionVisitor &visitor) const override { visitor.visit(*this); }
+};
+
 #endif //ARKOI_LANGUAGE_INSTRUCTION_H

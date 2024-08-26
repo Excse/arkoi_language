@@ -142,7 +142,6 @@ TypeNode Parser::_parse_type() {
 
     auto is_type = [](const Token &token) {
         switch (token.type()) {
-            case Token::Type::Bool:
             case Token::Type::U8:
             case Token::Type::S8:
             case Token::Type::U16:

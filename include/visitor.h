@@ -52,15 +52,23 @@ class ReturnInstruction;
 
 class LabelInstruction;
 
+class BeginInstruction;
+
+class EndInstruction;
+
 class InstructionVisitor {
 public:
     virtual ~InstructionVisitor() = default;
 
     virtual void visit(const LabelInstruction &node) = 0;
 
+    virtual void visit(const BeginInstruction &node) = 0;
+
     virtual void visit(const ReturnInstruction &node) = 0;
 
     virtual void visit(const BinaryInstruction &node) = 0;
+
+    virtual void visit(const EndInstruction &node) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

@@ -17,7 +17,6 @@ public:
         // Keyword
         Fun,
         Return,
-        Bool,
         U8,
         S8,
         U16,
