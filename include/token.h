@@ -57,8 +57,6 @@ public:
 
     [[nodiscard]] auto row() const { return _row; }
 
-    [[nodiscard]] static std::string type_to_string(Type type);
-
     [[nodiscard]] static std::optional<Token::Type> lookup_keyword(const std::string_view &value);
 
     [[nodiscard]] static std::optional<Token::Type> lookup_special_1(char value);
@@ -68,6 +66,8 @@ private:
     size_t _column, _row;
     Type _type;
 };
+
+std::ostream &operator<<(std::ostream &os, const Token::Type &type);
 
 std::ostream &operator<<(std::ostream &os, const Token &token);
 

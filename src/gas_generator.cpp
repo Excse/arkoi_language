@@ -3,52 +3,63 @@
 #include <cassert>
 #include <sstream>
 
-#include "utils.h"
 #include "instruction.h"
+#include "il_printer.h"
+#include "utils.h"
 
-GASGenerator::GASGenerator() : _output() {
+GASGenerator::GASGenerator(bool debug) : _output(), _printer(), _debug(debug) {
     _preamble();
 }
 
 void GASGenerator::visit(LabelInstruction &node) {
+    _comment_instruction(node);
     _label(node.symbol());
 }
 
-void GASGenerator::visit(BeginInstruction &) {
+void GASGenerator::visit(BeginInstruction &node) {
+    _comment_instruction(node);
     _push("rbp");
     _mov("rbp", "rsp");
+    _sub("rsp", to_string(node.size()));
+    _newline();
 }
 
 void GASGenerator::visit(ReturnInstruction &node) {
+    _comment_instruction(node);
     _load(node.value(), "rax");
+    _newline();
 }
 
 void GASGenerator::visit(BinaryInstruction &node) {
+    _comment_instruction(node);
     _load(node.left(), "rax");
-    _load(node.right(), "r10");
+    _load(node.right(), "r11");
 
     switch (node.type()) {
         case BinaryInstruction::Type::Add:
-            _add("rax", "r10");
+            _add("rax", "r11");
             break;
         case BinaryInstruction::Type::Sub:
-            _sub("rax", "r10");
+            _sub("rax", "r11");
             break;
         case BinaryInstruction::Type::Mul:
-            _imul("rax", "r10");
+            _imul("rax", "r11");
             break;
         case BinaryInstruction::Type::Div:
-            _idiv("r10");
+            _idiv("r11");
             break;
     }
 
     _store(node.result(), "rax");
+    _newline();
 }
 
-void GASGenerator::visit(EndInstruction &) {
+void GASGenerator::visit(EndInstruction &node) {
+    _comment_instruction(node);
     _mov("rsp", "rbp");
     _pop("rbp");
     _ret();
+    _newline();
 }
 
 void GASGenerator::_preamble() {
@@ -68,24 +79,21 @@ _start:
 
 void GASGenerator::_load(const Operand &operand, const std::string &destination) {
     std::visit(match{
-            [&](const std::shared_ptr<Symbol> &symbol) {
-                assert(symbol->type() == Symbol::Type::Temporary);
-                _pop(destination);
+            [&](const std::shared_ptr<Symbol> &) {
+                throw std::runtime_error("Cannot load symbols");
+            },
+            [&](const FPRelative &relative) {
+                _mov(destination, to_string(relative));
             },
             [&](const long long &value) {
-                auto operand = std::to_string(value);
-                _mov(destination, operand);
+                _mov(destination, to_string(value));
             },
     }, operand);
 }
 
 void GASGenerator::_store(const Operand &operand, const std::string &src) {
-    assert(std::holds_alternative<std::shared_ptr<Symbol>>(operand));
-
-    auto symbol = std::get<std::shared_ptr<Symbol>>(operand);
-    assert(symbol->type() == Symbol::Type::Temporary);
-
-    _push(src);
+    assert(std::holds_alternative<FPRelative>(operand));
+    _mov(to_string(operand), src);
 }
 
 void GASGenerator::_mov(const std::string &destination, const std::string &src) {
@@ -122,4 +130,17 @@ void GASGenerator::_idiv(const std::string &dividend) {
 
 void GASGenerator::_imul(const std::string &destination, const std::string &src) {
     _output << "\timul " << destination << ", " << src << "\n";
+}
+
+void GASGenerator::_comment_instruction(Instruction &instruction) {
+    if (!_debug) return;
+
+    instruction.accept(_printer);
+    _output << "\t# " << _printer.output().str();
+    _printer.clear();
+}
+
+void GASGenerator::_newline() {
+    if (!_debug) return;
+    _output << "\n";
 }

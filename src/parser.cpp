@@ -1,5 +1,6 @@
-#include "symbol_table.h"
 #include "parser.h"
+
+#include "symbol_table.h"
 
 Parser::Parser(std::vector<Token> &&tokens)
         : _scopes(), _tokens(std::move(tokens)), _position(0), _failed(false) {
@@ -300,7 +301,7 @@ void Parser::_next() {
 }
 
 const Token &Parser::_consume(Token::Type type) {
-    return _consume([&](const Token &input) { return input.type() == type; }, Token::type_to_string(type));
+    return _consume([&](const Token &input) { return input.type() == type; }, to_string(type));
 }
 
 const Token *Parser::_try_consume(Token::Type type) {

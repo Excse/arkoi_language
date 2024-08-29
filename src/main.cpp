@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include "name_resolution.h"
+#include "memory_resolver.h"
 #include "gas_generator.h"
 #include "il_generator.h"
 #include "il_printer.h"
@@ -41,9 +42,16 @@ int main() {
         item->accept(il_printer);
     }
 
+    std::cout << il_printer.output().str() << std::endl;
+
+    MemoryResolver memoryResolver;
+    for (const auto &item: ir_generator.instructions()) {
+        item->accept(memoryResolver);
+    }
+
     std::cout << "~~~~~~~~~~~~ GNU Assembler ~~~~~~~~~~~~ " << std::endl;
 
-    GASGenerator gas_generator;
+    GASGenerator gas_generator(true);
     for (const auto &item: ir_generator.instructions()) {
         item->accept(gas_generator);
     }

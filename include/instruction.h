@@ -8,12 +8,9 @@
 #include <string>
 
 #include "symbol_table.h"
+#include "operand.h"
 #include "visitor.h"
 #include "ast.h"
-
-using Operand = std::variant<std::shared_ptr<Symbol>, long long>;
-
-std::ostream &operator<<(std::ostream &os, const Operand &token);
 
 class Instruction {
 public:
@@ -40,7 +37,7 @@ public:
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &value() const { return _value; };
+    [[nodiscard]] auto &value() { return _value; };
 
 private:
     Operand _value;
@@ -61,26 +58,33 @@ public:
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &result() const { return _result; };
-
-    [[nodiscard]] const auto &right() const { return _right; };
-
-    [[nodiscard]] const auto &left() const { return _left; };
-
     [[nodiscard]] const auto &type() const { return _type; };
 
-    [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
+    [[nodiscard]] auto &result()  { return _result; };
 
-    [[nodiscard]] static std::string type_to_string(Type type);
+    [[nodiscard]] auto &right()  { return _right; };
+
+    [[nodiscard]] auto &left() { return _left; };
+
+    [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
 
 private:
     Operand _result, _left, _right;
     Type _type;
 };
 
+std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type);
+
 class BeginInstruction : public Instruction {
 public:
+    explicit BeginInstruction(size_t size = 0) : _size(size) {}
+
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &size() { return _size; }
+
+private:
+    size_t _size;
 };
 
 class EndInstruction : public Instruction {

@@ -1,6 +1,6 @@
 #include "il_generator.h"
 
-#include "token.h"
+#include "utils.h"
 #include "ast.h"
 
 void IRGenerator::visit(ProgramNode &node) {
@@ -86,7 +86,7 @@ void IRGenerator::visit(BinaryNode &node) {
 std::shared_ptr<Symbol> IRGenerator::_make_temporary() {
     auto scope = _scopes.top();
 
-    auto name = "$tmp" + std::to_string(_temp_index);
+    auto name = "$tmp" + to_string(_temp_index);
     auto symbol = scope->insert(name, Symbol::Type::Temporary);
     _temp_index++;
 

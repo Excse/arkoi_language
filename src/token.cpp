@@ -1,70 +1,6 @@
 #include "token.h"
 
-std::string Token::type_to_string(Type type) {
-    switch (type) {
-        case Type::Number:
-            return "NumberNode";
-        case Type::Identifier:
-            return "IdentifierNode";
-        case Type::Comment:
-            return "Comment";
-
-        case Type::Fun:
-            return "fun";
-        case Type::Return:
-            return "return";
-        case Type::U8:
-            return "u8";
-        case Type::S8:
-            return "s8";
-        case Type::U16:
-            return "u16";
-        case Type::S16:
-            return "s16";
-        case Type::U32:
-            return "u32";
-        case Type::S32:
-            return "s32";
-        case Type::U64:
-            return "u64";
-        case Type::S64:
-            return "s64";
-        case Type::USize:
-            return "usize";
-        case Type::SSize:
-            return "ssize";
-
-        case Type::LParent:
-            return "(";
-        case Type::RParent:
-            return ")";
-        case Type::LCBracket:
-            return "{";
-        case Type::RCBracket:
-            return "}";
-        case Type::At:
-            return "@";
-        case Type::Semicolon:
-            return ";";
-        case Type::Comma:
-            return ",";
-        case Type::Plus:
-            return "+";
-        case Type::Minus:
-            return "-";
-        case Type::Slash:
-            return "/";
-        case Type::Asterisk:
-            return "*";
-
-        case Type::EndOfFile:
-            return "UnexpectedEndOfFile";
-        case Type::Unknown:
-            return "Unknown";
-        default:
-            throw std::runtime_error("Token type not implemented.");
-    }
-}
+#include "utils.h"
 
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
     static const std::unordered_map<std::string_view, Token::Type> KEYWORDS = {
@@ -119,8 +55,75 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
     }
 }
 
+
+std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
+    switch (type) {
+        case Token::Type::Number:
+            return os << "NumberNode";
+        case Token::Type::Identifier:
+            return os << "IdentifierNode";
+        case Token::Type::Comment:
+            return os << "Comment";
+
+        case Token::Type::Fun:
+            return os << "fun";
+        case Token::Type::Return:
+            return os << "return";
+        case Token::Type::U8:
+            return os << "u8";
+        case Token::Type::S8:
+            return os << "s8";
+        case Token::Type::U16:
+            return os << "u16";
+        case Token::Type::S16:
+            return os << "s16";
+        case Token::Type::U32:
+            return os << "u32";
+        case Token::Type::S32:
+            return os << "s32";
+        case Token::Type::U64:
+            return os << "u64";
+        case Token::Type::S64:
+            return os << "s64";
+        case Token::Type::USize:
+            return os << "usize";
+        case Token::Type::SSize:
+            return os << "ssize";
+
+        case Token::Type::LParent:
+            return os << "(";
+        case Token::Type::RParent:
+            return os << ")";
+        case Token::Type::LCBracket:
+            return os << "{";
+        case Token::Type::RCBracket:
+            return os << "}";
+        case Token::Type::At:
+            return os << "@";
+        case Token::Type::Semicolon:
+            return os << ";";
+        case Token::Type::Comma:
+            return os << ",";
+        case Token::Type::Plus:
+            return os << "+";
+        case Token::Type::Minus:
+            return os << "-";
+        case Token::Type::Slash:
+            return os << "/";
+        case Token::Type::Asterisk:
+            return os << "*";
+
+        case Token::Type::EndOfFile:
+            return os << "UnexpectedEndOfFile";
+        case Token::Type::Unknown:
+            return os << "Unknown";
+        default:
+            throw std::runtime_error("Token type not implemented.");
+    }
+}
+
 std::ostream &operator<<(std::ostream &os, const Token &token) {
-    os << Token::type_to_string(token.type());
+    os << to_string(token.type());
     os << ", value: " << token.value();
     os << ", column: " << token.column();
     os << ", row: " << token.row();

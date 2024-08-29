@@ -28,4 +28,8 @@ add_executable(arkoi_language
         src/il_printer.cpp
         include/il_printer.h
         src/gas_generator.cpp
-        include/gas_generator.h)
+        include/gas_generator.h
+        src/memory_resolver.cpp
+        include/memory_resolver.h
+        src/operand.cpp
+        include/operand.h)

@@ -5,11 +5,12 @@
 
 #include "symbol_table.h"
 #include "instruction.h"
+#include "il_printer.h"
 #include "visitor.h"
 
 class GASGenerator : public InstructionVisitor {
 public:
-    GASGenerator();
+    explicit GASGenerator(bool debug = false);
 
     void visit(LabelInstruction &node) override;
 
@@ -48,8 +49,14 @@ private:
 
     void _imul(const std::string &destination, const std::string &src);
 
+    void _comment_instruction(Instruction &instruction);
+
+    void _newline();
+
 private:
     std::stringstream _output;
+    ILPrinter _printer;
+    bool _debug;
 };
 
 

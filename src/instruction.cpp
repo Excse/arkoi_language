@@ -1,15 +1,5 @@
 #include "instruction.h"
 
-#include "utils.h"
-
-std::ostream &operator<<(std::ostream &os, const Operand &token) {
-    std::visit(match{
-            [&](const std::shared_ptr<Symbol> &symbol) { os << *symbol; },
-            [&](const auto &item) { os << item; }
-    }, token);
-    return os;
-}
-
 BinaryInstruction::Type BinaryInstruction::node_to_instruction(BinaryNode::Type type) {
     switch (type) {
         case BinaryNode::Type::Add:
@@ -25,16 +15,16 @@ BinaryInstruction::Type BinaryInstruction::node_to_instruction(BinaryNode::Type 
     }
 }
 
-std::string BinaryInstruction::type_to_string(BinaryInstruction::Type type) {
+std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type) {
     switch (type) {
         case BinaryInstruction::Type::Add:
-            return "+";
+            return os << "+";
         case BinaryInstruction::Type::Sub:
-            return "-";
+            return os << "-";
         case BinaryInstruction::Type::Mul:
-            return "*";
+            return os << "*";
         case BinaryInstruction::Type::Div:
-            return "/";
+            return os << "/";
         default:
             throw std::runtime_error("Binary Instruction not implemented.");
     }
