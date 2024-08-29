@@ -1,5 +1,6 @@
 #include "name_resolution.h"
 
+#include "utils.h"
 #include "ast.h"
 
 void NameResolution::visit(ProgramNode &node) {
@@ -11,7 +12,7 @@ void NameResolution::visit(ProgramNode &node) {
 }
 
 void NameResolution::visit(FunctionNode &node) {
-    _check_non_existence(node.name(), Symbol::Type::Function);
+    _check_non_existence<FunctionSymbol>(node.name());
 
     _scopes.push(node.table());
     for (auto &item: node.parameters()) {
@@ -31,11 +32,11 @@ void NameResolution::visit(BlockNode &node) {
 }
 
 void NameResolution::visit(ParameterNode &node) {
-    _check_non_existence(node.name(), Symbol::Type::Parameter);
+    _check_non_existence<ParameterSymbol>(node.name());
 }
 
 void NameResolution::visit(IdentifierNode &node) {
-    auto is_parameter = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Parameter; };
+    auto is_parameter = [](const Symbol &symbol) { return std::holds_alternative<ParameterSymbol>(symbol); };
     _check_existence(node.value(), is_parameter);
 }
 
@@ -50,16 +51,6 @@ void NameResolution::visit(ReturnNode &node) {
 void NameResolution::visit(BinaryNode &node) {
     node.left().accept(*this);
     node.right().accept(*this);
-}
-
-void NameResolution::_check_non_existence(const Token &token, Symbol::Type type) {
-    try {
-        auto scope = _scopes.top();
-        scope->insert(std::string(token.value()), type);
-    } catch (const IdentifierAlreadyTaken &error) {
-        std::cout << error.what() << std::endl;
-        _failed = true;
-    }
 }
 
 void NameResolution::_check_existence(const Token &token, const std::function<bool(const Symbol &)> &predicate) {

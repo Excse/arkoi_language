@@ -3,33 +3,24 @@ cmake_minimum_required(VERSION 3.28)
 project(arkoi_language)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wpedantic -fsanitize=address,undefined,leak")
+
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 include_directories(include)
 add_executable(arkoi_language
         src/main.cpp
         src/scanner.cpp
-        include/scanner.h
         src/token.cpp
-        include/token.h
         src/parser.cpp
-        include/parser.h
-        include/ast.h
-        include/visitor.h
+        src/symbol_table.tpp
         src/symbol_table.cpp
-        include/symbol_table.h
+        src/name_resolution.tpp
         src/name_resolution.cpp
-        include/name_resolution.h
         src/instruction.cpp
-        include/instruction.h
         src/il_generator.cpp
-        include/il_generator.h
-        include/utils.h
         src/il_printer.cpp
-        include/il_printer.h
         src/gas_generator.cpp
-        include/gas_generator.h
         src/memory_resolver.cpp
-        include/memory_resolver.h
         src/operand.cpp
-        include/operand.h)
+        src/symbol.cpp)

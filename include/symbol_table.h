@@ -7,40 +7,17 @@
 #include <utility>
 #include <memory>
 
-class Symbol {
-public:
-    enum class Type {
-        Function,
-        Parameter,
-        Temporary,
-    };
-
-public:
-    explicit Symbol(std::string name, Type type) : _name(std::move(name)), _type(type) {}
-
-    [[nodiscard]] const auto &name() const { return _name; }
-
-    [[nodiscard]] const auto &type() const { return _type; }
-
-private:
-    std::string _name;
-    Type _type;
-};
-
-std::ostream &operator<<(std::ostream &os, const Symbol &symbol);
+#include "symbol.h"
 
 class SymbolTable {
 public:
     explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _symbols(), _parent(std::move(parent)) {}
 
-    std::shared_ptr<Symbol> &insert(const std::string &name, Symbol::Type type);
+    template <typename SymbolType, typename... Args>
+    std::shared_ptr<Symbol>& insert(const std::string& name, Args&&... args);
 
     [[nodiscard]] std::shared_ptr<Symbol> &lookup(const std::string &name,
                                                   const std::function<bool(const Symbol &)> &predicate);
-
-    [[nodiscard]] std::shared_ptr<Symbol> &lookup_any(const std::string &name);
-
-    [[nodiscard]] const auto &parent() const { return _parent; }
 
 private:
     std::unordered_map<std::string, std::shared_ptr<Symbol>> _symbols;
@@ -58,5 +35,7 @@ public:
     explicit IdentifierNotFound(const std::string &name)
             : std::runtime_error("The identifier " + name + " was not found.") {}
 };
+
+#include "../src/symbol_table.tpp"
 
 #endif //ARKOI_LANGUAGE_SYMBOL_TABLE_H

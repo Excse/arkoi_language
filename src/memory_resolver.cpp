@@ -29,7 +29,7 @@ void MemoryResolver::_resolve_operand(Operand &operand) {
     }
 
     auto symbol = std::get<std::shared_ptr<Symbol>>(operand);
-    assert(symbol->type() == Symbol::Type::Temporary);
+    assert(std::holds_alternative<TemporarySymbol>(*symbol));
 
     auto found = _offsets.find(symbol);
     size_t offset;

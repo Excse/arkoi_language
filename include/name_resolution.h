@@ -31,8 +31,8 @@ public:
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
-private:
-    void _check_non_existence(const Token &token, Symbol::Type type);
+    template <typename SymbolType, typename... Args>
+    void _check_non_existence(const Token &token, Args&&... args);
 
     void _check_existence(const Token &token, const std::function<bool(const Symbol &)> &predicate);
 
@@ -41,5 +41,6 @@ private:
     bool _failed;
 };
 
+#include "../src/name_resolution.tpp"
 
 #endif //ARKOI_LANGUAGE_NAME_RESOLUTION_H

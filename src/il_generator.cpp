@@ -12,7 +12,7 @@ void IRGenerator::visit(ProgramNode &node) {
 }
 
 void IRGenerator::visit(FunctionNode &node) {
-    auto is_function = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Function; };
+    auto is_function = [](const Symbol &symbol) { return std::holds_alternative<FunctionSymbol>(symbol); };
 
     auto current_scope = _scopes.top();
     auto symbol = current_scope->lookup(std::string(node.name().value()), is_function);
@@ -57,7 +57,7 @@ void IRGenerator::visit(ReturnNode &node) {
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
-    auto is_parameter = [](const Symbol &symbol) { return symbol.type() == Symbol::Type::Parameter; };
+    auto is_parameter = [](const Symbol &symbol) { return std::holds_alternative<ParameterSymbol>(symbol); };
 
     auto current_scope = _scopes.top();
     auto symbol = current_scope->lookup(std::string(node.value().value()), is_parameter);
@@ -87,7 +87,7 @@ std::shared_ptr<Symbol> IRGenerator::_make_temporary() {
     auto scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);
-    auto symbol = scope->insert(name, Symbol::Type::Temporary);
+    auto symbol = scope->insert<TemporarySymbol>(name);
     _temp_index++;
 
     return symbol;
