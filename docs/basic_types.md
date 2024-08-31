@@ -1,9 +1,10 @@
 # TypeNode System
 
-Any type declared in Arkoi is prefixed by a ``@``, this clearly differentiates identifiers from types. If you notice 
+Any type declared in Arkoi is prefixed by a ``@``, this clearly differentiates identifiers from types. If you notice
 this symbol you can always be sure that it is a type.
 
 ## Builtin Types
+
 1. [Integer](#integer-types)
 2. [Floating Points](#floating-point-types)
 3. [Pointer](#pointer-type)
@@ -27,25 +28,25 @@ this symbol you can always be sure that it is a type.
 | usize          | size_t        | Platform depended* |
 | ssize          | -             | Platform depended* |
 
-\* The size of a ``usize`` is determined by the number of bits required to reference any location in memory. On a 32-bit 
+\* The size of a ``usize`` is determined by the number of bits required to reference any location in memory. On a 32-bit
 architecture, it will be 32 bits in size, and on a 64-bit architecture, it will be 64 bits in size.
 
 ### Integer Constants
 
-The type of integer constants are determined by the given type or using u64/s64. Every constant is downcasted 
+The type of integer constants are determined by the given type or using u64/s64. Every constant is downcasted
 automatically if the arithmetic precision is lower and no data is getting lost. If this is not the case an explicit cast
 is necessary.
 
 | Name        | Prefix | Example      | Default TypeNode |
-|-------------|--------|--------------|--------------|
-| Decimal     | -      | -123_141     | isize        |
-| Decimal     | -      | 123_141      | usize        |
-| Char        | '      | '1'          | u8           |
-| Hexadecimal | 0x     | 0xDe_AdBeEF  | usize        |
-| Octal       | 0o     | 0o077_0      | usize        |
-| Binary      | 0b     | 0b01_0101    | usize        |
-| With Suffix | -      | 123_141@u16  | u16          |
-| With Suffix | -      | 0xEAEAEA@u32 | u32          |
+|-------------|--------|--------------|------------------|
+| Decimal     | -      | -123_141     | isize            |
+| Decimal     | -      | 123_141      | usize            |
+| Char        | '      | '1'          | u8               |
+| Hexadecimal | 0x     | 0xDe_AdBeEF  | usize            |
+| Octal       | 0o     | 0o077_0      | usize            |
+| Binary      | 0b     | 0b01_0101    | usize            |
+| With Suffix | -      | 123_141@u16  | u16              |
+| With Suffix | -      | 0xEAEAEA@u32 | u32              |
 
 A suffix is provided using the keyword mentioned above and a ``@`` between the constant and the suffix. The constant
 will now be of the type given.
@@ -54,22 +55,22 @@ will now be of the type given.
 
 ### Floating Point Types
 
-| Keyword/Suffix | C Equivalent  | Size (Bits) |
-|----------------|---------------|-------------|
-| f32            | float         | 32          |
-| f64            | double        | 64          |
+| Keyword/Suffix | C Equivalent | Size (Bits) |
+|----------------|--------------|-------------|
+| f32            | float        | 32          |
+| f64            | double       | 64          |
 
 ### Floating Point Constants
 
 The type of floating point constants will always be f64 if not specified.
 
 | Name        | Example      | Default TypeNode |
-|-------------|--------------|--------------|
-| Normal      | -1.02_24     | f64          |
-| Normal      | 1.02_24      | f64          |
-| Exponential | 1.2e-21      | f64          |
-| Exponential | -1.2e+21     | f64          |
-| With Suffix | -1.2e+21@f32 | f32          |
+|-------------|--------------|------------------|
+| Normal      | -1.02_24     | f64              |
+| Normal      | 1.02_24      | f64              |
+| Exponential | 1.2e-21      | f64              |
+| Exponential | -1.2e+21     | f64              |
+| With Suffix | -1.2e+21@f32 | f32              |
 
 Just like the integer constants a suffix can be provided using a ``@`` between the constant and the suffix name.
 
@@ -77,7 +78,7 @@ Just like the integer constants a suffix can be provided using a ``@`` between t
 
 ### Pointer TypeNode
 
-A pointer points to a specific location in the computer's memory. Any type can be made to a pointer by adding ``*`` as a 
+A pointer points to a specific location in the computer's memory. Any type can be made to a pointer by adding ``*`` as a
 suffix. Some examples are ``f32*``, ``usize*``, ``bool*`` etc. The size of this type will always be ``usize``.
 
 ***
@@ -91,6 +92,7 @@ library provides functionality to interact with this specific data type.
 
 A string constant is encapsulated within ``"`` and must be terminated till the end of the line. Multiline or raw string
 constants are not implemented yet. An example for a string constant is:
+
 ```c
 "Hello World!" // of type u8*
 ```

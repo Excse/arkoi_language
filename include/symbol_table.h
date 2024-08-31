@@ -13,8 +13,8 @@ class SymbolTable {
 public:
     explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _symbols(), _parent(std::move(parent)) {}
 
-    template <typename SymbolType, typename... Args>
-    std::shared_ptr<Symbol>& insert(const std::string& name, Args&&... args);
+    template<typename SymbolType, typename... Args>
+    std::shared_ptr<Symbol> &insert(const std::string &name, Args &&... args);
 
     [[nodiscard]] std::shared_ptr<Symbol> &lookup(const std::string &name,
                                                   const std::function<bool(const Symbol &)> &predicate);

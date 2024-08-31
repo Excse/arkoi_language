@@ -22,7 +22,7 @@ int main() {
     Parser parser(scanner.tokenize());
     auto program = parser.parse_program();
 
-    if(scanner.has_failed() || parser.has_failed()) {
+    if (scanner.has_failed() || parser.has_failed()) {
         exit(1);
     }
 
@@ -84,7 +84,7 @@ int main() {
     std::cout << "~~~~~~~~~~~~ Execute ~~~~~~~~~~~~ " << std::endl;
 
     int exec_result = std::system(exe_file_path.string().c_str());
-    std::cout << "Execute Code: " << WEXITSTATUS(exec_result)  << std::endl;
+    std::cout << "Execute Code: " << WEXITSTATUS(exec_result) << std::endl;
 
     return 0;
 }

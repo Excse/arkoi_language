@@ -36,18 +36,22 @@ void GASGenerator::visit(BinaryInstruction &node) {
     _load(node.right(), "r11");
 
     switch (node.type()) {
-        case BinaryInstruction::Type::Add:
+        case BinaryInstruction::Type::Add: {
             _add("rax", "r11");
             break;
-        case BinaryInstruction::Type::Sub:
+        }
+        case BinaryInstruction::Type::Sub: {
             _sub("rax", "r11");
             break;
-        case BinaryInstruction::Type::Mul:
+        }
+        case BinaryInstruction::Type::Mul: {
             _imul("rax", "r11");
             break;
-        case BinaryInstruction::Type::Div:
+        }
+        case BinaryInstruction::Type::Div: {
             _idiv("r11");
             break;
+        }
     }
 
     _store(node.result(), "rax");
@@ -69,8 +73,6 @@ void GASGenerator::_preamble() {
 .global _start
 
 _start:
-    mov rdi, 42
-    push 2
     call main
 
     mov rdi, rax
@@ -82,7 +84,7 @@ _start:
 void GASGenerator::_load(const Operand &operand, const std::string &destination) {
     std::visit(match{
             [&](const std::shared_ptr<Symbol> &) {
-                throw std::runtime_error("Cannot load symbols");
+                throw std::invalid_argument("Cannot load symbols");
             },
             [&](const FPRelative &relative) {
                 _mov(destination, to_string(relative));

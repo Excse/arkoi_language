@@ -1,5 +1,5 @@
-template <typename SymbolType, typename... Args>
-std::shared_ptr<Symbol>& SymbolTable::insert(const std::string& name, Args&&... args) {
+template<typename SymbolType, typename... Args>
+std::shared_ptr<Symbol> &SymbolTable::insert(const std::string &name, Args &&... args) {
     if (_symbols.find(name) != _symbols.end()) {
         throw IdentifierAlreadyTaken(name);
     }

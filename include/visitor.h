@@ -27,23 +27,23 @@ class NodeVisitor {
 public:
     virtual ~NodeVisitor() = default;
 
-    virtual void visit(ProgramNode &node) = 0;
+    virtual void visit(const ProgramNode &node) = 0;
 
-    virtual void visit(FunctionNode &node) = 0;
+    virtual void visit(const FunctionNode &node) = 0;
 
-    virtual void visit(TypeNode &node) = 0;
+    virtual void visit(const TypeNode &node) = 0;
 
-    virtual void visit(BlockNode &node) = 0;
+    virtual void visit(const BlockNode &node) = 0;
 
-    virtual void visit(ParameterNode &node) = 0;
+    virtual void visit(const ParameterNode &node) = 0;
 
-    virtual void visit(NumberNode &node) = 0;
+    virtual void visit(const NumberNode &node) = 0;
 
-    virtual void visit(ReturnNode &node) = 0;
+    virtual void visit(const ReturnNode &node) = 0;
 
-    virtual void visit(IdentifierNode &node) = 0;
+    virtual void visit(const IdentifierNode &node) = 0;
 
-    virtual void visit(BinaryNode &node) = 0;
+    virtual void visit(const BinaryNode &node) = 0;
 };
 
 class BinaryInstruction;

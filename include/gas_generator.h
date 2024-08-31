@@ -21,7 +21,7 @@ public:
     void visit(BinaryInstruction &node) override;
 
     void visit(EndInstruction &node) override;
-    
+
     [[nodiscard]] const auto &output() const { return _output; }
 
 private:

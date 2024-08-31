@@ -89,7 +89,9 @@ public:
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &size() { return _size; }
+    void increase_size(size_t amount) { _size += amount; }
+
+    [[nodiscard]] auto size() const { return _size; }
 
 private:
     size_t _size;

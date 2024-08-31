@@ -39,10 +39,8 @@ ProgramNode Parser::parse_program() {
 std::unique_ptr<Node> Parser::_parse_program_statement() {
     auto &current = _current();
     switch (current.type()) {
-        case Token::Type::Fun:
-            return _parse_function();
-        default:
-            throw UnexpectedToken("fun", current);
+        case Token::Type::Fun:return _parse_function();
+        default: throw UnexpectedToken("fun", current);
     }
 }
 
@@ -53,10 +51,8 @@ void Parser::_recover_program() {
         auto &current = _current();
         switch (current.type()) {
             case Token::Type::Fun:
-            case Token::Type::EndOfFile:
-                return;
-            default:
-                continue;
+            case Token::Type::EndOfFile: return;
+            default: continue;
         }
     }
 }
@@ -122,10 +118,8 @@ void Parser::_recover_parameters() {
         switch (current.type()) {
             case Token::Type::Comma:
             case Token::Type::RParent:
-            case Token::Type::EndOfFile:
-                return;
-            default:
-                continue;
+            case Token::Type::EndOfFile: return;
+            default: continue;
         }
     }
 }
@@ -152,10 +146,8 @@ TypeNode Parser::_parse_type() {
             case Token::Type::U64:
             case Token::Type::S64:
             case Token::Type::USize:
-            case Token::Type::SSize:
-                return true;
-            default:
-                return false;
+            case Token::Type::SSize: return true;
+            default: return false;
         }
     };
 
@@ -197,10 +189,8 @@ BlockNode Parser::_parse_block() {
 std::unique_ptr<Node> Parser::_parse_block_statement() {
     auto &current = _current();
     switch (current.type()) {
-        case Token::Type::Return:
-            return _parse_return();
-        default:
-            throw UnexpectedToken("return", current);
+        case Token::Type::Return: return _parse_return();
+        default: throw UnexpectedToken("return", current);
     }
 }
 
@@ -212,10 +202,8 @@ void Parser::_recover_block() {
         switch (current.type()) {
             case Token::Type::RCBracket:
             case Token::Type::Return:
-            case Token::Type::EndOfFile:
-                return;
-            default:
-                continue;
+            case Token::Type::EndOfFile: return;
+            default: continue;
         }
     }
 }
@@ -339,16 +327,11 @@ const Token *Parser::_try_consume(const std::function<bool(const Token &)> &pred
 
 BinaryNode::Type Parser::to_binary_operator(const Token &token) {
     switch (token.type()) {
-        case Token::Type::Slash:
-            return BinaryNode::Type::Div;
-        case Token::Type::Asterisk:
-            return BinaryNode::Type::Mul;
-        case Token::Type::Plus:
-            return BinaryNode::Type::Add;
-        case Token::Type::Minus:
-            return BinaryNode::Type::Sub;
-        default:
-            throw std::runtime_error("This token is a invalid binary operator.");
+        case Token::Type::Slash:return BinaryNode::Type::Div;
+        case Token::Type::Asterisk:return BinaryNode::Type::Mul;
+        case Token::Type::Plus:return BinaryNode::Type::Add;
+        case Token::Type::Minus:return BinaryNode::Type::Sub;
+        default:throw std::invalid_argument("This token is a invalid binary operator.");
     }
 }
 

@@ -11,28 +11,28 @@ class NameResolution : public NodeVisitor {
 public:
     NameResolution() : _scopes(), _failed(false) {}
 
-    void visit(ProgramNode &node) override;
+    void visit(const ProgramNode &node) override;
 
-    void visit(FunctionNode &node) override;
+    void visit(const FunctionNode &node) override;
 
-    void visit(BlockNode &node) override;
+    void visit(const BlockNode &node) override;
 
-    void visit(ParameterNode &node) override;
+    void visit(const ParameterNode &node) override;
 
-    void visit(IdentifierNode &node) override;
+    void visit(const IdentifierNode &node) override;
 
-    void visit(TypeNode &node) override;
+    void visit(const TypeNode &node) override;
 
-    void visit(NumberNode &node) override;
+    void visit(const NumberNode &node) override;
 
-    void visit(ReturnNode &node) override;
+    void visit(const ReturnNode &node) override;
 
-    void visit(BinaryNode &node) override;
+    void visit(const BinaryNode &node) override;
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
-    template <typename SymbolType, typename... Args>
-    void _check_non_existence(const Token &token, Args&&... args);
+    template<typename SymbolType, typename... Args>
+    void _check_non_existence(const Token &token, Args &&... args);
 
     void _check_existence(const Token &token, const std::function<bool(const Symbol &)> &predicate);
 

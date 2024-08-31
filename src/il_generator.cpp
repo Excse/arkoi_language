@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "ast.h"
 
-void IRGenerator::visit(ProgramNode &node) {
+void IRGenerator::visit(const ProgramNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -11,7 +11,7 @@ void IRGenerator::visit(ProgramNode &node) {
     _scopes.pop();
 }
 
-void IRGenerator::visit(FunctionNode &node) {
+void IRGenerator::visit(const FunctionNode &node) {
     auto is_function = [](const Symbol &symbol) { return std::holds_alternative<FunctionSymbol>(symbol); };
 
     auto current_scope = _scopes.top();
@@ -31,9 +31,9 @@ void IRGenerator::visit(FunctionNode &node) {
     _instructions.emplace_back(std::move(end));
 }
 
-void IRGenerator::visit(TypeNode &) {}
+void IRGenerator::visit(const TypeNode &) {}
 
-void IRGenerator::visit(BlockNode &node) {
+void IRGenerator::visit(const BlockNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -41,14 +41,14 @@ void IRGenerator::visit(BlockNode &node) {
     _scopes.pop();
 }
 
-void IRGenerator::visit(ParameterNode &) {}
+void IRGenerator::visit(const ParameterNode &) {}
 
-void IRGenerator::visit(NumberNode &node) {
+void IRGenerator::visit(const NumberNode &node) {
     auto value = std::string(node.value().value());
     _current_operand = std::stoll(value);
 }
 
-void IRGenerator::visit(ReturnNode &node) {
+void IRGenerator::visit(const ReturnNode &node) {
     // This will set _current_operand
     node.expression().accept(*this);
 
@@ -56,7 +56,7 @@ void IRGenerator::visit(ReturnNode &node) {
     _instructions.emplace_back(std::move(instruction));
 }
 
-void IRGenerator::visit(IdentifierNode &node) {
+void IRGenerator::visit(const IdentifierNode &node) {
     auto is_parameter = [](const Symbol &symbol) { return std::holds_alternative<ParameterSymbol>(symbol); };
 
     auto current_scope = _scopes.top();
@@ -65,7 +65,7 @@ void IRGenerator::visit(IdentifierNode &node) {
     _current_operand = symbol;
 }
 
-void IRGenerator::visit(BinaryNode &node) {
+void IRGenerator::visit(const BinaryNode &node) {
     // This will set _current_operand
     node.left().accept(*this);
     auto left = _current_operand;

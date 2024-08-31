@@ -12,31 +12,89 @@ std::ostream &operator<<(std::ostream &os, const FPRelative &operand) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Register &reg) {
-    static const std::unordered_map<Register, std::string_view> REGISTERS = {
-            {Register::RAX, "rax"}, {Register::EAX, "eax"}, {Register::AX, "ax"}, {Register::AL, "al"},
-            {Register::RCX, "rcx"}, {Register::ECX, "ecx"}, {Register::CX, "cx"}, {Register::CL, "cl"},
-            {Register::RDX, "rdx"}, {Register::EDX, "edx"}, {Register::DX, "dx"}, {Register::DL, "dl"},
-            {Register::RBX, "rbx"}, {Register::EBX, "ebx"}, {Register::BX, "bx"}, {Register::BL, "bl"},
-            {Register::RSI, "rsi"}, {Register::ESI, "esi"}, {Register::SI, "si"}, {Register::SIL, "sil"},
-            {Register::RDI, "rdi"}, {Register::EDI, "edi"}, {Register::DI, "di"}, {Register::DIL, "dil"},
-            {Register::RSP, "rsp"}, {Register::ESP, "esp"}, {Register::SP, "sp"}, {Register::SPL, "spl"},
-            {Register::RBP, "rbp"}, {Register::EBP, "ebp"}, {Register::BP, "bp"}, {Register::BPL, "bpl"},
-            {Register::R8,  "r8"},  {Register::R8D, "r8d"}, {Register::R8W, "r8w"}, {Register::R8B, "r8b"},
-            {Register::R9,  "r9"},  {Register::R9D, "r9d"}, {Register::R9W, "r9w"}, {Register::R9B, "r9b"},
-            {Register::R10, "r10"}, {Register::R10D, "r10d"}, {Register::R10W, "r10w"}, {Register::R10B, "r10b"},
-            {Register::R11, "r11"}, {Register::R11D, "r11d"}, {Register::R11W, "r11w"}, {Register::R11B, "r11b"},
-            {Register::R12, "r12"}, {Register::R12D, "r12d"}, {Register::R12W, "r12w"}, {Register::R12B, "r12b"},
-            {Register::R13, "r13"}, {Register::R13D, "r13d"}, {Register::R13W, "r13w"}, {Register::R13B, "r13b"},
-            {Register::R14, "r14"}, {Register::R14D, "r14d"}, {Register::R14W, "r14w"}, {Register::R14B, "r14b"},
-            {Register::R15, "r15"}, {Register::R15D, "r15d"}, {Register::R15W, "r15w"}, {Register::R15B, "r15b"},
-    };
+    switch (reg) {
+        case Register::RAX: return os << "rax";
+        case Register::EAX: return os << "eax";
+        case Register::AX: return os << "ax";
+        case Register::AL: return os << "al";
 
-    const auto found = REGISTERS.find(reg);
-    if (found != REGISTERS.end()) {
-        return os << found->second;
+        case Register::RCX: return os << "rcx";
+        case Register::ECX: return os << "ecx";
+        case Register::CX: return os << "cx";
+        case Register::CL: return os << "cl";
+
+        case Register::RDX: return os << "rdx";
+        case Register::EDX: return os << "edx";
+        case Register::DX: return os << "dx";
+        case Register::DL: return os << "dl";
+
+        case Register::RBX: return os << "rbx";
+        case Register::EBX: return os << "ebx";
+        case Register::BX: return os << "bx";
+        case Register::BL: return os << "bl";
+
+        case Register::RSI: return os << "rsi";
+        case Register::ESI: return os << "esi";
+        case Register::SI: return os << "si";
+        case Register::SIL: return os << "sil";
+
+        case Register::RDI: return os << "rdi";
+        case Register::EDI: return os << "edi";
+        case Register::DI: return os << "di";
+        case Register::DIL: return os << "dil";
+
+        case Register::RSP: return os << "rsp";
+        case Register::ESP: return os << "esp";
+        case Register::SP: return os << "sp";
+        case Register::SPL: return os << "spl";
+
+        case Register::RBP: return os << "rbp";
+        case Register::EBP: return os << "ebp";
+        case Register::BP: return os << "bp";
+        case Register::BPL: return os << "bpl";
+
+        case Register::R8: return os << "r8";
+        case Register::R8D: return os << "r8d";
+        case Register::R8W: return os << "r8w";
+        case Register::R8B: return os << "r8b";
+
+        case Register::R9: return os << "r9";
+        case Register::R9D: return os << "r9d";
+        case Register::R9W: return os << "r9w";
+        case Register::R9B: return os << "r9b";
+
+        case Register::R10: return os << "r10";
+        case Register::R10D: return os << "r10d";
+        case Register::R10W: return os << "r10w";
+        case Register::R10B: return os << "r10b";
+
+        case Register::R11: return os << "r11";
+        case Register::R11D: return os << "r11d";
+        case Register::R11W: return os << "r11w";
+        case Register::R11B: return os << "r11b";
+
+        case Register::R12: return os << "r12";
+        case Register::R12D: return os << "r12d";
+        case Register::R12W: return os << "r12w";
+        case Register::R12B: return os << "r12b";
+
+        case Register::R13: return os << "r13";
+        case Register::R13D: return os << "r13d";
+        case Register::R13W: return os << "r13w";
+        case Register::R13B: return os << "r13b";
+
+        case Register::R14: return os << "r14";
+        case Register::R14D: return os << "r14d";
+        case Register::R14W: return os << "r14w";
+        case Register::R14B: return os << "r14b";
+
+        case Register::R15: return os << "r15";
+        case Register::R15D: return os << "r15d";
+        case Register::R15W: return os << "r15w";
+        case Register::R15B: return os << "r15b";
+
+        default: throw std::invalid_argument("This register is not printable.");
     }
-
-    throw std::invalid_argument("This register is not printable.");
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {

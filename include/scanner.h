@@ -15,7 +15,7 @@ private:
 
 public:
     explicit Scanner(std::string_view data)
-        : _position(0), _start(0), _data(data), _column(0), _row(0), _failed(false) {}
+            : _position(0), _start(0), _data(data), _column(0), _row(0), _failed(false) {}
 
     [[nodiscard]] std::vector<Token> tokenize();
 
