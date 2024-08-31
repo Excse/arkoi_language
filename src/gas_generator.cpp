@@ -69,6 +69,8 @@ void GASGenerator::_preamble() {
 .global _start
 
 _start:
+    mov rdi, 42
+    push 2
     call main
 
     mov rdi, rax
@@ -84,6 +86,9 @@ void GASGenerator::_load(const Operand &operand, const std::string &destination)
             },
             [&](const FPRelative &relative) {
                 _mov(destination, to_string(relative));
+            },
+            [&](const Register &reg) {
+                _mov(destination, to_string(reg));
             },
             [&](const long long &value) {
                 _mov(destination, to_string(value));

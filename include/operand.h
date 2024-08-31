@@ -7,6 +7,25 @@
 
 #include "symbol_table.h"
 
+enum class Register {
+    RAX,  EAX,   AX,   AL,
+    RCX,  ECX,   CX,   CL,
+    RDX,  EDX,   DX,   DL,
+    RBX,  EBX,   BX,   BL,
+    RSI,  ESI,   SI,  SIL,
+    RDI,  EDI,   DI,  DIL,
+    RSP,  ESP,   SP,  SPL,
+    RBP,  EBP,   BP,  BPL,
+    R8,   R8D,  R8W,  R8B,
+    R9,   R9D,  R9W,  R9B,
+    R10, R10D, R10W, R10B,
+    R11, R11D, R11W, R11B,
+    R12, R12D, R12W, R12B,
+    R13, R13D, R13W, R13B,
+    R14, R14D, R14W, R14B,
+    R15, R15D, R15W, R15B,
+};
+
 class FPRelative {
 public:
     explicit FPRelative(size_t offset, bool sign) : _offset(offset), _sign(sign) {}
@@ -20,9 +39,11 @@ private:
     bool _sign;
 };
 
-using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, long long>;
+using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, long long, Register>;
 
 std::ostream &operator<<(std::ostream &os, const FPRelative &operand);
+
+std::ostream &operator<<(std::ostream &os, const Register &reg);
 
 std::ostream &operator<<(std::ostream &os, const Operand &operand);
 

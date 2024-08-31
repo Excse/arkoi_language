@@ -37,7 +37,9 @@ public:
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &value() { return _value; };
+    void set_value(Operand &&operand) { _value = operand; };
+
+    [[nodiscard]] const auto &value() const { return _value; };
 
 private:
     Operand _value;
@@ -60,11 +62,17 @@ public:
 
     [[nodiscard]] const auto &type() const { return _type; };
 
-    [[nodiscard]] auto &result()  { return _result; };
+    void set_result(Operand &&operand) { _result = operand; };
 
-    [[nodiscard]] auto &right()  { return _right; };
+    [[nodiscard]] const auto &result() const { return _result; };
 
-    [[nodiscard]] auto &left() { return _left; };
+    void set_right(Operand &&operand) { _right = operand; };
+
+    [[nodiscard]] const auto &right() const { return _right; };
+
+    void set_left(Operand &&operand) { _left = operand; };
+
+    [[nodiscard]] const auto &left() const { return _left; };
 
     [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
 

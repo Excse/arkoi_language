@@ -15,8 +15,10 @@ void NameResolution::visit(FunctionNode &node) {
     _check_non_existence<FunctionSymbol>(node.name());
 
     _scopes.push(node.table());
-    for (auto &item: node.parameters()) {
-        item.accept(*this);
+
+    for (size_t index = 0; index < node.parameters().size(); index++) {
+        const auto &parameter = node.parameters()[index];
+        _check_non_existence<ParameterSymbol>(parameter.name(), index);
     }
 
     node.block().accept(*this);
@@ -31,8 +33,8 @@ void NameResolution::visit(BlockNode &node) {
     _scopes.pop();
 }
 
-void NameResolution::visit(ParameterNode &node) {
-    _check_non_existence<ParameterSymbol>(node.name());
+void NameResolution::visit(ParameterNode &) {
+    throw std::runtime_error("This is handled in visit(FunctionNode &), as we need the specific parameter index.");
 }
 
 void NameResolution::visit(IdentifierNode &node) {

@@ -6,7 +6,7 @@
 
 class MemoryResolver : public InstructionVisitor {
 public:
-    MemoryResolver() : _offsets(), _current_begin(nullptr) {}
+    MemoryResolver() : _offsets(), _current_begin(nullptr), _parameter_offset(0) {}
 
     void visit(LabelInstruction &node) override;
 
@@ -19,11 +19,12 @@ public:
     void visit(EndInstruction &node) override;
 
 private:
-    void _resolve_operand(Operand &operand);
+    Operand _resolve_operand(const Operand &operand);
 
 private:
     std::unordered_map<std::shared_ptr<Symbol>, size_t> _offsets;
     BeginInstruction *_current_begin;
+    size_t _parameter_offset;
 };
 
 #endif //ARKOI_LANGUAGE_MEMORY_RESOLVER_H
