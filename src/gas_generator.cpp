@@ -1,6 +1,5 @@
 #include "gas_generator.h"
 
-#include <cassert>
 #include <sstream>
 
 #include "instruction.h"
@@ -11,31 +10,33 @@ GASGenerator::GASGenerator(bool debug) : _output(), _printer(), _debug(debug) {
     _preamble();
 }
 
-void GASGenerator::visit(LabelInstruction &node) {
-    _comment_instruction(node);
-    _label(node.symbol());
+void GASGenerator::visit(LabelInstruction &instruction) {
+    _comment_instruction(instruction);
+    _label(instruction.symbol());
 }
 
-void GASGenerator::visit(BeginInstruction &node) {
-    _comment_instruction(node);
+void GASGenerator::visit(BeginInstruction &instruction) {
+    _comment_instruction(instruction);
     _push("rbp");
     _mov("rbp", "rsp");
-    _sub("rsp", to_string(node.size()));
+    if(instruction.size() != 0) {
+        _sub("rsp", to_string(instruction.size()));
+    }
     _newline();
 }
 
-void GASGenerator::visit(ReturnInstruction &node) {
-    _comment_instruction(node);
-    _load(node.value(), "rax");
+void GASGenerator::visit(ReturnInstruction &instruction) {
+    _comment_instruction(instruction);
+    _load(instruction.value(), "rax");
     _newline();
 }
 
-void GASGenerator::visit(BinaryInstruction &node) {
-    _comment_instruction(node);
-    _load(node.left(), "rax");
-    _load(node.right(), "r11");
+void GASGenerator::visit(BinaryInstruction &instruction) {
+    _comment_instruction(instruction);
+    _load(instruction.left(), "rax");
+    _load(instruction.right(), "r11");
 
-    switch (node.type()) {
+    switch (instruction.type()) {
         case BinaryInstruction::Type::Add: {
             _add("rax", "r11");
             break;
@@ -54,12 +55,12 @@ void GASGenerator::visit(BinaryInstruction &node) {
         }
     }
 
-    _store(node.result(), "rax");
+    _store(instruction.result(), "rax");
     _newline();
 }
 
-void GASGenerator::visit(EndInstruction &node) {
-    _comment_instruction(node);
+void GASGenerator::visit(EndInstruction &instruction) {
+    _comment_instruction(instruction);
     _mov("rsp", "rbp");
     _pop("rbp");
     _ret();
@@ -84,7 +85,7 @@ _start:
 void GASGenerator::_load(const Operand &operand, const std::string &destination) {
     std::visit(match{
             [&](const std::shared_ptr<Symbol> &) {
-                throw std::invalid_argument("Cannot load symbols");
+                throw std::invalid_argument("Cannot load symbols.");
             },
             [&](const FPRelative &relative) {
                 _mov(destination, to_string(relative));
@@ -99,8 +100,20 @@ void GASGenerator::_load(const Operand &operand, const std::string &destination)
 }
 
 void GASGenerator::_store(const Operand &operand, const std::string &src) {
-    assert(std::holds_alternative<FPRelative>(operand));
-    _mov(to_string(operand), src);
+    std::visit(match{
+            [&](const std::shared_ptr<Symbol> &) {
+                throw std::invalid_argument("Cannot store into symbols.");
+            },
+            [&](const long long &) {
+                throw std::invalid_argument("Cannot store into constants.");
+            },
+            [&](const FPRelative &relative) {
+                _mov(to_string(relative), src);
+            },
+            [&](const Register &reg) {
+                _mov(to_string(reg), src);
+            },
+    }, operand);
 }
 
 void GASGenerator::_mov(const std::string &destination, const std::string &src) {

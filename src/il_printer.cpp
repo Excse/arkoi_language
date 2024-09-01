@@ -6,20 +6,21 @@
 #include "instruction.h"
 #include "utils.h"
 
-void ILPrinter::visit(LabelInstruction &node) {
-    _output << "LABEL " << *node.symbol() << ":\n";
+void ILPrinter::visit(LabelInstruction &instruction) {
+    _output << "LABEL " << *instruction.symbol() << ":\n";
 }
 
-void ILPrinter::visit(BeginInstruction &node) {
-    _output << "BEGIN " << node.size() << "\n";
+void ILPrinter::visit(BeginInstruction &instruction) {
+    _output << "BEGIN " << instruction.size() << "\n";
 }
 
-void ILPrinter::visit(ReturnInstruction &node) {
-    _output << "RETURN " << node.value() << "\n";
+void ILPrinter::visit(ReturnInstruction &instruction) {
+    _output << "RETURN " << instruction.value() << "\n";
 }
 
-void ILPrinter::visit(BinaryInstruction &node) {
-    _output << node.result() << " = " << node.left() << " " << to_string(node.type()) << " " << node.right() << "\n";
+void ILPrinter::visit(BinaryInstruction &instruction) {
+    _output << instruction.result() << " = " << instruction.left() << " " << to_string(instruction.type()) << " "
+            << instruction.right() << "\n";
 }
 
 void ILPrinter::visit(EndInstruction &) {

@@ -39,7 +39,7 @@ ProgramNode Parser::parse_program() {
 std::unique_ptr<Node> Parser::_parse_program_statement() {
     auto &current = _current();
     switch (current.type()) {
-        case Token::Type::Fun:return _parse_function();
+        case Token::Type::Fun: return _parse_function();
         default: throw UnexpectedToken("fun", current);
     }
 }

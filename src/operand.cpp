@@ -3,11 +3,7 @@
 #include "utils.h"
 
 std::ostream &operator<<(std::ostream &os, const FPRelative &operand) {
-    if (operand.sign()) {
-        os << "[rbp + " << to_string(operand.offset()) << "]";
-    } else {
-        os << "[rbp - " << to_string(operand.offset()) << "]";
-    }
+    os << "[" << Register::RBP << (operand.sign() ? " + " : " - ") << operand.offset() << "]";
     return os;
 }
 

@@ -9,13 +9,13 @@ class ILPrinter : public InstructionVisitor {
 public:
     ILPrinter() : _output() {}
 
-    void visit(LabelInstruction &node) override;
+    void visit(LabelInstruction &instruction) override;
 
-    void visit(BeginInstruction &node) override;
+    void visit(BeginInstruction &instruction) override;
 
-    void visit(ReturnInstruction &node) override;
+    void visit(ReturnInstruction &instruction) override;
 
-    void visit(BinaryInstruction &node) override;
+    void visit(BinaryInstruction &instruction) override;
 
     void visit(EndInstruction &node) override;
 

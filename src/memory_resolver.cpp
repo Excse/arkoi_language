@@ -7,20 +7,20 @@ static Register INTEGER_ORDER[6] = {Register::RDI, Register::RSI, Register::RDX,
 
 void MemoryResolver::visit(LabelInstruction &) {}
 
-void MemoryResolver::visit(BeginInstruction &node) {
-    _current_begin = &node;
+void MemoryResolver::visit(BeginInstruction &instruction) {
+    _current_begin = &instruction;
     _parameter_offset = 8;
     _offsets.clear();
 }
 
-void MemoryResolver::visit(ReturnInstruction &node) {
-    node.set_value(_resolve_operand(node.value()));
+void MemoryResolver::visit(ReturnInstruction &instruction) {
+    instruction.set_value(_resolve_operand(instruction.value()));
 }
 
-void MemoryResolver::visit(BinaryInstruction &node) {
-    node.set_result(_resolve_operand(node.result()));
-    node.set_left(_resolve_operand(node.left()));
-    node.set_right(_resolve_operand(node.right()));
+void MemoryResolver::visit(BinaryInstruction &instruction) {
+    instruction.set_result(_resolve_operand(instruction.result()));
+    instruction.set_left(_resolve_operand(instruction.left()));
+    instruction.set_right(_resolve_operand(instruction.right()));
 }
 
 void MemoryResolver::visit(EndInstruction &) {}
