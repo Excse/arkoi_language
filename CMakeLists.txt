@@ -24,4 +24,5 @@ add_executable(arkoi_language
         src/operand.cpp
         src/symbol.cpp
         src/type_resolver.cpp
-        src/type.cpp)
+        src/type.cpp
+        src/ast.cpp)

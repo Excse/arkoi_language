@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "ast.h"
 
-void IRGenerator::visit(const ProgramNode &node) {
+void IRGenerator::visit(ProgramNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -11,7 +11,7 @@ void IRGenerator::visit(const ProgramNode &node) {
     _scopes.pop();
 }
 
-void IRGenerator::visit(const FunctionNode &node) {
+void IRGenerator::visit(FunctionNode &node) {
     auto symbol = _scopes.top()->lookup<FunctionSymbol>(to_string(node.name().value()));
     auto label = std::make_unique<LabelInstruction>(symbol);
     _instructions.emplace_back(std::move(label));
@@ -27,7 +27,7 @@ void IRGenerator::visit(const FunctionNode &node) {
     _instructions.emplace_back(std::move(end));
 }
 
-void IRGenerator::visit(const BlockNode &node) {
+void IRGenerator::visit(BlockNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -35,12 +35,12 @@ void IRGenerator::visit(const BlockNode &node) {
     _scopes.pop();
 }
 
-void IRGenerator::visit(const NumberNode &node) {
+void IRGenerator::visit(NumberNode &node) {
     auto value = std::string(node.value().value());
     _current_operand = std::stoll(value);
 }
 
-void IRGenerator::visit(const ReturnNode &node) {
+void IRGenerator::visit(ReturnNode &node) {
     // This will set _current_operand
     node.expression().accept(*this);
 
@@ -48,18 +48,18 @@ void IRGenerator::visit(const ReturnNode &node) {
     _instructions.emplace_back(std::move(instruction));
 }
 
-void IRGenerator::visit(const IdentifierNode &node) {
+void IRGenerator::visit(IdentifierNode &node) {
     auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.value().value()));
     _current_operand = symbol;
 }
 
-void IRGenerator::visit(const BinaryNode &node) {
+void IRGenerator::visit(BinaryNode &node) {
     // This will set _current_operand
-    node.left().accept(*this);
+    node.left()->accept(*this);
     auto left = _current_operand;
 
     // This will set _current_operand
-    node.right().accept(*this);
+    node.right()->accept(*this);
     auto right = _current_operand;
 
     auto type = BinaryInstruction::node_to_instruction(node.type());
@@ -69,6 +69,11 @@ void IRGenerator::visit(const BinaryNode &node) {
     _instructions.emplace_back(std::move(instruction));
 
     _current_operand = result;
+}
+
+void IRGenerator::visit(CastNode &) {
+    // TODO: Implement casting.
+    throw std::invalid_argument("Not implemented now.");
 }
 
 std::shared_ptr<Symbol> IRGenerator::_make_temporary() {

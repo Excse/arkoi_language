@@ -46,7 +46,7 @@ public:
     };
 
 public:
-    Token(Type type, size_t column, size_t row, std::string_view value)
+    Token(Type type, int64_t column, int64_t row, std::string_view value)
             : _value(value), _column(column), _row(row), _type(type) {}
 
     [[nodiscard]] const auto &value() const { return _value; }
@@ -63,7 +63,7 @@ public:
 
 private:
     std::string_view _value;
-    size_t _column, _row;
+    int64_t _column, _row;
     Type _type;
 };
 

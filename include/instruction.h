@@ -85,16 +85,16 @@ std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type);
 
 class BeginInstruction : public Instruction {
 public:
-    explicit BeginInstruction(size_t size = 0) : _size(size) {}
+    explicit BeginInstruction(int64_t size = 0) : _size(size) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    void increase_size(size_t amount) { _size += amount; }
+    void increase_size(int64_t amount) { _size += amount; }
 
     [[nodiscard]] auto size() const { return _size; }
 
 private:
-    size_t _size;
+    int64_t _size;
 };
 
 class EndInstruction : public Instruction {

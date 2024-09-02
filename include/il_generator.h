@@ -10,23 +10,25 @@ class IRGenerator : public NodeVisitor {
 public:
     IRGenerator() : _instructions(), _scopes(), _current_operand(), _temp_index(0) {}
 
-    void visit(const ProgramNode &node) override;
+    void visit(ProgramNode &node) override;
 
-    void visit(const FunctionNode &node) override;
+    void visit(FunctionNode &node) override;
 
-    void visit(const TypeNode &) override {};
+    void visit(TypeNode &) override {};
 
-    void visit(const BlockNode &node) override;
+    void visit(BlockNode &node) override;
 
-    void visit(const ParameterNode &) override {};
+    void visit(ParameterNode &) override {};
 
-    void visit(const NumberNode &node) override;
+    void visit(NumberNode &node) override;
 
-    void visit(const ReturnNode &node) override;
+    void visit(ReturnNode &node) override;
 
-    void visit(const IdentifierNode &node) override;
+    void visit(IdentifierNode &node) override;
 
-    void visit(const BinaryNode &node) override;
+    void visit(BinaryNode &node) override;
+
+    void visit(CastNode &node) override;
 
     [[nodiscard]] const auto &instructions() const { return _instructions; }
 

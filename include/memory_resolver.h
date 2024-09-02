@@ -26,7 +26,7 @@ private:
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Operand> _resolved;
     BeginInstruction *_current_begin;
-    size_t _parameter_offset;
+    int64_t _parameter_offset;
 };
 
 #endif //ARKOI_LANGUAGE_MEMORY_RESOLVER_H

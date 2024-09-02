@@ -11,23 +11,25 @@ class NameResolver : public NodeVisitor {
 public:
     NameResolver() : _scopes(), _failed(false) {}
 
-    void visit(const ProgramNode &node) override;
+    void visit(ProgramNode &node) override;
 
-    void visit(const FunctionNode &node) override;
+    void visit(FunctionNode &node) override;
 
-    void visit(const BlockNode &node) override;
+    void visit(BlockNode &node) override;
 
-    void visit(const ParameterNode &) override {};
+    void visit(ParameterNode &) override {};
 
-    void visit(const IdentifierNode &node) override;
+    void visit(IdentifierNode &node) override;
 
-    void visit(const TypeNode &) override {};
+    void visit(TypeNode &) override {};
 
-    void visit(const NumberNode &) override {};
+    void visit(NumberNode &) override {};
 
-    void visit(const ReturnNode &node) override;
+    void visit(ReturnNode &node) override;
 
-    void visit(const BinaryNode &node) override;
+    void visit(BinaryNode &node) override;
+
+    void visit(CastNode &node) override;
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 

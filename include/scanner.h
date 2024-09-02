@@ -10,7 +10,7 @@
 class Scanner {
 private:
     struct Location {
-        size_t column, row;
+        int64_t column, row;
     };
 
 public:
@@ -63,9 +63,9 @@ private:
     [[nodiscard]] static bool _is_hex(char input);
 
 private:
-    size_t _position, _start;
+    int64_t _position, _start;
     std::string_view _data;
-    size_t _column, _row;
+    int64_t _column, _row;
     bool _failed;
 };
 

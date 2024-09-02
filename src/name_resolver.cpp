@@ -3,7 +3,7 @@
 #include "utils.h"
 #include "ast.h"
 
-void NameResolver::visit(const ProgramNode &node) {
+void NameResolver::visit(ProgramNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -11,7 +11,7 @@ void NameResolver::visit(const ProgramNode &node) {
     _scopes.pop();
 }
 
-void NameResolver::visit(const FunctionNode &node) {
+void NameResolver::visit(FunctionNode &node) {
     _check_non_existence<FunctionSymbol>(node.name());
 
     _scopes.push(node.table());
@@ -25,7 +25,7 @@ void NameResolver::visit(const FunctionNode &node) {
     _scopes.pop();
 }
 
-void NameResolver::visit(const BlockNode &node) {
+void NameResolver::visit(BlockNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -33,15 +33,19 @@ void NameResolver::visit(const BlockNode &node) {
     _scopes.pop();
 }
 
-void NameResolver::visit(const IdentifierNode &node) {
+void NameResolver::visit(IdentifierNode &node) {
     _check_existence<ParameterSymbol>(node.value());
 }
 
-void NameResolver::visit(const ReturnNode &node) {
+void NameResolver::visit(ReturnNode &node) {
     node.expression().accept(*this);
 }
 
-void NameResolver::visit(const BinaryNode &node) {
-    node.left().accept(*this);
-    node.right().accept(*this);
+void NameResolver::visit(BinaryNode &node) {
+    node.left()->accept(*this);
+    node.right()->accept(*this);
+}
+
+void NameResolver::visit(CastNode &node) {
+    node.expression()->accept(*this);
 }

@@ -28,18 +28,18 @@ enum class Register {
 
 class FPRelative {
 public:
-    explicit FPRelative(size_t offset, bool sign) : _offset(offset), _sign(sign) {}
+    explicit FPRelative(int64_t offset, bool sign) : _offset(offset), _sign(sign) {}
 
     [[nodiscard]] auto offset() const { return _offset; }
 
     [[nodiscard]] auto sign() const { return _sign; }
 
 private:
-    size_t _offset;
+    int64_t _offset;
     bool _sign;
 };
 
-using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, long long, Register>;
+using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, int64_t, Register>;
 
 std::ostream &operator<<(std::ostream &os, const FPRelative &operand);
 

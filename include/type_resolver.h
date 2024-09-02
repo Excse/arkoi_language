@@ -7,35 +7,42 @@
 #include "visitor.h"
 #include "token.h"
 #include "type.h"
+#include "ast.h"
 
 class TypeResolver : public NodeVisitor {
 public:
     TypeResolver() : _scopes(), _current_type(), _failed(false) {}
 
-    void visit(const ProgramNode &node) override;
+    void visit(ProgramNode &node) override;
 
-    void visit(const FunctionNode &node) override;
+    void visit(FunctionNode &node) override;
 
-    void visit(const TypeNode &node) override;
+    void visit(TypeNode &node) override;
 
-    void visit(const BlockNode &node) override;
+    void visit(BlockNode &node) override;
 
-    void visit(const ParameterNode &node) override;
+    void visit(ParameterNode &node) override;
 
-    void visit(const NumberNode &node) override;
+    void visit(NumberNode &node) override;
 
-    void visit(const ReturnNode &node) override;
+    void visit(ReturnNode &node) override;
 
-    void visit(const IdentifierNode &node) override;
+    void visit(IdentifierNode &node) override;
 
-    void visit(const BinaryNode &node) override;
+    void visit(BinaryNode &node) override;
+
+    void visit(CastNode &node) override;
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    static std::shared_ptr<Type> _maximum_type(const std::shared_ptr<Type> &first, const std::shared_ptr<Type> &second);
+    std::shared_ptr<Type> _arithmetic_conversion(std::unique_ptr<Node> &left, std::unique_ptr<Node> &right);
+
+    static void _integer_promote(std::shared_ptr<IntegerType> &type, std::unique_ptr<Node> &node);
 
     static std::shared_ptr<Type> _resolve_type(const TypeNode &node);
+
+    static TypeNode _to_typenode(const IntegerType &type);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};

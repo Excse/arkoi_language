@@ -76,7 +76,7 @@ private:
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes;
     std::vector<Token> _tokens;
-    size_t _position;
+    int64_t _position;
     bool _failed;
 };
 

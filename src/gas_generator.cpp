@@ -84,7 +84,7 @@ _start:
 
 void GASGenerator::_load(const Operand &operand, const std::string &destination) {
     assert(std::holds_alternative<FPRelative>(operand) || std::holds_alternative<Register>(operand) ||
-           std::holds_alternative<long long>(operand));
+           std::holds_alternative<int64_t>(operand));
     _mov(destination, to_string(operand));
 }
 
