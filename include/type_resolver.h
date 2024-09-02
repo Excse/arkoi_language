@@ -36,13 +36,18 @@ public:
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    std::shared_ptr<Type> _arithmetic_conversion(std::unique_ptr<Node> &left, std::unique_ptr<Node> &right);
+    static std::shared_ptr<Type> _arithmetic_conversion(
+            std::unique_ptr<Node> &left_node, std::shared_ptr<Type> &left_type,
+            std::unique_ptr<Node> &right_node, std::shared_ptr<Type> &right_type);
 
     static void _integer_promote(std::shared_ptr<IntegerType> &type, std::unique_ptr<Node> &node);
 
+    static std::shared_ptr<IntegerType> _cast_node(std::unique_ptr<Node> &node, const std::shared_ptr<IntegerType> &from,
+                                                   const std::shared_ptr<IntegerType> &to);
+
     static std::shared_ptr<Type> _resolve_type(const TypeNode &node);
 
-    static TypeNode _to_typenode(const IntegerType &type);
+    static TypeNode _to_typenode(const std::shared_ptr<Type> &type);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};

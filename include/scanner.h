@@ -63,7 +63,7 @@ private:
     [[nodiscard]] static bool _is_hex(char input);
 
 private:
-    int64_t _position, _start;
+    size_t _position, _start;
     std::string_view _data;
     int64_t _column, _row;
     bool _failed;

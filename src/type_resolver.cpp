@@ -72,108 +72,103 @@ void TypeResolver::visit(IdentifierNode &node) {
 }
 
 void TypeResolver::visit(BinaryNode &node) {
-    auto result = _arithmetic_conversion(node.left(), node.right());
+    // This will set _current_type
+    node.left()->accept(*this);
+    auto left = _current_type;
+
+    // This will set _current_type
+    node.right()->accept(*this);
+    auto right = _current_type;
+
+    auto result = _arithmetic_conversion(node.left(), left, node.right(), right);
     _current_type = result;
 }
 
 void TypeResolver::visit(CastNode &node) {
-    // TODO: Do check if this casting is even allowed.
+    // This will set _current_type
     node.expression()->accept(*this);
-    _current_type = _resolve_type(node.type());
+    auto from = _current_type;
+    node.set_from(_to_typenode(from));
+
+    // TODO: Do check if this casting is even allowed.
+
+    auto result = _resolve_type(node.to());
+    _current_type = result;
 }
 
 void TypeResolver::_integer_promote(std::shared_ptr<IntegerType> &type, std::unique_ptr<Node> &node) {
     if (type->size() >= 32) return;
 
     if (type->sign()) {
-        node = std::make_unique<CastNode>(std::move(node), TypeNode::TYPE_S32);
+        node = std::make_unique<CastNode>(std::move(node), _to_typenode(type), TypeNode::TYPE_S32);
     } else {
-        node = std::make_unique<CastNode>(std::move(node), TypeNode::TYPE_U32);
+        node = std::make_unique<CastNode>(std::move(node), _to_typenode(type), TypeNode::TYPE_U32);
     }
 
     type = std::make_shared<IntegerType>(32, type->sign());
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
-std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(std::unique_ptr<Node> &left_node,
-                                                           std::unique_ptr<Node> &right_node) {
-    // This will set _current_type
-    left_node->accept(*this);
-    auto left = _current_type;
-
-    // This will set _current_type
-    right_node->accept(*this);
-    auto right = _current_type;
-
+std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(
+        std::unique_ptr<Node> &left_node, std::shared_ptr<Type> &left_type,
+        std::unique_ptr<Node> &right_node, std::shared_ptr<Type> &right_type) {
     // TODO: 1. Add Stage 4 for floating-point numbers.
 
     // Stage 5
     // Both operands are converted to a common type C.
-    auto left_integer = std::dynamic_pointer_cast<IntegerType>(left);
-    auto right_integer = std::dynamic_pointer_cast<IntegerType>(right);
-    if (!left_integer || !right_integer) throw std::invalid_argument("This arithmetic conversion is not allowed.");
+    auto t1 = std::dynamic_pointer_cast<IntegerType>(left_type);
+    auto t2 = std::dynamic_pointer_cast<IntegerType>(right_type);
+    if (!t1 || !t2) throw std::invalid_argument("This arithmetic conversion is not allowed.");
 
     // Given the types T1 and T2 as the promoted type (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    _integer_promote(left_integer, left_node);
-    _integer_promote(right_integer, right_node);
+    _integer_promote(t1, left_node);
+    _integer_promote(t2, right_node);
 
     // 1. If T1 and T2 are the same type, C is that type.
-    if (left_integer == right_integer) {
-        return left_integer;
-    }
+    if (*t1 == *t2) return t1;
 
     // 2. If T1 and T2 are both signed integer types or both unsigned integer types, C is the type of greater integer
     //    conversion rank.
-    if (left_integer->sign() == right_integer->sign()) {
-        if (right_integer->size() > left_integer->size()) {
-            left_node = std::make_unique<CastNode>(std::move(left_node), _to_typenode(*right_integer));
-            return right_integer;
-        } else {
-            right_node = std::make_unique<CastNode>(std::move(right_node), _to_typenode(*left_integer));
-            return left_integer;
-        }
+    if (t1->sign() == t2->sign()) {
+        if (t2->size() > t1->size()) return _cast_node(left_node, t1, t2);
+        if (t1->size() > t2->size()) return _cast_node(right_node, t2, t1);
     }
 
     // 3. Otherwise, one type between T1 and T2 is an signed integer type S, the other type is an unsigned integer type U.
     //    Apply the following rules:
-    if (left_integer->sign()) {
-        // 3.1. If the integer conversion rank of U is greater than or equal to the integer conversion rank of S, C is U.
-        if (right_integer->size() >= left_integer->size()) {
-            left_node = std::make_unique<CastNode>(std::move(left_node), _to_typenode(*right_integer));
-            return right_integer;
-        }
+    if (t1->sign()) {
+        // 3.1. If the integer conversion rank of T2 is greater than or equal to the integer conversion rank of T1, C is T2.
+        if (t2->size() >= t1->size()) return _cast_node(left_node, t1, t2);
 
-        // 3.2. Otherwise, if S can represent all of the values of U, C is S.
-        if (left_integer->max() >= right_integer->max()) {
-            right_node = std::make_unique<CastNode>(std::move(right_node), _to_typenode(*left_integer));
-            return left_integer;
-        }
+        // 3.2. Otherwise, if T1 can represent all of the values of T2, C is T1.
+        if (t1->max() >= t2->max()) return _cast_node(right_node, t2, t1);
 
-        // 3.3. Otherwise, C is the unsigned integer type corresponding to S.
-        auto result = std::make_shared<IntegerType>(left_integer->size(), false);
-        left_node = std::make_unique<CastNode>(std::move(left_node), _to_typenode(*result));
-        right_node = std::make_unique<CastNode>(std::move(right_node), _to_typenode(*result));
+        // 3.3. Otherwise, C is the unsigned integer type corresponding to T1.
+        auto result = std::make_shared<IntegerType>(t1->size(), false);
+        _cast_node(left_node, t1, result);
+        _cast_node(right_node, t2, result);
         return result;
     } else {
-        // 3.1. If the integer conversion rank of U is greater than or equal to the integer conversion rank of S, C is U.
-        if (left_integer->size() >= right_integer->size()) {
-            right_node = std::make_unique<CastNode>(std::move(right_node), _to_typenode(*left_integer));
-            return left_integer;
-        }
+        // 3.1. If the integer conversion rank of T1 is greater than or equal to the integer conversion rank of T2, C is T1.
+        if (t1->size() >= t2->size()) return _cast_node(right_node, t2, t1);
 
-        // 3.2. Otherwise, if S can represent all of the values of U, C is S.
-        if (right_integer->max() >= left_integer->max()) {
-            left_node = std::make_unique<CastNode>(std::move(left_node), _to_typenode(*right_integer));
-            return right_integer;
-        }
+        // 3.2. Otherwise, if T2 can represent all of the values of T1, C is T2.
+        if (t2->max() >= t1->max()) return _cast_node(left_node, t1, t2);
 
-        // 3.3. Otherwise, C is the unsigned integer type corresponding to S.
-        auto result = std::make_shared<IntegerType>(right_integer->size(), false);
-        left_node = std::make_unique<CastNode>(std::move(left_node), _to_typenode(*result));
-        right_node = std::make_unique<CastNode>(std::move(right_node), _to_typenode(*result));
+        // 3.3. Otherwise, C is the unsigned integer type corresponding to T2.
+        auto result = std::make_shared<IntegerType>(t2->size(), false);
+        _cast_node(left_node, t1, result);
+        _cast_node(right_node, t2, result);
         return result;
     }
+}
+
+std::shared_ptr<IntegerType> TypeResolver::_cast_node(std::unique_ptr<Node> &node,
+                                                      const std::shared_ptr<IntegerType> &from,
+                                                      const std::shared_ptr<IntegerType> &to) {
+    node = std::make_unique<CastNode>(std::move(node), _to_typenode(from), _to_typenode(to));
+    return to;
 }
 
 std::shared_ptr<Type> TypeResolver::_resolve_type(const TypeNode &node) {
@@ -192,22 +187,24 @@ std::shared_ptr<Type> TypeResolver::_resolve_type(const TypeNode &node) {
     }
 }
 
-TypeNode TypeResolver::_to_typenode(const IntegerType &type) {
-    if (type.sign()) {
-        switch (type.size()) {
-            case 8: return TypeNode::TYPE_S8;
-            case 16: return TypeNode::TYPE_S16;
-            case 32: return TypeNode::TYPE_S32;
-            case 64: return TypeNode::TYPE_S64;
-        }
-    } else {
-        switch (type.size()) {
-            case 8: return TypeNode::TYPE_U8;
-            case 16: return TypeNode::TYPE_U16;
-            case 32: return TypeNode::TYPE_U32;
-            case 64: return TypeNode::TYPE_U64;
+TypeNode TypeResolver::_to_typenode(const std::shared_ptr<Type> &type) {
+    if (auto integer = std::dynamic_pointer_cast<IntegerType>(type)) {
+        if (integer->sign()) {
+            switch (integer->size()) {
+                case 8: return TypeNode::TYPE_S8;
+                case 16: return TypeNode::TYPE_S16;
+                case 32: return TypeNode::TYPE_S32;
+                case 64: return TypeNode::TYPE_S64;
+            }
+        } else {
+            switch (integer->size()) {
+                case 8: return TypeNode::TYPE_U8;
+                case 16: return TypeNode::TYPE_U16;
+                case 32: return TypeNode::TYPE_U32;
+                case 64: return TypeNode::TYPE_U64;
+            }
         }
     }
 
-    throw std::invalid_argument("This integer type is not supported.");
+    throw std::invalid_argument("This type is not supported.");
 }

@@ -179,18 +179,26 @@ private:
 
 class CastNode : public Node {
 public:
-    CastNode(std::unique_ptr<Node> &&expression, TypeNode type)
-            : _expression(std::move(expression)), _type(std::move(type)) {}
+    CastNode(std::unique_ptr<Node> &&expression, TypeNode from, TypeNode to)
+            : _expression(std::move(expression)), _from(std::move(from)), _to(std::move(to)) {}
+
+    CastNode(std::unique_ptr<Node> &&expression, TypeNode to)
+            : _expression(std::move(expression)), _from(), _to(std::move(to)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    [[nodiscard]] TypeNode &type() { return _type; }
+    void set_from(TypeNode node) { _from = std::move(node); }
+
+    [[nodiscard]] std::optional<TypeNode> &from() { return _from; }
+
+    [[nodiscard]] TypeNode &to() { return _to; }
 
 private:
     std::unique_ptr<Node> _expression;
-    TypeNode _type;
+    std::optional<TypeNode> _from;
+    TypeNode _to;
 };
 
 #endif //ARKOI_LANGUAGE_AST_H
