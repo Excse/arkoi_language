@@ -2,12 +2,6 @@
 
 #include "symbol_table.h"
 
-Parser::Parser(std::vector<Token> &&tokens)
-        : _scopes(), _tokens(std::move(tokens)), _position(0), _failed(false) {
-    auto is_useless = [](const Token &token) { return token.type() == Token::Type::Comment; };
-    _tokens.erase(std::remove_if(_tokens.begin(), _tokens.end(), is_useless), _tokens.end());
-}
-
 ProgramNode Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
     auto own_scope = _enter_scope();
@@ -281,6 +275,7 @@ std::shared_ptr<SymbolTable> Parser::_exit_scope() {
 }
 
 const Token &Parser::_current() {
+    while (_tokens[_position].type() == Token::Type::Comment) _next();
     return _tokens[_position];
 }
 

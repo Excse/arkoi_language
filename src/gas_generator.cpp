@@ -1,6 +1,7 @@
 #include "gas_generator.h"
 
 #include <sstream>
+#include <cassert>
 
 #include "instruction.h"
 #include "il_printer.h"
@@ -19,7 +20,7 @@ void GASGenerator::visit(BeginInstruction &instruction) {
     _comment_instruction(instruction);
     _push("rbp");
     _mov("rbp", "rsp");
-    if(instruction.size() != 0) {
+    if (instruction.size() != 0) {
         _sub("rsp", to_string(instruction.size()));
     }
     _newline();
@@ -82,37 +83,14 @@ _start:
 }
 
 void GASGenerator::_load(const Operand &operand, const std::string &destination) {
-    std::visit(match{
-            [&](const std::shared_ptr<Symbol> &) {
-                throw std::invalid_argument("Cannot load symbols.");
-            },
-            [&](const FPRelative &relative) {
-                _mov(destination, to_string(relative));
-            },
-            [&](const Register &reg) {
-                _mov(destination, to_string(reg));
-            },
-            [&](const long long &value) {
-                _mov(destination, to_string(value));
-            },
-    }, operand);
+    assert(std::holds_alternative<FPRelative>(operand) || std::holds_alternative<Register>(operand) ||
+           std::holds_alternative<long long>(operand));
+    _mov(destination, to_string(operand));
 }
 
 void GASGenerator::_store(const Operand &operand, const std::string &src) {
-    std::visit(match{
-            [&](const std::shared_ptr<Symbol> &) {
-                throw std::invalid_argument("Cannot store into symbols.");
-            },
-            [&](const long long &) {
-                throw std::invalid_argument("Cannot store into constants.");
-            },
-            [&](const FPRelative &relative) {
-                _mov(to_string(relative), src);
-            },
-            [&](const Register &reg) {
-                _mov(to_string(reg), src);
-            },
-    }, operand);
+    assert(std::holds_alternative<FPRelative>(operand) || std::holds_alternative<Register>(operand));
+    _mov(to_string(operand), src);
 }
 
 void GASGenerator::_mov(const std::string &destination, const std::string &src) {

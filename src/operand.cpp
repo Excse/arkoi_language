@@ -94,11 +94,10 @@ std::ostream &operator<<(std::ostream &os, const Register &reg) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {
-    std::visit(match{
-            [&](const std::shared_ptr<Symbol> &symbol) { os << *symbol; },
-            [&](const FPRelative &relative) { os << relative; },
-            [&](const long long &value) { os << value; },
-            [&](const Register &reg) { os << reg; },
-    }, operand);
+    if (auto symbol = std::get_if<std::shared_ptr<Symbol>>(&operand)) {
+        return os << *symbol->get();
+    }
+
+    std::visit([&os](const auto &arg) { os << arg; }, operand);
     return os;
 }

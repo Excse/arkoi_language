@@ -11,7 +11,8 @@
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> &&tokens);
+    explicit Parser(std::vector<Token> &&tokens)
+            : _scopes(), _tokens(std::move(tokens)), _position(0), _failed(false) {}
 
     [[nodiscard]] ProgramNode parse_program();
 

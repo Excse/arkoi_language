@@ -12,9 +12,7 @@ void IRGenerator::visit(const ProgramNode &node) {
 }
 
 void IRGenerator::visit(const FunctionNode &node) {
-    auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup<FunctionSymbol>(to_string(node.name().value()));
-
+    auto symbol = _scopes.top()->lookup<FunctionSymbol>(to_string(node.name().value()));
     auto label = std::make_unique<LabelInstruction>(symbol);
     _instructions.emplace_back(std::move(label));
 
@@ -51,9 +49,7 @@ void IRGenerator::visit(const ReturnNode &node) {
 }
 
 void IRGenerator::visit(const IdentifierNode &node) {
-    auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup<ParameterSymbol>(to_string(node.value().value()));
-
+    auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.value().value()));
     _current_operand = symbol;
 }
 

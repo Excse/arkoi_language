@@ -12,8 +12,7 @@ void TypeResolver::visit(const ProgramNode &node) {
 }
 
 void TypeResolver::visit(const FunctionNode &node) {
-    auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup<FunctionSymbol>(to_string(node.name().value()));
+    auto symbol = _scopes.top()->lookup<FunctionSymbol>(to_string(node.name().value()));
 
     _scopes.push(node.table());
 
@@ -46,10 +45,9 @@ void TypeResolver::visit(const ParameterNode &node) {
     node.type().accept(*this);
     auto type = _current_type;
 
-    auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup<ParameterSymbol>(to_string(node.name().value()));
-
+    auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.name().value()));
     auto parameter = std::static_pointer_cast<ParameterSymbol>(symbol);
+
     parameter->set_type(type);
 }
 
@@ -67,9 +65,7 @@ void TypeResolver::visit(const ReturnNode &node) {
 }
 
 void TypeResolver::visit(const IdentifierNode &node) {
-    auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup<ParameterSymbol>(to_string(node.value().value()));
-
+    auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.value().value()));
     if (auto parameter = std::dynamic_pointer_cast<ParameterSymbol>(symbol)) {
         _current_type = parameter->type();
     }

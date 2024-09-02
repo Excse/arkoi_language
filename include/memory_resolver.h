@@ -6,8 +6,7 @@
 
 class MemoryResolver : public InstructionVisitor {
 public:
-    explicit MemoryResolver()
-            : _resolved(), _current_begin(nullptr), _parameter_offset(0) {}
+    MemoryResolver() : _resolved(), _current_begin(nullptr), _parameter_offset(0) {}
 
     void visit(LabelInstruction &) override {};
 
@@ -17,7 +16,7 @@ public:
 
     void visit(BinaryInstruction &instruction) override;
 
-    void visit(EndInstruction &node) override;
+    void visit(EndInstruction &) override {};
 
     [[nodiscard]] const auto &resolved() const { return _resolved; }
 

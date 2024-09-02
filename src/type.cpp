@@ -12,7 +12,7 @@ bool IntegerType::can_implicitly_cast_to(const Type &to) const {
 
 bool IntegerType::equals(const Type &other) const {
     const auto *to_check = dynamic_cast<const IntegerType *>(&other);
-    if(!to_check) return false;
+    if (!to_check) return false;
 
     return _size == to_check->_size && _sign == to_check->_sign;
 }
