@@ -16,8 +16,8 @@ public:
     template<typename SymbolType, typename... Args>
     std::shared_ptr<Symbol> &insert(const std::string &name, Args &&... args);
 
-    [[nodiscard]] std::shared_ptr<Symbol> &lookup(const std::string &name,
-                                                  const std::function<bool(const Symbol &)> &predicate);
+    template<typename... SymbolTypes>
+    [[nodiscard]] std::shared_ptr<Symbol> &lookup(const std::string &name);
 
 private:
     std::unordered_map<std::string, std::shared_ptr<Symbol>> _symbols;

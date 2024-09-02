@@ -12,10 +12,8 @@ void IRGenerator::visit(const ProgramNode &node) {
 }
 
 void IRGenerator::visit(const FunctionNode &node) {
-    auto is_function = [](const Symbol &symbol) { return std::holds_alternative<FunctionSymbol>(symbol); };
-
     auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup(std::string(node.name().value()), is_function);
+    auto symbol = current_scope->lookup<FunctionSymbol>(to_string(node.name().value()));
 
     auto label = std::make_unique<LabelInstruction>(symbol);
     _instructions.emplace_back(std::move(label));
@@ -31,8 +29,6 @@ void IRGenerator::visit(const FunctionNode &node) {
     _instructions.emplace_back(std::move(end));
 }
 
-void IRGenerator::visit(const TypeNode &) {}
-
 void IRGenerator::visit(const BlockNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
@@ -40,8 +36,6 @@ void IRGenerator::visit(const BlockNode &node) {
     }
     _scopes.pop();
 }
-
-void IRGenerator::visit(const ParameterNode &) {}
 
 void IRGenerator::visit(const NumberNode &node) {
     auto value = std::string(node.value().value());
@@ -57,10 +51,8 @@ void IRGenerator::visit(const ReturnNode &node) {
 }
 
 void IRGenerator::visit(const IdentifierNode &node) {
-    auto is_parameter = [](const Symbol &symbol) { return std::holds_alternative<ParameterSymbol>(symbol); };
-
     auto current_scope = _scopes.top();
-    auto symbol = current_scope->lookup(std::string(node.value().value()), is_parameter);
+    auto symbol = current_scope->lookup<ParameterSymbol>(to_string(node.value().value()));
 
     _current_operand = symbol;
 }

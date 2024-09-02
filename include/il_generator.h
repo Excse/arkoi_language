@@ -14,11 +14,11 @@ public:
 
     void visit(const FunctionNode &node) override;
 
-    void visit(const TypeNode &node) override;
+    void visit(const TypeNode &) override {};
 
     void visit(const BlockNode &node) override;
 
-    void visit(const ParameterNode &node) override;
+    void visit(const ParameterNode &) override {};
 
     void visit(const NumberNode &node) override;
 

@@ -11,7 +11,7 @@ GASGenerator::GASGenerator(bool debug) : _output(), _printer(), _debug(debug) {
 }
 
 void GASGenerator::visit(LabelInstruction &instruction) {
-    _comment_instruction(instruction);
+    _newline();
     _label(instruction.symbol());
 }
 
@@ -68,8 +68,7 @@ void GASGenerator::visit(EndInstruction &instruction) {
 }
 
 void GASGenerator::_preamble() {
-    _output << R"(
-.intel_syntax noprefix
+    _output << R"(.intel_syntax noprefix
 .section .text
 .global _start
 
@@ -121,7 +120,7 @@ void GASGenerator::_mov(const std::string &destination, const std::string &src) 
 }
 
 void GASGenerator::_label(const std::shared_ptr<Symbol> &symbol) {
-    _output << "\n" << *symbol << ":\n";
+    _output << *symbol << ":\n";
 }
 
 void GASGenerator::_pop(const std::string &destination) {

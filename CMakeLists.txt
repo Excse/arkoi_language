@@ -14,13 +14,14 @@ add_executable(arkoi_language
         src/token.cpp
         src/parser.cpp
         src/symbol_table.tpp
-        src/symbol_table.cpp
-        src/name_resolution.tpp
-        src/name_resolution.cpp
+        src/name_resolver.tpp
+        src/name_resolver.cpp
         src/instruction.cpp
         src/il_generator.cpp
         src/il_printer.cpp
         src/gas_generator.cpp
         src/memory_resolver.cpp
         src/operand.cpp
-        src/symbol.cpp)
+        src/symbol.cpp
+        src/type_resolver.cpp
+        src/type.cpp)
