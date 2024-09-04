@@ -24,9 +24,9 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &statements() const { return _statements; };
+    [[nodiscard]] auto &statements() const { return _statements; };
 
-    [[nodiscard]] const auto &table() const { return _table; };
+    [[nodiscard]] auto &table() const { return _table; };
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
@@ -51,7 +51,7 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &token() const { return _token; }
+    [[nodiscard]] auto &token() const { return _token; }
 
 private:
     Token _token;
@@ -64,9 +64,9 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &statements() const { return _statements; };
+    [[nodiscard]] auto &statements() const { return _statements; };
 
-    [[nodiscard]] const auto &table() const { return _table; };
+    [[nodiscard]] auto &table() const { return _table; };
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
@@ -79,9 +79,9 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &name() const { return _name; }
+    [[nodiscard]] auto &name() const { return _name; }
 
-    [[nodiscard]] TypeNode &type() { return _type; }
+    [[nodiscard]] auto &type() { return _type; }
 
 private:
     TypeNode _type;
@@ -97,15 +97,15 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &return_type() const { return _return_type; }
-
-    [[nodiscard]] const auto &table() const { return _table; }
+    [[nodiscard]] auto &return_type() { return _return_type; }
 
     [[nodiscard]] auto &parameters() { return _parameters; }
 
-    [[nodiscard]] const auto &name() const { return _name; }
+    [[nodiscard]] auto &table() const { return _table; }
 
-    [[nodiscard]] BlockNode &block() { return _block; }
+    [[nodiscard]] auto &name() const { return _name; }
+
+    [[nodiscard]] auto &block() { return _block; }
 
 private:
     std::vector<ParameterNode> _parameters;
@@ -121,7 +121,9 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &expression() const { return *_expression; }
+    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
+
+    [[nodiscard]] auto &expression() const { return _expression; }
 
 private:
     std::unique_ptr<Node> _expression;
@@ -133,7 +135,7 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &value() const { return _value; }
+    [[nodiscard]] auto &value() const { return _value; }
 
 private:
     Token _value;
@@ -145,7 +147,7 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &value() const { return _value; }
+    [[nodiscard]] auto &value() const { return _value; }
 
 private:
     Token _value;
@@ -166,11 +168,15 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &type() const { return _type; }
+    [[nodiscard]] auto &type() const { return _type; }
 
-    [[nodiscard]] auto &right() { return _right; }
+    void set_right(std::unique_ptr<Node> &&node) { _right = std::move(node); }
 
-    [[nodiscard]] auto &left() { return _left; }
+    [[nodiscard]] auto &right() const { return _right; }
+
+    void set_left(std::unique_ptr<Node> &&node) { _left = std::move(node); }
+
+    [[nodiscard]] auto &left() const { return _left; }
 
 private:
     std::unique_ptr<Node> _left, _right;
@@ -191,9 +197,9 @@ public:
 
     void set_from(TypeNode node) { _from = std::move(node); }
 
-    [[nodiscard]] std::optional<TypeNode> &from() { return _from; }
+    [[nodiscard]] auto &from() { return _from; }
 
-    [[nodiscard]] TypeNode &to() { return _to; }
+    [[nodiscard]] auto &to() { return _to; }
 
 private:
     std::unique_ptr<Node> _expression;

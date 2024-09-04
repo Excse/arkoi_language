@@ -22,7 +22,7 @@ public:
 
     void visit(EndInstruction &instruction) override;
 
-    [[nodiscard]] const auto &output() const { return _output; }
+    [[nodiscard]] auto &output() const { return _output; }
 
 private:
     void _preamble();

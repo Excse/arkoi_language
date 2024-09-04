@@ -30,7 +30,7 @@ public:
 
     void visit(CastNode &node) override;
 
-    [[nodiscard]] const auto &instructions() const { return _instructions; }
+    [[nodiscard]] auto &instructions() const { return _instructions; }
 
 private:
     std::shared_ptr<Symbol> _make_temporary();

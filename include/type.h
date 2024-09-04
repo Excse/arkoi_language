@@ -12,8 +12,6 @@ class Type {
 public:
     virtual ~Type() = default;
 
-    [[nodiscard]] virtual bool can_implicitly_cast_to(const Type &other) const = 0;
-
     [[nodiscard]] virtual bool equals(const Type &other) const = 0;
 
     friend bool operator==(const Type &lhs, const Type &rhs) {
@@ -44,8 +42,6 @@ public:
     explicit IntegerType(uint64_t value) : _size(32), _sign(false) {
         while (_size < 64 && value > max()) _size *= 2;
     }
-
-    [[nodiscard]] bool can_implicitly_cast_to(const Type &to) const override;
 
     [[nodiscard]] bool equals(const Type &other) const override;
 

@@ -18,7 +18,7 @@ public:
 
     void visit(EndInstruction &) override {};
 
-    [[nodiscard]] const auto &resolved() const { return _resolved; }
+    [[nodiscard]] auto &resolved() const { return _resolved; }
 
 private:
     Operand _resolve_operand(const Operand &operand);

@@ -13,18 +13,15 @@ void IRGenerator::visit(ProgramNode &node) {
 
 void IRGenerator::visit(FunctionNode &node) {
     auto symbol = _scopes.top()->lookup<FunctionSymbol>(to_string(node.name().value()));
-    auto label = std::make_unique<LabelInstruction>(symbol);
-    _instructions.emplace_back(std::move(label));
+    _instructions.emplace_back(std::make_unique<LabelInstruction>(symbol));
 
-    auto begin = std::make_unique<BeginInstruction>();
-    _instructions.emplace_back(std::move(begin));
+    _instructions.emplace_back(std::make_unique<BeginInstruction>());
 
     _scopes.push(node.table());
     node.block().accept(*this);
     _scopes.pop();
 
-    auto end = std::make_unique<EndInstruction>();
-    _instructions.emplace_back(std::move(end));
+    _instructions.emplace_back(std::make_unique<EndInstruction>());
 }
 
 void IRGenerator::visit(BlockNode &node) {
@@ -42,10 +39,9 @@ void IRGenerator::visit(NumberNode &node) {
 
 void IRGenerator::visit(ReturnNode &node) {
     // This will set _current_operand
-    node.expression().accept(*this);
+    node.expression()->accept(*this);
 
-    auto instruction = std::make_unique<ReturnInstruction>(std::move(_current_operand));
-    _instructions.emplace_back(std::move(instruction));
+    _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand)));
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
@@ -64,11 +60,9 @@ void IRGenerator::visit(BinaryNode &node) {
 
     auto type = BinaryInstruction::node_to_instruction(node.type());
     auto result = _make_temporary();
-
-    auto instruction = std::make_unique<BinaryInstruction>(result, std::move(left), type, std::move(right));
-    _instructions.emplace_back(std::move(instruction));
-
     _current_operand = result;
+
+    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, std::move(left), type, std::move(right)));
 }
 
 void IRGenerator::visit(CastNode &) {

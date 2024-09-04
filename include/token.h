@@ -49,9 +49,9 @@ public:
     Token(Type type, int64_t column, int64_t row, std::string_view value)
             : _value(value), _column(column), _row(row), _type(type) {}
 
-    [[nodiscard]] const auto &value() const { return _value; }
+    [[nodiscard]] auto &value() const { return _value; }
 
-    [[nodiscard]] const auto &type() const { return _type; }
+    [[nodiscard]] auto &type() const { return _type; }
 
     [[nodiscard]] auto column() const { return _column; }
 

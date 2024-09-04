@@ -21,7 +21,7 @@ public:
 
     void clear();
 
-    [[nodiscard]] const auto &output() const { return _output; }
+    [[nodiscard]] auto &output() const { return _output; }
 
 private:
     std::stringstream _output;

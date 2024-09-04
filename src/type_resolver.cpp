@@ -28,6 +28,10 @@ void TypeResolver::visit(FunctionNode &node) {
     auto function = std::static_pointer_cast<FunctionSymbol>(symbol);
     function->set_parameter_types(std::move(parameter_types));
 
+    // This will set _current_type
+    node.return_type().accept(*this);
+    _return_type = _current_type;
+
     node.block().accept(*this);
     _scopes.pop();
 }
@@ -61,7 +65,21 @@ void TypeResolver::visit(NumberNode &node) {
 }
 
 void TypeResolver::visit(ReturnNode &node) {
-    node.expression().accept(*this);
+    node.expression()->accept(*this);
+    auto type = _current_type;
+
+    if (*type == *_return_type) {
+        return;
+    }
+
+    if (!_can_implicit_convert(type, _return_type)) {
+        throw std::runtime_error("Return statement has a wrong return type.");
+    }
+
+    // We assure to override the const casted node with a new node. Thus, this exception is legal.
+    auto &expression = const_cast<std::unique_ptr<Node> &>(node.expression());
+    node.set_expression(std::make_unique<CastNode>(std::move(expression), _to_typenode(type),
+                                                   _to_typenode(_return_type)));
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
@@ -80,50 +98,62 @@ void TypeResolver::visit(BinaryNode &node) {
     node.right()->accept(*this);
     auto right = _current_type;
 
-    auto result = _arithmetic_conversion(node.left(), left, node.right(), right);
+    auto result = _arithmetic_conversion(left, right);
     _current_type = result;
+
+    if (*left != *result) {
+        // We assure to override the const casted node with a new node. Thus, this exception is legal.
+        auto &left_node = const_cast<std::unique_ptr<Node> &>(node.left());
+        node.set_left(std::make_unique<CastNode>(std::move(left_node), _to_typenode(left), _to_typenode(result)));
+    }
+
+    if (*right != *result) {
+        // We assure to override the const casted node with a new node. Thus, this exception is legal.
+        auto &right_node = const_cast<std::unique_ptr<Node> &>(node.right());
+        node.set_right(std::make_unique<CastNode>(std::move(right_node), _to_typenode(right), _to_typenode(result)));
+    }
 }
 
 void TypeResolver::visit(CastNode &node) {
-    // This will set _current_type
-    node.expression()->accept(*this);
-    auto from = _current_type;
-    node.set_from(_to_typenode(from));
+    std::shared_ptr<Type> from;
+    if(!node.from()) {
+        // This will set _current_type
+        node.expression()->accept(*this);
+        from = _current_type;
 
-    // TODO: Do check if this casting is even allowed.
+        node.set_from(_to_typenode(from));
+    } else {
+        // This will set _current_type
+        node.from().value().accept(*this);
+        from = _current_type;
+    }
+
+    // This will set _current_type
+    node.to().accept(*this);
+    auto to = _current_type;
+
+    if(!_can_implicit_convert(from, to)) {
+        throw std::runtime_error("This cast is not valid.");
+    }
 
     auto result = _resolve_type(node.to());
     _current_type = result;
 }
 
-void TypeResolver::_integer_promote(std::shared_ptr<IntegerType> &type, std::unique_ptr<Node> &node) {
-    if (type->size() >= 32) return;
-
-    if (type->sign()) {
-        node = std::make_unique<CastNode>(std::move(node), _to_typenode(type), TypeNode::TYPE_S32);
-    } else {
-        node = std::make_unique<CastNode>(std::move(node), _to_typenode(type), TypeNode::TYPE_U32);
-    }
-
-    type = std::make_shared<IntegerType>(32, type->sign());
-}
-
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
-std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(
-        std::unique_ptr<Node> &left_node, std::shared_ptr<Type> &left_type,
-        std::unique_ptr<Node> &right_node, std::shared_ptr<Type> &right_type) {
+std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr<Type> &left_type,
+                                                           const std::shared_ptr<Type> &right_type) {
     // TODO: 1. Add Stage 4 for floating-point numbers.
 
-    // Stage 5
-    // Both operands are converted to a common type C.
+    // Stage 5: Both operands are converted to a common type C.
     auto t1 = std::dynamic_pointer_cast<IntegerType>(left_type);
     auto t2 = std::dynamic_pointer_cast<IntegerType>(right_type);
     if (!t1 || !t2) throw std::invalid_argument("This arithmetic conversion is not allowed.");
 
     // Given the types T1 and T2 as the promoted type (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    _integer_promote(t1, left_node);
-    _integer_promote(t2, right_node);
+    if (t1->size() < 32) t1 = std::make_shared<IntegerType>(32, t1->sign());
+    if (t2->size() < 32) t2 = std::make_shared<IntegerType>(32, t2->sign());
 
     // 1. If T1 and T2 are the same type, C is that type.
     if (*t1 == *t2) return t1;
@@ -131,44 +161,36 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(
     // 2. If T1 and T2 are both signed integer types or both unsigned integer types, C is the type of greater integer
     //    conversion rank.
     if (t1->sign() == t2->sign()) {
-        if (t2->size() > t1->size()) return _cast_node(left_node, t1, t2);
-        if (t1->size() > t2->size()) return _cast_node(right_node, t2, t1);
+        if (t2->size() > t1->size()) return t2;
+        else return t1;
     }
 
     // 3. Otherwise, one type between T1 and T2 is an signed integer type S, the other type is an unsigned integer type U.
     //    Apply the following rules:
-    if (t1->sign()) {
-        // 3.1. If the integer conversion rank of T2 is greater than or equal to the integer conversion rank of T1, C is T2.
-        if (t2->size() >= t1->size()) return _cast_node(left_node, t1, t2);
+    auto _signed = t1->sign() ? t1 : t2;
+    auto _unsigned = !t1->sign() ? t1 : t2;
 
-        // 3.2. Otherwise, if T1 can represent all of the values of T2, C is T1.
-        if (t1->max() >= t2->max()) return _cast_node(right_node, t2, t1);
+    // 3.1. If the integer conversion rank of U is greater than or equal to the integer conversion rank of S, C is U.
+    if (_unsigned->size() >= _signed->size()) return _unsigned;
 
-        // 3.3. Otherwise, C is the unsigned integer type corresponding to T1.
-        auto result = std::make_shared<IntegerType>(t1->size(), false);
-        _cast_node(left_node, t1, result);
-        _cast_node(right_node, t2, result);
-        return result;
-    } else {
-        // 3.1. If the integer conversion rank of T1 is greater than or equal to the integer conversion rank of T2, C is T1.
-        if (t1->size() >= t2->size()) return _cast_node(right_node, t2, t1);
+    // 3.2. Otherwise, if S can represent all of the values of U, C is S.
+    if (_signed->max() >= _unsigned->max()) return _signed;
 
-        // 3.2. Otherwise, if T2 can represent all of the values of T1, C is T2.
-        if (t2->max() >= t1->max()) return _cast_node(left_node, t1, t2);
-
-        // 3.3. Otherwise, C is the unsigned integer type corresponding to T2.
-        auto result = std::make_shared<IntegerType>(t2->size(), false);
-        _cast_node(left_node, t1, result);
-        _cast_node(right_node, t2, result);
-        return result;
-    }
+    // 3.3. Otherwise, C is the unsigned integer type corresponding to S.
+    return std::make_shared<IntegerType>(_signed->size(), false);
 }
 
-std::shared_ptr<IntegerType> TypeResolver::_cast_node(std::unique_ptr<Node> &node,
-                                                      const std::shared_ptr<IntegerType> &from,
-                                                      const std::shared_ptr<IntegerType> &to) {
-    node = std::make_unique<CastNode>(std::move(node), _to_typenode(from), _to_typenode(to));
-    return to;
+// https://en.cppreference.com/w/cpp/language/implicit_conversion
+bool TypeResolver::_can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination) {
+    // A prvalue of an integer type or of an unscoped enumeration type can be converted to any other integer type. If the
+    // conversion is listed under integral promotions, it is a promotion and not a conversion.
+    if (std::dynamic_pointer_cast<IntegerType>(destination) && std::dynamic_pointer_cast<IntegerType>(from)) {
+        return true;
+    }
+
+    // TODO: Implement floating-point implicit conversion check
+
+    return false;
 }
 
 std::shared_ptr<Type> TypeResolver::_resolve_type(const TypeNode &node) {

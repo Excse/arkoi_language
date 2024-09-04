@@ -25,7 +25,7 @@ public:
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
     std::shared_ptr<Symbol> _symbol;
@@ -39,7 +39,7 @@ public:
 
     void set_value(Operand &&operand) { _value = operand; };
 
-    [[nodiscard]] const auto &value() const { return _value; };
+    [[nodiscard]] auto &value() const { return _value; };
 
 private:
     Operand _value;
@@ -60,19 +60,19 @@ public:
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] const auto &type() const { return _type; };
+    [[nodiscard]] auto &type() const { return _type; };
 
     void set_result(Operand &&operand) { _result = operand; };
 
-    [[nodiscard]] const auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; };
 
     void set_right(Operand &&operand) { _right = operand; };
 
-    [[nodiscard]] const auto &right() const { return _right; };
+    [[nodiscard]] auto &right() const { return _right; };
 
     void set_left(Operand &&operand) { _left = operand; };
 
-    [[nodiscard]] const auto &left() const { return _left; };
+    [[nodiscard]] auto &left() const { return _left; };
 
     [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
 

@@ -12,7 +12,7 @@ public:
 
     virtual ~Symbol() = default;
 
-    [[nodiscard]] const auto &name() const { return _name; }
+    [[nodiscard]] auto &name() const { return _name; }
 
 private:
     std::string _name;
@@ -24,7 +24,7 @@ public:
 
     void set_parameter_types(std::vector<std::shared_ptr<Type>> &&types) { _parameter_types = std::move(types); }
 
-    [[nodiscard]] const auto &parameter_types() const { return _parameter_types; }
+    [[nodiscard]] auto &parameter_types() const { return _parameter_types; }
 
 private:
     std::vector<std::shared_ptr<Type>> _parameter_types;
@@ -38,7 +38,7 @@ public:
 
     void set_type(std::shared_ptr<Type> type) { _type = std::move(type); }
 
-    [[nodiscard]] const auto &type() const { return _type; }
+    [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::shared_ptr<Type> _type;

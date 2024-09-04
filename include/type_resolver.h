@@ -11,7 +11,7 @@
 
 class TypeResolver : public NodeVisitor {
 public:
-    TypeResolver() : _scopes(), _current_type(), _failed(false) {}
+    TypeResolver() : _scopes(), _current_type(), _return_type(), _failed(false) {}
 
     void visit(ProgramNode &node) override;
 
@@ -36,14 +36,10 @@ public:
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    static std::shared_ptr<Type> _arithmetic_conversion(
-            std::unique_ptr<Node> &left_node, std::shared_ptr<Type> &left_type,
-            std::unique_ptr<Node> &right_node, std::shared_ptr<Type> &right_type);
+    static std::shared_ptr<Type> _arithmetic_conversion(const std::shared_ptr<Type> &left_type,
+                                                        const std::shared_ptr<Type> &right_type);
 
-    static void _integer_promote(std::shared_ptr<IntegerType> &type, std::unique_ptr<Node> &node);
-
-    static std::shared_ptr<IntegerType> _cast_node(std::unique_ptr<Node> &node, const std::shared_ptr<IntegerType> &from,
-                                                   const std::shared_ptr<IntegerType> &to);
+    static bool _can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination);
 
     static std::shared_ptr<Type> _resolve_type(const TypeNode &node);
 
@@ -52,6 +48,7 @@ private:
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};
     std::shared_ptr<Type> _current_type;
+    std::shared_ptr<Type> _return_type;
     bool _failed;
 };
 

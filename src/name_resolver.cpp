@@ -38,7 +38,7 @@ void NameResolver::visit(IdentifierNode &node) {
 }
 
 void NameResolver::visit(ReturnNode &node) {
-    node.expression().accept(*this);
+    node.expression()->accept(*this);
 }
 
 void NameResolver::visit(BinaryNode &node) {

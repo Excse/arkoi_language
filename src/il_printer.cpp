@@ -19,7 +19,7 @@ void ILPrinter::visit(ReturnInstruction &instruction) {
 }
 
 void ILPrinter::visit(BinaryInstruction &instruction) {
-    _output << instruction.result() << " = " << instruction.left() << " " << to_string(instruction.type()) << " "
+    _output << instruction.result() << " = " << to_string(instruction.type()) << " " << instruction.left() << ", "
             << instruction.right() << "\n";
 }
 

@@ -12,10 +12,10 @@ BinaryInstruction::Type BinaryInstruction::node_to_instruction(BinaryNode::Type 
 
 std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type) {
     switch (type) {
-        case BinaryInstruction::Type::Add: return os << "+";
-        case BinaryInstruction::Type::Sub: return os << "-";
-        case BinaryInstruction::Type::Mul: return os << "*";
-        case BinaryInstruction::Type::Div: return os << "/";
+        case BinaryInstruction::Type::Add: return os << "add";
+        case BinaryInstruction::Type::Sub: return os << "sub";
+        case BinaryInstruction::Type::Mul: return os << "mul";
+        case BinaryInstruction::Type::Div: return os << "div";
         default: throw std::invalid_argument("Binary Instruction not implemented.");
     }
 }
