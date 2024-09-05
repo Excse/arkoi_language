@@ -3,47 +3,75 @@
 
 #include <iostream>
 #include <variant>
+#include <cassert>
 #include <memory>
 
 #include "symbol_table.h"
 
-enum class Register {
-    RAX, EAX, AX, AL,
-    RCX, ECX, CX, CL,
-    RDX, EDX, DX, DL,
-    RBX, EBX, BX, BL,
-    RSI, ESI, SI, SIL,
-    RDI, EDI, DI, DIL,
-    RSP, ESP, SP, SPL,
-    RBP, EBP, BP, BPL,
-    R8, R8D, R8W, R8B,
-    R9, R9D, R9W, R9B,
-    R10, R10D, R10W, R10B,
-    R11, R11D, R11W, R11B,
-    R12, R12D, R12W, R12B,
-    R13, R13D, R13W, R13B,
-    R14, R14D, R14W, R14B,
-    R15, R15D, R15W, R15B,
-};
-
-class FPRelative {
+class Register {
 public:
-    explicit FPRelative(int64_t offset, bool sign) : _offset(offset), _sign(sign) {}
+    static const Register RBP;
+    static const Register RDI;
+    static const Register RSI;
+    static const Register RDX;
+    static const Register RCX;
+    static const Register R8;
+    static const Register R9;
 
-    [[nodiscard]] auto offset() const { return _offset; }
+    enum class Base {
+        A, C, D, B, SI, DI, SP, BP, R8, R9, R10, R11, R12, R13, R14, R15
+    };
 
-    [[nodiscard]] auto sign() const { return _sign; }
+    enum class Size {
+        BYTE, WORD, DWORD, QWORD
+    };
+
+public:
+    Register(Base base, Size size) : _size(size), _base(base) {}
+
+    [[nodiscard]] auto &size() const { return _size; }
+
+    [[nodiscard]] auto &base() const { return _base; }
+
+    friend std::ostream &operator<<(std::ostream &os, const Register::Base &reg);
+
+    friend std::ostream &operator<<(std::ostream &os, const Register &reg);
 
 private:
-    int64_t _offset;
-    bool _sign;
+    Size _size;
+    Base _base;
 };
 
-using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, uint64_t, int64_t, uint32_t, int32_t, Register>;
+class Memory {
+public:
+    explicit Memory(Register base, int64_t index, int64_t scale, int64_t displacement)
+            : _index(index), _scale(scale), _displacement(displacement), _base(base) {}
 
-std::ostream &operator<<(std::ostream &os, const FPRelative &operand);
+    explicit Memory(Register base, int64_t displacement)
+            : _index(1), _scale(1), _displacement(displacement), _base(base) {}
 
-std::ostream &operator<<(std::ostream &os, const Register &reg);
+    [[nodiscard]] auto displacement() const { return _displacement; }
+
+    [[nodiscard]] auto scale() const { return _scale; }
+
+    [[nodiscard]] auto index() const { return _index; }
+
+    [[nodiscard]] auto &base() const { return _base; }
+
+    friend std::ostream &operator<<(std::ostream &os, const Memory &memory);
+
+private:
+    int64_t _index, _scale, _displacement;
+    Register _base;
+};
+
+using Immediate = std::variant<uint64_t, int64_t, uint32_t, int32_t>;
+
+std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
+
+using Operand = std::variant<std::shared_ptr<Symbol>, Memory, Immediate, Register>;
+
+Register::Size register_size(const Operand &operand);
 
 std::ostream &operator<<(std::ostream &os, const Operand &operand);
 

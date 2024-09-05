@@ -76,12 +76,12 @@ public:
 
     [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
 
+    friend std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type);
+
 private:
     Operand _result, _left, _right;
     Type _type;
 };
-
-std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type);
 
 class BeginInstruction : public Instruction {
 public:

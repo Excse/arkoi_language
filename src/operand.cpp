@@ -2,95 +2,114 @@
 
 #include "utils.h"
 
-std::ostream &operator<<(std::ostream &os, const FPRelative &operand) {
-    os << "[" << Register::RBP << (operand.sign() ? " + " : " - ") << operand.offset() << "]";
+const Register Register::RBP = Register(Register::Base::BP, Register::Size::QWORD);
+const Register Register::RDI = Register(Register::Base::DI, Register::Size::QWORD);
+const Register Register::RSI = Register(Register::Base::SI, Register::Size::QWORD);
+const Register Register::RDX = Register(Register::Base::D, Register::Size::QWORD);
+const Register Register::RCX = Register(Register::Base::C, Register::Size::QWORD);
+const Register Register::R8 = Register(Register::Base::R8, Register::Size::QWORD);
+const Register Register::R9 = Register(Register::Base::R9, Register::Size::QWORD);
+
+std::ostream &operator<<(std::ostream &os, const Memory &memory) {
+    os << "[" << memory.base();
+
+    if (memory.index() != 1) {
+        os << " + " << memory.index();
+    }
+
+    if (memory.scale() != 1) {
+        os << " * " << memory.scale();
+    }
+
+    if (memory.displacement() < 0) {
+        os << " - " << std::abs(memory.displacement());
+    } else if (memory.displacement() > 0) {
+        os << " + " << std::abs(memory.displacement());
+    }
+
+    os << "]";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
+    std::visit([&os](const auto &arg) { os << arg; }, immediate);
     return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const Register &reg) {
-    switch (reg) {
-        case Register::RAX: return os << "rax";
-        case Register::EAX: return os << "eax";
-        case Register::AX: return os << "ax";
-        case Register::AL: return os << "al";
-
-        case Register::RCX: return os << "rcx";
-        case Register::ECX: return os << "ecx";
-        case Register::CX: return os << "cx";
-        case Register::CL: return os << "cl";
-
-        case Register::RDX: return os << "rdx";
-        case Register::EDX: return os << "edx";
-        case Register::DX: return os << "dx";
-        case Register::DL: return os << "dl";
-
-        case Register::RBX: return os << "rbx";
-        case Register::EBX: return os << "ebx";
-        case Register::BX: return os << "bx";
-        case Register::BL: return os << "bl";
-
-        case Register::RSI: return os << "rsi";
-        case Register::ESI: return os << "esi";
-        case Register::SI: return os << "si";
-        case Register::SIL: return os << "sil";
-
-        case Register::RDI: return os << "rdi";
-        case Register::EDI: return os << "edi";
-        case Register::DI: return os << "di";
-        case Register::DIL: return os << "dil";
-
-        case Register::RSP: return os << "rsp";
-        case Register::ESP: return os << "esp";
-        case Register::SP: return os << "sp";
-        case Register::SPL: return os << "spl";
-
-        case Register::RBP: return os << "rbp";
-        case Register::EBP: return os << "ebp";
-        case Register::BP: return os << "bp";
-        case Register::BPL: return os << "bpl";
-
-        case Register::R8: return os << "r8";
-        case Register::R8D: return os << "r8d";
-        case Register::R8W: return os << "r8w";
-        case Register::R8B: return os << "r8b";
-
-        case Register::R9: return os << "r9";
-        case Register::R9D: return os << "r9d";
-        case Register::R9W: return os << "r9w";
-        case Register::R9B: return os << "r9b";
-
-        case Register::R10: return os << "r10";
-        case Register::R10D: return os << "r10d";
-        case Register::R10W: return os << "r10w";
-        case Register::R10B: return os << "r10b";
-
-        case Register::R11: return os << "r11";
-        case Register::R11D: return os << "r11d";
-        case Register::R11W: return os << "r11w";
-        case Register::R11B: return os << "r11b";
-
-        case Register::R12: return os << "r12";
-        case Register::R12D: return os << "r12d";
-        case Register::R12W: return os << "r12w";
-        case Register::R12B: return os << "r12b";
-
-        case Register::R13: return os << "r13";
-        case Register::R13D: return os << "r13d";
-        case Register::R13W: return os << "r13w";
-        case Register::R13B: return os << "r13b";
-
-        case Register::R14: return os << "r14";
-        case Register::R14D: return os << "r14d";
-        case Register::R14W: return os << "r14w";
-        case Register::R14B: return os << "r14b";
-
-        case Register::R15: return os << "r15";
-        case Register::R15D: return os << "r15d";
-        case Register::R15W: return os << "r15w";
-        case Register::R15B: return os << "r15b";
-
-        default: throw std::invalid_argument("This register is not printable.");
+    if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
+        switch (reg.size()) {
+            case Register::Size::BYTE: return os << reg.base() << "b";
+            case Register::Size::WORD: return os << reg.base() << "w";
+            case Register::Size::DWORD: return os << reg.base() << "d";
+            case Register::Size::QWORD: return os << reg.base();
+            default: throw std::invalid_argument("This is not a valid register size.");
+        }
+    } else if (reg.base() >= Register::Base::SI && reg.base() <= Register::Base::BP) {
+        switch (reg.size()) {
+            case Register::Size::BYTE: return os << reg.base() << "l";
+            case Register::Size::WORD: return os << reg.base();
+            case Register::Size::DWORD: return os << "e" << reg.base();
+            case Register::Size::QWORD: return os << "r" << reg.base();
+            default: throw std::invalid_argument("This is not a valid register size.");
+        }
+    } else if (reg.base() >= Register::Base::A && reg.base() <= Register::Base::B) {
+        switch (reg.size()) {
+            case Register::Size::BYTE: return os << reg.base() << "l";
+            case Register::Size::WORD: return os << reg.base() << "x";
+            case Register::Size::DWORD: return os << "e" << reg.base() << "x";
+            case Register::Size::QWORD: return os << "r" << reg.base() << "x";
+            default: throw std::invalid_argument("This is not a valid register size.");
+        }
     }
+
+    throw std::invalid_argument("This register is not implemented.");
+}
+
+std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
+    switch (reg) {
+        case Register::Base::A: return os << "a";
+        case Register::Base::C: return os << "c";
+        case Register::Base::D: return os << "d";
+        case Register::Base::B: return os << "b";
+        case Register::Base::SI: return os << "si";
+        case Register::Base::DI: return os << "di";
+        case Register::Base::SP: return os << "sp";
+        case Register::Base::BP: return os << "bp";
+        case Register::Base::R8: return os << "r8";
+        case Register::Base::R9: return os << "r9";
+        case Register::Base::R10: return os << "r10";
+        case Register::Base::R11: return os << "r11";
+        case Register::Base::R12: return os << "r12";
+        case Register::Base::R13: return os << "r13";
+        case Register::Base::R14: return os << "r14";
+        case Register::Base::R15: return os << "r15";
+        default: throw std::invalid_argument("This register is not implemented.");
+    }
+}
+
+Register::Size register_size(const Operand &operand) {
+    if (auto immediate = std::get_if<Immediate>(&operand)) {
+        if (std::holds_alternative<uint32_t>(*immediate)) return Register::Size::DWORD;
+        if (std::holds_alternative<int32_t>(*immediate)) return Register::Size::DWORD;
+        if (std::holds_alternative<int64_t>(*immediate)) return Register::Size::QWORD;
+        if (std::holds_alternative<int64_t>(*immediate)) return Register::Size::QWORD;
+    } else if(auto reg = std::get_if<Register>(&operand)) {
+        return reg->size();
+    } else if(auto symbol = std::get_if<std::shared_ptr<Symbol>>(&operand)) {
+        if(auto parameter = std::dynamic_pointer_cast<ParameterSymbol>(*symbol)) {
+            if(auto integer = std::dynamic_pointer_cast<IntegerType>(parameter->type())) {
+                switch(integer->size()) {
+                    case 8: return Register::Size::BYTE;
+                    case 16: return Register::Size::WORD;
+                    case 32: return Register::Size::DWORD;
+                    case 64: return Register::Size::QWORD;
+                }
+            }
+        }
+    }
+
+    throw std::invalid_argument("This operand is not implemented.");
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {

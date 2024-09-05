@@ -29,7 +29,7 @@ public:
 private:
     void _preamble();
 
-    void _load(const Operand &operand, const std::string &destination);
+    void _load(const Operand &operand, const Register::Base &destination);
 
     void _store(const Operand &operand, const std::string &src);
 

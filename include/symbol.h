@@ -14,6 +14,8 @@ public:
 
     [[nodiscard]] auto &name() const { return _name; }
 
+    friend std::ostream &operator<<(std::ostream &os, const Symbol &symbol);
+
 private:
     std::string _name;
 };
@@ -49,7 +51,5 @@ class TemporarySymbol : public Symbol {
 public:
     explicit TemporarySymbol(std::string name) : Symbol(std::move(name)) {}
 };
-
-std::ostream &operator<<(std::ostream &os, const Symbol &symbol);
 
 #endif //ARKOI_LANGUAGE_SYMBOL_H

@@ -61,14 +61,14 @@ public:
 
     [[nodiscard]] static std::optional<Token::Type> lookup_special_1(char value);
 
+    friend std::ostream &operator<<(std::ostream &os, const Token &token);
+
+    friend std::ostream &operator<<(std::ostream &os, const Type &type);
+
 private:
     std::string_view _value;
     int64_t _column, _row;
     Type _type;
 };
-
-std::ostream &operator<<(std::ostream &os, const Token::Type &type);
-
-std::ostream &operator<<(std::ostream &os, const Token &token);
 
 #endif //ARKOI_LANGUAGE_TOKEN_H

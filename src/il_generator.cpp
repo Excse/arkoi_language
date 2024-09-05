@@ -40,16 +40,16 @@ void IRGenerator::visit(NumberNode &node) {
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            _current_operand = (int64_t) value;
+            _current_operand = Immediate((int64_t) value);
         } else {
-            _current_operand = (int32_t) value;
+            _current_operand = Immediate((int32_t) value);
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            _current_operand = (uint64_t) value;
+            _current_operand = Immediate((uint64_t) value);
         } else {
-            _current_operand = (uint32_t) value;
+            _current_operand = Immediate((uint32_t) value);
         }
     }
 }
