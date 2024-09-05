@@ -1,5 +1,6 @@
 #include "il_generator.h"
 
+#include "type_resolver.h"
 #include "utils.h"
 #include "ast.h"
 
@@ -33,8 +34,24 @@ void IRGenerator::visit(BlockNode &node) {
 }
 
 void IRGenerator::visit(NumberNode &node) {
-    auto value = std::string(node.value().value());
-    _current_operand = std::stoll(value);
+    auto number_string = to_string(node.value().value());
+    auto sign = !number_string.starts_with('-');
+
+    if (sign) {
+        auto value = std::stoll(number_string);
+        if (value > std::numeric_limits<int32_t>::max()) {
+            _current_operand = (int64_t) value;
+        } else {
+            _current_operand = (int32_t) value;
+        }
+    } else {
+        auto value = std::stoull(number_string);
+        if (value > std::numeric_limits<uint32_t>::max()) {
+            _current_operand = (uint64_t) value;
+        } else {
+            _current_operand = (uint32_t) value;
+        }
+    }
 }
 
 void IRGenerator::visit(ReturnNode &node) {
@@ -65,9 +82,15 @@ void IRGenerator::visit(BinaryNode &node) {
     _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, std::move(left), type, std::move(right)));
 }
 
-void IRGenerator::visit(CastNode &) {
-    // TODO: Implement casting.
-    throw std::invalid_argument("Not implemented now.");
+void IRGenerator::visit(CastNode &node) {
+    node.expression()->accept(*this);
+    auto expression = _current_operand;
+
+    auto result = _make_temporary();
+    _current_operand = result;
+
+    _instructions.emplace_back(std::make_unique<CastInstruction>(result, TypeResolver::_resolve_type(node.to()),
+                                                                 std::move(expression)));
 }
 
 std::shared_ptr<Symbol> IRGenerator::_make_temporary() {

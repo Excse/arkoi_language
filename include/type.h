@@ -39,10 +39,6 @@ public:
 public:
     IntegerType(int64_t size, bool sign) : _size(size), _sign(sign) {}
 
-    explicit IntegerType(uint64_t value) : _size(32), _sign(false) {
-        while (_size < 64 && value > max()) _size *= 2;
-    }
-
     [[nodiscard]] bool equals(const Type &other) const override;
 
     [[nodiscard]] uint64_t max() const {

@@ -20,6 +20,11 @@ void MemoryResolver::visit(BinaryInstruction &instruction) {
     instruction.set_right(_resolve_operand(instruction.right()));
 }
 
+void MemoryResolver::visit(CastInstruction &instruction) {
+    instruction.set_result(_resolve_operand(instruction.result()));
+    instruction.set_expression(_resolve_operand(instruction.expression()));
+}
+
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
     if (!std::holds_alternative<std::shared_ptr<Symbol>>(operand)) {
         return operand;

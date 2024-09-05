@@ -60,6 +60,10 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     _newline();
 }
 
+void GASGenerator::visit(CastInstruction &) {
+    throw std::runtime_error("Cast Instruction not implemented yet.");
+}
+
 void GASGenerator::visit(EndInstruction &instruction) {
     _comment_instruction(instruction);
     _mov("rsp", "rbp");

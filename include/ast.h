@@ -185,25 +185,17 @@ private:
 
 class CastNode : public Node {
 public:
-    CastNode(std::unique_ptr<Node> &&expression, TypeNode from, TypeNode to)
-            : _expression(std::move(expression)), _from(std::move(from)), _to(std::move(to)) {}
-
     CastNode(std::unique_ptr<Node> &&expression, TypeNode to)
-            : _expression(std::move(expression)), _from(), _to(std::move(to)) {}
+            : _expression(std::move(expression)), _to(std::move(to)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_from(TypeNode node) { _from = std::move(node); }
-
-    [[nodiscard]] auto &from() { return _from; }
-
     [[nodiscard]] auto &to() { return _to; }
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<TypeNode> _from;
     TypeNode _to;
 };
 

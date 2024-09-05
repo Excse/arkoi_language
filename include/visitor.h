@@ -58,21 +58,25 @@ class LabelInstruction;
 
 class BeginInstruction;
 
+class CastInstruction;
+
 class EndInstruction;
 
 class InstructionVisitor {
 public:
     virtual ~InstructionVisitor() = default;
 
-    virtual void visit(LabelInstruction &node) = 0;
+    virtual void visit(LabelInstruction &instruction) = 0;
 
-    virtual void visit(BeginInstruction &node) = 0;
+    virtual void visit(BeginInstruction &instruction) = 0;
 
-    virtual void visit(ReturnInstruction &node) = 0;
+    virtual void visit(ReturnInstruction &instruction) = 0;
 
-    virtual void visit(BinaryInstruction &node) = 0;
+    virtual void visit(BinaryInstruction &instruction) = 0;
 
-    virtual void visit(EndInstruction &node) = 0;
+    virtual void visit(EndInstruction &instruction) = 0;
+
+    virtual void visit(CastInstruction &instruction) = 0;
 };
 
 #endif //ARKOI_LANGUAGE_VISITOR_H

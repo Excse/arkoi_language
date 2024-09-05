@@ -35,15 +35,15 @@ public:
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
+    static std::shared_ptr<Type> _resolve_type(const TypeNode &node);
+
+    static TypeNode _to_typenode(const std::shared_ptr<Type> &type);
+
 private:
     static std::shared_ptr<Type> _arithmetic_conversion(const std::shared_ptr<Type> &left_type,
                                                         const std::shared_ptr<Type> &right_type);
 
     static bool _can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination);
-
-    static std::shared_ptr<Type> _resolve_type(const TypeNode &node);
-
-    static TypeNode _to_typenode(const std::shared_ptr<Type> &type);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};

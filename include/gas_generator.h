@@ -20,6 +20,8 @@ public:
 
     void visit(BinaryInstruction &instruction) override;
 
+    void visit(CastInstruction &instruction) override;
+
     void visit(EndInstruction &instruction) override;
 
     [[nodiscard]] auto &output() const { return _output; }

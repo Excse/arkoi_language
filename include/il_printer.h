@@ -17,6 +17,8 @@ public:
 
     void visit(BinaryInstruction &instruction) override;
 
+    void visit(CastInstruction &instruction) override;
+
     void visit(EndInstruction &node) override;
 
     void clear();

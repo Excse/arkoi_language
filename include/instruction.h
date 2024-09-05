@@ -102,4 +102,26 @@ public:
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 };
 
+class CastInstruction : public Instruction {
+public:
+    CastInstruction(Operand &&result, const std::shared_ptr<Type> &type, Operand &&expression)
+            : _result(std::move(result)), _expression(std::move(expression)), _type(type) {}
+
+    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_expression(Operand &&operand) { _expression = operand; };
+
+    [[nodiscard]] auto &expression() const { return _expression; };
+
+    void set_result(Operand &&operand) { _result = operand; };
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &type() const { return _type; };
+
+private:
+    Operand _result, _expression;
+    std::shared_ptr<Type> _type;
+};
+
 #endif //ARKOI_LANGUAGE_INSTRUCTION_H

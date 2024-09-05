@@ -39,7 +39,7 @@ Token Scanner::_next_token() {
     auto current = _current_char();
     if (std::isalpha(current)) {
         return _lex_identifier();
-    } else if (current == '\'' || std::isdigit(current)) {
+    } else if (current == '-' || std::isdigit(current)) {
         return _lex_number();
     } else if (current == '#') {
         return _lex_comment();
@@ -74,6 +74,10 @@ Token Scanner::_lex_identifier() {
 Token Scanner::_lex_number() {
     Location start = _mark_start();
 
+    if (_try_consume('-') && !_try_consume(_is_digit)) {
+        return {Token::Type::Minus, start.column, start.row, _current_view()};
+    }
+
     _consume(_is_digit, "0-9");
 
     if (_try_consume('x')) {
@@ -81,6 +85,17 @@ Token Scanner::_lex_number() {
         while (_try_consume(_is_hex));
     } else {
         while (_try_consume(_is_digit));
+    }
+
+    auto number = std::string(_current_view());
+    try {
+        if (number.starts_with("-")) {
+            std::stoll(number);
+        } else {
+            std::stoull(number);
+        }
+    } catch (const std::out_of_range &error) {
+        throw NumberOutOfRange(number);
     }
 
     return {Token::Type::Number, start.column, start.row, _current_view()};

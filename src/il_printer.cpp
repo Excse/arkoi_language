@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "type_resolver.h"
 #include "symbol_table.h"
 #include "instruction.h"
 #include "utils.h"
@@ -21,6 +22,11 @@ void ILPrinter::visit(ReturnInstruction &instruction) {
 void ILPrinter::visit(BinaryInstruction &instruction) {
     _output << instruction.result() << " = " << to_string(instruction.type()) << " " << instruction.left() << ", "
             << instruction.right() << "\n";
+}
+
+void ILPrinter::visit(CastInstruction &instruction) {
+    _output << instruction.result() << " = CAST " << instruction.expression() << " TO "
+            << to_string(TypeResolver::_to_typenode(instruction.type()).token().value()) << "\n";
 }
 
 void ILPrinter::visit(EndInstruction &) {

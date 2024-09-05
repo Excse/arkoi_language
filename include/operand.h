@@ -39,7 +39,7 @@ private:
     bool _sign;
 };
 
-using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, int64_t, Register>;
+using Operand = std::variant<std::shared_ptr<Symbol>, FPRelative, uint64_t, int64_t, uint32_t, int32_t, Register>;
 
 std::ostream &operator<<(std::ostream &os, const FPRelative &operand);
 
