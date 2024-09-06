@@ -29,7 +29,7 @@ public:
 private:
     void _preamble();
 
-    void _load(const Operand &operand, const Register::Base &destination);
+    void _load(const Operand &operand, const Register &destination);
 
     void _store(const Operand &operand, const std::string &src);
 
@@ -56,8 +56,8 @@ private:
     void _newline();
 
 private:
-    std::stringstream _output;
-    ILPrinter _printer;
+    std::stringstream _output{};
+    ILPrinter _printer{};
     bool _debug;
 };
 

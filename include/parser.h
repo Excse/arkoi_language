@@ -11,8 +11,7 @@
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> &&tokens)
-            : _scopes(), _tokens(std::move(tokens)), _position(0), _failed(false) {}
+    explicit Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
 
     [[nodiscard]] ProgramNode parse_program();
 
@@ -74,10 +73,10 @@ private:
     [[nodiscard]] static bool is_term_operator(const Token &token);
 
 private:
-    std::stack<std::shared_ptr<SymbolTable>> _scopes;
+    std::stack<std::shared_ptr<SymbolTable>> _scopes{};
     std::vector<Token> _tokens;
-    size_t _position;
-    bool _failed;
+    size_t _position{};
+    bool _failed{};
 };
 
 class ParserError : public std::runtime_error {

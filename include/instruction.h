@@ -55,7 +55,7 @@ public:
     };
 
 public:
-    BinaryInstruction(Operand &&result, Operand &&left, Type type, Operand &&right)
+    BinaryInstruction(Operand result, Operand left, Type type, Operand right)
             : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
@@ -104,7 +104,7 @@ public:
 
 class CastInstruction : public Instruction {
 public:
-    CastInstruction(Operand &&result, const std::shared_ptr<Type> &type, Operand &&expression)
+    CastInstruction(Operand result, const std::shared_ptr<Type> &type, Operand expression)
             : _result(std::move(result)), _expression(std::move(expression)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }

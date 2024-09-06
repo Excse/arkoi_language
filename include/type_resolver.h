@@ -11,8 +11,6 @@
 
 class TypeResolver : public NodeVisitor {
 public:
-    TypeResolver() : _scopes(), _current_type(), _return_type(), _failed(false) {}
-
     void visit(ProgramNode &node) override;
 
     void visit(FunctionNode &node) override;
@@ -46,10 +44,9 @@ private:
     static bool _can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination);
 
 private:
-    std::stack<std::shared_ptr<SymbolTable>> _scopes{};
-    std::shared_ptr<Type> _current_type;
-    std::shared_ptr<Type> _return_type;
-    bool _failed;
+    std::shared_ptr<Type> _current_type{};
+    std::shared_ptr<Type> _return_type{};
+    bool _failed{};
 };
 
 

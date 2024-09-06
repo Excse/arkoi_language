@@ -14,8 +14,7 @@ private:
     };
 
 public:
-    explicit Scanner(std::string_view data)
-            : _position(0), _start(0), _data(data), _column(0), _row(0), _failed(false) {}
+    explicit Scanner(std::string_view data) : _data(data) {}
 
     [[nodiscard]] std::vector<Token> tokenize();
 
@@ -63,10 +62,10 @@ private:
     [[nodiscard]] static bool _is_hex(char input);
 
 private:
-    size_t _position, _start;
+    size_t _position{}, _start{};
+    int64_t _column{}, _row{};
     std::string_view _data;
-    int64_t _column, _row;
-    bool _failed;
+    bool _failed{};
 };
 
 class ScannerError : public std::runtime_error {

@@ -23,11 +23,11 @@ void MemoryResolver::visit(CastInstruction &instruction) {
 }
 
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
-    if (!std::holds_alternative<std::shared_ptr<Symbol>>(operand)) {
+    if (!std::holds_alternative<std::shared_ptr<Symbol>>(operand.data())) {
         return operand;
     }
 
-    auto symbol = std::get<std::shared_ptr<Symbol>>(operand);
+    auto symbol = std::get<std::shared_ptr<Symbol>>(operand.data());
     auto result = _resolved.find(symbol);
     if (result != _resolved.end()) {
         return result->second;
@@ -36,7 +36,7 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
     if (std::dynamic_pointer_cast<TemporarySymbol>(symbol)) {
         _current_begin->increase_size(8);
 
-        auto location = Memory(Register::RBP, -_current_begin->size());
+        auto location = Operand(Memory(Register::RBP, -_current_begin->size()));
         _resolved[symbol] = location;
 
         return location;
@@ -46,7 +46,7 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
 
         // TODO: This is only for integer typed parameters
         if (parameter->index() < 6) {
-            auto reg = INT_REG_ORDER[parameter->index()];
+            auto reg = Operand(INT_REG_ORDER[parameter->index()]);
             _resolved[symbol] = reg;
 
             return reg;
@@ -54,7 +54,7 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
 
         _parameter_offset += 8;
 
-        auto location = Memory(Register::RBP, _parameter_offset);
+        auto location = Operand(Memory(Register::RBP, _parameter_offset));
         _resolved[symbol] = location;
 
         return location;

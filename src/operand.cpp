@@ -2,6 +2,7 @@
 
 #include "utils.h"
 
+const Register Register::RAX = Register(Register::Base::A, Register::Size::QWORD);
 const Register Register::RBP = Register(Register::Base::BP, Register::Size::QWORD);
 const Register Register::RDI = Register(Register::Base::DI, Register::Size::QWORD);
 const Register Register::RSI = Register(Register::Base::SI, Register::Size::QWORD);
@@ -9,6 +10,7 @@ const Register Register::RDX = Register(Register::Base::D, Register::Size::QWORD
 const Register Register::RCX = Register(Register::Base::C, Register::Size::QWORD);
 const Register Register::R8 = Register(Register::Base::R8, Register::Size::QWORD);
 const Register Register::R9 = Register(Register::Base::R9, Register::Size::QWORD);
+const Register Register::R11 = Register(Register::Base::R11, Register::Size::QWORD);
 
 std::ostream &operator<<(std::ostream &os, const Memory &memory) {
     os << "[" << memory.base();
@@ -32,7 +34,7 @@ std::ostream &operator<<(std::ostream &os, const Memory &memory) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
-    std::visit([&os](const auto &arg) { os << arg; }, immediate);
+    std::visit([&os](const auto &arg) { os << arg; }, immediate.data());
     return os;
 }
 
@@ -88,35 +90,11 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
     }
 }
 
-Register::Size register_size(const Operand &operand) {
-    if (auto immediate = std::get_if<Immediate>(&operand)) {
-        if (std::holds_alternative<uint32_t>(*immediate)) return Register::Size::DWORD;
-        if (std::holds_alternative<int32_t>(*immediate)) return Register::Size::DWORD;
-        if (std::holds_alternative<int64_t>(*immediate)) return Register::Size::QWORD;
-        if (std::holds_alternative<int64_t>(*immediate)) return Register::Size::QWORD;
-    } else if(auto reg = std::get_if<Register>(&operand)) {
-        return reg->size();
-    } else if(auto symbol = std::get_if<std::shared_ptr<Symbol>>(&operand)) {
-        if(auto parameter = std::dynamic_pointer_cast<ParameterSymbol>(*symbol)) {
-            if(auto integer = std::dynamic_pointer_cast<IntegerType>(parameter->type())) {
-                switch(integer->size()) {
-                    case 8: return Register::Size::BYTE;
-                    case 16: return Register::Size::WORD;
-                    case 32: return Register::Size::DWORD;
-                    case 64: return Register::Size::QWORD;
-                }
-            }
-        }
-    }
-
-    throw std::invalid_argument("This operand is not implemented.");
-}
-
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {
-    if (auto symbol = std::get_if<std::shared_ptr<Symbol>>(&operand)) {
+    if (auto symbol = std::get_if<std::shared_ptr<Symbol>>(&operand.data())) {
         return os << *symbol->get();
     }
 
-    std::visit([&os](const auto &arg) { os << arg; }, operand);
+    std::visit([&os](const auto &arg) { os << arg; }, operand.data());
     return os;
 }

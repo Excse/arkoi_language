@@ -7,8 +7,6 @@
 
 class ILPrinter : public InstructionVisitor {
 public:
-    ILPrinter() : _output() {}
-
     void visit(LabelInstruction &instruction) override;
 
     void visit(BeginInstruction &instruction) override;
@@ -26,7 +24,7 @@ public:
     [[nodiscard]] auto &output() const { return _output; }
 
 private:
-    std::stringstream _output;
+    std::stringstream _output{};
 };
 
 #endif //ARKOI_LANGUAGE_IL_PRINTER_H

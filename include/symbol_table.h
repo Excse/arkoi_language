@@ -11,7 +11,7 @@
 
 class SymbolTable {
 public:
-    explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _symbols(), _parent(std::move(parent)) {}
+    explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
 
     template<typename SymbolType, typename... Args>
     std::shared_ptr<Symbol> &insert(const std::string &name, Args &&... args);
@@ -20,7 +20,7 @@ public:
     [[nodiscard]] std::shared_ptr<Symbol> &lookup(const std::string &name);
 
 private:
-    std::unordered_map<std::string, std::shared_ptr<Symbol>> _symbols;
+    std::unordered_map<std::string, std::shared_ptr<Symbol>> _symbols{};
     std::shared_ptr<SymbolTable> _parent;
 };
 

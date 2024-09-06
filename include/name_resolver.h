@@ -9,8 +9,6 @@
 
 class NameResolver : public NodeVisitor {
 public:
-    NameResolver() : _scopes(), _failed(false) {}
-
     void visit(ProgramNode &node) override;
 
     void visit(FunctionNode &node) override;
@@ -34,14 +32,14 @@ public:
     [[nodiscard]] auto has_failed() const { return _failed; }
 
     template<typename SymbolType, typename... Args>
-    void _check_non_existence(const Token &token, Args &&... args);
+    [[nodiscard]] std::shared_ptr<Symbol> _check_non_existence(const Token &token, Args &&... args);
 
     template<typename... SymbolTypes>
-    void _check_existence(const Token &token);
+    [[nodiscard]] std::shared_ptr<Symbol> _check_existence(const Token &token);
 
 private:
-    std::stack<std::shared_ptr<SymbolTable>> _scopes;
-    bool _failed;
+    std::stack<std::shared_ptr<SymbolTable>> _scopes{};
+    bool _failed{};
 };
 
 #include "../src/name_resolver.tpp"

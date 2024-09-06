@@ -5,16 +5,13 @@
 #include "ast.h"
 
 void IRGenerator::visit(ProgramNode &node) {
-    _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
-    _scopes.pop();
 }
 
 void IRGenerator::visit(FunctionNode &node) {
-    auto symbol = _scopes.top()->lookup<FunctionSymbol>(to_string(node.name().value()));
-    _instructions.emplace_back(std::make_unique<LabelInstruction>(symbol));
+    _instructions.emplace_back(std::make_unique<LabelInstruction>(node.symbol()));
 
     _instructions.emplace_back(std::make_unique<BeginInstruction>());
 
@@ -40,16 +37,16 @@ void IRGenerator::visit(NumberNode &node) {
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            _current_operand = Immediate((int64_t) value);
+            _current_operand = Operand(Immediate((int64_t) value));
         } else {
-            _current_operand = Immediate((int32_t) value);
+            _current_operand = Operand(Immediate((int32_t) value));
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            _current_operand = Immediate((uint64_t) value);
+            _current_operand = Operand(Immediate((uint64_t) value));
         } else {
-            _current_operand = Immediate((uint32_t) value);
+            _current_operand = Operand(Immediate((uint32_t) value));
         }
     }
 }
@@ -62,8 +59,7 @@ void IRGenerator::visit(ReturnNode &node) {
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
-    auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.value().value()));
-    _current_operand = symbol;
+    _current_operand = Operand(node.symbol());
 }
 
 void IRGenerator::visit(BinaryNode &node) {
@@ -79,26 +75,26 @@ void IRGenerator::visit(BinaryNode &node) {
     auto result = _make_temporary();
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, std::move(left), type, std::move(right)));
+    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right));
 }
 
 void IRGenerator::visit(CastNode &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
+    auto type = TypeResolver::_resolve_type(node.to());
     auto result = _make_temporary();
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<CastInstruction>(result, TypeResolver::_resolve_type(node.to()),
-                                                                 std::move(expression)));
+    _instructions.emplace_back(std::make_unique<CastInstruction>(result, type, expression));
 }
 
-std::shared_ptr<Symbol> IRGenerator::_make_temporary() {
+Operand IRGenerator::_make_temporary() {
     auto scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);
     auto symbol = scope->insert<TemporarySymbol>(name);
     _temp_index++;
 
-    return symbol;
+    return Operand(symbol);
 }

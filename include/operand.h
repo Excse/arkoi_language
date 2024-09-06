@@ -2,6 +2,7 @@
 #define ARKOI_LANGUAGE_OPERAND_H
 
 #include <iostream>
+#include <utility>
 #include <variant>
 #include <cassert>
 #include <memory>
@@ -10,6 +11,7 @@
 
 class Register {
 public:
+    static const Register RAX;
     static const Register RBP;
     static const Register RDI;
     static const Register RSI;
@@ -17,6 +19,7 @@ public:
     static const Register RCX;
     static const Register R8;
     static const Register R9;
+    static const Register R11;
 
     enum class Base {
         A, C, D, B, SI, DI, SP, BP, R8, R9, R10, R11, R12, R13, R14, R15
@@ -65,14 +68,35 @@ private:
     Register _base;
 };
 
-using Immediate = std::variant<uint64_t, int64_t, uint32_t, int32_t>;
+class Immediate {
+public:
+    using Data = std::variant<uint64_t, int64_t, uint32_t, int32_t>;
 
-std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
+    explicit Immediate(Data data) : _data(data) {}
 
-using Operand = std::variant<std::shared_ptr<Symbol>, Memory, Immediate, Register>;
+    [[nodiscard]] auto &data() const { return _data; }
 
-Register::Size register_size(const Operand &operand);
+    friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
 
-std::ostream &operator<<(std::ostream &os, const Operand &operand);
+private:
+    Data _data;
+};
+
+class Operand {
+public:
+    using Data = std::variant<std::shared_ptr<Symbol>, Memory, Immediate, Register>;
+
+public:
+    explicit Operand(Data data) : _data(std::move(data)) {}
+
+    explicit Operand() : _data() {}
+
+    [[nodiscard]] auto &data() const { return _data; }
+
+    friend std::ostream &operator<<(std::ostream &os, const Operand &operand);
+
+private:
+    Data _data;
+};
 
 #endif //ARKOI_LANGUAGE_OPERAND_H

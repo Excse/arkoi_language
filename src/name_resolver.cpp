@@ -12,13 +12,15 @@ void NameResolver::visit(ProgramNode &node) {
 }
 
 void NameResolver::visit(FunctionNode &node) {
-    _check_non_existence<FunctionSymbol>(node.name());
+    auto function_symbol = _check_non_existence<FunctionSymbol>(node.name());
+    node.set_symbol(function_symbol);
 
     _scopes.push(node.table());
 
     for (size_t index = 0; index < node.parameters().size(); index++) {
-        const auto &parameter = node.parameters()[index];
-        _check_non_existence<ParameterSymbol>(parameter.name(), index);
+        auto &parameter = node.parameters()[index];
+        auto parameter_symbol = _check_non_existence<ParameterSymbol>(parameter.name(), index);
+        parameter.set_symbol(parameter_symbol);
     }
 
     node.block().accept(*this);
@@ -34,7 +36,8 @@ void NameResolver::visit(BlockNode &node) {
 }
 
 void NameResolver::visit(IdentifierNode &node) {
-    _check_existence<ParameterSymbol>(node.value());
+    auto symbol = _check_existence<ParameterSymbol>(node.value());
+    node.set_symbol(symbol);
 }
 
 void NameResolver::visit(ReturnNode &node) {

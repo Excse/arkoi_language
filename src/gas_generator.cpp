@@ -7,7 +7,7 @@
 #include "il_printer.h"
 #include "utils.h"
 
-GASGenerator::GASGenerator(bool debug) : _output(), _printer(), _debug(debug) {
+GASGenerator::GASGenerator(bool debug) : _debug(debug) {
     _preamble();
 }
 
@@ -28,14 +28,14 @@ void GASGenerator::visit(BeginInstruction &instruction) {
 
 void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
-    _load(instruction.value(), Register::Base::A);
+    _load(instruction.value(), Register::RAX);
     _newline();
 }
 
 void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
-    _load(instruction.left(), Register::Base::A);
-    _load(instruction.right(), Register::Base::R11);
+    _load(instruction.left(), Register::RAX);
+    _load(instruction.right(), Register::R11);
 
     switch (instruction.type()) {
         case BinaryInstruction::Type::Add: {
@@ -86,16 +86,14 @@ _start:
 )";
 }
 
-void GASGenerator::_load(const Operand &operand, const Register::Base &destination) {
-    assert(std::holds_alternative<Memory>(operand) || std::holds_alternative<Register>(operand) ||
-           std::holds_alternative<Immediate>(operand));
-
-    auto reg = Register(destination, Register::Size::QWORD);
-    _mov(to_string(reg), to_string(operand));
+void GASGenerator::_load(const Operand &operand, const Register &destination) {
+    assert(std::holds_alternative<Memory>(operand.data()) || std::holds_alternative<Register>(operand.data()) ||
+           std::holds_alternative<Immediate>(operand.data()));
+    _mov(to_string(destination), to_string(operand));
 }
 
 void GASGenerator::_store(const Operand &operand, const std::string &src) {
-    assert(std::holds_alternative<Memory>(operand) || std::holds_alternative<Register>(operand));
+    assert(std::holds_alternative<Memory>(operand.data()) || std::holds_alternative<Register>(operand.data()));
     _mov(to_string(operand), src);
 }
 

@@ -10,6 +10,8 @@
 
 class SymbolTable;
 
+class Symbol;
+
 class Node {
 public:
     virtual ~Node() = default;
@@ -79,11 +81,16 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
+    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
+
     [[nodiscard]] auto &name() const { return _name; }
 
     [[nodiscard]] auto &type() { return _type; }
 
 private:
+    std::shared_ptr<Symbol> _symbol{};
     TypeNode _type;
     Token _name;
 };
@@ -93,13 +100,17 @@ public:
     FunctionNode(Token name, std::vector<ParameterNode> &&parameters, TypeNode return_type, BlockNode &&block,
                  std::shared_ptr<SymbolTable> table)
             : _parameters(std::move(parameters)), _table(std::move(table)), _return_type(std::move(return_type)),
-              _block(std::move(block)), _name(name) {}
+            _block(std::move(block)), _name(name) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &return_type() { return _return_type; }
 
     [[nodiscard]] auto &parameters() { return _parameters; }
+
+    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
 
     [[nodiscard]] auto &table() const { return _table; }
 
@@ -110,6 +121,7 @@ public:
 private:
     std::vector<ParameterNode> _parameters;
     std::shared_ptr<SymbolTable> _table;
+    std::shared_ptr<Symbol> _symbol{};
     TypeNode _return_type;
     BlockNode _block;
     Token _name;
@@ -147,9 +159,14 @@ public:
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
+    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
+
     [[nodiscard]] auto &value() const { return _value; }
 
 private:
+    std::shared_ptr<Symbol> _symbol{};
     Token _value;
 };
 

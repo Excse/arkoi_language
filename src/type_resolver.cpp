@@ -4,18 +4,12 @@
 #include "ast.h"
 
 void TypeResolver::visit(ProgramNode &node) {
-    _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
-    _scopes.pop();
 }
 
 void TypeResolver::visit(FunctionNode &node) {
-    auto symbol = _scopes.top()->lookup<FunctionSymbol>(to_string(node.name().value()));
-
-    _scopes.push(node.table());
-
     std::vector<std::shared_ptr<Type>> parameter_types;
     for (auto &item: node.parameters()) {
         // This will set _current_type
@@ -25,7 +19,7 @@ void TypeResolver::visit(FunctionNode &node) {
         parameter_types.push_back(type);
     }
 
-    auto function = std::static_pointer_cast<FunctionSymbol>(symbol);
+    auto function = std::static_pointer_cast<FunctionSymbol>(node.symbol());
     function->set_parameter_types(std::move(parameter_types));
 
     // This will set _current_type
@@ -33,15 +27,12 @@ void TypeResolver::visit(FunctionNode &node) {
     _return_type = _current_type;
 
     node.block().accept(*this);
-    _scopes.pop();
 }
 
 void TypeResolver::visit(BlockNode &node) {
-    _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
-    _scopes.pop();
 }
 
 void TypeResolver::visit(ParameterNode &node) {
@@ -49,9 +40,7 @@ void TypeResolver::visit(ParameterNode &node) {
     node.type().accept(*this);
     auto type = _current_type;
 
-    auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.name().value()));
-    auto parameter = std::static_pointer_cast<ParameterSymbol>(symbol);
-
+    auto parameter = std::static_pointer_cast<ParameterSymbol>(node.symbol());
     parameter->set_type(type);
 }
 
@@ -91,10 +80,8 @@ void TypeResolver::visit(ReturnNode &node) {
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
-    auto symbol = _scopes.top()->lookup<ParameterSymbol>(to_string(node.value().value()));
-    if (auto parameter = std::dynamic_pointer_cast<ParameterSymbol>(symbol)) {
-        _current_type = parameter->type();
-    }
+    auto parameter = std::static_pointer_cast<ParameterSymbol>(node.symbol());
+    _current_type = parameter->type();
 }
 
 void TypeResolver::visit(BinaryNode &node) {

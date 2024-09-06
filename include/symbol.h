@@ -29,12 +29,12 @@ public:
     [[nodiscard]] auto &parameter_types() const { return _parameter_types; }
 
 private:
-    std::vector<std::shared_ptr<Type>> _parameter_types;
+    std::vector<std::shared_ptr<Type>> _parameter_types{};
 };
 
 class ParameterSymbol : public Symbol {
 public:
-    explicit ParameterSymbol(std::string name, size_t index) : Symbol(std::move(name)), _type(), _index(index) {}
+    explicit ParameterSymbol(std::string name, size_t index) : Symbol(std::move(name)), _index(index) {}
 
     [[nodiscard]] auto index() const { return _index; }
 
@@ -43,7 +43,7 @@ public:
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
-    std::shared_ptr<Type> _type;
+    std::shared_ptr<Type> _type{};
     size_t _index;
 };
 
