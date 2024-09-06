@@ -82,11 +82,10 @@ void IRGenerator::visit(CastNode &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    auto type = TypeResolver::_resolve_type(node.to());
     auto result = _make_temporary();
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<CastInstruction>(result, type, expression));
+    _instructions.emplace_back(std::make_unique<CastInstruction>(result, node.to(), expression));
 }
 
 Operand IRGenerator::_make_temporary() {

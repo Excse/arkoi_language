@@ -19,8 +19,6 @@ public:
 
     void visit(IdentifierNode &node) override;
 
-    void visit(TypeNode &) override {};
-
     void visit(NumberNode &) override {};
 
     void visit(ReturnNode &node) override;

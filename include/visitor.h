@@ -21,8 +21,6 @@ class BinaryNode;
 
 class BlockNode;
 
-class TypeNode;
-
 class CastNode;
 
 class NodeVisitor {
@@ -32,8 +30,6 @@ public:
     virtual void visit(ProgramNode &node) = 0;
 
     virtual void visit(FunctionNode &node) = 0;
-
-    virtual void visit(TypeNode &node) = 0;
 
     virtual void visit(BlockNode &node) = 0;
 

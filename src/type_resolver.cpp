@@ -22,9 +22,7 @@ void TypeResolver::visit(FunctionNode &node) {
     auto function = std::static_pointer_cast<FunctionSymbol>(node.symbol());
     function->set_parameter_types(std::move(parameter_types));
 
-    // This will set _current_type
-    node.return_type().accept(*this);
-    _return_type = _current_type;
+    _return_type = node.return_type();
 
     node.block().accept(*this);
 }
@@ -36,16 +34,8 @@ void TypeResolver::visit(BlockNode &node) {
 }
 
 void TypeResolver::visit(ParameterNode &node) {
-    // This will set _current_type
-    node.type().accept(*this);
-    auto type = _current_type;
-
     auto parameter = std::static_pointer_cast<ParameterSymbol>(node.symbol());
-    parameter->set_type(type);
-}
-
-void TypeResolver::visit(TypeNode &node) {
-    _current_type = _resolve_type(node);
+    parameter->set_type(node.type());
 }
 
 void TypeResolver::visit(NumberNode &node) {
@@ -76,7 +66,7 @@ void TypeResolver::visit(ReturnNode &node) {
 
     // We assure to override the const casted node with a new node. Thus, this exception is legal.
     auto &expression = const_cast<std::unique_ptr<Node> &>(node.expression());
-    node.set_expression(std::make_unique<CastNode>(std::move(expression), _to_typenode(_return_type)));
+    node.set_expression(std::make_unique<CastNode>(std::move(expression), _return_type));
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
@@ -99,13 +89,13 @@ void TypeResolver::visit(BinaryNode &node) {
     if (*left != *result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &left_node = const_cast<std::unique_ptr<Node> &>(node.left());
-        node.set_left(std::make_unique<CastNode>(std::move(left_node), _to_typenode(result)));
+        node.set_left(std::make_unique<CastNode>(std::move(left_node), result));
     }
 
     if (*right != *result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &right_node = const_cast<std::unique_ptr<Node> &>(node.right());
-        node.set_right(std::make_unique<CastNode>(std::move(right_node), _to_typenode(result)));
+        node.set_right(std::make_unique<CastNode>(std::move(right_node), result));
     }
 }
 
@@ -114,16 +104,11 @@ void TypeResolver::visit(CastNode &node) {
     node.expression()->accept(*this);
     auto from = _current_type;
 
-    // This will set _current_type
-    node.to().accept(*this);
-    auto to = _current_type;
-
-    if (!_can_implicit_convert(from, to)) {
+    if (!_can_implicit_convert(from, node.to())) {
         throw std::runtime_error("This cast is not valid.");
     }
 
-    auto result = _resolve_type(node.to());
-    _current_type = result;
+    _current_type = node.to();
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
@@ -177,42 +162,4 @@ bool TypeResolver::_can_implicit_convert(const std::shared_ptr<Type> &from, cons
     // TODO: Implement floating-point implicit conversion check
 
     return false;
-}
-
-std::shared_ptr<Type> TypeResolver::_resolve_type(const TypeNode &node) {
-    switch (node.token().type()) {
-        case Token::Type::U8: return IntegerType::TYPE_U8;
-        case Token::Type::S8: return IntegerType::TYPE_S8;
-        case Token::Type::U16: return IntegerType::TYPE_U16;
-        case Token::Type::S16: return IntegerType::TYPE_S16;
-        case Token::Type::U32: return IntegerType::TYPE_U32;
-        case Token::Type::S32: return IntegerType::TYPE_S32;
-        case Token::Type::U64: return IntegerType::TYPE_U64;
-        case Token::Type::S64: return IntegerType::TYPE_S64;
-        case Token::Type::USize: return IntegerType::TYPE_USize;
-        case Token::Type::SSize: return IntegerType::TYPE_SSize;
-        default: throw std::invalid_argument("Can't resolve this type.");
-    }
-}
-
-TypeNode TypeResolver::_to_typenode(const std::shared_ptr<Type> &type) {
-    if (auto integer = std::dynamic_pointer_cast<IntegerType>(type)) {
-        if (integer->sign()) {
-            switch (integer->size()) {
-                case 8: return TypeNode::TYPE_S8;
-                case 16: return TypeNode::TYPE_S16;
-                case 32: return TypeNode::TYPE_S32;
-                case 64: return TypeNode::TYPE_S64;
-            }
-        } else {
-            switch (integer->size()) {
-                case 8: return TypeNode::TYPE_U8;
-                case 16: return TypeNode::TYPE_U16;
-                case 32: return TypeNode::TYPE_U32;
-                case 64: return TypeNode::TYPE_U64;
-            }
-        }
-    }
-
-    throw std::invalid_argument("This type is not supported.");
 }

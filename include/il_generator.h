@@ -12,8 +12,6 @@ public:
 
     void visit(FunctionNode &node) override;
 
-    void visit(TypeNode &) override {};
-
     void visit(BlockNode &node) override;
 
     void visit(ParameterNode &) override {};

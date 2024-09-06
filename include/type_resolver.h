@@ -15,8 +15,6 @@ public:
 
     void visit(FunctionNode &node) override;
 
-    void visit(TypeNode &node) override;
-
     void visit(BlockNode &node) override;
 
     void visit(ParameterNode &node) override;
@@ -32,10 +30,6 @@ public:
     void visit(CastNode &node) override;
 
     [[nodiscard]] auto has_failed() const { return _failed; }
-
-    static std::shared_ptr<Type> _resolve_type(const TypeNode &node);
-
-    static TypeNode _to_typenode(const std::shared_ptr<Type> &type);
 
 private:
     static std::shared_ptr<Type> _arithmetic_conversion(const std::shared_ptr<Type> &left_type,

@@ -12,6 +12,8 @@ class SymbolTable;
 
 class Symbol;
 
+class Type;
+
 class Node {
 public:
     virtual ~Node() = default;
@@ -35,30 +37,6 @@ private:
     std::shared_ptr<SymbolTable> _table;
 };
 
-class TypeNode : public Node {
-public:
-    static const TypeNode TYPE_U8;
-    static const TypeNode TYPE_S8;
-    static const TypeNode TYPE_U16;
-    static const TypeNode TYPE_S16;
-    static const TypeNode TYPE_U32;
-    static const TypeNode TYPE_S32;
-    static const TypeNode TYPE_U64;
-    static const TypeNode TYPE_S64;
-    static const TypeNode TYPE_USIZE;
-    static const TypeNode TYPE_SSIZE;
-
-public:
-    explicit TypeNode(Token token) : _token(token) {}
-
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &token() const { return _token; }
-
-private:
-    Token _token;
-};
-
 class BlockNode : public Node {
 public:
     BlockNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
@@ -77,7 +55,7 @@ private:
 
 class ParameterNode : public Node {
 public:
-    ParameterNode(Token name, TypeNode type) : _type(std::move(type)), _name(name) {}
+    ParameterNode(Token name, std::shared_ptr<Type> type) : _type(std::move(type)), _name(name) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -91,16 +69,16 @@ public:
 
 private:
     std::shared_ptr<Symbol> _symbol{};
-    TypeNode _type;
+    std::shared_ptr<Type> _type;
     Token _name;
 };
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, TypeNode return_type, BlockNode &&block,
-                 std::shared_ptr<SymbolTable> table)
+    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, std::shared_ptr<Type> return_type,
+                 BlockNode &&block, std::shared_ptr<SymbolTable> table)
             : _parameters(std::move(parameters)), _table(std::move(table)), _return_type(std::move(return_type)),
-            _block(std::move(block)), _name(name) {}
+              _block(std::move(block)), _name(name) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -121,8 +99,8 @@ public:
 private:
     std::vector<ParameterNode> _parameters;
     std::shared_ptr<SymbolTable> _table;
+    std::shared_ptr<Type> _return_type;
     std::shared_ptr<Symbol> _symbol{};
-    TypeNode _return_type;
     BlockNode _block;
     Token _name;
 };
@@ -202,7 +180,7 @@ private:
 
 class CastNode : public Node {
 public:
-    CastNode(std::unique_ptr<Node> &&expression, TypeNode to)
+    CastNode(std::unique_ptr<Node> &&expression, std::shared_ptr<Type> to)
             : _expression(std::move(expression)), _to(std::move(to)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
@@ -213,7 +191,7 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    TypeNode _to;
+    std::shared_ptr<Type> _to;
 };
 
 #endif //ARKOI_LANGUAGE_AST_H

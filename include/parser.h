@@ -30,7 +30,7 @@ private:
 
     [[nodiscard]] ParameterNode _parse_parameter();
 
-    [[nodiscard]] TypeNode _parse_type();
+    [[nodiscard]] std::shared_ptr<Type> _parse_type();
 
     [[nodiscard]] BlockNode _parse_block();
 
@@ -57,6 +57,8 @@ private:
     [[nodiscard]] const Token &_current();
 
     void _next();
+
+    const Token &_consume_any();
 
     const Token &_consume(Token::Type type);
 

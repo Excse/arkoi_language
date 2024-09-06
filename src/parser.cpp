@@ -126,27 +126,23 @@ ParameterNode Parser::_parse_parameter() {
     return {name, type};
 }
 
-TypeNode Parser::_parse_type() {
+std::shared_ptr<Type> Parser::_parse_type() {
     _consume(Token::Type::At);
 
-    auto is_type = [](const Token &token) {
-        switch (token.type()) {
-            case Token::Type::U8:
-            case Token::Type::S8:
-            case Token::Type::U16:
-            case Token::Type::S16:
-            case Token::Type::U32:
-            case Token::Type::S32:
-            case Token::Type::U64:
-            case Token::Type::S64:
-            case Token::Type::USize:
-            case Token::Type::SSize: return true;
-            default: return false;
-        }
-    };
-
-    auto &type = _consume(is_type, "bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize");
-    return TypeNode(type);
+    auto token = _consume_any();
+    switch (token.type()) {
+        case Token::Type::U8: return IntegerType::TYPE_U8;
+        case Token::Type::S8: return IntegerType::TYPE_S8;
+        case Token::Type::U16: return IntegerType::TYPE_U16;
+        case Token::Type::S16: return IntegerType::TYPE_S16;
+        case Token::Type::U32: return IntegerType::TYPE_U32;
+        case Token::Type::S32: return IntegerType::TYPE_S32;
+        case Token::Type::U64: return IntegerType::TYPE_U64;
+        case Token::Type::S64: return IntegerType::TYPE_S64;
+        case Token::Type::USize: return IntegerType::TYPE_USize;
+        case Token::Type::SSize: return IntegerType::TYPE_SSize;
+        default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize", token);
+    }
 }
 
 BlockNode Parser::_parse_block() {
@@ -248,8 +244,7 @@ std::unique_ptr<Node> Parser::_parse_primary() {
         return std::make_unique<IdentifierNode>(*identifier);
     }
 
-    auto &current = _current();
-    throw UnexpectedToken("number or identifier", current);
+    throw UnexpectedToken("number or identifier", _current());
 }
 
 std::shared_ptr<SymbolTable> Parser::_current_scope() {
@@ -275,12 +270,19 @@ std::shared_ptr<SymbolTable> Parser::_exit_scope() {
 }
 
 const Token &Parser::_current() {
-    while (_tokens[_position].type() == Token::Type::Comment) _next();
+    if (_position >= _tokens.size()) throw UnexpectedEndOfTokens();
+    while (_position < _tokens.size() && _tokens[_position].type() == Token::Type::Comment) _next();
     return _tokens[_position];
 }
 
 void Parser::_next() {
     _position++;
+}
+
+const Token &Parser::_consume_any() {
+    auto &current = _current();
+    _next();
+    return current;
 }
 
 const Token &Parser::_consume(Token::Type type) {
@@ -298,14 +300,8 @@ const Token *Parser::_try_consume(Token::Type type) {
 
 const Token &Parser::_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected) {
     auto &current = _current();
-    if (_position >= _tokens.size()) {
-        throw UnexpectedEndOfTokens();
-    }
-
-    if (!predicate(current)) {
-        throw UnexpectedToken(expected, current);
-    }
-
+    if (!predicate(current)) throw UnexpectedToken(expected, current);
+    
     _next();
 
     return current;

@@ -14,13 +14,11 @@ public:
 
     [[nodiscard]] virtual bool equals(const Type &other) const = 0;
 
-    friend bool operator==(const Type &lhs, const Type &rhs) {
-        return lhs.equals(rhs);
-    }
+    friend std::ostream &operator<<(std::ostream &os, const Type &reg);
 
-    friend bool operator!=(const Type &lhs, const Type &rhs) {
-        return !(lhs == rhs);
-    }
+    friend bool operator==(const Type &lhs, const Type &rhs) { return lhs.equals(rhs); }
+
+    friend bool operator!=(const Type &lhs, const Type &rhs) { return !(lhs == rhs); }
 };
 
 class IntegerType : public Type {

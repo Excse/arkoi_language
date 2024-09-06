@@ -25,8 +25,7 @@ void ILPrinter::visit(BinaryInstruction &instruction) {
 }
 
 void ILPrinter::visit(CastInstruction &instruction) {
-    _output << instruction.result() << " = CAST " << instruction.expression() << " TO "
-            << to_string(TypeResolver::_to_typenode(instruction.type()).token().value()) << "\n";
+    _output << instruction.result() << " = CAST " << instruction.expression() << " TO " << *instruction.type() << "\n";
 }
 
 void ILPrinter::visit(EndInstruction &) {
