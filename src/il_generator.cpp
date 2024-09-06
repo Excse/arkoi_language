@@ -72,7 +72,7 @@ void IRGenerator::visit(BinaryNode &node) {
     auto right = _current_operand;
 
     auto type = BinaryInstruction::node_to_instruction(node.op());
-    auto result = _make_temporary();
+    auto result = _make_temporary(node.type());
     _current_operand = result;
 
     _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right, node.type()));
@@ -82,17 +82,17 @@ void IRGenerator::visit(CastNode &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    auto result = _make_temporary();
+    auto result = _make_temporary(node.to());
     _current_operand = result;
 
     _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from(), node.to()));
 }
 
-Operand IRGenerator::_make_temporary() {
+Operand IRGenerator::_make_temporary(const std::shared_ptr<Type> &type) {
     auto scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);
-    auto symbol = scope->insert<TemporarySymbol>(name);
+    auto symbol = scope->insert<TemporarySymbol>(name, type);
     _temp_index++;
 
     return Operand(symbol);

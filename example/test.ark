@@ -1,4 +1,4 @@
 # This is the entry point for this program
-fun main(test @s64) @s64 {
+fun main(test @u64) @u64 {
     return 42 / test + 8 * 2;
 }

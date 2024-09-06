@@ -34,7 +34,8 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
     }
 
     if (auto temporary = std::dynamic_pointer_cast<TemporarySymbol>(symbol)) {
-        _current_begin->increase_local_size(8);
+        auto byte_size = _type_to_byte_size(temporary->type());
+        _current_begin->increase_local_size(byte_size);
 
         auto location = Operand(Memory(Register::RBP, -_current_begin->local_size()));
         _resolved[symbol] = location;
@@ -54,7 +55,8 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
             return reg;
         }
 
-        _parameter_offset += 8;
+        auto byte_size = _type_to_byte_size(parameter->type());
+        _parameter_offset += byte_size;
 
         auto location = Operand(Memory(Register::RBP, _parameter_offset));
         _resolved[symbol] = location;
@@ -63,4 +65,17 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
     }
 
     throw std::invalid_argument("Only parameter and temporary symbols are resolvable.");
+}
+
+int64_t MemoryResolver::_type_to_byte_size(const std::shared_ptr<Type> &type) {
+    if (auto integer = std::dynamic_pointer_cast<IntegerType>(type)) {
+        switch (integer->size()) {
+            case 8: return 1;
+            case 16: return 2;
+            case 32: return 4;
+            case 64: return 8;
+        }
+    }
+
+    throw std::runtime_error("This type is not implemented.");
 }

@@ -3,8 +3,9 @@
 
 #include <stack>
 
-#include "visitor.h"
 #include "instruction.h"
+#include "visitor.h"
+#include "type.h"
 
 class IRGenerator : public NodeVisitor {
 public:
@@ -29,7 +30,7 @@ public:
     [[nodiscard]] auto &instructions() const { return _instructions; }
 
 private:
-    Operand _make_temporary();
+    Operand _make_temporary(const std::shared_ptr<Type> &type);
 
 private:
     std::vector<std::unique_ptr<Instruction>> _instructions{};

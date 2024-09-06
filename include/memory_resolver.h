@@ -23,6 +23,8 @@ public:
 private:
     Operand _resolve_operand(const Operand &operand);
 
+    static int64_t _type_to_byte_size(const std::shared_ptr<Type> &type);
+
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Operand> _resolved{};
     BeginInstruction *_current_begin{};
