@@ -33,20 +33,22 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
         return result->second;
     }
 
-    if (std::dynamic_pointer_cast<TemporarySymbol>(symbol)) {
-        _current_begin->increase_size(8);
+    if (auto temporary = std::dynamic_pointer_cast<TemporarySymbol>(symbol)) {
+        _current_begin->increase_local_size(8);
 
-        auto location = Operand(Memory(Register::RBP, -_current_begin->size()));
+        auto location = Operand(Memory(Register::RBP, -_current_begin->local_size()));
         _resolved[symbol] = location;
 
         return location;
     } else if (auto parameter = std::dynamic_pointer_cast<ParameterSymbol>(symbol)) {
-        static const Register INT_REG_ORDER[6] = {Register::RDI, Register::RSI, Register::RDX, Register::RCX,
-                                                  Register::R8, Register::R9};
+        static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
+                                                        Register::Base::C, Register::Base::R8, Register::Base::R9};
 
         // TODO: This is only for integer typed parameters
         if (parameter->index() < 6) {
-            auto reg = Operand(INT_REG_ORDER[parameter->index()]);
+            auto size = Register::type_to_register_size(parameter->type());
+            auto base = INT_REG_ORDER[parameter->index()];
+            auto reg = Operand(Register(base, size));
             _resolved[symbol] = reg;
 
             return reg;

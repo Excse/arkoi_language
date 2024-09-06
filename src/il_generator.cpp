@@ -55,7 +55,7 @@ void IRGenerator::visit(ReturnNode &node) {
     // This will set _current_operand
     node.expression()->accept(*this);
 
-    _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand)));
+    _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand), node.type()));
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
@@ -72,27 +72,27 @@ void IRGenerator::visit(BinaryNode &node) {
     auto right = _current_operand;
 
     auto type = BinaryInstruction::node_to_instruction(node.op());
-    auto result = _make_temporary(node.type());
+    auto result = _make_temporary();
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right));
+    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right, node.type()));
 }
 
 void IRGenerator::visit(CastNode &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    auto result = _make_temporary(node.to());
+    auto result = _make_temporary();
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<CastInstruction>(result, node.to(), expression));
+    _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from(), node.to()));
 }
 
-Operand IRGenerator::_make_temporary(const std::shared_ptr<Type> &type) {
+Operand IRGenerator::_make_temporary() {
     auto scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);
-    auto symbol = scope->insert<TemporarySymbol>(name, type);
+    auto symbol = scope->insert<TemporarySymbol>(name);
     _temp_index++;
 
     return Operand(symbol);

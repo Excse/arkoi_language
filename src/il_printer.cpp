@@ -12,7 +12,7 @@ void ILPrinter::visit(LabelInstruction &instruction) {
 }
 
 void ILPrinter::visit(BeginInstruction &instruction) {
-    _output << "BEGIN " << instruction.size() << "\n";
+    _output << "BEGIN " << instruction.local_size() << "\n";
 }
 
 void ILPrinter::visit(ReturnInstruction &instruction) {
@@ -20,12 +20,13 @@ void ILPrinter::visit(ReturnInstruction &instruction) {
 }
 
 void ILPrinter::visit(BinaryInstruction &instruction) {
-    _output << instruction.result() << " = " << to_string(instruction.type()) << " " << instruction.left() << ", "
+    _output << instruction.result() << " = " << to_string(instruction.op()) << " " << instruction.left() << ", "
             << instruction.right() << "\n";
 }
 
 void ILPrinter::visit(CastInstruction &instruction) {
-    _output << instruction.result() << " = CAST " << instruction.expression() << " TO " << *instruction.type() << "\n";
+    _output << instruction.result() << " = CAST " << instruction.expression() << " FROM @" << *instruction.from()
+            << " TO @" << *instruction.to() << "\n";
 }
 
 void ILPrinter::visit(EndInstruction &) {

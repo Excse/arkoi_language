@@ -13,6 +13,7 @@ class Register {
 public:
     static const Register RAX;
     static const Register RBP;
+    static const Register RSP;
     static const Register RDI;
     static const Register RSI;
     static const Register RDX;
@@ -32,13 +33,15 @@ public:
 public:
     Register(Base base, Size size) : _size(size), _base(base) {}
 
-    [[nodiscard]] auto &size() const { return _size; }
+    [[nodiscard]] auto size() const { return _size; }
 
-    [[nodiscard]] auto &base() const { return _base; }
+    [[nodiscard]] auto base() const { return _base; }
 
     friend std::ostream &operator<<(std::ostream &os, const Register::Base &reg);
 
     friend std::ostream &operator<<(std::ostream &os, const Register &reg);
+
+    static Size type_to_register_size(const std::shared_ptr<Type> &type);
 
 private:
     Size _size;

@@ -4,6 +4,7 @@
 
 const Register Register::RAX = Register(Register::Base::A, Register::Size::QWORD);
 const Register Register::RBP = Register(Register::Base::BP, Register::Size::QWORD);
+const Register Register::RSP = Register(Register::Base::SP, Register::Size::QWORD);
 const Register Register::RDI = Register(Register::Base::DI, Register::Size::QWORD);
 const Register Register::RSI = Register(Register::Base::SI, Register::Size::QWORD);
 const Register Register::RDX = Register(Register::Base::D, Register::Size::QWORD);
@@ -88,6 +89,19 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
         case Register::Base::R15: return os << "r15";
         default: throw std::invalid_argument("This register is not implemented.");
     }
+}
+
+Register::Size Register::type_to_register_size(const std::shared_ptr<Type> &type) {
+    if (auto integer = std::dynamic_pointer_cast<IntegerType>(type)) {
+        switch (integer->size()) {
+            case 8: return Register::Size::BYTE;
+            case 16: return Register::Size::WORD;
+            case 32: return Register::Size::DWORD;
+            case 64: return Register::Size::QWORD;
+        }
+    }
+
+    throw std::runtime_error("This type is not implemented.");
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {

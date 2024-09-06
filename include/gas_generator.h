@@ -8,7 +8,16 @@
 #include "il_printer.h"
 #include "visitor.h"
 
+using Source = std::variant<Memory, Register, Immediate>;
+
+std::ostream &operator<<(std::ostream &os, const Source &source);
+
+using Destination = std::variant<Memory, Register>;
+
+std::ostream &operator<<(std::ostream &os, const Destination &destination);
+
 class GASGenerator : public InstructionVisitor {
+
 public:
     explicit GASGenerator(bool debug = false);
 
@@ -29,31 +38,33 @@ public:
 private:
     void _preamble();
 
-    void _load(const Operand &operand, const Register &destination);
+    void _movsx(const Destination &destination, const Source &src);
 
-    void _store(const Operand &operand, const std::string &src);
-
-    void _mov(const std::string &destination, const std::string &src);
+    void _mov(const Destination &destination, const Source &src);
 
     void _label(const std::shared_ptr<Symbol> &symbol);
 
-    void _pop(const std::string &destination);
+    void _pop(const Destination &destination);
 
-    void _push(const std::string &src);
+    void _push(const Source &src);
 
     void _ret();
 
-    void _add(const std::string &destination, const std::string &src);
+    void _add(const Destination &destination, const Source &src);
 
-    void _sub(const std::string &destination, const std::string &src);
+    void _sub(const Destination &destination, const Source &src);
 
-    void _idiv(const std::string &dividend);
+    void _idiv(const Source &dividend);
 
-    void _imul(const std::string &destination, const std::string &src);
+    void _imul(const Destination &destination, const Source &src);
 
     void _comment_instruction(Instruction &instruction);
 
     void _newline();
+
+    [[nodiscard]] static Destination _to_destination(const Operand &operand);
+
+    [[nodiscard]] static Source _to_source(const Operand &operand);
 
 private:
     std::stringstream _output{};

@@ -33,21 +33,25 @@ private:
 
 class ReturnInstruction : public Instruction {
 public:
-    explicit ReturnInstruction(Operand &&value) : _value(std::move(value)) {}
+    explicit ReturnInstruction(Operand &&value, std::shared_ptr<Type> type)
+            : _type(std::move(type)), _value(std::move(value)) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &type() const { return _type; };
 
     void set_value(Operand &&operand) { _value = operand; };
 
     [[nodiscard]] auto &value() const { return _value; };
 
 private:
+    std::shared_ptr<Type> _type;
     Operand _value;
 };
 
 class BinaryInstruction : public Instruction {
 public:
-    enum class Type {
+    enum class Operator {
         Add,
         Sub,
         Mul,
@@ -55,12 +59,11 @@ public:
     };
 
 public:
-    BinaryInstruction(Operand result, Operand left, Type type, Operand right)
-            : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _type(type) {}
+    BinaryInstruction(Operand result, Operand left, Operator op, Operand right, std::shared_ptr<Type> type)
+            : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _type(std::move(type)),
+              _op(op) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &type() const { return _type; };
 
     void set_result(Operand &&operand) { _result = operand; };
 
@@ -74,27 +77,32 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; };
 
-    [[nodiscard]] static Type node_to_instruction(BinaryNode::Operator type);
+    [[nodiscard]] auto &type() const { return _type; };
 
-    friend std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type);
+    [[nodiscard]] auto &op() const { return _op; };
+
+    [[nodiscard]] static Operator node_to_instruction(BinaryNode::Operator op);
+
+    friend std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Operator &op);
 
 private:
     Operand _result, _left, _right;
-    Type _type;
+    std::shared_ptr<Type> _type;
+    Operator _op;
 };
 
 class BeginInstruction : public Instruction {
 public:
-    explicit BeginInstruction(int64_t size = 0) : _size(size) {}
+    explicit BeginInstruction(int64_t local_size = 0) : _local_size(local_size) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    void increase_size(int64_t amount) { _size += amount; }
+    void increase_local_size(int64_t amount) { _local_size += amount; }
 
-    [[nodiscard]] auto size() const { return _size; }
+    [[nodiscard]] auto local_size() const { return _local_size; }
 
 private:
-    int64_t _size;
+    int64_t _local_size;
 };
 
 class EndInstruction : public Instruction {
@@ -104,8 +112,9 @@ public:
 
 class CastInstruction : public Instruction {
 public:
-    CastInstruction(Operand result, const std::shared_ptr<Type> &type, Operand expression)
-            : _result(std::move(result)), _expression(std::move(expression)), _type(type) {}
+    CastInstruction(Operand result, Operand expression, std::shared_ptr<Type> from, std::shared_ptr<Type> to)
+            : _from(std::move(from)), _to(std::move(to)), _result(std::move(result)),
+              _expression(std::move(expression)) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -117,11 +126,13 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &type() const { return _type; };
+    [[nodiscard]] auto &from() const { return _from; };
+
+    [[nodiscard]] auto &to() const { return _to; };
 
 private:
+    std::shared_ptr<Type> _from, _to;
     Operand _result, _expression;
-    std::shared_ptr<Type> _type;
 };
 
 #endif //ARKOI_LANGUAGE_INSTRUCTION_H

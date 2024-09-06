@@ -115,8 +115,13 @@ public:
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
+    void set_type(std::shared_ptr<Type> type) { _type = std::move(type); }
+
+    [[nodiscard]] auto &type() const { return _type; }
+
 private:
     std::unique_ptr<Node> _expression;
+    std::shared_ptr<Type> _type{};
 };
 
 class NumberNode : public Node {
@@ -185,18 +190,25 @@ private:
 
 class CastNode : public Node {
 public:
+    CastNode(std::unique_ptr<Node> &&expression, std::shared_ptr<Type> from, std::shared_ptr<Type> to)
+            : _expression(std::move(expression)), _from(std::move(from)), _to(std::move(to)) {}
+
     CastNode(std::unique_ptr<Node> &&expression, std::shared_ptr<Type> to)
-            : _expression(std::move(expression)), _to(std::move(to)) {}
+            : _expression(std::move(expression)), _from(), _to(std::move(to)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
+    void set_from(std::shared_ptr<Type> type) { _from = std::move(type); }
+
+    [[nodiscard]] auto &from() { return _from; }
+
     [[nodiscard]] auto &to() { return _to; }
 
 private:
     std::unique_ptr<Node> _expression;
-    std::shared_ptr<Type> _to;
+    std::shared_ptr<Type> _from, _to;
 };
 
 #endif //ARKOI_LANGUAGE_AST_H

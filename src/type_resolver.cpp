@@ -56,6 +56,8 @@ void TypeResolver::visit(ReturnNode &node) {
     node.expression()->accept(*this);
     auto type = _current_type;
 
+    node.set_type(_return_type);
+
     if (*type == *_return_type) {
         return;
     }
@@ -66,7 +68,7 @@ void TypeResolver::visit(ReturnNode &node) {
 
     // We assure to override the const casted node with a new node. Thus, this exception is legal.
     auto &expression = const_cast<std::unique_ptr<Node> &>(node.expression());
-    node.set_expression(std::make_unique<CastNode>(std::move(expression), _return_type));
+    node.set_expression(std::make_unique<CastNode>(std::move(expression), type, _return_type));
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
@@ -90,13 +92,13 @@ void TypeResolver::visit(BinaryNode &node) {
     if (*left != *result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &left_node = const_cast<std::unique_ptr<Node> &>(node.left());
-        node.set_left(std::make_unique<CastNode>(std::move(left_node), result));
+        node.set_left(std::make_unique<CastNode>(std::move(left_node), left, result));
     }
 
     if (*right != *result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &right_node = const_cast<std::unique_ptr<Node> &>(node.right());
-        node.set_right(std::make_unique<CastNode>(std::move(right_node), result));
+        node.set_right(std::make_unique<CastNode>(std::move(right_node), right, result));
     }
 }
 
@@ -104,6 +106,7 @@ void TypeResolver::visit(CastNode &node) {
     // This will set _current_type
     node.expression()->accept(*this);
     auto from = _current_type;
+    node.set_from(from);
 
     if (!_can_implicit_convert(from, node.to())) {
         throw std::runtime_error("This cast is not valid.");

@@ -50,13 +50,7 @@ private:
 
 class TemporarySymbol : public Symbol {
 public:
-    explicit TemporarySymbol(std::string name, std::shared_ptr<Type> type)
-            : Symbol(std::move(name)), _type(std::move(type)) {}
-
-    [[nodiscard]] auto &type() const { return _type; }
-
-private:
-    std::shared_ptr<Type> _type{};
+    explicit TemporarySymbol(std::string name) : Symbol(std::move(name)) {}
 };
 
 #endif //ARKOI_LANGUAGE_SYMBOL_H
