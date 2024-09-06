@@ -16,7 +16,7 @@ std::ostream &operator<<(std::ostream &os, const Type &type) {
         return os << (integer->sign() ? "s" : "u") << integer->size();
     }
 
-    throw std::runtime_error("This type is not implemented.");
+    throw std::runtime_error("This op is not implemented.");
 }
 
 bool IntegerType::equals(const Type &other) const {

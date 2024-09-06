@@ -78,7 +78,7 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::EndOfFile: return os << "UnexpectedEndOfFile";
         case Token::Type::Unknown: return os << "Unknown";
 
-        default: throw std::invalid_argument("Token type not implemented.");
+        default: throw std::invalid_argument("Token op not implemented.");
     }
 }
 

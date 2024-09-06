@@ -75,14 +75,12 @@ private:
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, std::shared_ptr<Type> return_type,
-                 BlockNode &&block, std::shared_ptr<SymbolTable> table)
-            : _parameters(std::move(parameters)), _table(std::move(table)), _return_type(std::move(return_type)),
+    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, std::shared_ptr<Type> type, BlockNode &&block,
+                 std::shared_ptr<SymbolTable> table)
+            : _parameters(std::move(parameters)), _table(std::move(table)), _type(std::move(type)),
               _block(std::move(block)), _name(name) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &return_type() { return _return_type; }
 
     [[nodiscard]] auto &parameters() { return _parameters; }
 
@@ -94,13 +92,15 @@ public:
 
     [[nodiscard]] auto &name() const { return _name; }
 
+    [[nodiscard]] auto &type() const { return _type; }
+
     [[nodiscard]] auto &block() { return _block; }
 
 private:
     std::vector<ParameterNode> _parameters;
     std::shared_ptr<SymbolTable> _table;
-    std::shared_ptr<Type> _return_type;
     std::shared_ptr<Symbol> _symbol{};
+    std::shared_ptr<Type> _type;
     BlockNode _block;
     Token _name;
 };
@@ -150,7 +150,7 @@ private:
 
 class BinaryNode : public Node {
 public:
-    enum class Type {
+    enum class Operator {
         Add,
         Sub,
         Mul,
@@ -158,12 +158,12 @@ public:
     };
 
 public:
-    BinaryNode(std::unique_ptr<Node> &&left, Type type, std::unique_ptr<Node> &&right)
-            : _left(std::move(left)), _right(std::move(right)), _type(type) {}
+    BinaryNode(std::unique_ptr<Node> &&left, Operator op, std::unique_ptr<Node> &&right)
+            : _left(std::move(left)), _right(std::move(right)), _op(op) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &type() const { return _type; }
+    [[nodiscard]] auto &op() const { return _op; }
 
     void set_right(std::unique_ptr<Node> &&node) { _right = std::move(node); }
 
@@ -173,9 +173,14 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; }
 
+    void set_type(std::shared_ptr<Type> type) { _type = std::move(type); }
+
+    [[nodiscard]] auto &type() const { return _type; }
+
 private:
     std::unique_ptr<Node> _left, _right;
-    Type _type;
+    std::shared_ptr<Type> _type{};
+    Operator _op;
 };
 
 class CastNode : public Node {

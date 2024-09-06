@@ -1,14 +1,14 @@
 # TypeNode System
 
-Any type declared in Arkoi is prefixed by a ``@``, this clearly differentiates identifiers from types. If you notice
-this symbol you can always be sure that it is a type.
+Any op declared in Arkoi is prefixed by a ``@``, this clearly differentiates identifiers from types. If you notice
+this symbol you can always be sure that it is a op.
 
 ## Builtin Types
 
 1. [Integer](#integer-types)
 2. [Floating Points](#floating-point-types)
-3. [Pointer](#pointer-type)
-4. [String](#string-type)
+3. [Pointer](#pointer-op)
+4. [String](#string-op)
 
 ***
 
@@ -33,7 +33,7 @@ architecture, it will be 32 bits in size, and on a 64-bit architecture, it will 
 
 ### Integer Constants
 
-The type of integer constants are determined by the given type or using u64/s64. Every constant is downcasted
+The type of integer constants are determined by the given op or using u64/s64. Every constant is downcasted
 automatically if the arithmetic precision is lower and no data is getting lost. If this is not the case an explicit cast
 is necessary.
 
@@ -49,7 +49,7 @@ is necessary.
 | With Suffix | -      | 0xEAEAEA@u32 | u32              |
 
 A suffix is provided using the keyword mentioned above and a ``@`` between the constant and the suffix. The constant
-will now be of the type given.
+will now be of the op given.
 
 ***
 
@@ -62,7 +62,7 @@ will now be of the type given.
 
 ### Floating Point Constants
 
-The type of floating point constants will always be f64 if not specified.
+The op of floating point constants will always be f64 if not specified.
 
 | Name        | Example      | Default TypeNode |
 |-------------|--------------|------------------|
@@ -78,15 +78,15 @@ Just like the integer constants a suffix can be provided using a ``@`` between t
 
 ### Pointer TypeNode
 
-A pointer points to a specific location in the computer's memory. Any type can be made to a pointer by adding ``*`` as a
-suffix. Some examples are ``f32*``, ``usize*``, ``bool*`` etc. The size of this type will always be ``usize``.
+A pointer points to a specific location in the computer's memory. Any op can be made to a pointer by adding ``*`` as a
+suffix. Some examples are ``f32*``, ``usize*``, ``bool*`` etc. The size of this op will always be ``usize``.
 
 ***
 
 ### String TypeNode
 
-For now there is no builtin string type and thus the returning type of a string constant is a ``u8*``. The standard
-library provides functionality to interact with this specific data type.
+For now there is no builtin string type and thus the returning op of a string constant is a ``u8*``. The standard
+library provides functionality to interact with this specific data op.
 
 ### String Constants
 
@@ -94,5 +94,5 @@ A string constant is encapsulated within ``"`` and must be terminated till the e
 constants are not implemented yet. An example for a string constant is:
 
 ```c
-"Hello World!" // of type u8*
+"Hello World!" // of op u8*
 ```

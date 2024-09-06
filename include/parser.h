@@ -68,7 +68,7 @@ private:
 
     [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
 
-    [[nodiscard]] static BinaryNode::Type to_binary_operator(const Token &token);
+    [[nodiscard]] static BinaryNode::Operator to_binary_operator(const Token &token);
 
     [[nodiscard]] static bool is_factor_operator(const Token &token);
 

@@ -1,11 +1,11 @@
 #include "instruction.h"
 
-BinaryInstruction::Type BinaryInstruction::node_to_instruction(BinaryNode::Type type) {
+BinaryInstruction::Type BinaryInstruction::node_to_instruction(BinaryNode::Operator type) {
     switch (type) {
-        case BinaryNode::Type::Add: return BinaryInstruction::Type::Add;
-        case BinaryNode::Type::Sub: return BinaryInstruction::Type::Sub;
-        case BinaryNode::Type::Mul: return BinaryInstruction::Type::Mul;
-        case BinaryNode::Type::Div: return BinaryInstruction::Type::Div;
+        case BinaryNode::Operator::Add: return BinaryInstruction::Type::Add;
+        case BinaryNode::Operator::Sub: return BinaryInstruction::Type::Sub;
+        case BinaryNode::Operator::Mul: return BinaryInstruction::Type::Mul;
+        case BinaryNode::Operator::Div: return BinaryInstruction::Type::Div;
         default: throw std::invalid_argument("Binary Instruction not implemented.");
     }
 }

@@ -74,7 +74,7 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; };
 
-    [[nodiscard]] static Type node_to_instruction(BinaryNode::Type type);
+    [[nodiscard]] static Type node_to_instruction(BinaryNode::Operator type);
 
     friend std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Type &type);
 
