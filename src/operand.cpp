@@ -2,66 +2,29 @@
 
 #include "utils.h"
 
-const Register Register::RAX = Register(Register::Base::A, Register::Size::QWORD);
-const Register Register::RBP = Register(Register::Base::BP, Register::Size::QWORD);
-const Register Register::RSP = Register(Register::Base::SP, Register::Size::QWORD);
-const Register Register::RDI = Register(Register::Base::DI, Register::Size::QWORD);
-const Register Register::RSI = Register(Register::Base::SI, Register::Size::QWORD);
-const Register Register::RDX = Register(Register::Base::D, Register::Size::QWORD);
-const Register Register::RCX = Register(Register::Base::C, Register::Size::QWORD);
-const Register Register::R8 = Register(Register::Base::R8, Register::Size::QWORD);
-const Register Register::R9 = Register(Register::Base::R9, Register::Size::QWORD);
-const Register Register::R11 = Register(Register::Base::R11, Register::Size::QWORD);
-
-std::ostream &operator<<(std::ostream &os, const Memory &memory) {
-    os << "[" << memory.base();
-
-    if (memory.index() != 1) {
-        os << " + " << memory.index();
-    }
-
-    if (memory.scale() != 1) {
-        os << " * " << memory.scale();
-    }
-
-    if (memory.displacement() < 0) {
-        os << " - " << std::abs(memory.displacement());
-    } else if (memory.displacement() > 0) {
-        os << " + " << std::abs(memory.displacement());
-    }
-
-    os << "]";
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
-    std::visit([&os](const auto &arg) { os << arg; }, immediate.data());
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const Register &reg) {
-    if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
-        switch (reg.size()) {
-            case Register::Size::BYTE: return os << reg.base() << "b";
-            case Register::Size::WORD: return os << reg.base() << "w";
-            case Register::Size::DWORD: return os << reg.base() << "d";
-            case Register::Size::QWORD: return os << reg.base();
+std::ostream &Register::print(std::ostream &os) const {
+    if (_base >= Register::Base::R8 && _base <= Register::Base::R15) {
+        switch (_size) {
+            case Register::Size::BYTE: return os << _base << "b";
+            case Register::Size::WORD: return os << _base << "w";
+            case Register::Size::DWORD: return os << _base << "d";
+            case Register::Size::QWORD: return os << _base;
             default: throw std::invalid_argument("This is not a valid register size.");
         }
-    } else if (reg.base() >= Register::Base::SI && reg.base() <= Register::Base::BP) {
-        switch (reg.size()) {
-            case Register::Size::BYTE: return os << reg.base() << "l";
-            case Register::Size::WORD: return os << reg.base();
-            case Register::Size::DWORD: return os << "e" << reg.base();
-            case Register::Size::QWORD: return os << "r" << reg.base();
+    } else if (_base >= Register::Base::SI && _base <= Register::Base::BP) {
+        switch (_size) {
+            case Register::Size::BYTE: return os << _base << "l";
+            case Register::Size::WORD: return os << _base;
+            case Register::Size::DWORD: return os << "e" << _base;
+            case Register::Size::QWORD: return os << "r" << _base;
             default: throw std::invalid_argument("This is not a valid register size.");
         }
-    } else if (reg.base() >= Register::Base::A && reg.base() <= Register::Base::B) {
-        switch (reg.size()) {
-            case Register::Size::BYTE: return os << reg.base() << "l";
-            case Register::Size::WORD: return os << reg.base() << "x";
-            case Register::Size::DWORD: return os << "e" << reg.base() << "x";
-            case Register::Size::QWORD: return os << "r" << reg.base() << "x";
+    } else if (_base >= Register::Base::A && _base <= Register::Base::B) {
+        switch (_size) {
+            case Register::Size::BYTE: return os << _base << "l";
+            case Register::Size::WORD: return os << _base << "x";
+            case Register::Size::DWORD: return os << "e" << _base << "x";
+            case Register::Size::QWORD: return os << "r" << _base << "x";
             default: throw std::invalid_argument("This is not a valid register size.");
         }
     }
@@ -104,11 +67,32 @@ Register::Size Register::type_to_register_size(const std::shared_ptr<Type> &type
     throw std::runtime_error("This type is not implemented.");
 }
 
-std::ostream &operator<<(std::ostream &os, const Operand &operand) {
-    if (auto symbol = std::get_if<std::shared_ptr<Symbol>>(&operand.data())) {
-        return os << *symbol->get();
+std::ostream &Memory::print(std::ostream &os) const {
+    os << "[" << _base;
+
+    if (_index != 1) {
+        os << " + " << _index;
     }
 
-    std::visit([&os](const auto &arg) { os << arg; }, operand.data());
+    if (_scale != 1) {
+        os << " * " << _scale;
+    }
+
+    if (_displacement < 0) {
+        os << " - " << std::abs(_displacement);
+    } else if (_displacement > 0) {
+        os << " + " << std::abs(_displacement);
+    }
+
+    os << "]";
     return os;
+}
+
+std::ostream &Immediate::print(std::ostream &os) const {
+    std::visit([&os](const auto &arg) { os << arg; }, _data);
+    return os;
+}
+
+std::ostream &SymbolOperand::print(std::ostream &os) const {
+    return os << *_symbol;
 }

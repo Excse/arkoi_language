@@ -9,19 +9,17 @@
 
 #include "symbol_table.h"
 
-class Register {
+class Operand {
 public:
-    static const Register RAX;
-    static const Register RBP;
-    static const Register RSP;
-    static const Register RDI;
-    static const Register RSI;
-    static const Register RDX;
-    static const Register RCX;
-    static const Register R8;
-    static const Register R9;
-    static const Register R11;
+    virtual ~Operand() = default;
 
+    virtual std::ostream &print(std::ostream &os) const = 0;
+
+    friend std::ostream &operator<<(std::ostream &os, const Operand &operand) { return operand.print(os); }
+};
+
+class Register : public Operand {
+public:
     enum class Base {
         A, C, D, B, SI, DI, SP, BP, R8, R9, R10, R11, R12, R13, R14, R15
     };
@@ -33,13 +31,13 @@ public:
 public:
     Register(Base base, Size size) : _size(size), _base(base) {}
 
+    std::ostream &print(std::ostream &os) const override;
+
     [[nodiscard]] auto size() const { return _size; }
 
     [[nodiscard]] auto base() const { return _base; }
 
     friend std::ostream &operator<<(std::ostream &os, const Register::Base &reg);
-
-    friend std::ostream &operator<<(std::ostream &os, const Register &reg);
 
     static Size type_to_register_size(const std::shared_ptr<Type> &type);
 
@@ -48,13 +46,15 @@ private:
     Base _base;
 };
 
-class Memory {
+class Memory : public Operand {
 public:
     explicit Memory(Register base, int64_t index, int64_t scale, int64_t displacement)
-            : _index(index), _scale(scale), _displacement(displacement), _base(base) {}
+            : _index(index), _scale(scale), _displacement(displacement), _base(std::move(base)) {}
 
     explicit Memory(Register base, int64_t displacement)
-            : _index(1), _scale(1), _displacement(displacement), _base(base) {}
+            : _index(1), _scale(1), _displacement(displacement), _base(std::move(base)) {}
+
+    std::ostream &print(std::ostream &os) const override;
 
     [[nodiscard]] auto displacement() const { return _displacement; }
 
@@ -64,42 +64,35 @@ public:
 
     [[nodiscard]] auto &base() const { return _base; }
 
-    friend std::ostream &operator<<(std::ostream &os, const Memory &memory);
-
 private:
     int64_t _index, _scale, _displacement;
     Register _base;
 };
 
-class Immediate {
+class Immediate : public Operand {
 public:
     using Data = std::variant<uint64_t, int64_t, uint32_t, int32_t>;
 
     explicit Immediate(Data data) : _data(data) {}
 
-    [[nodiscard]] auto &data() const { return _data; }
+    std::ostream &print(std::ostream &os) const override;
 
-    friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
+    [[nodiscard]] auto &data() const { return _data; }
 
 private:
     Data _data;
 };
 
-class Operand {
+class SymbolOperand : public Operand {
 public:
-    using Data = std::variant<std::shared_ptr<Symbol>, Memory, Immediate, Register>;
+    explicit SymbolOperand(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
 
-public:
-    explicit Operand(Data data) : _data(std::move(data)) {}
+    std::ostream &print(std::ostream &os) const override;
 
-    explicit Operand() : _data() {}
-
-    [[nodiscard]] auto &data() const { return _data; }
-
-    friend std::ostream &operator<<(std::ostream &os, const Operand &operand);
+    [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
-    Data _data;
+    std::shared_ptr<Symbol> _symbol;
 };
 
 #endif //ARKOI_LANGUAGE_OPERAND_H

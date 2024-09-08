@@ -21,12 +21,12 @@ public:
     [[nodiscard]] auto &resolved() const { return _resolved; }
 
 private:
-    Operand _resolve_operand(const Operand &operand);
+    std::shared_ptr<Operand> _resolve_operand(const std::shared_ptr<Operand> &operand);
 
     static int64_t _type_to_byte_size(const std::shared_ptr<Type> &type);
 
 private:
-    std::unordered_map<std::shared_ptr<Symbol>, Operand> _resolved{};
+    std::unordered_map<std::shared_ptr<Symbol>, std::shared_ptr<Operand>> _resolved{};
     BeginInstruction *_current_begin{};
     int64_t _parameter_offset{};
 };

@@ -16,16 +16,16 @@ void ILPrinter::visit(BeginInstruction &instruction) {
 }
 
 void ILPrinter::visit(ReturnInstruction &instruction) {
-    _output << "RETURN " << instruction.value() << "\n";
+    _output << "RETURN " << *instruction.value() << "\n";
 }
 
 void ILPrinter::visit(BinaryInstruction &instruction) {
-    _output << instruction.result() << " = " << to_string(instruction.op()) << " " << instruction.left() << ", "
-            << instruction.right() << "\n";
+    _output << *instruction.result() << " = " << to_string(instruction.op()) << " " << *instruction.left() << ", "
+            << *instruction.right() << "\n";
 }
 
 void ILPrinter::visit(CastInstruction &instruction) {
-    _output << instruction.result() << " = CAST " << instruction.expression() << " FROM @" << *instruction.from()
+    _output << *instruction.result() << " = CAST " << *instruction.expression() << " FROM @" << *instruction.from()
             << " TO @" << *instruction.to() << "\n";
 }
 

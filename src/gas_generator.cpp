@@ -5,15 +5,8 @@
 #include "instruction.h"
 #include "il_printer.h"
 
-std::ostream &operator<<(std::ostream &os, const Source &source) {
-    std::visit([&os](const auto &arg) { os << arg; }, source);
-    return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const Destination &destination) {
-    std::visit([&os](const auto &arg) { os << arg; }, destination);
-    return os;
-}
+static const auto RBP = std::make_shared<Register>(Register::Base::BP, Register::Size::QWORD);
+static const auto RSP = std::make_shared<Register>(Register::Base::SP, Register::Size::QWORD);
 
 GASGenerator::GASGenerator(bool debug) : _debug(debug) {
     _preamble();
@@ -26,10 +19,10 @@ void GASGenerator::visit(LabelInstruction &instruction) {
 
 void GASGenerator::visit(BeginInstruction &instruction) {
     _comment_instruction(instruction);
-    _push(Register::RBP);
-    _mov(Register::RBP, Register::RSP);
+    _push(RBP);
+    _mov(RBP, RSP);
     if (instruction.local_size() != 0) {
-        _sub(Register::RSP, Immediate(instruction.local_size()));
+        _sub(RSP, std::make_shared<Immediate>(instruction.local_size()));
     }
     _newline();
 }
@@ -37,8 +30,9 @@ void GASGenerator::visit(BeginInstruction &instruction) {
 void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto destination = Register(Register::Base::A, Register::type_to_register_size(instruction.type()));
-    _mov(destination, _to_source(instruction.value()));
+    auto destination = std::make_shared<Register>(Register::Base::A,
+                                                  Register::type_to_register_size(instruction.type()));
+    _mov(destination, instruction.value());
 
     _newline();
 }
@@ -46,11 +40,12 @@ void GASGenerator::visit(ReturnInstruction &instruction) {
 void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto left_reg = Register(Register::Base::A, Register::type_to_register_size(instruction.type()));
-    _mov(left_reg, _to_source(instruction.left()));
+    auto left_reg = std::make_shared<Register>(Register::Base::A, Register::type_to_register_size(instruction.type()));
+    _mov(left_reg, instruction.left());
 
-    auto right_reg = Register(Register::Base::R11, Register::type_to_register_size(instruction.type()));
-    _mov(right_reg, _to_source(instruction.right()));
+    auto right_reg = std::make_shared<Register>(Register::Base::R11,
+                                                Register::type_to_register_size(instruction.type()));
+    _mov(right_reg, instruction.right());
 
     switch (instruction.op()) {
         case BinaryInstruction::Operator::Add: {
@@ -71,17 +66,19 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
         }
     }
 
-    _mov(_to_destination(instruction.result()), left_reg);
+    _mov(instruction.result(), left_reg);
     _newline();
 }
 
 void GASGenerator::visit(CastInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto from_temporary = Register(Register::Base::A, Register::type_to_register_size(instruction.from()));
-    _mov(from_temporary, _to_source(instruction.expression()));
+    auto from_temporary = std::make_shared<Register>(Register::Base::A,
+                                                     Register::type_to_register_size(instruction.from()));
+    _mov(from_temporary, instruction.expression());
 
-    auto to_temporary = Register(Register::Base::A, Register::type_to_register_size(instruction.to()));
+    auto to_temporary = std::make_shared<Register>(Register::Base::A,
+                                                   Register::type_to_register_size(instruction.to()));
 
     auto from_integer = std::dynamic_pointer_cast<IntegerType>(instruction.from());
     auto to_integer = std::dynamic_pointer_cast<IntegerType>(instruction.to());
@@ -95,14 +92,14 @@ void GASGenerator::visit(CastInstruction &instruction) {
         throw std::runtime_error("Cast Instruction not implemented yet.");
     }
 
-    _mov(_to_destination(instruction.result()), to_temporary);
+    _mov(instruction.result(), to_temporary);
     _newline();
 }
 
 void GASGenerator::visit(EndInstruction &instruction) {
     _comment_instruction(instruction);
-    _mov(Register::RSP, Register::RBP);
-    _pop(Register::RBP);
+    _mov(RSP, RBP);
+    _pop(RBP);
     _ret();
     _newline();
 }
@@ -122,44 +119,44 @@ _start:
 )";
 }
 
-void GASGenerator::_movsx(const Destination &destination, const Source &src) {
-    _output << "\tmovsx " << destination << ", " << src << "\n";
+void GASGenerator::_movsx(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmovsx " << *destination << ", " << *src << "\n";
 }
 
-void GASGenerator::_mov(const Destination &destination, const Source &src) {
-    _output << "\tmov " << destination << ", " << src << "\n";
+void GASGenerator::_mov(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmov " << *destination << ", " << *src << "\n";
 }
 
 void GASGenerator::_label(const std::shared_ptr<Symbol> &symbol) {
     _output << *symbol << ":\n";
 }
 
-void GASGenerator::_pop(const Destination &destination) {
-    _output << "\tpop " << destination << "\n";
+void GASGenerator::_pop(const std::shared_ptr<Operand> &destination) {
+    _output << "\tpop " << *destination << "\n";
 }
 
-void GASGenerator::_push(const Source &src) {
-    _output << "\tpush " << src << "\n";
+void GASGenerator::_push(const std::shared_ptr<Operand> &src) {
+    _output << "\tpush " << *src << "\n";
 }
 
 void GASGenerator::_ret() {
     _output << "\tret\n";
 }
 
-void GASGenerator::_add(const Destination &destination, const Source &src) {
-    _output << "\tadd " << destination << ", " << src << "\n";
+void GASGenerator::_add(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tadd " << *destination << ", " << *src << "\n";
 }
 
-void GASGenerator::_sub(const Destination &destination, const Source &src) {
-    _output << "\tsub " << destination << ", " << src << "\n";
+void GASGenerator::_sub(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tsub " << *destination << ", " << *src << "\n";
 }
 
-void GASGenerator::_idiv(const Source &dividend) {
-    _output << "\tidiv " << dividend << "\n";
+void GASGenerator::_idiv(const std::shared_ptr<Operand> &dividend) {
+    _output << "\tidiv " << *dividend << "\n";
 }
 
-void GASGenerator::_imul(const Destination &destination, const Source &src) {
-    _output << "\timul " << destination << ", " << src << "\n";
+void GASGenerator::_imul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\timul " << *destination << ", " << *src << "\n";
 }
 
 void GASGenerator::_comment_instruction(Instruction &instruction) {
@@ -173,17 +170,4 @@ void GASGenerator::_comment_instruction(Instruction &instruction) {
 void GASGenerator::_newline() {
     if (!_debug) return;
     _output << "\n";
-}
-
-Destination GASGenerator::_to_destination(const Operand &operand) {
-    if (auto memory = std::get_if<Memory>(&operand.data())) return *memory;
-    if (auto reg = std::get_if<Register>(&operand.data())) return *reg;
-    throw std::invalid_argument("This operand can't be converted to a destination operand");
-}
-
-Source GASGenerator::_to_source(const Operand &operand) {
-    if (auto memory = std::get_if<Memory>(&operand.data())) return *memory;
-    if (auto reg = std::get_if<Register>(&operand.data())) return *reg;
-    if (auto immediate = std::get_if<Immediate>(&operand.data())) return *immediate;
-    throw std::invalid_argument("This operand can't be converted to a source operand");
 }

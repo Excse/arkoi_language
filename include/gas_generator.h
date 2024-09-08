@@ -8,14 +8,6 @@
 #include "il_printer.h"
 #include "visitor.h"
 
-using Source = std::variant<Memory, Register, Immediate>;
-
-std::ostream &operator<<(std::ostream &os, const Source &source);
-
-using Destination = std::variant<Memory, Register>;
-
-std::ostream &operator<<(std::ostream &os, const Destination &destination);
-
 class GASGenerator : public InstructionVisitor {
 
 public:
@@ -38,33 +30,29 @@ public:
 private:
     void _preamble();
 
-    void _movsx(const Destination &destination, const Source &src);
+    void _movsx(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
-    void _mov(const Destination &destination, const Source &src);
+    void _mov(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
     void _label(const std::shared_ptr<Symbol> &symbol);
 
-    void _pop(const Destination &destination);
+    void _pop(const std::shared_ptr<Operand> &destination);
 
-    void _push(const Source &src);
+    void _push(const std::shared_ptr<Operand> &src);
 
     void _ret();
 
-    void _add(const Destination &destination, const Source &src);
+    void _add(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
-    void _sub(const Destination &destination, const Source &src);
+    void _sub(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
-    void _idiv(const Source &dividend);
+    void _idiv(const std::shared_ptr<Operand> &dividend);
 
-    void _imul(const Destination &destination, const Source &src);
+    void _imul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
     void _comment_instruction(Instruction &instruction);
 
     void _newline();
-
-    [[nodiscard]] static Destination _to_destination(const Operand &operand);
-
-    [[nodiscard]] static Source _to_source(const Operand &operand);
 
 private:
     std::stringstream _output{};

@@ -4,7 +4,6 @@
 #include <unordered_map>
 #include <iostream>
 #include <optional>
-#include <variant>
 #include <cstdint>
 
 class Token {

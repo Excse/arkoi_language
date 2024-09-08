@@ -4,7 +4,6 @@
 #include <optional>
 #include <cstddef>
 #include <cstdint>
-#include <variant>
 #include <memory>
 #include <limits>
 
@@ -23,16 +22,6 @@ public:
 
 class IntegerType : public Type {
 public:
-    static const std::shared_ptr<IntegerType> TYPE_U8;
-    static const std::shared_ptr<IntegerType> TYPE_S8;
-    static const std::shared_ptr<IntegerType> TYPE_U16;
-    static const std::shared_ptr<IntegerType> TYPE_S16;
-    static const std::shared_ptr<IntegerType> TYPE_U32;
-    static const std::shared_ptr<IntegerType> TYPE_S32;
-    static const std::shared_ptr<IntegerType> TYPE_U64;
-    static const std::shared_ptr<IntegerType> TYPE_S64;
-    static const std::shared_ptr<IntegerType> TYPE_USize;
-    static const std::shared_ptr<IntegerType> TYPE_SSize;
 
 public:
     IntegerType(int64_t size, bool sign) : _size(size), _sign(sign) {}

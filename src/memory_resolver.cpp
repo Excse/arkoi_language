@@ -2,6 +2,8 @@
 
 #include "instruction.h"
 
+static const auto RBP = Register(Register::Base::BP, Register::Size::QWORD);
+
 void MemoryResolver::visit(BeginInstruction &instruction) {
     _current_begin = &instruction;
     _parameter_offset = 8;
@@ -22,12 +24,13 @@ void MemoryResolver::visit(CastInstruction &instruction) {
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-Operand MemoryResolver::_resolve_operand(const Operand &operand) {
-    if (!std::holds_alternative<std::shared_ptr<Symbol>>(operand.data())) {
+std::shared_ptr<Operand> MemoryResolver::_resolve_operand(const std::shared_ptr<Operand> &operand) {
+    auto symbolic = std::dynamic_pointer_cast<SymbolOperand>(operand);
+    if (!symbolic) {
         return operand;
     }
 
-    auto symbol = std::get<std::shared_ptr<Symbol>>(operand.data());
+    auto symbol = symbolic->symbol();
     auto result = _resolved.find(symbol);
     if (result != _resolved.end()) {
         return result->second;
@@ -37,7 +40,7 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
         auto byte_size = _type_to_byte_size(temporary->type());
         _current_begin->increase_local_size(byte_size);
 
-        auto location = Operand(Memory(Register::RBP, -_current_begin->local_size()));
+        auto location = std::make_shared<Memory>(RBP, -_current_begin->local_size());
         _resolved[symbol] = location;
 
         return location;
@@ -49,7 +52,7 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
         if (parameter->index() < 6) {
             auto size = Register::type_to_register_size(parameter->type());
             auto base = INT_REG_ORDER[parameter->index()];
-            auto reg = Operand(Register(base, size));
+            auto reg = std::make_shared<Register>(base, size);
             _resolved[symbol] = reg;
 
             return reg;
@@ -58,7 +61,7 @@ Operand MemoryResolver::_resolve_operand(const Operand &operand) {
         auto byte_size = _type_to_byte_size(parameter->type());
         _parameter_offset += byte_size;
 
-        auto location = Operand(Memory(Register::RBP, _parameter_offset));
+        auto location = std::make_shared<Memory>(RBP, _parameter_offset);
         _resolved[symbol] = location;
 
         return location;

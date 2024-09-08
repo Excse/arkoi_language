@@ -30,12 +30,12 @@ public:
     [[nodiscard]] auto &instructions() const { return _instructions; }
 
 private:
-    Operand _make_temporary(const std::shared_ptr<Type> &type);
+    std::shared_ptr<Operand> _make_temporary(const std::shared_ptr<Type> &type);
 
 private:
     std::vector<std::unique_ptr<Instruction>> _instructions{};
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};
-    Operand _current_operand{};
+    std::shared_ptr<Operand> _current_operand{};
     size_t _temp_index{};
 };
 

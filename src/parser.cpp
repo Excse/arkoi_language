@@ -131,16 +131,16 @@ std::shared_ptr<Type> Parser::_parse_type() {
 
     auto token = _consume_any();
     switch (token.type()) {
-        case Token::Type::U8: return IntegerType::TYPE_U8;
-        case Token::Type::S8: return IntegerType::TYPE_S8;
-        case Token::Type::U16: return IntegerType::TYPE_U16;
-        case Token::Type::S16: return IntegerType::TYPE_S16;
-        case Token::Type::U32: return IntegerType::TYPE_U32;
-        case Token::Type::S32: return IntegerType::TYPE_S32;
-        case Token::Type::U64: return IntegerType::TYPE_U64;
-        case Token::Type::S64: return IntegerType::TYPE_S64;
-        case Token::Type::USize: return IntegerType::TYPE_USize;
-        case Token::Type::SSize: return IntegerType::TYPE_SSize;
+        case Token::Type::U8: return std::make_shared<IntegerType>(8, false);
+        case Token::Type::S8: return std::make_shared<IntegerType>(8, true);
+        case Token::Type::U16: return std::make_shared<IntegerType>(16, false);
+        case Token::Type::S16: return std::make_shared<IntegerType>(16, true);
+        case Token::Type::U32: return std::make_shared<IntegerType>(32, false);
+        case Token::Type::S32: return std::make_shared<IntegerType>(32, true);
+        case Token::Type::U64: return std::make_shared<IntegerType>(64, false);
+        case Token::Type::S64: return std::make_shared<IntegerType>(64, true);
+        case Token::Type::USize: return std::make_shared<IntegerType>(64, false);
+        case Token::Type::SSize: return std::make_shared<IntegerType>(64, true);
         default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize", token);
     }
 }
