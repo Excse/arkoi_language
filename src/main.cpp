@@ -68,7 +68,7 @@ int main() {
 
     if (DEBUG) {
         for (const auto &item: memoryResolver.resolved()) {
-            std::cout << ":> " << *item.first << " = " << item.second << std::endl;
+            std::cout << ":> " << *item.first << " = " << *item.second << std::endl;
         }
     }
 

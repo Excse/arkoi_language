@@ -239,7 +239,13 @@ std::unique_ptr<Node> Parser::_parse_factor() {
 
 std::unique_ptr<Node> Parser::_parse_primary() {
     if (auto *number = _try_consume(Token::Type::Number)) {
-        return std::make_unique<NumberNode>(*number);
+        auto node = std::make_unique<NumberNode>(*number);
+        
+        if (_current().type() == Token::Type::At) {
+            return std::make_unique<CastNode>(std::move(node), _parse_type());
+        }
+
+        return node;
     } else if (auto *identifier = _try_consume(Token::Type::Identifier)) {
         return std::make_unique<IdentifierNode>(*identifier);
     }

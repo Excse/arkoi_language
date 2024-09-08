@@ -29,9 +29,11 @@ private:
 
     [[nodiscard]] Token _lex_number();
 
+    [[nodiscard]] Token _lex_char();
+
     [[nodiscard]] Token _lex_special();
 
-    [[nodiscard]] std::string_view _current_view();
+    [[nodiscard]] std::string _current_view();
 
     [[nodiscard]] char _current_char();
 
@@ -40,6 +42,8 @@ private:
     [[nodiscard]] Location _mark_start();
 
     void _next();
+
+    char _peek();
 
     void _consume(char expected);
 
@@ -53,13 +57,17 @@ private:
 
     [[nodiscard]] static bool _is_ident_start(char input);
 
-    [[nodiscard]] static bool _is_ident(char input);
+    [[nodiscard]] static bool _is_ident_inner(char input);
 
     [[nodiscard]] static bool _is_not_newline(char input);
 
+    [[nodiscard]] static bool _is_ascii(char input);
+
     [[nodiscard]] static bool _is_space(char input);
 
-    [[nodiscard]] static bool _is_hex(char input);
+    [[nodiscard]] static bool _is_hex_start(char input);
+
+    [[nodiscard]] static bool _is_hex_inner(char input);
 
 private:
     size_t _position{}, _start{};

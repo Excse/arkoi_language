@@ -32,15 +32,18 @@ std::vector<Token> Scanner::tokenize() {
 Token Scanner::_next_token() {
     while (_try_consume(_is_space));
 
+    Location start = _mark_start();
     if (_is_eof()) {
-        return {Token::Type::EndOfFile, 0, 0, ""};
+        return {Token::Type::EndOfFile, start.column, start.row, ""};
     }
 
     auto current = _current_char();
-    if (std::isalpha(current)) {
+    if (_is_ident_start(current)) {
         return _lex_identifier();
-    } else if (current == '-' || std::isdigit(current)) {
+    } else if (current == '-' || _is_digit(current)) {
         return _lex_number();
+    } else if (current == '\'') {
+        return _lex_char();
     } else if (current == '#') {
         return _lex_comment();
     }
@@ -61,9 +64,9 @@ Token Scanner::_lex_identifier() {
     Location start = _mark_start();
 
     _consume(_is_ident_start, "_, a-z or A-Z");
-    while (_try_consume(_is_ident));
+    while (_try_consume(_is_ident_inner));
 
-    std::string_view value = _current_view();
+    auto value = _current_view();
     if (auto keyword = Token::lookup_keyword(value)) {
         return {*keyword, start.column, start.row, value};
     }
@@ -73,16 +76,14 @@ Token Scanner::_lex_identifier() {
 
 Token Scanner::_lex_number() {
     Location start = _mark_start();
-
-    if (_try_consume('-') && !_try_consume(_is_digit)) {
+    if (_try_consume('-') && !_is_digit(_peek())) {
         return {Token::Type::Minus, start.column, start.row, _current_view()};
     }
 
-    _consume(_is_digit, "0-9");
-
-    if (_try_consume('x')) {
-        _consume(_is_hex, "0-9, a-f or A-F");
-        while (_try_consume(_is_hex));
+    auto consumed = _consume(_is_digit, "0-9");
+    if (consumed == '0' && _try_consume('x')) {
+        _consume(_is_hex_start, "0-9, a-f or A-F");
+        while (_try_consume(_is_hex_inner));
     } else {
         while (_try_consume(_is_digit));
     }
@@ -99,6 +100,16 @@ Token Scanner::_lex_number() {
     }
 
     return {Token::Type::Number, start.column, start.row, _current_view()};
+}
+
+Token Scanner::_lex_char() {
+    Location start = _mark_start();
+
+    _consume('\'');
+    auto consumed = _consume(_is_ascii, "'");
+    _consume('\'');
+
+    return {Token::Type::Number, start.column, start.row, std::to_string(consumed)};
 }
 
 Token Scanner::_lex_special() {
@@ -126,8 +137,8 @@ Scanner::Location Scanner::_mark_start() {
     return Location{_column, _row};
 }
 
-std::string_view Scanner::_current_view() {
-    return _data.substr(_start, (_position - _start));
+std::string Scanner::_current_view() {
+    return std::string(_data.substr(_start, (_position - _start)));
 }
 
 void Scanner::_next() {
@@ -139,6 +150,11 @@ void Scanner::_next() {
     }
 
     _position += 1;
+}
+
+char Scanner::_peek() {
+    if (_position >= _data.size()) return 0;
+    return _data[_position];
 }
 
 void Scanner::_consume(char expected) {
@@ -186,7 +202,7 @@ bool Scanner::_is_ident_start(char input) {
     return std::isalpha(static_cast<unsigned char>(input)) || input == '_';
 }
 
-bool Scanner::_is_ident(char input) {
+bool Scanner::_is_ident_inner(char input) {
     return std::isalnum(static_cast<unsigned char>(input)) || input == '_';
 }
 
@@ -194,12 +210,20 @@ bool Scanner::_is_not_newline(char input) {
     return input != '\n';
 }
 
+bool Scanner::_is_ascii(char input) {
+    return static_cast<unsigned char>(input) <= 127;
+}
+
 bool Scanner::_is_space(char input) {
     return std::isspace(static_cast<unsigned char>(input));
 }
 
-bool Scanner::_is_hex(char input) {
+bool Scanner::_is_hex_start(char input) {
     return (input >= '0' && input <= '9') ||
            (input >= 'a' && input <= 'f') ||
            (input >= 'A' && input <= 'F');
+}
+
+bool Scanner::_is_hex_inner(char input) {
+    return _is_hex_start(input) || input == '_';
 }

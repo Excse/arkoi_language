@@ -5,6 +5,7 @@
 #include <iostream>
 #include <optional>
 #include <cstdint>
+#include <utility>
 
 class Token {
 public:
@@ -45,8 +46,8 @@ public:
     };
 
 public:
-    Token(Type type, int64_t column, int64_t row, std::string_view value)
-            : _value(value), _column(column), _row(row), _type(type) {}
+    Token(Type type, int64_t column, int64_t row, std::string value)
+            : _column(column), _row(row), _value(std::move(value)), _type(type) {}
 
     [[nodiscard]] auto &value() const { return _value; }
 
@@ -65,8 +66,8 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Type &type);
 
 private:
-    std::string_view _value;
     int64_t _column, _row;
+    std::string _value;
     Type _type;
 };
 
