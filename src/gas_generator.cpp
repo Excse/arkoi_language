@@ -29,22 +29,18 @@ void GASGenerator::visit(BeginInstruction &instruction) {
 
 void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
-
-    auto destination = std::make_shared<Register>(Register::Base::A,
-                                                  Register::type_to_register_size(instruction.type()));
+    auto destination = _destination_register(*instruction.type());
     _mov(destination, instruction.value());
-
     _newline();
 }
 
 void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto left_reg = std::make_shared<Register>(Register::Base::A, Register::type_to_register_size(instruction.type()));
+    auto left_reg = _temp1_register(*instruction.type());
     _mov(left_reg, instruction.left());
 
-    auto right_reg = std::make_shared<Register>(Register::Base::R11,
-                                                Register::type_to_register_size(instruction.type()));
+    auto right_reg = _temp2_register(*instruction.type());
     _mov(right_reg, instruction.right());
 
     switch (instruction.op()) {
@@ -61,6 +57,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
             break;
         }
         case BinaryInstruction::Operator::Div: {
+            // TODO: Use div for unsigned and idiv for signed
             _idiv(right_reg);
             break;
         }
@@ -73,27 +70,92 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 void GASGenerator::visit(CastInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto from_temporary = std::make_shared<Register>(Register::Base::A,
-                                                     Register::type_to_register_size(instruction.from()));
-    _mov(from_temporary, instruction.expression());
-
-    auto to_temporary = std::make_shared<Register>(Register::Base::A,
-                                                   Register::type_to_register_size(instruction.to()));
-
     auto from_integer = std::dynamic_pointer_cast<IntegerType>(instruction.from());
     auto to_integer = std::dynamic_pointer_cast<IntegerType>(instruction.to());
     if (from_integer && to_integer) {
+        auto from_temporary = _temp1_register(*instruction.from());
+        auto to_temporary = _temp1_register(*instruction.to());
+        _mov(from_temporary, instruction.expression());
+
         if (to_integer->size() > from_integer->size()) {
             _movsx(to_temporary, from_temporary);
         } else if (to_integer->size() < from_integer->size()) {
-            // Do nothing, just use to_temporary as they are the same register just in different sizes
+            _mov(to_temporary, from_temporary);
         }
-    } else {
-        throw std::runtime_error("Cast Instruction not implemented yet.");
+
+        _mov(instruction.result(), to_temporary);
+        _newline();
+        return;
     }
 
-    _mov(instruction.result(), to_temporary);
-    _newline();
+    auto from_floating = std::dynamic_pointer_cast<FloatingType>(instruction.from());
+    auto to_floating = std::dynamic_pointer_cast<FloatingType>(instruction.to());
+    if (from_floating && to_floating) {
+        auto from_temporary = _temp1_register(*instruction.from());
+        auto to_temporary = _temp1_register(*instruction.to());
+        _movss(from_temporary, instruction.expression());
+
+        if (from_floating->size() == 32 && to_floating->size() == 64) {
+            _cvtss2sd(to_temporary, from_temporary);
+            _movsd(instruction.result(), to_temporary);
+        } else if (from_floating->size() == 64 && to_floating->size() == 32) {
+            _cvtsd2ss(to_temporary, from_temporary);
+            _movss(instruction.result(), to_temporary);
+        }
+
+        _newline();
+        return;
+    }
+
+    if (from_integer && to_floating) {
+        auto to_temporary = _temp1_register(*instruction.to());
+        auto from_temporary = _temp1_register(*instruction.from());
+
+        if (from_integer->size() < 32) {
+            auto temp_type = std::make_shared<IntegerType>(32, from_integer->sign());
+            auto bigger_from_temporary = _temp1_register(*temp_type);
+            _movsx(bigger_from_temporary, from_temporary);
+            from_temporary = bigger_from_temporary;
+        } else {
+            _mov(from_temporary, instruction.expression());
+        }
+
+        if (to_floating->size() == 32) {
+            _cvtsi2ss(to_temporary, from_temporary);
+            _movss(instruction.result(), to_temporary);
+        } else if (to_floating->size() == 64) {
+            _cvtsi2sd(to_temporary, from_temporary);
+            _movsd(instruction.result(), to_temporary);
+        }
+
+        _newline();
+        return;
+    }
+
+    if(from_floating && to_integer) {
+        auto from_temporary = _temp1_register(*instruction.from());
+        auto to_temporary = _temp1_register(*instruction.to());
+
+        auto bigger_to_temporary = to_temporary;
+        if(to_integer->size() < 32) {
+            auto temp_type = std::make_shared<IntegerType>(32, to_integer->sign());
+            bigger_to_temporary = _temp1_register(*temp_type);
+        }
+
+        if(from_floating->size() == 32) {
+            _movss(from_temporary, instruction.expression());
+            _cvttss2si(bigger_to_temporary, from_temporary);
+        } else {
+            _movsd(from_temporary, instruction.expression());
+            _cvttsd2si(bigger_to_temporary, from_temporary);
+        }
+
+        _mov(instruction.result(), to_temporary);
+        _newline();
+        return;
+    }
+
+    throw std::runtime_error("Cast Instruction not implemented yet.");
 }
 
 void GASGenerator::visit(EndInstruction &instruction) {
@@ -119,8 +181,40 @@ _start:
 )";
 }
 
+void GASGenerator::_cvttsd2si(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tcvttsd2si " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_cvttss2si(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tcvttss2si " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_cvtss2sd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tcvtss2sd " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_cvtsd2ss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tcvtsd2ss " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_cvtsi2ss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tcvtsi2ss " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_cvtsi2sd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tcvtsi2sd " << *destination << ", " << *src << "\n";
+}
+
 void GASGenerator::_movsx(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
     _output << "\tmovsx " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_movss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmovss " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_movsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmovsd " << *destination << ", " << *src << "\n";
 }
 
 void GASGenerator::_mov(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
@@ -170,4 +264,34 @@ void GASGenerator::_comment_instruction(Instruction &instruction) {
 void GASGenerator::_newline() {
     if (!_debug) return;
     _output << "\n";
+}
+
+std::shared_ptr<Register> GASGenerator::_destination_register(const Type &type) {
+    if (dynamic_cast<const IntegerType *>(&type)) {
+        return std::make_shared<Register>(Register::Base::A, Register::type_to_register_size(type));
+    } else if (dynamic_cast<const FloatingType *>(&type)) {
+        return std::make_shared<Register>(Register::Base::XMM0, Register::type_to_register_size(type));
+    }
+
+    throw std::invalid_argument("This type is not implemented.");
+}
+
+std::shared_ptr<Register> GASGenerator::_temp1_register(const Type &type) {
+    if (dynamic_cast<const IntegerType *>(&type)) {
+        return std::make_shared<Register>(Register::Base::A, Register::type_to_register_size(type));
+    } else if (dynamic_cast<const FloatingType *>(&type)) {
+        return std::make_shared<Register>(Register::Base::XMM11, Register::type_to_register_size(type));
+    }
+
+    throw std::invalid_argument("This type is not implemented.");
+}
+
+std::shared_ptr<Register> GASGenerator::_temp2_register(const Type &type) {
+    if (dynamic_cast<const IntegerType *>(&type)) {
+        return std::make_shared<Register>(Register::Base::R11, Register::type_to_register_size(type));
+    } else if (dynamic_cast<const FloatingType *>(&type)) {
+        return std::make_shared<Register>(Register::Base::XMM12, Register::type_to_register_size(type));
+    }
+
+    throw std::invalid_argument("This type is not implemented.");
 }

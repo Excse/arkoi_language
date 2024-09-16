@@ -42,4 +42,18 @@ private:
     bool _sign;
 };
 
+class FloatingType : public Type {
+public:
+
+public:
+    explicit FloatingType(int64_t size) : _size(size) {}
+
+    [[nodiscard]] bool equals(const Type &other) const override;
+
+    [[nodiscard]] auto size() const { return _size; }
+
+private:
+    int64_t _size;
+};
+
 #endif //ARKOI_LANGUAGE_TYPE_H

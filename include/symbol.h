@@ -35,17 +35,23 @@ private:
 
 class ParameterSymbol : public Symbol {
 public:
-    explicit ParameterSymbol(std::string name, size_t index) : Symbol(std::move(name)), _index(index) {}
+    explicit ParameterSymbol(std::string name) : Symbol(std::move(name)) {}
 
-    [[nodiscard]] auto index() const { return _index; }
+    void set_sse_index(size_t index) { _sse_index = index; }
+
+    [[nodiscard]] auto sse_index() const { return _sse_index; }
+
+    void set_int_index(size_t index) { _int_index = index; }
+
+    [[nodiscard]] auto int_index() const { return _int_index; }
 
     void set_type(std::shared_ptr<Type> type) { _type = std::move(type); }
 
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
+    size_t _int_index{}, _sse_index{};
     std::shared_ptr<Type> _type{};
-    size_t _index;
 };
 
 class TemporarySymbol : public Symbol {

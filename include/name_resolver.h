@@ -15,11 +15,13 @@ public:
 
     void visit(BlockNode &node) override;
 
-    void visit(ParameterNode &) override {};
+    void visit(ParameterNode &) override;
 
     void visit(IdentifierNode &node) override;
 
-    void visit(NumberNode &) override {};
+    void visit(IntegerNode &) override {};
+
+    void visit(FloatingNode &) override {};
 
     void visit(ReturnNode &node) override;
 

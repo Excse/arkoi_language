@@ -10,6 +10,10 @@ void TypeResolver::visit(ProgramNode &node) {
 }
 
 void TypeResolver::visit(FunctionNode &node) {
+    // Reset the register counters for the parameters
+    _sse_index = 0;
+    _int_index = 0;
+
     std::vector<std::shared_ptr<Type>> parameter_types;
     for (auto &item: node.parameters()) {
         // This will set _current_type
@@ -36,10 +40,16 @@ void TypeResolver::visit(BlockNode &node) {
 void TypeResolver::visit(ParameterNode &node) {
     auto parameter = std::static_pointer_cast<ParameterSymbol>(node.symbol());
     parameter->set_type(node.type());
+
+    if (std::dynamic_pointer_cast<IntegerType>(node.type())) {
+        parameter->set_int_index(_int_index++);
+    } else if (std::dynamic_pointer_cast<FloatingType>(node.type())) {
+        parameter->set_sse_index(_sse_index++);
+    }
 }
 
-void TypeResolver::visit(NumberNode &node) {
-    auto number_string = to_string(node.value().value());
+void TypeResolver::visit(IntegerNode &node) {
+    auto number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
     int64_t size;
@@ -50,6 +60,13 @@ void TypeResolver::visit(NumberNode &node) {
     }
 
     _current_type = std::make_shared<IntegerType>(size, sign);
+}
+
+void TypeResolver::visit(FloatingNode &node) {
+    auto number_string = node.value().contents();
+
+    auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? 64 : 32;
+    _current_type = std::make_shared<FloatingType>(size);
 }
 
 void TypeResolver::visit(ReturnNode &node) {
@@ -118,12 +135,36 @@ void TypeResolver::visit(CastNode &node) {
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
 std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr<Type> &left_type,
                                                            const std::shared_ptr<Type> &right_type) {
-    // TODO: 1. Add Stage 4 for floating-point numbers.
+    auto floating_left = std::dynamic_pointer_cast<FloatingType>(left_type);
+    auto floating_right = std::dynamic_pointer_cast<FloatingType>(right_type);
+
+    // Stage 4: If either operand is of floating-point type, the following rules are applied:
+    if (floating_left || floating_right) {
+        // If both operands have the same type, no further conversion will be performed.
+        if (*left_type == *right_type) return left_type;
+
+        // Otherwise, if one of the operands is of a non-floating-point type, that operand is converted to the type of
+        // the other operand.
+        if (floating_left && !floating_right) return floating_left;
+        if (floating_right && !floating_left) return floating_right;
+
+        // Otherwise, if the floating-point conversion ranks of the types of the operands are ordered but(since C++23)
+        // not equal, then the operand of the type with the lesser floating-point conversion rank is converted to the
+        // type of the other operand.
+        if (floating_left && floating_right) {
+            if (floating_left->size() > floating_right->size()) return floating_left;
+            if (floating_right->size() > floating_left->size()) return floating_right;
+        }
+    }
+
+    // Otherwise, both operands are of integer types, proceed to the next stage.
+    auto integer_left = std::dynamic_pointer_cast<IntegerType>(left_type);
+    auto integer_right = std::dynamic_pointer_cast<IntegerType>(right_type);
+    if (!integer_left || !integer_right) throw std::invalid_argument("This arithmetic conversion is not allowed.");
 
     // Stage 5: Both operands are converted to a common op C.
-    auto t1 = std::dynamic_pointer_cast<IntegerType>(left_type);
-    auto t2 = std::dynamic_pointer_cast<IntegerType>(right_type);
-    if (!t1 || !t2) throw std::invalid_argument("This arithmetic conversion is not allowed.");
+    auto t1 = integer_left;
+    auto t2 = integer_right;
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
@@ -159,11 +200,26 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr
 bool TypeResolver::_can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination) {
     // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type. If the
     // conversion is listed under integral promotions, it is a promotion and not a conversion.
-    if (std::dynamic_pointer_cast<IntegerType>(destination) && std::dynamic_pointer_cast<IntegerType>(from)) {
+    if (std::dynamic_pointer_cast<IntegerType>(from) && std::dynamic_pointer_cast<IntegerType>(destination)) {
         return true;
     }
 
-    // TODO: Implement floating-point implicit conversion check
+    // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
+    if (std::dynamic_pointer_cast<FloatingType>(from) && std::dynamic_pointer_cast<FloatingType>(destination)) {
+        return true;
+    }
+
+    // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
+    // truncated, that is, the fractional part is discarded.
+    if (std::dynamic_pointer_cast<FloatingType>(from) && std::dynamic_pointer_cast<IntegerType>(destination)) {
+        return true;
+    }
+
+    // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
+    // The result is exact if possible.
+    if (std::dynamic_pointer_cast<IntegerType>(from) && std::dynamic_pointer_cast<FloatingType>(destination)) {
+        return true;
+    }
 
     return false;
 }

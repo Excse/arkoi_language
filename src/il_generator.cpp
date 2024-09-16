@@ -30,8 +30,8 @@ void IRGenerator::visit(BlockNode &node) {
     _scopes.pop();
 }
 
-void IRGenerator::visit(NumberNode &node) {
-    auto number_string = to_string(node.value().value());
+void IRGenerator::visit(IntegerNode &node) {
+    auto number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
     if (sign) {
@@ -48,6 +48,17 @@ void IRGenerator::visit(NumberNode &node) {
         } else {
             _current_operand = std::make_shared<Immediate>((uint32_t) value);
         }
+    }
+}
+
+void IRGenerator::visit(FloatingNode &node) {
+    auto number_string = node.value().contents();
+
+    auto value = std::stold(number_string);
+    if (value > std::numeric_limits<float>::max()) {
+        _current_operand = std::make_shared<Immediate>((double) value);
+    } else {
+        _current_operand = std::make_shared<Immediate>((float) value);
     }
 }
 

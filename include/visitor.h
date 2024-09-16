@@ -7,15 +7,17 @@ class SymbolTable;
 
 class IdentifierNode;
 
+class ParameterNode;
+
+class FloatingNode;
+
 class FunctionNode;
 
-class ParameterNode;
+class IntegerNode;
 
 class ProgramNode;
 
 class ReturnNode;
-
-class NumberNode;
 
 class BinaryNode;
 
@@ -35,7 +37,9 @@ public:
 
     virtual void visit(ParameterNode &node) = 0;
 
-    virtual void visit(NumberNode &node) = 0;
+    virtual void visit(IntegerNode &node) = 0;
+
+    virtual void visit(FloatingNode &node) = 0;
 
     virtual void visit(ReturnNode &node) = 0;
 

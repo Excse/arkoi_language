@@ -65,9 +65,13 @@ private:
 
     [[nodiscard]] static bool _is_space(char input);
 
-    [[nodiscard]] static bool _is_hex_start(char input);
+    [[nodiscard]] static bool _is_hex(char input);
 
-    [[nodiscard]] static bool _is_hex_inner(char input);
+    [[nodiscard]] static bool _is_hex_expo(char input);
+
+    [[nodiscard]] static bool _is_expo(char input);
+
+    [[nodiscard]] static bool _is_decimal_sign(char input);
 
 private:
     size_t _position{}, _start{};

@@ -30,7 +30,23 @@ public:
 private:
     void _preamble();
 
+    void _cvttsd2si(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _cvttss2si(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _cvtss2sd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _cvtsd2ss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _cvtsi2ss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _cvtsi2sd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
     void _movsx(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _movss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _movsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
     void _mov(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
@@ -53,6 +69,12 @@ private:
     void _comment_instruction(Instruction &instruction);
 
     void _newline();
+
+    static std::shared_ptr<Register> _destination_register(const Type &type);
+
+    static std::shared_ptr<Register> _temp1_register(const Type &type);
+
+    static std::shared_ptr<Register> _temp2_register(const Type &type);
 
 private:
     std::stringstream _output{};

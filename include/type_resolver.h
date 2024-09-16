@@ -19,7 +19,9 @@ public:
 
     void visit(ParameterNode &node) override;
 
-    void visit(NumberNode &node) override;
+    void visit(IntegerNode &node) override;
+
+    void visit(FloatingNode &node) override;
 
     void visit(ReturnNode &node) override;
 
@@ -40,6 +42,7 @@ private:
 private:
     std::shared_ptr<Type> _current_type{};
     std::shared_ptr<Type> _return_type{};
+    size_t _sse_index{}, _int_index{};
     bool _failed{};
 };
 

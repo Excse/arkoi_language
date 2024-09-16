@@ -1,6 +1,5 @@
 #include "name_resolver.h"
 
-#include "utils.h"
 #include "ast.h"
 
 void NameResolver::visit(ProgramNode &node) {
@@ -17,14 +16,17 @@ void NameResolver::visit(FunctionNode &node) {
 
     _scopes.push(node.table());
 
-    for (size_t index = 0; index < node.parameters().size(); index++) {
-        auto &parameter = node.parameters()[index];
-        auto parameter_symbol = _check_non_existence<ParameterSymbol>(parameter.name(), index);
-        parameter.set_symbol(parameter_symbol);
+    for (auto &item: node.parameters()) {
+        item.accept(*this);
     }
 
     node.block().accept(*this);
     _scopes.pop();
+}
+
+void NameResolver::visit(ParameterNode &node) {
+    auto parameter_symbol = _check_non_existence<ParameterSymbol>(node.name());
+    node.set_symbol(parameter_symbol);
 }
 
 void NameResolver::visit(BlockNode &node) {

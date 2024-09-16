@@ -141,6 +141,8 @@ std::shared_ptr<Type> Parser::_parse_type() {
         case Token::Type::S64: return std::make_shared<IntegerType>(64, true);
         case Token::Type::USize: return std::make_shared<IntegerType>(64, false);
         case Token::Type::SSize: return std::make_shared<IntegerType>(64, true);
+        case Token::Type::F32: return std::make_shared<FloatingType>(32);
+        case Token::Type::F64: return std::make_shared<FloatingType>(64);
         default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize", token);
     }
 }
@@ -238,9 +240,17 @@ std::unique_ptr<Node> Parser::_parse_factor() {
 
 
 std::unique_ptr<Node> Parser::_parse_primary() {
-    if (auto *number = _try_consume(Token::Type::Number)) {
-        auto node = std::make_unique<NumberNode>(*number);
-        
+    if (auto *integer = _try_consume(Token::Type::Integer)) {
+        auto node = std::make_unique<IntegerNode>(*integer);
+
+        if (_current().type() == Token::Type::At) {
+            return std::make_unique<CastNode>(std::move(node), _parse_type());
+        }
+
+        return node;
+    } else if (auto *floating = _try_consume(Token::Type::Floating)) {
+        auto node = std::make_unique<FloatingNode>(*floating);
+
         if (_current().type() == Token::Type::At) {
             return std::make_unique<CastNode>(std::move(node), _parse_type());
         }

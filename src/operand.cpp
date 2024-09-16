@@ -27,6 +27,8 @@ std::ostream &Register::print(std::ostream &os) const {
             case Register::Size::QWORD: return os << "r" << _base << "x";
             default: throw std::invalid_argument("This is not a valid register size.");
         }
+    } else if (_base >= Register::Base::XMM0 && _base <= Register::Base::XMM15) {
+        return os << _base;
     }
 
     throw std::invalid_argument("This register is not implemented.");
@@ -50,15 +52,36 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
         case Register::Base::R13: return os << "r13";
         case Register::Base::R14: return os << "r14";
         case Register::Base::R15: return os << "r15";
+        case Register::Base::XMM0: return os << "xmm0";
+        case Register::Base::XMM1: return os << "xmm1";
+        case Register::Base::XMM2: return os << "xmm2";
+        case Register::Base::XMM3: return os << "xmm3";
+        case Register::Base::XMM4: return os << "xmm4";
+        case Register::Base::XMM5: return os << "xmm5";
+        case Register::Base::XMM6: return os << "xmm6";
+        case Register::Base::XMM7: return os << "xmm7";
+        case Register::Base::XMM8: return os << "xmm8";
+        case Register::Base::XMM9: return os << "xmm9";
+        case Register::Base::XMM10: return os << "xmm10";
+        case Register::Base::XMM11: return os << "xmm11";
+        case Register::Base::XMM12: return os << "xmm12";
+        case Register::Base::XMM13: return os << "xmm13";
+        case Register::Base::XMM14: return os << "xmm14";
+        case Register::Base::XMM15: return os << "xmm15";
         default: throw std::invalid_argument("This register is not implemented.");
     }
 }
 
-Register::Size Register::type_to_register_size(const std::shared_ptr<Type> &type) {
-    if (auto integer = std::dynamic_pointer_cast<IntegerType>(type)) {
+Register::Size Register::type_to_register_size(const Type &type) {
+    if (auto integer = dynamic_cast<const IntegerType *>(&type)) {
         switch (integer->size()) {
             case 8: return Register::Size::BYTE;
             case 16: return Register::Size::WORD;
+            case 32: return Register::Size::DWORD;
+            case 64: return Register::Size::QWORD;
+        }
+    } else if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+        switch (floating->size()) {
             case 32: return Register::Size::DWORD;
             case 64: return Register::Size::QWORD;
         }

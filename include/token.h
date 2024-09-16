@@ -10,7 +10,8 @@
 class Token {
 public:
     enum class Type {
-        Number,
+        Integer,
+        Floating,
         Identifier,
         Comment,
 
@@ -27,6 +28,8 @@ public:
         S64,
         USize,
         SSize,
+        F32,
+        F64,
 
         // Special 1
         LParent,
@@ -46,14 +49,14 @@ public:
     };
 
 public:
-    Token(Type type, int64_t column, int64_t row, std::string value)
-            : _column(column), _row(row), _value(std::move(value)), _type(type) {}
+    Token(Type type, int64_t column, int64_t row, std::string contents)
+            : _column(column), _row(row), _contents(std::move(contents)), _type(type) {}
 
-    [[nodiscard]] auto &value() const { return _value; }
-
-    [[nodiscard]] auto &type() const { return _type; }
+    [[nodiscard]] auto &contents() const { return _contents; }
 
     [[nodiscard]] auto column() const { return _column; }
+
+    [[nodiscard]] auto &type() const { return _type; }
 
     [[nodiscard]] auto row() const { return _row; }
 
@@ -67,7 +70,7 @@ public:
 
 private:
     int64_t _column, _row;
-    std::string _value;
+    std::string _contents;
     Type _type;
 };
 

@@ -55,7 +55,7 @@ private:
 
 class ParameterNode : public Node {
 public:
-    ParameterNode(Token name, std::shared_ptr<Type> type) : _type(std::move(type)), _name(name) {}
+    ParameterNode(Token name, std::shared_ptr<Type> type) : _type(std::move(type)), _name(std::move(name)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -78,7 +78,7 @@ public:
     FunctionNode(Token name, std::vector<ParameterNode> &&parameters, std::shared_ptr<Type> type, BlockNode &&block,
                  std::shared_ptr<SymbolTable> table)
             : _parameters(std::move(parameters)), _table(std::move(table)), _type(std::move(type)),
-              _block(std::move(block)), _name(name) {}
+              _block(std::move(block)), _name(std::move(name)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -124,9 +124,21 @@ private:
     std::shared_ptr<Type> _type{};
 };
 
-class NumberNode : public Node {
+class IntegerNode : public Node {
 public:
-    explicit NumberNode(Token value) : _value(value) {}
+    explicit IntegerNode(Token value) : _value(std::move(value)) {}
+
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &value() const { return _value; }
+
+private:
+    Token _value;
+};
+
+class FloatingNode : public Node {
+public:
+    explicit FloatingNode(Token value) : _value(std::move(value)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -138,7 +150,7 @@ private:
 
 class IdentifierNode : public Node {
 public:
-    explicit IdentifierNode(Token value) : _value(value) {}
+    explicit IdentifierNode(Token value) : _value(std::move(value)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 

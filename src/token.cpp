@@ -16,6 +16,8 @@ std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) 
             {"s64",    Token::Type::S64},
             {"usize",  Token::Type::USize},
             {"ssize",  Token::Type::SSize},
+            {"f64",  Token::Type::F64},
+            {"f32",  Token::Type::F32},
     };
 
     const auto keyword = KEYWORDS.find(value);
@@ -46,7 +48,8 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
 
 std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
     switch (type) {
-        case Token::Type::Number: return os << "Number";
+        case Token::Type::Integer: return os << "Integer";
+        case Token::Type::Floating: return os << "Floating";
         case Token::Type::Identifier: return os << "Identifier";
         case Token::Type::Comment: return os << "Comment";
 
@@ -62,6 +65,8 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::S64: return os << "s64";
         case Token::Type::USize: return os << "usize";
         case Token::Type::SSize: return os << "ssize";
+        case Token::Type::F32: return os << "f32";
+        case Token::Type::F64: return os << "f64";
 
         case Token::Type::LParent: return os << "(";
         case Token::Type::RParent: return os << ")";
@@ -84,7 +89,7 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
     os << to_string(token.type());
-    os << ", value: " << token.value();
+    os << ", contents: " << token.contents();
     os << ", column: " << token.column();
     os << ", row: " << token.row();
     return os;

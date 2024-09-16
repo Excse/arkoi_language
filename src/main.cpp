@@ -39,7 +39,7 @@ int main() {
         exit(1);
     }
 
-    std::cout << "~~~~~~~~~~~~        Operator Resolver         ~~~~~~~~~~~~" << std::endl;
+    std::cout << "~~~~~~~~~~~~        Type Resolver         ~~~~~~~~~~~~" << std::endl;
 
     TypeResolver type_resolver;
     program.accept(type_resolver);

@@ -81,16 +81,43 @@ Token Scanner::_lex_number() {
     }
 
     auto consumed = _consume(_is_digit, "0-9");
+    bool floating;
+
     if (consumed == '0' && _try_consume('x')) {
-        _consume(_is_hex_start, "0-9, a-f or A-F");
-        while (_try_consume(_is_hex_inner));
+        _consume(_is_hex, "0-9, a-f or A-F");
+
+        while (_try_consume(_is_hex));
+
+        floating = _try_consume('.');
+
+        while (_try_consume(_is_hex));
+
+        if (_try_consume(_is_hex_expo)) {
+            std::ignore = _try_consume(_is_decimal_sign);
+
+            while (_try_consume(_is_hex));
+        }
     } else {
         while (_try_consume(_is_digit));
+
+        floating = _try_consume('.');
+
+        while (_try_consume(_is_digit));
+
+        if (_try_consume(_is_expo)) {
+            floating = true;
+
+            std::ignore = _try_consume(_is_decimal_sign);
+
+            while (_try_consume(_is_hex));
+        }
     }
 
-    auto number = std::string(_current_view());
+    auto number = _current_view();
     try {
-        if (number.starts_with("-")) {
+        if (floating) {
+            std::stold(number);
+        } else if (number.starts_with("-")) {
             std::stoll(number);
         } else {
             std::stoull(number);
@@ -99,7 +126,11 @@ Token Scanner::_lex_number() {
         throw NumberOutOfRange(number);
     }
 
-    return {Token::Type::Number, start.column, start.row, _current_view()};
+    if (floating) {
+        return {Token::Type::Floating, start.column, start.row, number};
+    } else {
+        return {Token::Type::Integer, start.column, start.row, number};
+    }
 }
 
 Token Scanner::_lex_char() {
@@ -109,7 +140,7 @@ Token Scanner::_lex_char() {
     auto consumed = _consume(_is_ascii, "'");
     _consume('\'');
 
-    return {Token::Type::Number, start.column, start.row, std::to_string(consumed)};
+    return {Token::Type::Integer, start.column, start.row, std::to_string(consumed)};
 }
 
 Token Scanner::_lex_special() {
@@ -218,12 +249,20 @@ bool Scanner::_is_space(char input) {
     return std::isspace(static_cast<unsigned char>(input));
 }
 
-bool Scanner::_is_hex_start(char input) {
+bool Scanner::_is_hex(char input) {
     return (input >= '0' && input <= '9') ||
            (input >= 'a' && input <= 'f') ||
            (input >= 'A' && input <= 'F');
 }
 
-bool Scanner::_is_hex_inner(char input) {
-    return _is_hex_start(input) || input == '_';
+bool Scanner::_is_hex_expo(char input) {
+    return input == 'p' || input == 'P';
+}
+
+bool Scanner::_is_expo(char input) {
+    return input == 'e' || input == 'E';
+}
+
+bool Scanner::_is_decimal_sign(char input) {
+    return input == '+' || input == '-';
 }

@@ -17,7 +17,9 @@ public:
 
     void visit(ParameterNode &) override {};
 
-    void visit(NumberNode &node) override;
+    void visit(IntegerNode &node) override;
+
+    void visit(FloatingNode &node) override;
 
     void visit(ReturnNode &node) override;
 
