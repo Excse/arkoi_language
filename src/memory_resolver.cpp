@@ -7,8 +7,6 @@ static const auto RBP = Register(Register::Base::BP, Register::Size::QWORD);
 void MemoryResolver::visit(BeginInstruction &instruction) {
     _current_begin = &instruction;
     _parameter_offset = 8;
-    _int_arguments = 0;
-    _sse_arguments = 0;
 }
 
 void MemoryResolver::visit(ReturnInstruction &instruction) {

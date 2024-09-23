@@ -1,5 +1,6 @@
 #include "gas_generator.h"
 
+#include <iomanip>
 #include <sstream>
 
 #include "instruction.h"
@@ -29,41 +30,69 @@ void GASGenerator::visit(BeginInstruction &instruction) {
 
 void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
+
+    auto is_integer = std::dynamic_pointer_cast<IntegerType>(instruction.type());
+    auto is_floating = std::dynamic_pointer_cast<FloatingType>(instruction.type());
+    auto is_double = is_floating && is_floating->size() == 64;
+    auto is_float = is_floating && is_floating->size() == 32;
+
     auto destination = _destination_register(*instruction.type());
-    _mov(destination, instruction.value());
+    if (is_integer) {
+        _mov(destination, instruction.value());
+    } else if (is_float) {
+        _movss(destination, instruction.value());
+    } else if (is_double) {
+        _movsd(destination, instruction.value());
+    }
+
     _newline();
 }
 
 void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
+    auto is_integer = std::dynamic_pointer_cast<IntegerType>(instruction.type());
+    auto is_signed = is_integer && is_integer->sign();
+    auto is_floating = std::dynamic_pointer_cast<FloatingType>(instruction.type());
+    auto is_double = is_floating && is_floating->size() == 64;
+    auto is_float = is_floating && is_floating->size() == 32;
+
     auto left_reg = _temp1_register(*instruction.type());
-    _mov(left_reg, instruction.left());
-
     auto right_reg = _temp2_register(*instruction.type());
-    _mov(right_reg, instruction.right());
+    if (is_integer) {
+        _mov(left_reg, instruction.left());
+        _mov(right_reg, instruction.right());
 
-    switch (instruction.op()) {
-        case BinaryInstruction::Operator::Add: {
-            _add(left_reg, right_reg);
-            break;
-        }
-        case BinaryInstruction::Operator::Sub: {
-            _sub(left_reg, right_reg);
-            break;
-        }
-        case BinaryInstruction::Operator::Mul: {
-            _imul(left_reg, right_reg);
-            break;
-        }
-        case BinaryInstruction::Operator::Div: {
-            // TODO: Use div for unsigned and idiv for signed
-            _idiv(right_reg);
-            break;
-        }
+        if (instruction.op() == BinaryInstruction::Operator::Add) _add(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Sub) _sub(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Div && is_signed) _idiv(right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Div && !is_signed) _div(right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Mul && is_signed) _imul(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Mul && !is_signed) _mul(left_reg, right_reg);
+
+        _mov(instruction.result(), left_reg);
+    } else if (is_float) {
+        _movss(left_reg, instruction.left());
+        _movss(right_reg, instruction.right());
+
+        if (instruction.op() == BinaryInstruction::Operator::Add) _addss(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Sub) _subss(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Div) _divss(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Mul) _mulss(left_reg, right_reg);
+
+        _movss(instruction.result(), left_reg);
+    } else if (is_double) {
+        _movsd(left_reg, instruction.left());
+        _movsd(right_reg, instruction.right());
+
+        if (instruction.op() == BinaryInstruction::Operator::Add) _addsd(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Sub) _subsd(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Div) _divsd(left_reg, right_reg);
+        if (instruction.op() == BinaryInstruction::Operator::Mul) _mulsd(left_reg, right_reg);
+
+        _movsd(instruction.result(), left_reg);
     }
 
-    _mov(instruction.result(), left_reg);
     _newline();
 }
 
@@ -132,17 +161,17 @@ void GASGenerator::visit(CastInstruction &instruction) {
         return;
     }
 
-    if(from_floating && to_integer) {
+    if (from_floating && to_integer) {
         auto from_temporary = _temp1_register(*instruction.from());
         auto to_temporary = _temp1_register(*instruction.to());
 
         auto bigger_to_temporary = to_temporary;
-        if(to_integer->size() < 32) {
+        if (to_integer->size() < 32) {
             auto temp_type = std::make_shared<IntegerType>(32, to_integer->sign());
             bigger_to_temporary = _temp1_register(*temp_type);
         }
 
-        if(from_floating->size() == 32) {
+        if (from_floating->size() == 32) {
             _movss(from_temporary, instruction.expression());
             _cvttss2si(bigger_to_temporary, from_temporary);
         } else {
@@ -167,12 +196,13 @@ void GASGenerator::visit(EndInstruction &instruction) {
 }
 
 void GASGenerator::_preamble() {
-    _output << R"(.intel_syntax noprefix
+    _output << R"(
+.intel_syntax noprefix
 .section .text
 .global _start
 
 _start:
-    mov rdi, 2
+    movsd xmm0, 2.0
     call main
 
     mov rdi, rax
@@ -241,16 +271,56 @@ void GASGenerator::_add(const std::shared_ptr<Operand> &destination, const std::
     _output << "\tadd " << *destination << ", " << *src << "\n";
 }
 
+void GASGenerator::_addsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\taddsd " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_addss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\taddss " << *destination << ", " << *src << "\n";
+}
+
 void GASGenerator::_sub(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
     _output << "\tsub " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_subsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tsubsd " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_subss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tsubss " << *destination << ", " << *src << "\n";
 }
 
 void GASGenerator::_idiv(const std::shared_ptr<Operand> &dividend) {
     _output << "\tidiv " << *dividend << "\n";
 }
 
+void GASGenerator::_div(const std::shared_ptr<Operand> &dividend) {
+    _output << "\tdiv " << *dividend << "\n";
+}
+
+void GASGenerator::_divsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tdivsd " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_divss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tdivss " << *destination << ", " << *src << "\n";
+}
+
 void GASGenerator::_imul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
     _output << "\timul " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_mul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmul " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_mulsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmulsd " << *destination << ", " << *src << "\n";
+}
+
+void GASGenerator::_mulss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src) {
+    _output << "\tmulss " << *destination << ", " << *src << "\n";
 }
 
 void GASGenerator::_comment_instruction(Instruction &instruction) {
@@ -294,4 +364,18 @@ std::shared_ptr<Register> GASGenerator::_temp2_register(const Type &type) {
     }
 
     throw std::invalid_argument("This type is not implemented.");
+}
+
+std::string GASGenerator::double_to_hex(double value) {
+    uint64_t hex_value = *reinterpret_cast<uint64_t *>(&value);
+    std::stringstream ss;
+    ss << std::hex << std::showbase << std::setw(16) << std::setfill('0') << hex_value;
+    return ss.str();
+}
+
+std::string GASGenerator::float_to_hex(float value) {
+    uint32_t hex_value = *reinterpret_cast<uint32_t *>(&value);
+    std::stringstream ss;
+    ss << std::hex << std::showbase << std::setw(8) << std::setfill('0') << hex_value;
+    return ss.str();
 }

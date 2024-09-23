@@ -27,7 +27,6 @@ private:
 
 private:
     std::unordered_map<std::shared_ptr<Symbol>, std::shared_ptr<Operand>> _resolved{};
-    size_t _int_arguments{}, _sse_arguments{};
     BeginInstruction *_current_begin{};
     int64_t _parameter_offset{};
 };

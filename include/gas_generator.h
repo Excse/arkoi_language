@@ -60,21 +60,45 @@ private:
 
     void _add(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
+    void _addsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _addss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
     void _sub(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _subsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _subss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
     void _idiv(const std::shared_ptr<Operand> &dividend);
 
+    void _div(const std::shared_ptr<Operand> &dividend);
+
+    void _divsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _divss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
     void _imul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _mul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _mulsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
+
+    void _mulss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
 
     void _comment_instruction(Instruction &instruction);
 
     void _newline();
 
-    static std::shared_ptr<Register> _destination_register(const Type &type);
+    [[nodiscard]] static std::shared_ptr<Register> _destination_register(const Type &type);
 
-    static std::shared_ptr<Register> _temp1_register(const Type &type);
+    [[nodiscard]] static std::shared_ptr<Register> _temp1_register(const Type &type);
 
-    static std::shared_ptr<Register> _temp2_register(const Type &type);
+    [[nodiscard]] static std::shared_ptr<Register> _temp2_register(const Type &type);
+
+    [[nodiscard]] static std::string double_to_hex(double value);
+
+    [[nodiscard]] static std::string float_to_hex(float value);
 
 private:
     std::stringstream _output{};
