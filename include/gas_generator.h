@@ -3,13 +3,13 @@
 
 #include <sstream>
 
+#include "gas_assembly.h"
 #include "symbol_table.h"
 #include "instruction.h"
 #include "il_printer.h"
 #include "visitor.h"
 
 class GASGenerator : public InstructionVisitor {
-
 public:
     explicit GASGenerator(bool debug = false);
 
@@ -25,84 +25,47 @@ public:
 
     void visit(EndInstruction &instruction) override;
 
-    [[nodiscard]] auto &output() const { return _output; }
+    [[nodiscard]] auto &output() { return _assembly.output(); }
 
 private:
     void _preamble();
 
-    void _cvttsd2si(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _cvttss2si(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _cvtss2sd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _cvtsd2ss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _cvtsi2ss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _cvtsi2sd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _movsx(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _movss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _movsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _mov(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _label(const std::shared_ptr<Symbol> &symbol);
-
-    void _pop(const std::shared_ptr<Operand> &destination);
-
-    void _push(const std::shared_ptr<Operand> &src);
-
-    void _ret();
-
-    void _add(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _addsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _addss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _sub(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _subsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _subss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _idiv(const std::shared_ptr<Operand> &dividend);
-
-    void _div(const std::shared_ptr<Operand> &dividend);
-
-    void _divsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _divss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _imul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _mul(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _mulsd(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
-    void _mulss(const std::shared_ptr<Operand> &destination, const std::shared_ptr<Operand> &src);
-
     void _comment_instruction(Instruction &instruction);
 
-    void _newline();
+    void _convert_int_to_int(const IntegerType &from, const Operand &expression,
+                             const IntegerType &to, const Operand &destination);
 
-    [[nodiscard]] static std::shared_ptr<Register> _destination_register(const Type &type);
+    void _convert_float_to_float(const FloatingType &from, const Operand &expression,
+                                 const FloatingType &to, const Operand &destination);
+
+    void _convert_int_to_float(const IntegerType &from, const Operand &expression,
+                               const FloatingType &to, const Operand &destination);
+
+    void _convert_float_to_int(const FloatingType &from, const Operand &expression,
+                               const IntegerType &to, const Operand &destination);
+
+    void _mov(const Type &type, const Operand &destination, const Operand &src);
+
+    void _add(const Type &type, const Operand &destination, const Operand &src);
+
+    void _sub(const Type &type, const Operand &destination, const Operand &src);
+
+    void _div(const Type &type, const Operand &destination, const Operand &src);
+
+    void _mul(const Type &type, const Operand &destination, const Operand &src);
+
+    [[nodiscard]] static std::shared_ptr<Register> _select_register(const Type &type, Register::Base integer,
+                                                                    Register::Base floating);
+
+    [[nodiscard]] static std::shared_ptr<Register> _returning_register(const Type &type);
 
     [[nodiscard]] static std::shared_ptr<Register> _temp1_register(const Type &type);
 
     [[nodiscard]] static std::shared_ptr<Register> _temp2_register(const Type &type);
 
-    [[nodiscard]] static std::string double_to_hex(double value);
-
-    [[nodiscard]] static std::string float_to_hex(float value);
-
 private:
-    std::stringstream _output{};
     ILPrinter _printer{};
+    Assembly _assembly{};
     bool _debug;
 };
 
