@@ -3,31 +3,28 @@
 #include "utils.h"
 
 std::ostream &Register::print(std::ostream &os) const {
-    if (_base >= Register::Base::R8 && _base <= Register::Base::R15) {
+    if (_base >= Base::R8 && _base <= Base::R15) {
         switch (_size) {
-            case Register::Size::BYTE: return os << _base << "b";
-            case Register::Size::WORD: return os << _base << "w";
-            case Register::Size::DWORD: return os << _base << "d";
-            case Register::Size::QWORD: return os << _base;
-            default: throw std::invalid_argument("This is not a valid register size.");
+            case Size::BYTE: return os << _base << "b";
+            case Size::WORD: return os << _base << "w";
+            case Size::DWORD: return os << _base << "d";
+            case Size::QWORD: return os << _base;
         }
-    } else if (_base >= Register::Base::SI && _base <= Register::Base::BP) {
+    } else if (_base >= Base::SI && _base <= Base::BP) {
         switch (_size) {
-            case Register::Size::BYTE: return os << _base << "l";
-            case Register::Size::WORD: return os << _base;
-            case Register::Size::DWORD: return os << "e" << _base;
-            case Register::Size::QWORD: return os << "r" << _base;
-            default: throw std::invalid_argument("This is not a valid register size.");
+            case Size::BYTE: return os << _base << "l";
+            case Size::WORD: return os << _base;
+            case Size::DWORD: return os << "e" << _base;
+            case Size::QWORD: return os << "r" << _base;
         }
-    } else if (_base >= Register::Base::A && _base <= Register::Base::B) {
+    } else if (_base >= Base::A && _base <= Base::B) {
         switch (_size) {
-            case Register::Size::BYTE: return os << _base << "l";
-            case Register::Size::WORD: return os << _base << "x";
-            case Register::Size::DWORD: return os << "e" << _base << "x";
-            case Register::Size::QWORD: return os << "r" << _base << "x";
-            default: throw std::invalid_argument("This is not a valid register size.");
+            case Size::BYTE: return os << _base << "l";
+            case Size::WORD: return os << _base << "x";
+            case Size::DWORD: return os << "e" << _base << "x";
+            case Size::QWORD: return os << "r" << _base << "x";
         }
-    } else if (_base >= Register::Base::XMM0 && _base <= Register::Base::XMM15) {
+    } else if (_base >= Base::XMM0 && _base <= Base::XMM15) {
         return os << _base;
     }
 
@@ -68,22 +65,26 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
         case Register::Base::XMM13: return os << "xmm13";
         case Register::Base::XMM14: return os << "xmm14";
         case Register::Base::XMM15: return os << "xmm15";
-        default: throw std::invalid_argument("This register is not implemented.");
     }
+
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
 }
 
 Register::Size Register::type_to_register_size(const Type &type) {
-    if (auto integer = dynamic_cast<const IntegerType *>(&type)) {
+    if (const auto integer = dynamic_cast<const IntegerType *>(&type)) {
         switch (integer->size()) {
-            case 8: return Register::Size::BYTE;
-            case 16: return Register::Size::WORD;
-            case 32: return Register::Size::DWORD;
-            case 64: return Register::Size::QWORD;
+            case 8: return Size::BYTE;
+            case 16: return Size::WORD;
+            case 32: return Size::DWORD;
+            case 64: return Size::QWORD;
+            default: throw std::invalid_argument("This is a invalid integer type size.");
         }
-    } else if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    } else if (const auto floating = dynamic_cast<const FloatingType *>(&type)) {
         switch (floating->size()) {
-            case 32: return Register::Size::DWORD;
-            case 64: return Register::Size::QWORD;
+            case 32: return Size::DWORD;
+            case 64: return Size::QWORD;
+            default: throw std::invalid_argument("This is a invalid floating type size.");
         }
     }
 

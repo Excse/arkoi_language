@@ -334,11 +334,11 @@ const Token *Parser::_try_consume(const std::function<bool(const Token &)> &pred
 
 BinaryNode::Operator Parser::to_binary_operator(const Token &token) {
     switch (token.type()) {
-        case Token::Type::Slash:return BinaryNode::Operator::Div;
-        case Token::Type::Asterisk:return BinaryNode::Operator::Mul;
-        case Token::Type::Plus:return BinaryNode::Operator::Add;
-        case Token::Type::Minus:return BinaryNode::Operator::Sub;
-        default:throw std::invalid_argument("This token is a invalid binary operator.");
+        case Token::Type::Slash: return BinaryNode::Operator::Div;
+        case Token::Type::Asterisk: return BinaryNode::Operator::Mul;
+        case Token::Type::Plus: return BinaryNode::Operator::Add;
+        case Token::Type::Minus: return BinaryNode::Operator::Sub;
+        default: throw std::invalid_argument("This token is a invalid binary operator.");
     }
 }
 

@@ -3,21 +3,21 @@
 #include "utils.h"
 
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
-    static const std::unordered_map<std::string_view, Token::Type> KEYWORDS = {
-            {"fun",    Token::Type::Fun},
-            {"return", Token::Type::Return},
-            {"u8",     Token::Type::U8},
-            {"s8",     Token::Type::S8},
-            {"u16",    Token::Type::U16},
-            {"s16",    Token::Type::S16},
-            {"u32",    Token::Type::U32},
-            {"s32",    Token::Type::S32},
-            {"u64",    Token::Type::U64},
-            {"s64",    Token::Type::S64},
-            {"usize",  Token::Type::USize},
-            {"ssize",  Token::Type::SSize},
-            {"f64",  Token::Type::F64},
-            {"f32",  Token::Type::F32},
+    static const std::unordered_map<std::string_view, Type> KEYWORDS = {
+        {"fun", Type::Fun},
+        {"return", Type::Return},
+        {"u8", Type::U8},
+        {"s8", Type::S8},
+        {"u16", Type::U16},
+        {"s16", Type::S16},
+        {"u32", Type::U32},
+        {"s32", Type::S32},
+        {"u64", Type::U64},
+        {"s64", Type::S64},
+        {"usize", Type::USize},
+        {"ssize", Type::SSize},
+        {"f64", Type::F64},
+        {"f32", Type::F32},
     };
 
     const auto keyword = KEYWORDS.find(value);
@@ -30,21 +30,20 @@ std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) 
 
 std::optional<Token::Type> Token::lookup_special_1(char value) {
     switch (value) {
-        case '(': return Token::Type::LParent;
-        case ')': return Token::Type::RParent;
-        case '{': return Token::Type::LCBracket;
-        case '}': return Token::Type::RCBracket;
-        case '@': return Token::Type::At;
-        case ';': return Token::Type::Semicolon;
-        case ',': return Token::Type::Comma;
-        case '+': return Token::Type::Plus;
-        case '-': return Token::Type::Minus;
-        case '/': return Token::Type::Slash;
-        case '*': return Token::Type::Asterisk;
+        case '(': return Type::LParent;
+        case ')': return Type::RParent;
+        case '{': return Type::LCBracket;
+        case '}': return Type::RCBracket;
+        case '@': return Type::At;
+        case ';': return Type::Semicolon;
+        case ',': return Type::Comma;
+        case '+': return Type::Plus;
+        case '-': return Type::Minus;
+        case '/': return Type::Slash;
+        case '*': return Type::Asterisk;
         default: return std::nullopt;
     }
 }
-
 
 std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
     switch (type) {
@@ -82,9 +81,10 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
 
         case Token::Type::EndOfFile: return os << "UnexpectedEndOfFile";
         case Token::Type::Unknown: return os << "Unknown";
-
-        default: throw std::invalid_argument("Token op not implemented.");
     }
+
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
 }
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {

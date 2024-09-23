@@ -1,5 +1,7 @@
 #include "il_generator.h"
 
+#include <limits>
+
 #include "type_resolver.h"
 #include "utils.h"
 #include "ast.h"

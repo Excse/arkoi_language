@@ -1,5 +1,7 @@
 #include "type_resolver.h"
 
+#include <limits>
+
 #include "utils.h"
 #include "ast.h"
 

@@ -2,12 +2,14 @@
 
 BinaryInstruction::Operator BinaryInstruction::node_to_instruction(BinaryNode::Operator op) {
     switch (op) {
-        case BinaryNode::Operator::Add: return BinaryInstruction::Operator::Add;
-        case BinaryNode::Operator::Sub: return BinaryInstruction::Operator::Sub;
-        case BinaryNode::Operator::Mul: return BinaryInstruction::Operator::Mul;
-        case BinaryNode::Operator::Div: return BinaryInstruction::Operator::Div;
-        default: throw std::invalid_argument("Binary Instruction not implemented.");
+        case BinaryNode::Operator::Add: return Operator::Add;
+        case BinaryNode::Operator::Sub: return Operator::Sub;
+        case BinaryNode::Operator::Mul: return Operator::Mul;
+        case BinaryNode::Operator::Div: return Operator::Div;
     }
+
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
 }
 
 std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Operator &op) {
@@ -16,6 +18,8 @@ std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Operator &op
         case BinaryInstruction::Operator::Sub: return os << "sub";
         case BinaryInstruction::Operator::Mul: return os << "mul";
         case BinaryInstruction::Operator::Div: return os << "div";
-        default: throw std::invalid_argument("Binary Instruction not implemented.");
     }
+
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
 }
