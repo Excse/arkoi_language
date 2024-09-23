@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_INSTRUCTION_H
-#define ARKOI_LANGUAGE_INSTRUCTION_H
+#pragma once
 
 #include <optional>
 #include <utility>
@@ -135,5 +134,3 @@ private:
     std::shared_ptr<Operand> _result, _expression;
     std::shared_ptr<Type> _from, _to;
 };
-
-#endif //ARKOI_LANGUAGE_INSTRUCTION_H

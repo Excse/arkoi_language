@@ -25,58 +25,61 @@ void MemoryResolver::visit(CastInstruction &instruction) {
 }
 
 std::shared_ptr<Operand> MemoryResolver::_resolve_operand(const std::shared_ptr<Operand> &operand) {
-    auto symbolic = std::dynamic_pointer_cast<SymbolOperand>(operand);
-    if (!symbolic) {
-        return operand;
-    }
+    if (auto symbolic = std::dynamic_pointer_cast<SymbolOperand>(operand)) return _resolve_symbol(*symbolic->symbol());
 
-    auto symbol = symbolic->symbol();
-    auto result = _resolved.find(symbol);
-    if (result != _resolved.end()) {
-        return result->second;
-    }
+    // If nothing has to be resolved, the operand is already finished.
+    return operand;
+}
 
-    if (auto temporary = std::dynamic_pointer_cast<TemporarySymbol>(symbol)) {
-        auto byte_size = _type_to_byte_size(temporary->type());
-        _current_begin->increase_local_size(byte_size);
+std::shared_ptr<Operand> MemoryResolver::_resolve_symbol(const Symbol &symbol) {
+    auto result = _resolved.find(&symbol);
+    if (result != _resolved.end()) return result->second;
 
-        auto location = std::make_shared<Memory>(RBP, -_current_begin->local_size());
-        _resolved[symbol] = location;
-
-        return location;
-    } else if (auto parameter = std::dynamic_pointer_cast<ParameterSymbol>(symbol)) {
-        static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
-                                                        Register::Base::C, Register::Base::R8, Register::Base::R9};
-        if (std::dynamic_pointer_cast<IntegerType>(parameter->type()) && parameter->int_index() < 6) {
-            auto size = Register::type_to_register_size(*parameter->type());
-            auto base = INT_REG_ORDER[parameter->int_index()];
-            auto reg = std::make_shared<Register>(base, size);
-            _resolved[symbol] = reg;
-            return reg;
-        }
-
-        static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
-                                                        Register::Base::XMM2, Register::Base::XMM3,
-                                                        Register::Base::XMM4, Register::Base::XMM5,
-                                                        Register::Base::XMM6, Register::Base::XMM7};
-        if (std::dynamic_pointer_cast<FloatingType>(parameter->type()) && parameter->sse_index() < 8) {
-            auto size = Register::type_to_register_size(*parameter->type());
-            auto base = SSE_REG_ORDER[parameter->int_index()];
-            auto reg = std::make_shared<Register>(base, size);
-            _resolved[symbol] = reg;
-            return reg;
-        }
-
-        auto byte_size = _type_to_byte_size(parameter->type());
-        _parameter_offset += byte_size;
-
-        auto location = std::make_shared<Memory>(RBP, _parameter_offset);
-        _resolved[symbol] = location;
-
+    if (auto temporary = dynamic_cast<const TemporarySymbol *>(&symbol)) {
+        auto location = _resolve_temporary(*temporary);
+        _resolved[&symbol] = location;
         return location;
     }
 
-    throw std::invalid_argument("Only parameter and temporary symbols are resolvable.");
+    if (auto parameter = dynamic_cast<const ParameterSymbol *>(&symbol)) {
+        auto location = _resolve_parameter(*parameter);
+        _resolved[&symbol] = location;
+        return location;
+    }
+
+    throw std::invalid_argument("This symbol is not implemented.");
+}
+
+std::shared_ptr<Operand> MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
+    auto byte_size = _type_to_byte_size(symbol.type());
+    _current_begin->increase_local_size(byte_size);
+
+    return std::make_shared<Memory>(RBP, -_current_begin->local_size());
+}
+
+std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
+    static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
+                                                    Register::Base::C, Register::Base::R8, Register::Base::R9};
+    if (std::dynamic_pointer_cast<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
+        auto size = Register::type_to_register_size(*symbol.type());
+        auto base = INT_REG_ORDER[symbol.int_index()];
+        return std::make_shared<Register>(base, size);
+    }
+
+    static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
+                                                    Register::Base::XMM2, Register::Base::XMM3,
+                                                    Register::Base::XMM4, Register::Base::XMM5,
+                                                    Register::Base::XMM6, Register::Base::XMM7};
+    if (std::dynamic_pointer_cast<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
+        auto size = Register::type_to_register_size(*symbol.type());
+        auto base = SSE_REG_ORDER[symbol.int_index()];
+        return std::make_shared<Register>(base, size);
+    }
+
+    auto byte_size = _type_to_byte_size(symbol.type());
+    _parameter_offset += byte_size;
+
+    return std::make_shared<Memory>(RBP, _parameter_offset);
 }
 
 int64_t MemoryResolver::_type_to_byte_size(const std::shared_ptr<Type> &type) {
@@ -86,13 +89,15 @@ int64_t MemoryResolver::_type_to_byte_size(const std::shared_ptr<Type> &type) {
             case 16: return 2;
             case 32: return 4;
             case 64: return 8;
+            default: throw std::invalid_argument("This integer size is not supported.");
         }
     } else if (auto floating = std::dynamic_pointer_cast<FloatingType>(type)) {
         switch (floating->size()) {
             case 32: return 4;
             case 64: return 8;
+            default: throw std::invalid_argument("This floating point size is not supported.");
         }
     }
 
-    throw std::runtime_error("This type is not implemented.");
+    throw std::invalid_argument("This type is not implemented.");
 }

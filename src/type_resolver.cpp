@@ -81,7 +81,7 @@ void TypeResolver::visit(ReturnNode &node) {
         return;
     }
 
-    if (!_can_implicit_convert(type, _return_type)) {
+    if (!_can_implicit_convert(*type, *_return_type)) {
         throw std::runtime_error("Return statement has a wrong return op.");
     }
 
@@ -127,7 +127,7 @@ void TypeResolver::visit(CastNode &node) {
     auto from = _current_type;
     node.set_from(from);
 
-    if (!_can_implicit_convert(from, node.to())) {
+    if (!_can_implicit_convert(*from, *node.to())) {
         throw std::runtime_error("This cast is not valid.");
     }
 
@@ -199,29 +199,21 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr
 }
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion
-bool TypeResolver::_can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination) {
+bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destination) {
     // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type. If the
     // conversion is listed under integral promotions, it is a promotion and not a conversion.
-    if (std::dynamic_pointer_cast<IntegerType>(from) && std::dynamic_pointer_cast<IntegerType>(destination)) {
-        return true;
-    }
+    if (dynamic_cast<const IntegerType *>(&from) && dynamic_cast<const IntegerType *>(&destination)) return true;
 
     // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
-    if (std::dynamic_pointer_cast<FloatingType>(from) && std::dynamic_pointer_cast<FloatingType>(destination)) {
-        return true;
-    }
+    if (dynamic_cast<const FloatingType *>(&from) && dynamic_cast<const FloatingType *>(&destination)) return true;
 
     // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
     // truncated, that is, the fractional part is discarded.
-    if (std::dynamic_pointer_cast<FloatingType>(from) && std::dynamic_pointer_cast<IntegerType>(destination)) {
-        return true;
-    }
+    if (dynamic_cast<const FloatingType *>(&from) && dynamic_cast<const IntegerType *>(&destination)) return true;
 
     // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
     // The result is exact if possible.
-    if (std::dynamic_pointer_cast<IntegerType>(from) && std::dynamic_pointer_cast<FloatingType>(destination)) {
-        return true;
-    }
+    if (dynamic_cast<const IntegerType *>(&from) && dynamic_cast<const FloatingType *>(&destination)) return true;
 
     return false;
 }

@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_NAME_RESOLVER_H
-#define ARKOI_LANGUAGE_NAME_RESOLVER_H
+#pragma once
 
 #include <stack>
 
@@ -43,5 +42,3 @@ private:
 };
 
 #include "../src/name_resolver.tpp"
-
-#endif //ARKOI_LANGUAGE_NAME_RESOLVER_H

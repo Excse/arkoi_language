@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_TOKEN_H
-#define ARKOI_LANGUAGE_TOKEN_H
+#pragma once
 
 #include <unordered_map>
 #include <iostream>
@@ -73,5 +72,3 @@ private:
     std::string _contents;
     Type _type;
 };
-
-#endif //ARKOI_LANGUAGE_TOKEN_H

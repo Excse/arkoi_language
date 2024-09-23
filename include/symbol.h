@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_SYMBOL_H
-#define ARKOI_LANGUAGE_SYMBOL_H
+#pragma once
 
 #include <utility>
 #include <vector>
@@ -64,5 +63,3 @@ public:
 private:
     std::shared_ptr<Type> _type{};
 };
-
-#endif //ARKOI_LANGUAGE_SYMBOL_H

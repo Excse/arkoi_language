@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_GAS_GENERATOR_H
-#define ARKOI_LANGUAGE_GAS_GENERATOR_H
+#pragma once
 
 #include <sstream>
 
@@ -68,6 +67,3 @@ private:
     Assembly _assembly{};
     bool _debug;
 };
-
-
-#endif //ARKOI_LANGUAGE_GAS_GENERATOR_H

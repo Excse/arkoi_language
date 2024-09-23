@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_IL_PRINTER_H
-#define ARKOI_LANGUAGE_IL_PRINTER_H
+#pragma once
 
 #include <sstream>
 
@@ -26,5 +25,3 @@ public:
 private:
     std::stringstream _output{};
 };
-
-#endif //ARKOI_LANGUAGE_IL_PRINTER_H

@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_SCANNER_H
-#define ARKOI_LANGUAGE_SCANNER_H
+#pragma once
 
 #include <functional>
 #include <string>
@@ -106,5 +105,3 @@ public:
     explicit NumberOutOfRange(const std::string &number) : ScannerError(
             "The number " + number + " exceeds the 64bit limitations.") {}
 };
-
-#endif //ARKOI_LANGUAGE_SCANNER_H

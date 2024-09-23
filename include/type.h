@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_TYPE_H
-#define ARKOI_LANGUAGE_TYPE_H
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -58,5 +57,3 @@ public:
 private:
     int64_t _size;
 };
-
-#endif //ARKOI_LANGUAGE_TYPE_H

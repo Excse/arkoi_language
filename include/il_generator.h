@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_IL_GENERATOR_H
-#define ARKOI_LANGUAGE_IL_GENERATOR_H
+#pragma once
 
 #include <stack>
 
@@ -40,5 +39,3 @@ private:
     std::shared_ptr<Operand> _current_operand{};
     size_t _temp_index{};
 };
-
-#endif //ARKOI_LANGUAGE_IL_GENERATOR_H

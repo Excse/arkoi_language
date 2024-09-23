@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_OPERAND_H
-#define ARKOI_LANGUAGE_OPERAND_H
+#pragma once
 
 #include <iostream>
 #include <utility>
@@ -95,5 +94,3 @@ public:
 private:
     std::shared_ptr<Symbol> _symbol;
 };
-
-#endif //ARKOI_LANGUAGE_OPERAND_H

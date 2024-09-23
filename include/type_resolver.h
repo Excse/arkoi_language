@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_TYPE_RESOLVER_H
-#define ARKOI_LANGUAGE_TYPE_RESOLVER_H
+#pragma once
 
 #include <stack>
 
@@ -37,7 +36,7 @@ private:
     static std::shared_ptr<Type> _arithmetic_conversion(const std::shared_ptr<Type> &left_type,
                                                         const std::shared_ptr<Type> &right_type);
 
-    static bool _can_implicit_convert(const std::shared_ptr<Type> &from, const std::shared_ptr<Type> &destination);
+    static bool _can_implicit_convert(const Type &from, const Type &destination);
 
 private:
     std::shared_ptr<Type> _current_type{};
@@ -45,6 +44,3 @@ private:
     size_t _sse_index{}, _int_index{};
     bool _failed{};
 };
-
-
-#endif //ARKOI_LANGUAGE_TYPE_RESOLVER_H

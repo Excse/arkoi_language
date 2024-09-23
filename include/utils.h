@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_UTILS_H
-#define ARKOI_LANGUAGE_UTILS_H
+#pragma once
 
 #include <sstream>
 
@@ -9,5 +8,3 @@ std::string to_string(const T &value) {
     ss << value;
     return ss.str();
 }
-
-#endif //ARKOI_LANGUAGE_UTILS_H

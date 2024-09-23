@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_MEMORY_RESOLVER_H
-#define ARKOI_LANGUAGE_MEMORY_RESOLVER_H
+#pragma once
 
 #include "instruction.h"
 #include "visitor.h"
@@ -23,12 +22,16 @@ public:
 private:
     std::shared_ptr<Operand> _resolve_operand(const std::shared_ptr<Operand> &operand);
 
+    std::shared_ptr<Operand> _resolve_symbol(const Symbol &symbol);
+
+    std::shared_ptr<Operand> _resolve_temporary(const TemporarySymbol &symbol);
+
+    std::shared_ptr<Operand> _resolve_parameter(const ParameterSymbol &symbol);
+
     static int64_t _type_to_byte_size(const std::shared_ptr<Type> &type);
 
 private:
-    std::unordered_map<std::shared_ptr<Symbol>, std::shared_ptr<Operand>> _resolved{};
+    std::unordered_map<const Symbol *, std::shared_ptr<Operand>> _resolved{};
     BeginInstruction *_current_begin{};
     int64_t _parameter_offset{};
 };
-
-#endif //ARKOI_LANGUAGE_MEMORY_RESOLVER_H

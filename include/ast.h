@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_AST_H
-#define ARKOI_LANGUAGE_AST_H
+#pragma once
 
 #include <utility>
 #include <vector>
@@ -222,5 +221,3 @@ private:
     std::unique_ptr<Node> _expression;
     std::shared_ptr<Type> _from, _to;
 };
-
-#endif //ARKOI_LANGUAGE_AST_H

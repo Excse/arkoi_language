@@ -121,3 +121,17 @@ void Assembly::comment(const std::string &comment) {
 void Assembly::newline() {
     _output << "\n";
 }
+
+std::string Assembly::double_to_hex(double value) {
+    uint64_t hex_value = *reinterpret_cast<uint64_t *>(&value);
+    std::stringstream ss;
+    ss << std::hex << std::showbase << std::setw(16) << std::setfill('0') << hex_value;
+    return ss.str();
+}
+
+std::string Assembly::float_to_hex(float value) {
+    uint32_t hex_value = *reinterpret_cast<uint32_t *>(&value);
+    std::stringstream ss;
+    ss << std::hex << std::showbase << std::setw(8) << std::setfill('0') << hex_value;
+    return ss.str();
+}

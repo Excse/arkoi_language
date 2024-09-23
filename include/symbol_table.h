@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_SYMBOL_TABLE_H
-#define ARKOI_LANGUAGE_SYMBOL_TABLE_H
+#pragma once
 
 #include <unordered_map>
 #include <functional>
@@ -37,5 +36,3 @@ public:
 };
 
 #include "../src/symbol_table.tpp"
-
-#endif //ARKOI_LANGUAGE_SYMBOL_TABLE_H

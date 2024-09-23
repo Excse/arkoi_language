@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_VISITOR_H
-#define ARKOI_LANGUAGE_VISITOR_H
+#pragma once
 
 #include <memory>
 
@@ -78,5 +77,3 @@ public:
 
     virtual void visit(CastInstruction &instruction) = 0;
 };
-
-#endif //ARKOI_LANGUAGE_VISITOR_H

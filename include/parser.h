@@ -1,5 +1,4 @@
-#ifndef ARKOI_LANGUAGE_PARSER_H
-#define ARKOI_LANGUAGE_PARSER_H
+#pragma once
 
 #include <functional>
 #include <vector>
@@ -96,5 +95,3 @@ public:
     UnexpectedToken(const std::string &expected, const Token &got)
             : ParserError("Expected " + expected + " but got " + to_string(got.type())) {}
 };
-
-#endif //ARKOI_LANGUAGE_PARSER_H
