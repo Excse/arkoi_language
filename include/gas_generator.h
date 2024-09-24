@@ -53,14 +53,13 @@ private:
 
     void _mul(const Type &type, const Operand &destination, const Operand &src);
 
-    [[nodiscard]] static std::shared_ptr<Register> _select_register(const Type &type, Register::Base integer,
-                                                                    Register::Base floating);
+    [[nodiscard]] static Register _select_register(const Type &type, Register::Base integer, Register::Base floating);
 
-    [[nodiscard]] static std::shared_ptr<Register> _returning_register(const Type &type);
+    [[nodiscard]] static Register _returning_register(const Type &type);
 
-    [[nodiscard]] static std::shared_ptr<Register> _temp1_register(const Type &type);
+    [[nodiscard]] static Register _temp1_register(const Type &type);
 
-    [[nodiscard]] static std::shared_ptr<Register> _temp2_register(const Type &type);
+    [[nodiscard]] static Register _temp2_register(const Type &type);
 
 private:
     ILPrinter _printer{};

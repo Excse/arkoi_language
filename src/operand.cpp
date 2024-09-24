@@ -2,30 +2,36 @@
 
 #include "utils.h"
 
-std::ostream &Register::print(std::ostream &os) const {
-    if (_base >= Base::R8 && _base <= Base::R15) {
-        switch (_size) {
-            case Size::BYTE: return os << _base << "b";
-            case Size::WORD: return os << _base << "w";
-            case Size::DWORD: return os << _base << "d";
-            case Size::QWORD: return os << _base;
+std::ostream &operator<<(std::ostream &os, const Register &reg) {
+    if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
+        switch (reg.size()) {
+            case Register::Size::BYTE: return os << reg.base() << "b";
+            case Register::Size::WORD: return os << reg.base() << "w";
+            case Register::Size::DWORD: return os << reg.base() << "d";
+            case Register::Size::QWORD: return os << reg.base();
         }
-    } else if (_base >= Base::SI && _base <= Base::BP) {
-        switch (_size) {
-            case Size::BYTE: return os << _base << "l";
-            case Size::WORD: return os << _base;
-            case Size::DWORD: return os << "e" << _base;
-            case Size::QWORD: return os << "r" << _base;
+    }
+
+    if (reg.base() >= Register::Base::SI && reg.base() <= Register::Base::BP) {
+        switch (reg.size()) {
+            case Register::Size::BYTE: return os << reg.base() << "l";
+            case Register::Size::WORD: return os << reg.base();
+            case Register::Size::DWORD: return os << "e" << reg.base();
+            case Register::Size::QWORD: return os << "r" << reg.base();
         }
-    } else if (_base >= Base::A && _base <= Base::B) {
-        switch (_size) {
-            case Size::BYTE: return os << _base << "l";
-            case Size::WORD: return os << _base << "x";
-            case Size::DWORD: return os << "e" << _base << "x";
-            case Size::QWORD: return os << "r" << _base << "x";
+    }
+
+    if (reg.base() >= Register::Base::A && reg.base() <= Register::Base::B) {
+        switch (reg.size()) {
+            case Register::Size::BYTE: return os << reg.base() << "l";
+            case Register::Size::WORD: return os << reg.base() << "x";
+            case Register::Size::DWORD: return os << "e" << reg.base() << "x";
+            case Register::Size::QWORD: return os << "r" << reg.base() << "x";
         }
-    } else if (_base >= Base::XMM0 && _base <= Base::XMM15) {
-        return os << _base;
+    }
+
+    if (reg.base() >= Register::Base::XMM0 && reg.base() <= Register::Base::XMM15) {
+        return os << reg.base();
     }
 
     throw std::invalid_argument("This register is not implemented.");
@@ -91,32 +97,37 @@ Register::Size Register::type_to_register_size(const Type &type) {
     throw std::runtime_error("This type is not implemented.");
 }
 
-std::ostream &Memory::print(std::ostream &os) const {
-    os << "[" << _base;
+std::ostream &operator<<(std::ostream &os, const Memory &memory) {
+    os << "[" << memory.base();
 
-    if (_index != 1) {
-        os << " + " << _index;
+    if (memory.index() != 1) {
+        os << " + " << memory.index();
     }
 
-    if (_scale != 1) {
-        os << " * " << _scale;
+    if (memory.scale() != 1) {
+        os << " * " << memory.scale();
     }
 
-    if (_displacement < 0) {
-        os << " - " << std::abs(_displacement);
-    } else if (_displacement > 0) {
-        os << " + " << std::abs(_displacement);
+    if (memory.displacement() < 0) {
+        os << " - " << std::abs(memory.displacement());
+    } else if (memory.displacement() > 0) {
+        os << " + " << std::abs(memory.displacement());
     }
 
     os << "]";
     return os;
 }
 
-std::ostream &Immediate::print(std::ostream &os) const {
-    std::visit([&os](const auto &arg) { os << arg; }, _data);
+std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
+    std::visit([&os](const auto &value) { os << value; }, immediate);
     return os;
 }
 
-std::ostream &SymbolOperand::print(std::ostream &os) const {
-    return os << *_symbol;
+std::ostream &operator<<(std::ostream &os, const SymbolOperand &symbol) {
+    return os << *symbol.symbol();
+}
+
+std::ostream &operator<<(std::ostream &os, const Operand &operand) {
+    std::visit([&os](const auto &value) { os << value; }, operand);
+    return os;
 }

@@ -39,16 +39,16 @@ void IRGenerator::visit(IntegerNode &node) {
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            _current_operand = std::make_shared<Immediate>((int64_t) value);
+            _current_operand = std::make_shared<Operand>(Immediate{(int64_t) value});
         } else {
-            _current_operand = std::make_shared<Immediate>((int32_t) value);
+            _current_operand = std::make_shared<Operand>(Immediate{(int32_t) value});
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            _current_operand = std::make_shared<Immediate>((uint64_t) value);
+            _current_operand = std::make_shared<Operand>(Immediate{(uint64_t) value});
         } else {
-            _current_operand = std::make_shared<Immediate>((uint32_t) value);
+            _current_operand = std::make_shared<Operand>(Immediate{(uint32_t) value});
         }
     }
 }
@@ -58,9 +58,9 @@ void IRGenerator::visit(FloatingNode &node) {
 
     auto value = std::stold(number_string);
     if (value > std::numeric_limits<float>::max()) {
-        _current_operand = std::make_shared<Immediate>((double) value);
+        _current_operand = std::make_shared<Operand>(Immediate{(double) value});
     } else {
-        _current_operand = std::make_shared<Immediate>((float) value);
+        _current_operand = std::make_shared<Operand>(Immediate{(float) value});
     }
 }
 
@@ -72,7 +72,7 @@ void IRGenerator::visit(ReturnNode &node) {
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
-    _current_operand = std::make_shared<SymbolOperand>(node.symbol());
+    _current_operand = std::make_shared<Operand>(SymbolOperand{node.symbol()});
 }
 
 void IRGenerator::visit(BinaryNode &node) {
@@ -108,5 +108,5 @@ std::shared_ptr<Operand> IRGenerator::_make_temporary(const Type &type) {
     auto symbol = scope->insert<TemporarySymbol>(name, type);
     _temp_index++;
 
-    return std::make_shared<SymbolOperand>(symbol);
+    return std::make_shared<Operand>(SymbolOperand{symbol});
 }

@@ -3,8 +3,8 @@
 #include "instruction.h"
 #include "il_printer.h"
 
-static const auto RBP = std::make_unique<Register>(Register::Base::BP, Register::Size::QWORD);
-static const auto RSP = std::make_unique<Register>(Register::Base::SP, Register::Size::QWORD);
+inline Register RBP(Register::Base::BP, Register::Size::QWORD);
+inline Register RSP(Register::Base::SP, Register::Size::QWORD);
 
 GASGenerator::GASGenerator(bool debug) : _debug(debug) {
     _preamble();
@@ -18,12 +18,12 @@ void GASGenerator::visit(LabelInstruction &instruction) {
 void GASGenerator::visit(BeginInstruction &instruction) {
     _comment_instruction(instruction);
 
-    _assembly.push(*RBP);
-    _assembly.mov(*RBP, *RSP);
+    _assembly.push(RBP);
+    _assembly.mov(RBP, RSP);
 
     if (instruction.local_size() != 0) {
         auto size = std::make_unique<Immediate>(instruction.local_size());
-        _assembly.sub(*RSP, *size);
+        _assembly.sub(RSP, *size);
     }
 
     _assembly.newline();
@@ -33,7 +33,7 @@ void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
 
     auto destination = _returning_register(instruction.type());
-    _mov(instruction.type(), *destination, *instruction.value());
+    _mov(instruction.type(), destination, *instruction.value());
 
     _assembly.newline();
 }
@@ -42,20 +42,28 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
     auto left_reg = _temp1_register(instruction.type());
-    _mov(instruction.type(), *left_reg, *instruction.left());
+    _mov(instruction.type(), left_reg, *instruction.left());
 
     auto right_reg = _temp2_register(instruction.type());
-    _mov(instruction.type(), *right_reg, *instruction.right());
+    _mov(instruction.type(), right_reg, *instruction.right());
 
     switch (instruction.op()) {
-        case BinaryInstruction::Operator::Add: _add(instruction.type(), *left_reg, *right_reg);
+        case BinaryInstruction::Operator::Add: {
+            _add(instruction.type(), left_reg, right_reg);
             break;
-        case BinaryInstruction::Operator::Sub: _sub(instruction.type(), *left_reg, *right_reg);
+        }
+        case BinaryInstruction::Operator::Sub: {
+            _sub(instruction.type(), left_reg, right_reg);
             break;
-        case BinaryInstruction::Operator::Div: _div(instruction.type(), *left_reg, *right_reg);
+        }
+        case BinaryInstruction::Operator::Div: {
+            _div(instruction.type(), left_reg, right_reg);
             break;
-        case BinaryInstruction::Operator::Mul: _mul(instruction.type(), *left_reg, *right_reg);
+        }
+        case BinaryInstruction::Operator::Mul: {
+            _mul(instruction.type(), left_reg, right_reg);
             break;
+        }
     }
 
     _assembly.newline();
@@ -103,8 +111,8 @@ void GASGenerator::visit(CastInstruction &instruction) {
 void GASGenerator::visit(EndInstruction &instruction) {
     _comment_instruction(instruction);
 
-    _assembly.mov(*RSP, *RBP);
-    _assembly.pop(*RBP);
+    _assembly.mov(RSP, RBP);
+    _assembly.pop(RBP);
     _assembly.ret();
 
     _assembly.newline();
@@ -137,27 +145,27 @@ void GASGenerator::_comment_instruction(Instruction &instruction) {
 void GASGenerator::_convert_int_to_int(const IntegerType &from, const Operand &expression,
                                        const IntegerType &to, const Operand &destination) {
     auto from_temporary = _temp1_register(from);
-    _assembly.mov(*from_temporary, expression);
+    _assembly.mov(from_temporary, expression);
 
     auto to_temporary = _temp1_register(to);
-    if (to.size() > from.size()) _assembly.movsx(*to_temporary, *from_temporary);
-    else _assembly.mov(*to_temporary, *from_temporary);
+    if (to.size() > from.size()) _assembly.movsx(to_temporary, from_temporary);
+    else _assembly.mov(to_temporary, from_temporary);
 
-    _assembly.mov(destination, *to_temporary);
+    _assembly.mov(destination, to_temporary);
 }
 
 void GASGenerator::_convert_float_to_float(const FloatingType &from, const Operand &expression,
                                            const FloatingType &to, const Operand &destination) {
     auto from_temporary = _temp1_register(from);
-    _assembly.movss(*from_temporary, expression);
+    _assembly.movss(from_temporary, expression);
 
     auto to_temporary = _temp1_register(to);
     if (from.size() == 32 && to.size() == 64) {
-        _assembly.cvtss2sd(*to_temporary, *from_temporary);
-        _assembly.movsd(destination, *to_temporary);
+        _assembly.cvtss2sd(to_temporary, from_temporary);
+        _assembly.movsd(destination, to_temporary);
     } else if (from.size() == 64 && to.size() == 32) {
-        _assembly.cvtsd2ss(*to_temporary, *from_temporary);
-        _assembly.movss(destination, *to_temporary);
+        _assembly.cvtsd2ss(to_temporary, from_temporary);
+        _assembly.movss(destination, to_temporary);
     }
 }
 
@@ -167,19 +175,19 @@ void GASGenerator::_convert_int_to_float(const IntegerType &from, const Operand 
     if (from.size() < 32) {
         auto temp_type = std::make_shared<IntegerType>(32, from.sign());
         auto bigger_from_temporary = _temp1_register(*temp_type);
-        _assembly.movsx(*bigger_from_temporary, *from_temporary);
+        _assembly.movsx(bigger_from_temporary, from_temporary);
         from_temporary = bigger_from_temporary;
     } else {
-        _assembly.mov(*from_temporary, expression);
+        _assembly.mov(from_temporary, expression);
     }
 
     auto to_temporary = _temp1_register(to);
     if (to.size() == 32) {
-        _assembly.cvtsi2ss(*to_temporary, *from_temporary);
-        _assembly.movss(destination, *to_temporary);
+        _assembly.cvtsi2ss(to_temporary, from_temporary);
+        _assembly.movss(destination, to_temporary);
     } else if (to.size() == 64) {
-        _assembly.cvtsi2sd(*to_temporary, *from_temporary);
-        _assembly.movsd(destination, *to_temporary);
+        _assembly.cvtsi2sd(to_temporary, from_temporary);
+        _assembly.movsd(destination, to_temporary);
     }
 }
 
@@ -195,14 +203,14 @@ void GASGenerator::_convert_float_to_int(const FloatingType &from, const Operand
 
     auto from_temporary = _temp1_register(from);
     if (from.size() == 32) {
-        _assembly.movss(*from_temporary, expression);
-        _assembly.cvttss2si(*bigger_to_temporary, *from_temporary);
+        _assembly.movss(from_temporary, expression);
+        _assembly.cvttss2si(bigger_to_temporary, from_temporary);
     } else {
-        _assembly.movsd(*from_temporary, expression);
-        _assembly.cvttsd2si(*bigger_to_temporary, *from_temporary);
+        _assembly.movsd(from_temporary, expression);
+        _assembly.cvttsd2si(bigger_to_temporary, from_temporary);
     }
 
-    _assembly.mov(destination, *to_temporary);
+    _assembly.mov(destination, to_temporary);
 }
 
 void GASGenerator::_mov(const Type &type, const Operand &destination, const Operand &src) {
@@ -281,24 +289,23 @@ void GASGenerator::_mul(const Type &type, const Operand &destination, const Oper
     throw std::invalid_argument("This type is not implemented yet.");
 }
 
-std::shared_ptr<Register> GASGenerator::_select_register(const Type &type, Register::Base integer,
-                                                         Register::Base floating) {
+Register GASGenerator::_select_register(const Type &type, Register::Base integer, Register::Base floating) {
     auto size = Register::type_to_register_size(type);
 
-    if (std::holds_alternative<FloatingType>(type)) return std::make_shared<Register>(floating, size);
-    if (std::holds_alternative<IntegerType>(type)) return std::make_shared<Register>(integer, size);
+    if (std::holds_alternative<FloatingType>(type)) return Register(floating, size);
+    if (std::holds_alternative<IntegerType>(type)) return Register(integer, size);
 
     throw std::invalid_argument("This type is not implemented.");
 }
 
-std::shared_ptr<Register> GASGenerator::_returning_register(const Type &type) {
+Register GASGenerator::_returning_register(const Type &type) {
     return _select_register(type, Register::Base::A, Register::Base::XMM0);
 }
 
-std::shared_ptr<Register> GASGenerator::_temp1_register(const Type &type) {
+Register GASGenerator::_temp1_register(const Type &type) {
     return _select_register(type, Register::Base::A, Register::Base::XMM11);
 }
 
-std::shared_ptr<Register> GASGenerator::_temp2_register(const Type &type) {
+Register GASGenerator::_temp2_register(const Type &type) {
     return _select_register(type, Register::Base::R11, Register::Base::XMM12);
 }
