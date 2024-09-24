@@ -39,16 +39,16 @@ void IRGenerator::visit(IntegerNode &node) {
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            _current_operand = std::make_shared<Operand>(Immediate{(int64_t) value});
+            _current_operand = Immediate((int64_t) value);
         } else {
-            _current_operand = std::make_shared<Operand>(Immediate{(int32_t) value});
+            _current_operand = Immediate((int32_t) value);
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            _current_operand = std::make_shared<Operand>(Immediate{(uint64_t) value});
+            _current_operand = Immediate((uint64_t) value);
         } else {
-            _current_operand = std::make_shared<Operand>(Immediate{(uint32_t) value});
+            _current_operand = Immediate((uint32_t) value);
         }
     }
 }
@@ -58,9 +58,9 @@ void IRGenerator::visit(FloatingNode &node) {
 
     auto value = std::stold(number_string);
     if (value > std::numeric_limits<float>::max()) {
-        _current_operand = std::make_shared<Operand>(Immediate{(double) value});
+        _current_operand = Immediate((double) value);
     } else {
-        _current_operand = std::make_shared<Operand>(Immediate{(float) value});
+        _current_operand = Immediate((float) value);
     }
 }
 
@@ -72,7 +72,7 @@ void IRGenerator::visit(ReturnNode &node) {
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
-    _current_operand = std::make_shared<Operand>(SymbolOperand{node.symbol()});
+    _current_operand = SymbolOperand(node.symbol());
 }
 
 void IRGenerator::visit(BinaryNode &node) {
@@ -101,12 +101,12 @@ void IRGenerator::visit(CastNode &node) {
     _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from(), node.to()));
 }
 
-std::shared_ptr<Operand> IRGenerator::_make_temporary(const Type &type) {
+Operand IRGenerator::_make_temporary(const Type &type) {
     const auto &scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);
     auto &symbol = scope->insert<TemporarySymbol>(name, type);
     _temp_index++;
 
-    return std::make_shared<Operand>(SymbolOperand{symbol});
+    return SymbolOperand(symbol);
 }

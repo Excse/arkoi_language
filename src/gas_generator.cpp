@@ -12,7 +12,7 @@ GASGenerator::GASGenerator(bool debug) : _debug(debug) {
 
 void GASGenerator::visit(LabelInstruction &instruction) {
     _assembly.newline();
-    _assembly.label(instruction.symbol());
+    _assembly.label(*instruction.symbol());
 }
 
 void GASGenerator::visit(BeginInstruction &instruction) {
@@ -30,7 +30,7 @@ void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
 
     auto destination = _returning_register(instruction.type());
-    _mov(instruction.type(), destination, *instruction.value());
+    _mov(instruction.type(), destination, instruction.value());
 
     _assembly.newline();
 }
@@ -39,10 +39,10 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
     auto left_reg = _temp1_register(instruction.type());
-    _mov(instruction.type(), left_reg, *instruction.left());
+    _mov(instruction.type(), left_reg, instruction.left());
 
     auto right_reg = _temp2_register(instruction.type());
-    _mov(instruction.type(), right_reg, *instruction.right());
+    _mov(instruction.type(), right_reg, instruction.right());
 
     switch (instruction.op()) {
         case BinaryInstruction::Operator::Add: {
@@ -69,8 +69,8 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 void GASGenerator::visit(CastInstruction &instruction) {
     _comment_instruction(instruction);
 
-    const auto &expression = *instruction.expression();
-    const auto &destination = *instruction.result();
+    const auto &expression = instruction.expression();
+    const auto &destination = instruction.result();
     const auto &from = instruction.from();
     const auto &to = instruction.to();
 

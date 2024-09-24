@@ -26,7 +26,7 @@ public:
 
     void mov(const Operand &destination, const Operand &src);
 
-    void label(const std::shared_ptr<Symbol> &symbol);
+    void label(const Symbol &symbol);
 
     void pop(const Operand &destination);
 

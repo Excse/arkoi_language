@@ -42,8 +42,8 @@ void Assembly::mov(const Operand &destination, const Operand &src) {
     _output << "\tmov " << destination << ", " << src << "\n";
 }
 
-void Assembly::label(const std::shared_ptr<Symbol> &symbol) {
-    _output << *symbol << ":\n";
+void Assembly::label(const Symbol &symbol) {
+    _output << symbol << ":\n";
 }
 
 void Assembly::pop(const Operand &destination) {

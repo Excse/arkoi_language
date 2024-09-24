@@ -78,7 +78,7 @@ private:
     std::shared_ptr<Symbol> _symbol;
 };
 
-struct Operand : std::variant<SymbolOperand, Register, Memory, Immediate> {
+struct Operand : std::variant<SymbolOperand, Register, Memory, Immediate, std::monostate> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Operand &operand);

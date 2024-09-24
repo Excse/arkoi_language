@@ -20,18 +20,18 @@ public:
     [[nodiscard]] auto &resolved() const { return _resolved; }
 
 private:
-    std::shared_ptr<Operand> _resolve_operand(const std::shared_ptr<Operand> &operand);
+    [[nodiscard]] Operand _resolve_operand(const Operand &operand);
 
-    std::shared_ptr<Operand> _resolve_symbol(const Symbol &symbol);
+    [[nodiscard]] Operand _resolve_symbol(const Symbol &symbol);
 
-    std::shared_ptr<Operand> _resolve_temporary(const TemporarySymbol &symbol);
+    [[nodiscard]] Operand _resolve_temporary(const TemporarySymbol &symbol);
 
-    std::shared_ptr<Operand> _resolve_parameter(const ParameterSymbol &symbol);
+    [[nodiscard]] Operand _resolve_parameter(const ParameterSymbol &symbol);
 
-    static int64_t _type_to_byte_size(const Type &type);
+    [[nodiscard]] static int64_t _type_to_byte_size(const Type &type);
 
 private:
-    std::unordered_map<const Symbol *, std::shared_ptr<Operand>> _resolved{};
+    std::unordered_map<const Symbol *, Operand> _resolved{};
     BeginInstruction *_current_begin{};
     int64_t _parameter_offset{};
 };

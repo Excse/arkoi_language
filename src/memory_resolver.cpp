@@ -24,46 +24,46 @@ void MemoryResolver::visit(CastInstruction &instruction) {
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-std::shared_ptr<Operand> MemoryResolver::_resolve_operand(const std::shared_ptr<Operand> &operand) {
-    if (auto *symbolic = std::get_if<SymbolOperand>(operand.get())) return _resolve_symbol(*symbolic->symbol());
+Operand MemoryResolver::_resolve_operand(const Operand &operand) {
+    if (auto *symbolic = std::get_if<SymbolOperand>(&operand)) return _resolve_symbol(*symbolic->symbol());
 
     // If nothing has to be resolved, the operand is already finished.
     return operand;
 }
 
-std::shared_ptr<Operand> MemoryResolver::_resolve_symbol(const Symbol &symbol) {
+Operand MemoryResolver::_resolve_symbol(const Symbol &symbol) {
     auto result = _resolved.find(&symbol);
     if (result != _resolved.end()) return result->second;
 
     if (auto *temporary = std::get_if<TemporarySymbol>(&symbol)) {
         auto location = _resolve_temporary(*temporary);
-        _resolved[&symbol] = location;
+        _resolved.emplace(&symbol, location);
         return location;
     }
 
     if (auto *parameter = std::get_if<ParameterSymbol>(&symbol)) {
         auto location = _resolve_parameter(*parameter);
-        _resolved[&symbol] = location;
+        _resolved.emplace(&symbol, location);
         return location;
     }
 
     throw std::invalid_argument("This symbol is not implemented.");
 }
 
-std::shared_ptr<Operand> MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
+Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
     auto byte_size = _type_to_byte_size(symbol.type());
     _current_begin->increase_local_size(byte_size);
 
-    return std::make_shared<Operand>(Memory{RBP, -_current_begin->local_size()});
+    return Memory(RBP, -_current_begin->local_size());
 }
 
-std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
+Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
                                                     Register::Base::C, Register::Base::R8, Register::Base::R9};
     if (std::holds_alternative<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = INT_REG_ORDER[symbol.int_index()];
-        return std::make_shared<Operand>(Register{base, size});
+        return Register(base, size);
     }
 
     static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
@@ -73,13 +73,13 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbo
     if (std::holds_alternative<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = SSE_REG_ORDER[symbol.int_index()];
-        return std::make_shared<Operand>(Register{base, size});
+        return Register(base, size);
     }
 
     auto byte_size = _type_to_byte_size(symbol.type());
     _parameter_offset += byte_size;
 
-    return std::make_shared<Operand>(Memory{RBP, _parameter_offset});
+    return Memory(RBP, _parameter_offset);
 }
 
 int64_t MemoryResolver::_type_to_byte_size(const Type &type) {

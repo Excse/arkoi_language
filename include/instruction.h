@@ -31,19 +31,18 @@ private:
 
 class ReturnInstruction : public Instruction {
 public:
-    explicit ReturnInstruction(std::shared_ptr<Operand> value, Type type)
-            : _value(std::move(value)), _type(type) {}
+    explicit ReturnInstruction(Operand value, Type type) : _value(std::move(value)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &type() const { return _type; };
 
-    void set_value(std::shared_ptr<Operand> operand) { _value = std::move(operand); };
+    void set_value(Operand operand) { _value = std::move(operand); };
 
     [[nodiscard]] auto &value() const { return _value; };
 
 private:
-    std::shared_ptr<Operand> _value;
+    Operand _value;
     Type _type;
 };
 
@@ -57,22 +56,21 @@ public:
     };
 
 public:
-    BinaryInstruction(std::shared_ptr<Operand> result, std::shared_ptr<Operand> left, Operator op,
-                      std::shared_ptr<Operand> right, Type type)
+    BinaryInstruction(Operand result, Operand left, Operator op, Operand right, Type type)
             : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
               _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    void set_result(std::shared_ptr<Operand> operand) { _result = std::move(operand); };
+    void set_result(Operand operand) { _result = std::move(operand); };
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    void set_right(std::shared_ptr<Operand> operand) { _right = std::move(operand); };
+    void set_right(Operand operand) { _right = std::move(operand); };
 
     [[nodiscard]] auto &right() const { return _right; };
 
-    void set_left(std::shared_ptr<Operand> operand) { _left = std::move(operand); };
+    void set_left(Operand operand) { _left = std::move(operand); };
 
     [[nodiscard]] auto &left() const { return _left; };
 
@@ -85,7 +83,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Operator &op);
 
 private:
-    std::shared_ptr<Operand> _result, _left, _right;
+    Operand _result, _left, _right;
     Operator _op;
     Type _type;
 };
@@ -111,16 +109,16 @@ public:
 
 class CastInstruction : public Instruction {
 public:
-    CastInstruction(std::shared_ptr<Operand> result, std::shared_ptr<Operand> expression, Type from, Type to)
+    CastInstruction(Operand result, Operand expression, Type from, Type to)
             : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
-    void set_expression(std::shared_ptr<Operand> operand) { _expression = std::move(operand); };
+    void set_expression(Operand operand) { _expression = std::move(operand); };
 
     [[nodiscard]] auto &expression() const { return _expression; };
 
-    void set_result(std::shared_ptr<Operand> operand) { _result = std::move(operand); };
+    void set_result(Operand operand) { _result = std::move(operand); };
 
     [[nodiscard]] auto &result() const { return _result; };
 
@@ -129,6 +127,6 @@ public:
     [[nodiscard]] auto &to() const { return _to; };
 
 private:
-    std::shared_ptr<Operand> _result, _expression;
+    Operand _result, _expression;
     Type _from, _to;
 };
