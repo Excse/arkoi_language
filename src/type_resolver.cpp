@@ -43,9 +43,9 @@ void TypeResolver::visit(ParameterNode &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
-    if (std::dynamic_pointer_cast<IntegerType>(node.type())) {
+    if (std::holds_alternative<IntegerType>(*node.type())) {
         parameter.set_int_index(_int_index++);
-    } else if (std::dynamic_pointer_cast<FloatingType>(node.type())) {
+    } else if (std::holds_alternative<FloatingType>(*node.type())) {
         parameter.set_sse_index(_sse_index++);
     }
 }
@@ -61,14 +61,14 @@ void TypeResolver::visit(IntegerNode &node) {
         size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? 64 : 32;
     }
 
-    _current_type = std::make_shared<IntegerType>(size, sign);
+    _current_type = std::make_shared<Type>(IntegerType{size, sign});
 }
 
 void TypeResolver::visit(FloatingNode &node) {
     auto number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? 64 : 32;
-    _current_type = std::make_shared<FloatingType>(size);
+    _current_type = std::make_shared<Type>(FloatingType{size});
 }
 
 void TypeResolver::visit(ReturnNode &node) {
@@ -91,7 +91,7 @@ void TypeResolver::visit(ReturnNode &node) {
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
-    auto parameter = std::get<ParameterSymbol>(*node.symbol());
+    auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     _current_type = parameter.type();
 }
 
@@ -137,8 +137,8 @@ void TypeResolver::visit(CastNode &node) {
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
 std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr<Type> &left_type,
                                                            const std::shared_ptr<Type> &right_type) {
-    auto floating_left = std::dynamic_pointer_cast<FloatingType>(left_type);
-    auto floating_right = std::dynamic_pointer_cast<FloatingType>(right_type);
+    auto floating_left = std::get_if<FloatingType>(left_type.get());
+    auto floating_right = std::get_if<FloatingType>(right_type.get());
 
     // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
@@ -147,73 +147,73 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr
 
         // Otherwise, if one of the operands is of a non-floating-point type, that operand is converted to the type of
         // the other operand.
-        if (floating_left && !floating_right) return floating_left;
-        if (floating_right && !floating_left) return floating_right;
+        if (floating_left && !floating_right) return left_type;
+        if (floating_right && !floating_left) return right_type;
 
         // Otherwise, if the floating-point conversion ranks of the types of the operands are ordered but(since C++23)
         // not equal, then the operand of the type with the lesser floating-point conversion rank is converted to the
         // type of the other operand.
         if (floating_left && floating_right) {
-            if (floating_left->size() > floating_right->size()) return floating_left;
-            if (floating_right->size() > floating_left->size()) return floating_right;
+            if (floating_left->size() > floating_right->size()) return left_type;
+            if (floating_right->size() > floating_left->size()) return right_type;
         }
     }
 
     // Otherwise, both operands are of integer types, proceed to the next stage.
-    auto integer_left = std::dynamic_pointer_cast<IntegerType>(left_type);
-    auto integer_right = std::dynamic_pointer_cast<IntegerType>(right_type);
-    if (!integer_left || !integer_right) throw std::invalid_argument("This arithmetic conversion is not allowed.");
+    if (!std::holds_alternative<IntegerType>(*left_type) || !std::holds_alternative<IntegerType>(*right_type)) {
+        throw std::invalid_argument("This arithmetic conversion is not allowed.");
+    }
 
     // Stage 5: Both operands are converted to a common op C.
-    auto t1 = integer_left;
-    auto t2 = integer_right;
+    auto t1 = std::get<IntegerType>(*left_type);
+    auto t2 = std::get<IntegerType>(*right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    if (t1->size() < 32) t1 = std::make_shared<IntegerType>(32, t1->sign());
-    if (t2->size() < 32) t2 = std::make_shared<IntegerType>(32, t2->sign());
+    if (t1.size() < 32) t1 = IntegerType(32, t1.sign());
+    if (t2.size() < 32) t2 = IntegerType(32, t2.sign());
 
     // 1. If T1 and T2 are the same type, C is that op.
-    if (*t1 == *t2) return t1;
+    if (t1 == t2) return std::make_shared<Type>(t1);
 
     // 2. If T1 and T2 are both signed integer types or both unsigned integer types, C is the op of greater integer
     //    conversion rank.
-    if (t1->sign() == t2->sign()) {
-        if (t2->size() > t1->size()) return t2;
-        else return t1;
+    if (t1.sign() == t2.sign()) {
+        if (t2.size() > t1.size()) return std::make_shared<Type>(t2);
+        else return std::make_shared<Type>(t1);
     }
 
     // 3. Otherwise, one type between T1 and T2 is an signed integer type S, the other type is an unsigned integer op U.
     //    Apply the following rules:
-    auto _signed = t1->sign() ? t1 : t2;
-    auto _unsigned = !t1->sign() ? t1 : t2;
+    const auto &_signed = t1.sign() ? t1 : t2;
+    const auto &_unsigned = !t1.sign() ? t1 : t2;
 
     // 3.1. If the integer conversion rank of U is greater than or equal to the integer conversion rank of S, C is U.
-    if (_unsigned->size() >= _signed->size()) return _unsigned;
+    if (_unsigned.size() >= _signed.size()) return std::make_shared<Type>(_unsigned);
 
     // 3.2. Otherwise, if S can represent all of the values of U, C is S.
-    if (_signed->max() >= _unsigned->max()) return _signed;
+    if (_signed.max() >= _unsigned.max()) return std::make_shared<Type>(_signed);
 
     // 3.3. Otherwise, C is the unsigned integer op corresponding to S.
-    return std::make_shared<IntegerType>(_signed->size(), false);
+    return std::make_shared<Type>(IntegerType{_signed.size(), false});
 }
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion
 bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destination) {
     // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type. If the
     // conversion is listed under integral promotions, it is a promotion and not a conversion.
-    if (dynamic_cast<const IntegerType *>(&from) && dynamic_cast<const IntegerType *>(&destination)) return true;
+    if (std::holds_alternative<IntegerType>(from) && std::holds_alternative<IntegerType>(destination)) return true;
 
     // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
-    if (dynamic_cast<const FloatingType *>(&from) && dynamic_cast<const FloatingType *>(&destination)) return true;
+    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
 
     // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
     // truncated, that is, the fractional part is discarded.
-    if (dynamic_cast<const FloatingType *>(&from) && dynamic_cast<const IntegerType *>(&destination)) return true;
+    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<IntegerType>(destination)) return true;
 
     // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
     // The result is exact if possible.
-    if (dynamic_cast<const IntegerType *>(&from) && dynamic_cast<const FloatingType *>(&destination)) return true;
+    if (std::holds_alternative<IntegerType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
 
     return false;
 }

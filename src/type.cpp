@@ -1,35 +1,22 @@
 #include "type.h"
 
 std::ostream &operator<<(std::ostream &os, const Type &type) {
-    return type.print(os);
+    std::visit([&os](const auto &value) { os << value; }, type);
+    return os;
 }
 
-bool IntegerType::equals(const Type &other) const {
-    const auto *to_check = dynamic_cast<const IntegerType *>(&other);
-    if (!to_check) return false;
-
-    return _size == to_check->_size && _sign == to_check->_sign;
-}
-
-std::ostream &IntegerType::print(std::ostream &os) const {
-    return os << (_sign ? "s" : "u") << _size;
+bool IntegerType::operator==(const IntegerType &other) const {
+    return _size == other._size && _sign == other._sign;
 }
 
 std::ostream &operator<<(std::ostream &os, const IntegerType &type) {
-    return type.print(os);
+    return os << (type.sign() ? "s" : "u") << type.size();
 }
 
-bool FloatingType::equals(const Type &other) const {
-    const auto *to_check = dynamic_cast<const FloatingType *>(&other);
-    if (!to_check) return false;
-
-    return _size == to_check->_size;
-}
-
-std::ostream &FloatingType::print(std::ostream &os) const {
-    return os << "f" << _size;
+bool FloatingType::operator==(const FloatingType &other) const {
+    return _size == other._size;
 }
 
 std::ostream &operator<<(std::ostream &os, const FloatingType &type) {
-    return type.print(os);
+    return os << "f" << type.size();
 }

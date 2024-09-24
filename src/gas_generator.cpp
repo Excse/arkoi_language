@@ -64,30 +64,40 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 void GASGenerator::visit(CastInstruction &instruction) {
     _comment_instruction(instruction);
 
-    const auto &from = instruction.from();
-    auto from_float = std::dynamic_pointer_cast<FloatingType>(from);
-    auto from_int = std::dynamic_pointer_cast<IntegerType>(from);
-
-    const auto &to = instruction.from();
-    auto to_float = std::dynamic_pointer_cast<FloatingType>(to);
-    auto to_int = std::dynamic_pointer_cast<IntegerType>(to);
-
     const auto &expression = *instruction.expression();
     const auto &destination = *instruction.result();
+    const auto &from = *instruction.from();
+    const auto &to = *instruction.to();
 
-    if (from_float && to_float) {
-        _convert_float_to_float(*from_float, expression, *to_float, destination);
-    } else if (from_int && to_float) {
-        _convert_int_to_float(*from_int, expression, *to_float, destination);
-    } else if (from_float && to_int) {
-        _convert_float_to_int(*from_float, expression, *to_int, destination);
-    } else if (from_int && to_int) {
-        _convert_int_to_int(*from_int, expression, *to_int, destination);
-    } else {
-        throw std::runtime_error("Cast Instruction not implemented yet.");
+    if (auto *from_float = std::get_if<FloatingType>(&from)) {
+        if (auto *to_float = std::get_if<FloatingType>(&to)) {
+            _convert_float_to_float(*from_float, expression, *to_float, destination);
+            _assembly.newline();
+            return;
+        }
+
+        if (auto *to_int = std::get_if<IntegerType>(&to)) {
+            _convert_float_to_int(*from_float, expression, *to_int, destination);
+            _assembly.newline();
+            return;
+        }
+
+        throw std::runtime_error("This floating cast is not implemented yet.");
+    } else if (auto *from_int = std::get_if<IntegerType>(&from)) {
+        if (auto *to_float = std::get_if<FloatingType>(&to)) {
+            _convert_int_to_float(*from_int, expression, *to_float, destination);
+            _assembly.newline();
+            return;
+        } else if (auto *to_int = std::get_if<IntegerType>(&to)) {
+            _convert_int_to_int(*from_int, expression, *to_int, destination);
+            _assembly.newline();
+            return;
+        }
+
+        throw std::runtime_error("This integer cast is not implemented yet.");
     }
 
-    _assembly.newline();
+    throw std::runtime_error("This cast is not implemented yet.");
 }
 
 void GASGenerator::visit(EndInstruction &instruction) {
@@ -196,9 +206,9 @@ void GASGenerator::_convert_float_to_int(const FloatingType &from, const Operand
 }
 
 void GASGenerator::_mov(const Type &type, const Operand &destination, const Operand &src) {
-    if (dynamic_cast<const IntegerType *>(&type)) return _assembly.mov(destination, src);
+    if (std::holds_alternative<IntegerType>(type)) return _assembly.mov(destination, src);
 
-    if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 64: return _assembly.movsd(destination, src);
             case 32: return _assembly.movss(destination, src);
@@ -210,9 +220,9 @@ void GASGenerator::_mov(const Type &type, const Operand &destination, const Oper
 }
 
 void GASGenerator::_add(const Type &type, const Operand &destination, const Operand &src) {
-    if (dynamic_cast<const IntegerType *>(&type)) return _assembly.add(destination, src);
+    if (std::holds_alternative<IntegerType>(type)) return _assembly.add(destination, src);
 
-    if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 64: return _assembly.addsd(destination, src);
             case 32: return _assembly.addss(destination, src);
@@ -224,9 +234,9 @@ void GASGenerator::_add(const Type &type, const Operand &destination, const Oper
 }
 
 void GASGenerator::_sub(const Type &type, const Operand &destination, const Operand &src) {
-    if (dynamic_cast<const IntegerType *>(&type)) return _assembly.sub(destination, src);
+    if (std::holds_alternative<IntegerType>(type)) return _assembly.sub(destination, src);
 
-    if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 64: return _assembly.subsd(destination, src);
             case 32: return _assembly.subss(destination, src);
@@ -238,12 +248,12 @@ void GASGenerator::_sub(const Type &type, const Operand &destination, const Oper
 }
 
 void GASGenerator::_div(const Type &type, const Operand &destination, const Operand &src) {
-    if (auto integer = dynamic_cast<const IntegerType *>(&type)) {
+    if (auto integer = std::get_if<IntegerType>(&type)) {
         if (integer->sign()) return _assembly.idiv(src);
         else return _assembly.div(src);
     }
 
-    if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 64: return _assembly.divsd(destination, src);
             case 32: return _assembly.divss(destination, src);
@@ -255,12 +265,12 @@ void GASGenerator::_div(const Type &type, const Operand &destination, const Oper
 }
 
 void GASGenerator::_mul(const Type &type, const Operand &destination, const Operand &src) {
-    if (auto integer = dynamic_cast<const IntegerType *>(&type)) {
+    if (auto integer = std::get_if<IntegerType>(&type)) {
         if (integer->sign()) return _assembly.imul(destination, src);
         else return _assembly.mul(destination, src);
     }
 
-    if (auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 64: return _assembly.mulsd(destination, src);
             case 32: return _assembly.mulss(destination, src);
@@ -275,8 +285,8 @@ std::shared_ptr<Register> GASGenerator::_select_register(const Type &type, Regis
                                                          Register::Base floating) {
     auto size = Register::type_to_register_size(type);
 
-    if (dynamic_cast<const FloatingType *>(&type)) return std::make_shared<Register>(floating, size);
-    if (dynamic_cast<const IntegerType *>(&type)) return std::make_shared<Register>(integer, size);
+    if (std::holds_alternative<FloatingType>(type)) return std::make_shared<Register>(floating, size);
+    if (std::holds_alternative<IntegerType>(type)) return std::make_shared<Register>(integer, size);
 
     throw std::invalid_argument("This type is not implemented.");
 }

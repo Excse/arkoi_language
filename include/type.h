@@ -3,28 +3,11 @@
 #include <cstdint>
 #include <memory>
 
-class Type {
-public:
-    virtual ~Type() = default;
-
-    [[nodiscard]] virtual bool equals(const Type &other) const = 0;
-
-    virtual std::ostream &print(std::ostream &os) const = 0;
-
-    friend std::ostream &operator<<(std::ostream &os, const Type &type);
-
-    friend bool operator==(const Type &lhs, const Type &rhs) { return lhs.equals(rhs); }
-
-    friend bool operator!=(const Type &lhs, const Type &rhs) { return !(lhs == rhs); }
-};
-
-class IntegerType : public Type {
+class IntegerType {
 public:
     IntegerType(const int64_t size, const bool sign) : _size(size), _sign(sign) {}
 
-    [[nodiscard]] bool equals(const Type &other) const override;
-
-    std::ostream &print(std::ostream &os) const override;
+    bool operator==(const IntegerType &other) const;
 
     friend std::ostream &operator<<(std::ostream &os, const IntegerType &type);
 
@@ -42,13 +25,11 @@ private:
     bool _sign;
 };
 
-class FloatingType : public Type {
+class FloatingType {
 public:
     explicit FloatingType(const int64_t size) : _size(size) {}
 
-    [[nodiscard]] bool equals(const Type &other) const override;
-
-    std::ostream &print(std::ostream &os) const override;
+    bool operator==(const FloatingType &other) const;
 
     friend std::ostream &operator<<(std::ostream &os, const FloatingType &type);
 
@@ -56,4 +37,10 @@ public:
 
 private:
     int64_t _size;
+};
+
+struct Type : std::variant<IntegerType, FloatingType> {
+    using variant::variant;
+
+    friend std::ostream &operator<<(std::ostream &os, const Type &type);
 };

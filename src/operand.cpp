@@ -72,7 +72,7 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
 }
 
 Register::Size Register::type_to_register_size(const Type &type) {
-    if (const auto integer = dynamic_cast<const IntegerType *>(&type)) {
+    if (const auto integer = std::get_if<IntegerType>(&type)) {
         switch (integer->size()) {
             case 8: return Size::BYTE;
             case 16: return Size::WORD;
@@ -80,7 +80,7 @@ Register::Size Register::type_to_register_size(const Type &type) {
             case 64: return Size::QWORD;
             default: throw std::invalid_argument("This is a invalid integer type size.");
         }
-    } else if (const auto floating = dynamic_cast<const FloatingType *>(&type)) {
+    } else if (const auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 32: return Size::DWORD;
             case 64: return Size::QWORD;
