@@ -25,7 +25,7 @@ void MemoryResolver::visit(CastInstruction &instruction) {
 }
 
 std::shared_ptr<Operand> MemoryResolver::_resolve_operand(const std::shared_ptr<Operand> &operand) {
-    if (auto symbolic = std::get_if<SymbolOperand>(operand.get())) return _resolve_symbol(*symbolic->symbol());
+    if (auto *symbolic = std::get_if<SymbolOperand>(operand.get())) return _resolve_symbol(*symbolic->symbol());
 
     // If nothing has to be resolved, the operand is already finished.
     return operand;
@@ -35,13 +35,13 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_symbol(const Symbol &symbol) {
     auto result = _resolved.find(&symbol);
     if (result != _resolved.end()) return result->second;
 
-    if (auto temporary = std::get_if<TemporarySymbol>(&symbol)) {
+    if (auto *temporary = std::get_if<TemporarySymbol>(&symbol)) {
         auto location = _resolve_temporary(*temporary);
         _resolved[&symbol] = location;
         return location;
     }
 
-    if (auto parameter = std::get_if<ParameterSymbol>(&symbol)) {
+    if (auto *parameter = std::get_if<ParameterSymbol>(&symbol)) {
         auto location = _resolve_parameter(*parameter);
         _resolved[&symbol] = location;
         return location;
@@ -83,7 +83,7 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbo
 }
 
 int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
-    if (auto integer = std::get_if<IntegerType>(&type)) {
+    if (auto *integer = std::get_if<IntegerType>(&type)) {
         switch (integer->size()) {
             case 8: return 1;
             case 16: return 2;
@@ -91,7 +91,7 @@ int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
             case 64: return 8;
             default: throw std::invalid_argument("This integer size is not supported.");
         }
-    } else if (auto floating = std::get_if<FloatingType>(&type)) {
+    } else if (auto *floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 32: return 4;
             case 64: return 8;

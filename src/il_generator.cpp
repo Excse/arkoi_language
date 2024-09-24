@@ -33,9 +33,9 @@ void IRGenerator::visit(BlockNode &node) {
 }
 
 void IRGenerator::visit(IntegerNode &node) {
-    auto number_string = node.value().contents();
-    auto sign = !number_string.starts_with('-');
+    const auto &number_string = node.value().contents();
 
+    auto sign = !number_string.starts_with('-');
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
@@ -54,7 +54,7 @@ void IRGenerator::visit(IntegerNode &node) {
 }
 
 void IRGenerator::visit(FloatingNode &node) {
-    auto number_string = node.value().contents();
+    const auto &number_string = node.value().contents();
 
     auto value = std::stold(number_string);
     if (value > std::numeric_limits<float>::max()) {
@@ -102,10 +102,10 @@ void IRGenerator::visit(CastNode &node) {
 }
 
 std::shared_ptr<Operand> IRGenerator::_make_temporary(const Type &type) {
-    auto scope = _scopes.top();
+    const auto &scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);
-    auto symbol = scope->insert<TemporarySymbol>(name, type);
+    auto &symbol = scope->insert<TemporarySymbol>(name, type);
     _temp_index++;
 
     return std::make_shared<Operand>(SymbolOperand{symbol});

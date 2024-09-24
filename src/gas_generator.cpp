@@ -21,10 +21,7 @@ void GASGenerator::visit(BeginInstruction &instruction) {
     _assembly.push(RBP);
     _assembly.mov(RBP, RSP);
 
-    if (instruction.local_size() != 0) {
-        auto size = std::make_unique<Immediate>(instruction.local_size());
-        _assembly.sub(RSP, *size);
-    }
+    if (instruction.local_size() != 0) _assembly.sub(RSP, Immediate(instruction.local_size()));
 
     _assembly.newline();
 }

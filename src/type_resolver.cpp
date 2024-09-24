@@ -51,7 +51,7 @@ void TypeResolver::visit(ParameterNode &node) {
 }
 
 void TypeResolver::visit(IntegerNode &node) {
-    auto number_string = node.value().contents();
+    const auto &number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
     int64_t size;
@@ -65,7 +65,7 @@ void TypeResolver::visit(IntegerNode &node) {
 }
 
 void TypeResolver::visit(FloatingNode &node) {
-    auto number_string = node.value().contents();
+    const auto &number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? 64 : 32;
     _current_type = FloatingType(size);
