@@ -35,13 +35,13 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_symbol(const Symbol &symbol) {
     auto result = _resolved.find(&symbol);
     if (result != _resolved.end()) return result->second;
 
-    if (auto temporary = dynamic_cast<const TemporarySymbol *>(&symbol)) {
+    if (auto temporary = std::get_if<TemporarySymbol>(&symbol)) {
         auto location = _resolve_temporary(*temporary);
         _resolved[&symbol] = location;
         return location;
     }
 
-    if (auto parameter = dynamic_cast<const ParameterSymbol *>(&symbol)) {
+    if (auto parameter = std::get_if<ParameterSymbol>(&symbol)) {
         auto location = _resolve_parameter(*parameter);
         _resolved[&symbol] = location;
         return location;

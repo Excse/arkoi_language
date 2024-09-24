@@ -1,7 +1,7 @@
 template<typename... SymbolTypes>
 [[nodiscard]] std::shared_ptr<Symbol> &SymbolTable::lookup(const std::string &name) {
     auto found = _symbols.find(name);
-    if (found != _symbols.end() && (std::dynamic_pointer_cast<SymbolTypes>(found->second) || ...)) {
+    if (found != _symbols.end() && (std::holds_alternative<SymbolTypes>(*found->second) || ...)) {
         return found->second;
     }
 
@@ -18,7 +18,7 @@ std::shared_ptr<Symbol> &SymbolTable::insert(const std::string &name, Args &&...
         throw IdentifierAlreadyTaken(name);
     }
 
-    auto symbol = std::make_shared<SymbolType>(name, std::forward<Args>(args)...);
+    auto symbol = std::make_shared<Symbol>(SymbolType(name, std::forward<Args>(args)...));
     auto result = _symbols.emplace(name, symbol);
 
     return result.first->second;

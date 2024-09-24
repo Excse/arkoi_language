@@ -1,5 +1,6 @@
 #include "symbol.h"
 
 std::ostream &operator<<(std::ostream &os, const Symbol &symbol) {
-    return os << symbol.name();
+    std::visit([&os](const auto &symbol) { os << symbol.name(); }, symbol);
+    return os;
 }

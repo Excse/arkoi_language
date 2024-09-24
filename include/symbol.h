@@ -6,35 +6,24 @@
 
 #include "type.h"
 
-class Symbol {
+class FunctionSymbol {
 public:
-    explicit Symbol(std::string name) : _name(std::move(name)) {}
-
-    virtual ~Symbol() = default;
-
-    [[nodiscard]] auto &name() const { return _name; }
-
-    friend std::ostream &operator<<(std::ostream &os, const Symbol &symbol);
-
-private:
-    std::string _name;
-};
-
-class FunctionSymbol : public Symbol {
-public:
-    explicit FunctionSymbol(std::string name) : Symbol(std::move(name)) {}
+    explicit FunctionSymbol(std::string name) : _name(std::move(name)) {}
 
     void set_parameter_types(std::vector<std::shared_ptr<Type>> &&types) { _parameter_types = std::move(types); }
 
     [[nodiscard]] auto &parameter_types() const { return _parameter_types; }
 
+    [[nodiscard]] auto &name() const { return _name; }
+
 private:
     std::vector<std::shared_ptr<Type>> _parameter_types{};
+    std::string _name;
 };
 
-class ParameterSymbol : public Symbol {
+class ParameterSymbol {
 public:
-    explicit ParameterSymbol(std::string name) : Symbol(std::move(name)) {}
+    explicit ParameterSymbol(std::string name) : _name(std::move(name)) {}
 
     void set_sse_index(size_t index) { _sse_index = index; }
 
@@ -48,18 +37,29 @@ public:
 
     [[nodiscard]] auto &type() const { return _type; }
 
+    [[nodiscard]] auto &name() const { return _name; }
+
 private:
     size_t _int_index{}, _sse_index{};
     std::shared_ptr<Type> _type{};
+    std::string _name;
 };
 
-class TemporarySymbol : public Symbol {
+class TemporarySymbol {
 public:
-    explicit TemporarySymbol(std::string name, std::shared_ptr<Type> type)
-            : Symbol(std::move(name)), _type(std::move(type)) {}
+    TemporarySymbol(std::string name, std::shared_ptr<Type> type) : _type(std::move(type)), _name(std::move(name)) {}
 
     [[nodiscard]] auto &type() const { return _type; }
 
+    [[nodiscard]] auto &name() const { return _name; }
+
 private:
     std::shared_ptr<Type> _type{};
+    std::string _name;
+};
+
+struct Symbol : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {
+    using variant::variant;
+
+    friend std::ostream &operator<<(std::ostream &os, const Symbol &symbol);
 };

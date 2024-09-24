@@ -25,8 +25,8 @@ void TypeResolver::visit(FunctionNode &node) {
         parameter_types.push_back(type);
     }
 
-    auto function = std::static_pointer_cast<FunctionSymbol>(node.symbol());
-    function->set_parameter_types(std::move(parameter_types));
+    auto &function = std::get<FunctionSymbol>(*node.symbol());
+    function.set_parameter_types(std::move(parameter_types));
 
     _return_type = node.type();
 
@@ -40,13 +40,13 @@ void TypeResolver::visit(BlockNode &node) {
 }
 
 void TypeResolver::visit(ParameterNode &node) {
-    auto parameter = std::static_pointer_cast<ParameterSymbol>(node.symbol());
-    parameter->set_type(node.type());
+    auto &parameter = std::get<ParameterSymbol>(*node.symbol());
+    parameter.set_type(node.type());
 
     if (std::dynamic_pointer_cast<IntegerType>(node.type())) {
-        parameter->set_int_index(_int_index++);
+        parameter.set_int_index(_int_index++);
     } else if (std::dynamic_pointer_cast<FloatingType>(node.type())) {
-        parameter->set_sse_index(_sse_index++);
+        parameter.set_sse_index(_sse_index++);
     }
 }
 
@@ -91,8 +91,8 @@ void TypeResolver::visit(ReturnNode &node) {
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
-    auto parameter = std::static_pointer_cast<ParameterSymbol>(node.symbol());
-    _current_type = parameter->type();
+    auto parameter = std::get<ParameterSymbol>(*node.symbol());
+    _current_type = parameter.type();
 }
 
 void TypeResolver::visit(BinaryNode &node) {
