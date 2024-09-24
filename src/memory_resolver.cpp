@@ -60,8 +60,8 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_temporary(const TemporarySymbo
 std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
                                                     Register::Base::C, Register::Base::R8, Register::Base::R9};
-    if (std::get_if<IntegerType>(symbol.type().get()) && symbol.int_index() < 6) {
-        auto size = Register::type_to_register_size(*symbol.type());
+    if (std::holds_alternative<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
+        auto size = Register::type_to_register_size(symbol.type());
         auto base = INT_REG_ORDER[symbol.int_index()];
         return std::make_shared<Register>(base, size);
     }
@@ -70,8 +70,8 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbo
                                                     Register::Base::XMM2, Register::Base::XMM3,
                                                     Register::Base::XMM4, Register::Base::XMM5,
                                                     Register::Base::XMM6, Register::Base::XMM7};
-    if (std::get_if<FloatingType>(symbol.type().get()) && symbol.sse_index() < 8) {
-        auto size = Register::type_to_register_size(*symbol.type());
+    if (std::holds_alternative<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
+        auto size = Register::type_to_register_size(symbol.type());
         auto base = SSE_REG_ORDER[symbol.int_index()];
         return std::make_shared<Register>(base, size);
     }
@@ -82,8 +82,8 @@ std::shared_ptr<Operand> MemoryResolver::_resolve_parameter(const ParameterSymbo
     return std::make_shared<Memory>(RBP, _parameter_offset);
 }
 
-int64_t MemoryResolver::_type_to_byte_size(const std::shared_ptr<Type> &type) {
-    if (auto integer = std::get_if<IntegerType>(type.get())) {
+int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
+    if (auto integer = std::get_if<IntegerType>(&type)) {
         switch (integer->size()) {
             case 8: return 1;
             case 16: return 2;
@@ -91,7 +91,7 @@ int64_t MemoryResolver::_type_to_byte_size(const std::shared_ptr<Type> &type) {
             case 64: return 8;
             default: throw std::invalid_argument("This integer size is not supported.");
         }
-    } else if (auto floating = std::get_if<FloatingType>(type.get())) {
+    } else if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
             case 32: return 4;
             case 64: return 8;

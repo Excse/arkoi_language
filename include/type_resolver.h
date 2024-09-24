@@ -33,14 +33,13 @@ public:
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    static std::shared_ptr<Type> _arithmetic_conversion(const std::shared_ptr<Type> &left_type,
-                                                        const std::shared_ptr<Type> &right_type);
+    static Type _arithmetic_conversion(const Type &left_type, const Type &right_type);
 
     static bool _can_implicit_convert(const Type &from, const Type &destination);
 
 private:
-    std::shared_ptr<Type> _current_type{};
-    std::shared_ptr<Type> _return_type{};
+    Type _current_type{std::monostate()};
+    Type _return_type{std::monostate()};
     size_t _sse_index{}, _int_index{};
     bool _failed{};
 };

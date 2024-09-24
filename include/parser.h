@@ -29,7 +29,7 @@ private:
 
     [[nodiscard]] ParameterNode _parse_parameter();
 
-    [[nodiscard]] std::shared_ptr<Type> _parse_type();
+    [[nodiscard]] Type _parse_type();
 
     [[nodiscard]] BlockNode _parse_block();
 

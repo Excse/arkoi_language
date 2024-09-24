@@ -31,7 +31,7 @@ public:
     [[nodiscard]] auto &instructions() const { return _instructions; }
 
 private:
-    std::shared_ptr<Operand> _make_temporary(const std::shared_ptr<Type> &type);
+    std::shared_ptr<Operand> _make_temporary(const Type &type);
 
 private:
     std::vector<std::unique_ptr<Instruction>> _instructions{};

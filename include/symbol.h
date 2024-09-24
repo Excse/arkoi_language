@@ -10,14 +10,14 @@ class FunctionSymbol {
 public:
     explicit FunctionSymbol(std::string name) : _name(std::move(name)) {}
 
-    void set_parameter_types(std::vector<std::shared_ptr<Type>> &&types) { _parameter_types = std::move(types); }
+    void set_parameter_types(std::vector<Type> &&types) { _parameter_types = std::move(types); }
 
     [[nodiscard]] auto &parameter_types() const { return _parameter_types; }
 
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<std::shared_ptr<Type>> _parameter_types{};
+    std::vector<Type> _parameter_types{};
     std::string _name;
 };
 
@@ -33,7 +33,7 @@ public:
 
     [[nodiscard]] auto int_index() const { return _int_index; }
 
-    void set_type(std::shared_ptr<Type> type) { _type = std::move(type); }
+    void set_type(Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
@@ -41,21 +41,21 @@ public:
 
 private:
     size_t _int_index{}, _sse_index{};
-    std::shared_ptr<Type> _type{};
+    Type _type{std::monostate()};
     std::string _name;
 };
 
 class TemporarySymbol {
 public:
-    TemporarySymbol(std::string name, std::shared_ptr<Type> type) : _type(std::move(type)), _name(std::move(name)) {}
+    TemporarySymbol(std::string name, Type type) : _name(std::move(name)), _type(type) {}
 
     [[nodiscard]] auto &type() const { return _type; }
 
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::shared_ptr<Type> _type{};
     std::string _name;
+    Type _type;
 };
 
 struct Symbol : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {

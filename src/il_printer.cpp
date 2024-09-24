@@ -25,8 +25,8 @@ void ILPrinter::visit(BinaryInstruction &instruction) {
 }
 
 void ILPrinter::visit(CastInstruction &instruction) {
-    _output << *instruction.result() << " = CAST " << *instruction.expression() << " FROM @" << *instruction.from()
-            << " TO @" << *instruction.to() << "\n";
+    _output << *instruction.result() << " = CAST " << *instruction.expression() << " FROM @" << instruction.from()
+            << " TO @" << instruction.to() << "\n";
 }
 
 void ILPrinter::visit(EndInstruction &) {

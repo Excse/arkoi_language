@@ -101,7 +101,7 @@ void IRGenerator::visit(CastNode &node) {
     _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from(), node.to()));
 }
 
-std::shared_ptr<Operand> IRGenerator::_make_temporary(const std::shared_ptr<Type> &type) {
+std::shared_ptr<Operand> IRGenerator::_make_temporary(const Type &type) {
     auto scope = _scopes.top();
 
     auto name = "$tmp" + to_string(_temp_index);

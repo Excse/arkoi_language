@@ -16,7 +16,7 @@ void TypeResolver::visit(FunctionNode &node) {
     _sse_index = 0;
     _int_index = 0;
 
-    std::vector<std::shared_ptr<Type>> parameter_types;
+    std::vector<Type> parameter_types;
     for (auto &item: node.parameters()) {
         // This will set _current_type
         item.accept(*this);
@@ -43,9 +43,9 @@ void TypeResolver::visit(ParameterNode &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
-    if (std::holds_alternative<IntegerType>(*node.type())) {
+    if (std::holds_alternative<IntegerType>(node.type())) {
         parameter.set_int_index(_int_index++);
-    } else if (std::holds_alternative<FloatingType>(*node.type())) {
+    } else if (std::holds_alternative<FloatingType>(node.type())) {
         parameter.set_sse_index(_sse_index++);
     }
 }
@@ -61,14 +61,14 @@ void TypeResolver::visit(IntegerNode &node) {
         size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? 64 : 32;
     }
 
-    _current_type = std::make_shared<Type>(IntegerType{size, sign});
+    _current_type = IntegerType(size, sign);
 }
 
 void TypeResolver::visit(FloatingNode &node) {
     auto number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? 64 : 32;
-    _current_type = std::make_shared<Type>(FloatingType{size});
+    _current_type = FloatingType(size);
 }
 
 void TypeResolver::visit(ReturnNode &node) {
@@ -77,11 +77,11 @@ void TypeResolver::visit(ReturnNode &node) {
 
     node.set_type(_return_type);
 
-    if (*type == *_return_type) {
+    if (type == _return_type) {
         return;
     }
 
-    if (!_can_implicit_convert(*type, *_return_type)) {
+    if (!_can_implicit_convert(type, _return_type)) {
         throw std::runtime_error("Return statement has a wrong return op.");
     }
 
@@ -108,13 +108,13 @@ void TypeResolver::visit(BinaryNode &node) {
     _current_type = result;
     node.set_type(result);
 
-    if (*left != *result) {
+    if (left != result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &left_node = const_cast<std::unique_ptr<Node> &>(node.left());
         node.set_left(std::make_unique<CastNode>(std::move(left_node), left, result));
     }
 
-    if (*right != *result) {
+    if (right != result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &right_node = const_cast<std::unique_ptr<Node> &>(node.right());
         node.set_right(std::make_unique<CastNode>(std::move(right_node), right, result));
@@ -127,7 +127,7 @@ void TypeResolver::visit(CastNode &node) {
     auto from = _current_type;
     node.set_from(from);
 
-    if (!_can_implicit_convert(*from, *node.to())) {
+    if (!_can_implicit_convert(from, node.to())) {
         throw std::runtime_error("This cast is not valid.");
     }
 
@@ -135,15 +135,14 @@ void TypeResolver::visit(CastNode &node) {
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
-std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr<Type> &left_type,
-                                                           const std::shared_ptr<Type> &right_type) {
-    auto floating_left = std::get_if<FloatingType>(left_type.get());
-    auto floating_right = std::get_if<FloatingType>(right_type.get());
+Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &right_type) {
+    auto floating_left = std::get_if<FloatingType>(&left_type);
+    auto floating_right = std::get_if<FloatingType>(&right_type);
 
     // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
         // If both operands have the same type, no further conversion will be performed.
-        if (*left_type == *right_type) return left_type;
+        if (left_type == right_type) return left_type;
 
         // Otherwise, if one of the operands is of a non-floating-point type, that operand is converted to the type of
         // the other operand.
@@ -160,13 +159,13 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr
     }
 
     // Otherwise, both operands are of integer types, proceed to the next stage.
-    if (!std::holds_alternative<IntegerType>(*left_type) || !std::holds_alternative<IntegerType>(*right_type)) {
+    if (!std::holds_alternative<IntegerType>(left_type) || !std::holds_alternative<IntegerType>(right_type)) {
         throw std::invalid_argument("This arithmetic conversion is not allowed.");
     }
 
     // Stage 5: Both operands are converted to a common op C.
-    auto t1 = std::get<IntegerType>(*left_type);
-    auto t2 = std::get<IntegerType>(*right_type);
+    auto t1 = std::get<IntegerType>(left_type);
+    auto t2 = std::get<IntegerType>(right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
@@ -174,13 +173,13 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr
     if (t2.size() < 32) t2 = IntegerType(32, t2.sign());
 
     // 1. If T1 and T2 are the same type, C is that op.
-    if (t1 == t2) return std::make_shared<Type>(t1);
+    if (t1 == t2) return t1;
 
     // 2. If T1 and T2 are both signed integer types or both unsigned integer types, C is the op of greater integer
     //    conversion rank.
     if (t1.sign() == t2.sign()) {
-        if (t2.size() > t1.size()) return std::make_shared<Type>(t2);
-        else return std::make_shared<Type>(t1);
+        if (t2.size() > t1.size()) return t2;
+        else return t1;
     }
 
     // 3. Otherwise, one type between T1 and T2 is an signed integer type S, the other type is an unsigned integer op U.
@@ -189,13 +188,13 @@ std::shared_ptr<Type> TypeResolver::_arithmetic_conversion(const std::shared_ptr
     const auto &_unsigned = !t1.sign() ? t1 : t2;
 
     // 3.1. If the integer conversion rank of U is greater than or equal to the integer conversion rank of S, C is U.
-    if (_unsigned.size() >= _signed.size()) return std::make_shared<Type>(_unsigned);
+    if (_unsigned.size() >= _signed.size()) return _unsigned;
 
     // 3.2. Otherwise, if S can represent all of the values of U, C is S.
-    if (_signed.max() >= _unsigned.max()) return std::make_shared<Type>(_signed);
+    if (_signed.max() >= _unsigned.max()) return _signed;
 
     // 3.3. Otherwise, C is the unsigned integer op corresponding to S.
-    return std::make_shared<Type>(IntegerType{_signed.size(), false});
+    return IntegerType(_signed.size(), false);
 }
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion

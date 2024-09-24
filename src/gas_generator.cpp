@@ -32,8 +32,8 @@ void GASGenerator::visit(BeginInstruction &instruction) {
 void GASGenerator::visit(ReturnInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto destination = _returning_register(*instruction.type());
-    _mov(*instruction.type(), *destination, *instruction.value());
+    auto destination = _returning_register(instruction.type());
+    _mov(instruction.type(), *destination, *instruction.value());
 
     _assembly.newline();
 }
@@ -41,20 +41,20 @@ void GASGenerator::visit(ReturnInstruction &instruction) {
 void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto left_reg = _temp1_register(*instruction.type());
-    _mov(*instruction.type(), *left_reg, *instruction.left());
+    auto left_reg = _temp1_register(instruction.type());
+    _mov(instruction.type(), *left_reg, *instruction.left());
 
-    auto right_reg = _temp2_register(*instruction.type());
-    _mov(*instruction.type(), *right_reg, *instruction.right());
+    auto right_reg = _temp2_register(instruction.type());
+    _mov(instruction.type(), *right_reg, *instruction.right());
 
     switch (instruction.op()) {
-        case BinaryInstruction::Operator::Add: _add(*instruction.type(), *left_reg, *right_reg);
+        case BinaryInstruction::Operator::Add: _add(instruction.type(), *left_reg, *right_reg);
             break;
-        case BinaryInstruction::Operator::Sub: _sub(*instruction.type(), *left_reg, *right_reg);
+        case BinaryInstruction::Operator::Sub: _sub(instruction.type(), *left_reg, *right_reg);
             break;
-        case BinaryInstruction::Operator::Div: _div(*instruction.type(), *left_reg, *right_reg);
+        case BinaryInstruction::Operator::Div: _div(instruction.type(), *left_reg, *right_reg);
             break;
-        case BinaryInstruction::Operator::Mul: _mul(*instruction.type(), *left_reg, *right_reg);
+        case BinaryInstruction::Operator::Mul: _mul(instruction.type(), *left_reg, *right_reg);
             break;
     }
 
@@ -66,8 +66,8 @@ void GASGenerator::visit(CastInstruction &instruction) {
 
     const auto &expression = *instruction.expression();
     const auto &destination = *instruction.result();
-    const auto &from = *instruction.from();
-    const auto &to = *instruction.to();
+    const auto &from = instruction.from();
+    const auto &to = instruction.to();
 
     if (auto *from_float = std::get_if<FloatingType>(&from)) {
         if (auto *to_float = std::get_if<FloatingType>(&to)) {

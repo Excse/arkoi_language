@@ -31,8 +31,8 @@ private:
 
 class ReturnInstruction : public Instruction {
 public:
-    explicit ReturnInstruction(std::shared_ptr<Operand> value, std::shared_ptr<Type> type)
-            : _value(std::move(value)), _type(std::move(type)) {}
+    explicit ReturnInstruction(std::shared_ptr<Operand> value, Type type)
+            : _value(std::move(value)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -44,7 +44,7 @@ public:
 
 private:
     std::shared_ptr<Operand> _value;
-    std::shared_ptr<Type> _type;
+    Type _type;
 };
 
 class BinaryInstruction : public Instruction {
@@ -58,9 +58,9 @@ public:
 
 public:
     BinaryInstruction(std::shared_ptr<Operand> result, std::shared_ptr<Operand> left, Operator op,
-                      std::shared_ptr<Operand> right, std::shared_ptr<Type> type)
-            : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _type(std::move(type)),
-              _op(op) {}
+                      std::shared_ptr<Operand> right, Type type)
+            : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
+              _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -86,8 +86,8 @@ public:
 
 private:
     std::shared_ptr<Operand> _result, _left, _right;
-    std::shared_ptr<Type> _type;
     Operator _op;
+    Type _type;
 };
 
 class BeginInstruction : public Instruction {
@@ -111,10 +111,8 @@ public:
 
 class CastInstruction : public Instruction {
 public:
-    CastInstruction(std::shared_ptr<Operand> result, std::shared_ptr<Operand> expression, std::shared_ptr<Type> from,
-                    std::shared_ptr<Type> to)
-            : _result(std::move(result)), _expression(std::move(expression)), _from(std::move(from)),
-              _to(std::move(to)) {}
+    CastInstruction(std::shared_ptr<Operand> result, std::shared_ptr<Operand> expression, Type from, Type to)
+            : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -132,5 +130,5 @@ public:
 
 private:
     std::shared_ptr<Operand> _result, _expression;
-    std::shared_ptr<Type> _from, _to;
+    Type _from, _to;
 };

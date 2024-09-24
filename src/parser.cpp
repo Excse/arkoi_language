@@ -126,23 +126,23 @@ ParameterNode Parser::_parse_parameter() {
     return {name, type};
 }
 
-std::shared_ptr<Type> Parser::_parse_type() {
+Type Parser::_parse_type() {
     _consume(Token::Type::At);
 
     auto token = _consume_any();
     switch (token.type()) {
-        case Token::Type::U8: return std::make_shared<Type>(IntegerType{8, false});
-        case Token::Type::S8: return std::make_shared<Type>(IntegerType{8, true});
-        case Token::Type::U16: return std::make_shared<Type>(IntegerType{16, false});
-        case Token::Type::S16: return std::make_shared<Type>(IntegerType{16, true});
-        case Token::Type::U32: return std::make_shared<Type>(IntegerType{32, false});
-        case Token::Type::S32: return std::make_shared<Type>(IntegerType{32, true});
-        case Token::Type::U64: return std::make_shared<Type>(IntegerType{64, false});
-        case Token::Type::S64: return std::make_shared<Type>(IntegerType{64, true});
-        case Token::Type::USize: return std::make_shared<Type>(IntegerType{64, false});
-        case Token::Type::SSize: return std::make_shared<Type>(IntegerType{64, true});
-        case Token::Type::F32: return std::make_shared<Type>(FloatingType{32});
-        case Token::Type::F64: return std::make_shared<Type>(FloatingType{64});
+        case Token::Type::U8: return IntegerType(8, false);
+        case Token::Type::S8: return IntegerType(8, true);
+        case Token::Type::U16: return IntegerType(16, false);
+        case Token::Type::S16: return IntegerType(16, true);
+        case Token::Type::U32: return IntegerType(32, false);
+        case Token::Type::S32: return IntegerType(32, true);
+        case Token::Type::U64: return IntegerType(64, false);
+        case Token::Type::S64: return IntegerType(64, true);
+        case Token::Type::USize: return IntegerType(64, false);
+        case Token::Type::SSize: return IntegerType(64, true);
+        case Token::Type::F32: return FloatingType(32);
+        case Token::Type::F64: return FloatingType(64);
         default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize", token);
     }
 }
