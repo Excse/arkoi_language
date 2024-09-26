@@ -22,7 +22,7 @@ public:
 
     void visit(ReturnInstruction &instruction) override;
 
-    void visit(BinaryInstruction &instruction) override;
+    void visit(BinaryInstruction &memory) override;
 
     void visit(CastInstruction &instruction) override;
 

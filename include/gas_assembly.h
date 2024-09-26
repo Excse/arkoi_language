@@ -56,8 +56,6 @@ public:
 
     void imul(const Operand &destination, const Operand &src);
 
-    void mul(const Operand &destination, const Operand &src);
-
     void mulsd(const Operand &destination, const Operand &src);
 
     void mulss(const Operand &destination, const Operand &src);

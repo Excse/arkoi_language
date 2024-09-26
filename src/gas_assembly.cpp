@@ -102,10 +102,6 @@ void Assembly::imul(const Operand &destination, const Operand &src) {
     _output << "\timul " << destination << ", " << src << "\n";
 }
 
-void Assembly::mul(const Operand &destination, const Operand &src) {
-    _output << "\tmul " << destination << ", " << src << "\n";
-}
-
 void Assembly::mulsd(const Operand &destination, const Operand &src) {
     _output << "\tmulsd " << destination << ", " << src << "\n";
 }

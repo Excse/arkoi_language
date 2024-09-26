@@ -2,6 +2,7 @@
 
 #include "instruction.h"
 #include "il_printer.h"
+#include "utils.h"
 
 inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);
@@ -49,11 +50,29 @@ void GASGenerator::visit(ReturnInstruction &instruction) {
 void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
-    auto left_reg = _temp1_register(instruction.type());
-    _mov(instruction.type(), left_reg, instruction.left());
+    auto left_reg = std::visit(match{
+            [&](const Register &reg) -> Operand { return reg; },
+            [&](const auto &) -> Operand {
+                auto reg = _temp1_register(instruction.type());
+                _mov(instruction.type(), reg, instruction.left());
+                return reg;
+            },
+    }, instruction.left());
 
-    auto right_reg = _temp2_register(instruction.type());
-    _mov(instruction.type(), right_reg, instruction.right());
+    auto right_reg = std::visit(match{
+            [&](const Register &reg) -> Operand { return reg; },
+            [&](const Memory &memory) -> Operand { return memory; },
+            [&](const Immediate &immediate) -> Operand {
+                if (std::holds_alternative<FloatingType>(instruction.type())) {
+                    auto reg = _temp1_register(instruction.type());
+                    _mov(instruction.type(), reg, instruction.right());
+                    return reg;
+                }
+
+                return immediate;
+            },
+            [&](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
+    }, instruction.right());
 
     switch (instruction.op()) {
         case BinaryInstruction::Operator::Add: {
@@ -134,7 +153,6 @@ void GASGenerator::_preamble() {
 .global _start
 
 _start:
-    movsd xmm0, QWORD PTR [test]
     call main
 
     mov rdi, rax
@@ -144,11 +162,17 @@ _start:
 }
 
 void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
-    _assembly.output() << ".section .data" << "\n";
-    _assembly.output() << "test: .double 2.0" << "\n";
+    auto &os = _assembly.output();
 
+    os << ".section .data" << "\n";
     for (const auto &[name, value]: data) {
-        _assembly.output() << name << ": .float " << value << "\n";
+        os << name << ": ";
+
+        if (std::holds_alternative<float>(value)) os << ".float";
+        else if (std::holds_alternative<double>(value)) os << ".double";
+        else std::invalid_argument("This type is not implemented.");
+
+        os << " " << value << "\n";
     }
 }
 
@@ -288,10 +312,7 @@ void GASGenerator::_div(const Type &type, const Operand &destination, const Oper
 }
 
 void GASGenerator::_mul(const Type &type, const Operand &destination, const Operand &src) {
-    if (auto integer = std::get_if<IntegerType>(&type)) {
-        if (integer->sign()) return _assembly.imul(destination, src);
-        else return _assembly.mul(destination, src);
-    }
+    if (std::get_if<IntegerType>(&type)) return _assembly.imul(destination, src);
 
     if (auto floating = std::get_if<FloatingType>(&type)) {
         switch (floating->size()) {
