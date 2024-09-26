@@ -6,8 +6,13 @@
 #include "visitor.h"
 #include "token.h"
 
-class NameResolver : public NodeVisitor {
+class NameResolver : NodeVisitor {
+private:
+    NameResolver() = default;
+
 public:
+    [[nodiscard]] static NameResolver resolve(ProgramNode &node);
+
     void visit(ProgramNode &node) override;
 
     void visit(FunctionNode &node) override;

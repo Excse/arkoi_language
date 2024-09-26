@@ -2,7 +2,17 @@
 
 #include "instruction.h"
 
-inline Register RBP(Register::Base::BP, Register::Size::QWORD);
+inline Register RBP(Register::Base::BP, Size::QWORD);
+
+MemoryResolver MemoryResolver::resolve(const std::vector<std::unique_ptr<Instruction>> &instructions) {
+    MemoryResolver resolver;
+
+    for (const auto &item: instructions) {
+        item->accept(resolver);
+    }
+
+    return resolver;
+}
 
 void MemoryResolver::visit(BeginInstruction &instruction) {
     _current_begin = &instruction;
@@ -25,10 +35,26 @@ void MemoryResolver::visit(CastInstruction &instruction) {
 }
 
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
-    if (auto *symbolic = std::get_if<SymbolOperand>(&operand)) return _resolve_symbol(*symbolic->symbol());
+    if (auto *symbolic = std::get_if<std::shared_ptr<Symbol>>(&operand)) return _resolve_symbol(**symbolic);
+    if (auto *immediate = std::get_if<Immediate>(&operand)) return _resolve_immediate(*immediate);
 
     // If nothing has to be resolved, the operand is already finished.
     return operand;
+}
+
+Operand MemoryResolver::_resolve_immediate(const Immediate &immediate) {
+    if (!std::holds_alternative<float>(immediate) && !std::holds_alternative<double>(immediate)) return immediate;
+
+    auto data_name = ".LC" + std::to_string(_data_index++);
+    _data[data_name] = immediate;
+
+    if (std::holds_alternative<float>(immediate)) {
+        return Memory(Size::DWORD, Address(data_name));
+    } else if (std::holds_alternative<double>(immediate)) {
+        return Memory(Size::QWORD, Address(data_name));
+    } else {
+        throw std::invalid_argument("This type is not implemented.");
+    }
 }
 
 Operand MemoryResolver::_resolve_symbol(const Symbol &symbol) {
@@ -54,7 +80,8 @@ Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
     auto byte_size = _type_to_byte_size(symbol.type());
     _current_begin->increase_local_size(byte_size);
 
-    return Memory(RBP, -_current_begin->local_size());
+    auto size = _byte_size_to_size(byte_size);
+    return Memory(size, RBP, -_current_begin->local_size());
 }
 
 Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
@@ -79,7 +106,8 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     auto byte_size = _type_to_byte_size(symbol.type());
     _parameter_offset += byte_size;
 
-    return Memory(RBP, _parameter_offset);
+    auto size = _byte_size_to_size(byte_size);
+    return Memory(size, RBP, _parameter_offset);
 }
 
 int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
@@ -100,4 +128,14 @@ int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
     }
 
     throw std::invalid_argument("This type is not implemented.");
+}
+
+Size MemoryResolver::_byte_size_to_size(int64_t bytes) {
+    switch (bytes) {
+        case 1: return Size::BYTE;
+        case 2: return Size::WORD;
+        case 4: return Size::DWORD;
+        case 8: return Size::QWORD;
+        default: throw std::invalid_argument("This byte size is not implemented.");
+    }
 }

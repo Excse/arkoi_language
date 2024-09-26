@@ -6,6 +6,14 @@
 #include "utils.h"
 #include "ast.h"
 
+IRGenerator IRGenerator::generate(ProgramNode &node) {
+    IRGenerator generator;
+
+    node.accept(generator);
+
+    return generator;
+}
+
 void IRGenerator::visit(ProgramNode &node) {
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -39,16 +47,16 @@ void IRGenerator::visit(IntegerNode &node) {
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            _current_operand = Immediate((int64_t) value);
+            _current_operand = (int64_t) value;
         } else {
-            _current_operand = Immediate((int32_t) value);
+            _current_operand = (int32_t) value;
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            _current_operand = Immediate((uint64_t) value);
+            _current_operand = (uint64_t) value;
         } else {
-            _current_operand = Immediate((uint32_t) value);
+            _current_operand = (uint32_t) value;
         }
     }
 }
@@ -58,9 +66,9 @@ void IRGenerator::visit(FloatingNode &node) {
 
     auto value = std::stold(number_string);
     if (value > std::numeric_limits<float>::max()) {
-        _current_operand = Immediate((double) value);
+        _current_operand = (double) value;
     } else {
-        _current_operand = Immediate((float) value);
+        _current_operand = (float) value;
     }
 }
 
@@ -72,7 +80,7 @@ void IRGenerator::visit(ReturnNode &node) {
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
-    _current_operand = SymbolOperand(node.symbol());
+    _current_operand = node.symbol();
 }
 
 void IRGenerator::visit(BinaryNode &node) {
@@ -108,5 +116,5 @@ Operand IRGenerator::_make_temporary(const Type &type) {
     auto &symbol = scope->insert<TemporarySymbol>(name, type);
     _temp_index++;
 
-    return SymbolOperand(symbol);
+    return symbol;
 }

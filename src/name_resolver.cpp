@@ -2,6 +2,14 @@
 
 #include "ast.h"
 
+NameResolver NameResolver::resolve(ProgramNode &node) {
+    NameResolver resolver;
+
+    node.accept(resolver);
+
+    return resolver;
+}
+
 void NameResolver::visit(ProgramNode &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {

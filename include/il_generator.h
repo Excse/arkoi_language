@@ -6,8 +6,13 @@
 #include "visitor.h"
 #include "type.h"
 
-class IRGenerator : public NodeVisitor {
+class IRGenerator : NodeVisitor {
+private:
+    IRGenerator() = default;
+
 public:
+    [[nodiscard]] static IRGenerator generate(ProgramNode &node);
+
     void visit(ProgramNode &node) override;
 
     void visit(FunctionNode &node) override;

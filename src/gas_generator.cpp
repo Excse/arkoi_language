@@ -3,11 +3,22 @@
 #include "instruction.h"
 #include "il_printer.h"
 
-inline Register RBP(Register::Base::BP, Register::Size::QWORD);
-inline Register RSP(Register::Base::SP, Register::Size::QWORD);
+inline Register RBP(Register::Base::BP, Size::QWORD);
+inline Register RSP(Register::Base::SP, Size::QWORD);
 
-GASGenerator::GASGenerator(bool debug) : _debug(debug) {
-    _preamble();
+GASGenerator GASGenerator::generate(const std::vector<std::unique_ptr<Instruction>> &instructions,
+                                    const std::unordered_map<std::string, Immediate> &data) {
+    GASGenerator generator;
+
+    generator._preamble();
+
+    for (const auto &item: instructions) {
+        item->accept(generator);
+    }
+
+    generator._data_section(data);
+
+    return generator;
 }
 
 void GASGenerator::visit(LabelInstruction &instruction) {
@@ -63,6 +74,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
         }
     }
 
+    _mov(instruction.type(), instruction.result(), left_reg);
     _assembly.newline();
 }
 
@@ -122,7 +134,7 @@ void GASGenerator::_preamble() {
 .global _start
 
 _start:
-    movsd xmm0, 2
+    movsd xmm0, QWORD PTR [test]
     call main
 
     mov rdi, rax
@@ -131,12 +143,18 @@ _start:
 )";
 }
 
-void GASGenerator::_comment_instruction(Instruction &instruction) {
-    if (!_debug) return;
+void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
+    _assembly.output() << ".section .data" << "\n";
+    _assembly.output() << "test: .double 2.0" << "\n";
 
-    instruction.accept(_printer);
-    _assembly.comment(_printer.output().str());
-    _printer.clear();
+    for (const auto &[name, value]: data) {
+        _assembly.output() << name << ": .float " << value << "\n";
+    }
+}
+
+void GASGenerator::_comment_instruction(Instruction &instruction) {
+    auto printer = ILPrinter::print(instruction);
+    _assembly.comment(printer.output().str());
 }
 
 void GASGenerator::_convert_int_to_int(const IntegerType &from, const Operand &expression,
@@ -289,8 +307,8 @@ void GASGenerator::_mul(const Type &type, const Operand &destination, const Oper
 Register GASGenerator::_select_register(const Type &type, Register::Base integer, Register::Base floating) {
     auto size = Register::type_to_register_size(type);
 
-    if (std::holds_alternative<FloatingType>(type)) return Register(floating, size);
-    if (std::holds_alternative<IntegerType>(type)) return Register(integer, size);
+    if (std::holds_alternative<FloatingType>(type)) return {floating, size};
+    if (std::holds_alternative<IntegerType>(type)) return {integer, size};
 
     throw std::invalid_argument("This type is not implemented.");
 }

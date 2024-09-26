@@ -2,31 +2,43 @@
 
 #include "utils.h"
 
+std::ostream &operator<<(std::ostream &os, const Size &size) {
+    switch (size) {
+        case Size::BYTE: return os << "BYTE";
+        case Size::WORD: return os << "WORD";
+        case Size::DWORD: return os << "DWORD";
+        case Size::QWORD: return os << "QWORD";
+    }
+
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
+}
+
 std::ostream &operator<<(std::ostream &os, const Register &reg) {
     if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
         switch (reg.size()) {
-            case Register::Size::BYTE: return os << reg.base() << "b";
-            case Register::Size::WORD: return os << reg.base() << "w";
-            case Register::Size::DWORD: return os << reg.base() << "d";
-            case Register::Size::QWORD: return os << reg.base();
+            case Size::BYTE: return os << reg.base() << "b";
+            case Size::WORD: return os << reg.base() << "w";
+            case Size::DWORD: return os << reg.base() << "d";
+            case Size::QWORD: return os << reg.base();
         }
     }
 
     if (reg.base() >= Register::Base::SI && reg.base() <= Register::Base::BP) {
         switch (reg.size()) {
-            case Register::Size::BYTE: return os << reg.base() << "l";
-            case Register::Size::WORD: return os << reg.base();
-            case Register::Size::DWORD: return os << "e" << reg.base();
-            case Register::Size::QWORD: return os << "r" << reg.base();
+            case Size::BYTE: return os << reg.base() << "l";
+            case Size::WORD: return os << reg.base();
+            case Size::DWORD: return os << "e" << reg.base();
+            case Size::QWORD: return os << "r" << reg.base();
         }
     }
 
     if (reg.base() >= Register::Base::A && reg.base() <= Register::Base::B) {
         switch (reg.size()) {
-            case Register::Size::BYTE: return os << reg.base() << "l";
-            case Register::Size::WORD: return os << reg.base() << "x";
-            case Register::Size::DWORD: return os << "e" << reg.base() << "x";
-            case Register::Size::QWORD: return os << "r" << reg.base() << "x";
+            case Size::BYTE: return os << reg.base() << "l";
+            case Size::WORD: return os << reg.base() << "x";
+            case Size::DWORD: return os << "e" << reg.base() << "x";
+            case Size::QWORD: return os << "r" << reg.base() << "x";
         }
     }
 
@@ -77,7 +89,7 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
     std::unreachable();
 }
 
-Register::Size Register::type_to_register_size(const Type &type) {
+Size Register::type_to_register_size(const Type &type) {
     if (auto *integer = std::get_if<IntegerType>(&type)) {
         switch (integer->size()) {
             case 8: return Size::BYTE;
@@ -97,8 +109,18 @@ Register::Size Register::type_to_register_size(const Type &type) {
     throw std::runtime_error("This type is not implemented.");
 }
 
+std::ostream &operator<<(std::ostream &os, const Address &memory) {
+    std::visit(match{
+            [](const std::monostate &) {},
+            [&os](const auto &value) { os << value; },
+    }, memory);
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const Memory &memory) {
-    os << "[" << memory.base();
+    os << memory.size() << " PTR ";
+
+    os << "[" << memory.address();
 
     if (memory.index() != 1) {
         os << " + " << memory.index();
@@ -123,11 +145,11 @@ std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
     return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const SymbolOperand &symbol) {
-    return os << *symbol.symbol();
-}
-
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {
-    std::visit([&os](const auto &value) { os << value; }, operand);
+    std::visit(match{
+            [](const std::monostate &) {},
+            [&os](const std::shared_ptr<Symbol> &symbol) { os << *symbol; },
+            [&os](const auto &other) { os << other; },
+    }, operand);
     return os;
 }

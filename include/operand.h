@@ -8,6 +8,12 @@
 
 #include "symbol_table.h"
 
+enum class Size {
+    BYTE, WORD, DWORD, QWORD
+};
+
+std::ostream &operator<<(std::ostream &os, const Size &size);
+
 class Register {
 public:
     enum class Base {
@@ -16,10 +22,6 @@ public:
     };
 
     friend std::ostream &operator<<(std::ostream &os, const Register::Base &reg);
-
-    enum class Size {
-        BYTE, WORD, DWORD, QWORD
-    };
 
 public:
     Register(Base base, Size size) : _size(size), _base(base) {}
@@ -37,27 +39,37 @@ private:
     Base _base;
 };
 
+struct Address : std::variant<std::string, int64_t, Register, std::monostate> {
+    friend std::ostream &operator<<(std::ostream &os, const Address &memory);
+};
+
 class Memory {
 public:
-    explicit Memory(Register base, int64_t index, int64_t scale, int64_t displacement)
-            : _index(index), _scale(scale), _displacement(displacement), _base(std::move(base)) {}
+    explicit Memory(Size size, Register address, int64_t index, int64_t scale, int64_t displacement)
+            : _index(index), _scale(scale), _displacement(displacement), _address(address), _size(size) {}
 
-    explicit Memory(Register base, int64_t displacement)
-            : _index(1), _scale(1), _displacement(displacement), _base(std::move(base)) {}
+    explicit Memory(Size size, Register address, int64_t displacement)
+            : _index(1), _scale(1), _displacement(displacement), _address(address), _size(size) {}
+
+    explicit Memory(Size size, Address address)
+            : _index(1), _scale(1), _displacement(0), _address(address), _size(size) {}
 
     friend std::ostream &operator<<(std::ostream &os, const Memory &memory);
 
     [[nodiscard]] auto displacement() const { return _displacement; }
 
+    [[nodiscard]] auto &address() const { return _address; }
+
     [[nodiscard]] auto scale() const { return _scale; }
 
     [[nodiscard]] auto index() const { return _index; }
 
-    [[nodiscard]] auto &base() const { return _base; }
+    [[nodiscard]] auto &size() const { return _size; }
 
 private:
     int64_t _index, _scale, _displacement;
-    Register _base;
+    Address _address;
+    Size _size;
 };
 
 struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float> {
@@ -66,19 +78,7 @@ struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, fl
     friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
 };
 
-class SymbolOperand {
-public:
-    explicit SymbolOperand(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
-
-    friend std::ostream &operator<<(std::ostream &os, const SymbolOperand &symbol);
-
-    [[nodiscard]] auto &symbol() const { return _symbol; }
-
-private:
-    std::shared_ptr<Symbol> _symbol;
-};
-
-struct Operand : std::variant<SymbolOperand, Register, Memory, Immediate, std::monostate> {
+struct Operand : std::variant<Register, Memory, std::shared_ptr<Symbol>, Immediate, std::monostate> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Operand &operand);

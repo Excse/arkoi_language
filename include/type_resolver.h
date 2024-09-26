@@ -8,8 +8,13 @@
 #include "type.h"
 #include "ast.h"
 
-class TypeResolver : public NodeVisitor {
+class TypeResolver : NodeVisitor {
+private:
+    TypeResolver() = default;
+
 public:
+    [[nodiscard]] static TypeResolver resolve(ProgramNode &node);
+
     void visit(ProgramNode &node) override;
 
     void visit(FunctionNode &node) override;

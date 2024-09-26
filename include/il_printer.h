@@ -2,10 +2,18 @@
 
 #include <sstream>
 
+#include "instruction.h"
 #include "visitor.h"
 
-class ILPrinter : public InstructionVisitor {
+class ILPrinter :  InstructionVisitor {
+private:
+    ILPrinter() = default;
+
 public:
+    [[nodiscard]] static ILPrinter print(const std::vector<std::unique_ptr<Instruction>> &instructions);
+
+    [[nodiscard]] static ILPrinter print(Instruction &instruction);
+
     void visit(LabelInstruction &instruction) override;
 
     void visit(BeginInstruction &instruction) override;

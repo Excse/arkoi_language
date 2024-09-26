@@ -5,6 +5,14 @@
 #include "utils.h"
 #include "ast.h"
 
+TypeResolver TypeResolver::resolve(ProgramNode &node) {
+    TypeResolver resolver;
+
+    node.accept(resolver);
+
+    return resolver;
+}
+
 void TypeResolver::visit(ProgramNode &node) {
     for (const auto &item: node.statements()) {
         item->accept(*this);

@@ -8,9 +8,13 @@
 #include "il_printer.h"
 #include "visitor.h"
 
-class GASGenerator : public InstructionVisitor {
+class GASGenerator : InstructionVisitor {
+private:
+    GASGenerator() = default;
+
 public:
-    explicit GASGenerator(bool debug = false);
+    [[nodiscard]] static GASGenerator generate(const std::vector<std::unique_ptr<Instruction>> &instructions,
+                                               const std::unordered_map<std::string, Immediate> &data);
 
     void visit(LabelInstruction &instruction) override;
 
@@ -28,6 +32,8 @@ public:
 
 private:
     void _preamble();
+
+    void _data_section(const std::unordered_map<std::string, Immediate> &data);
 
     void _comment_instruction(Instruction &instruction);
 
@@ -62,7 +68,5 @@ private:
     [[nodiscard]] static Register _temp2_register(const Type &type);
 
 private:
-    ILPrinter _printer{};
     Assembly _assembly{};
-    bool _debug;
 };

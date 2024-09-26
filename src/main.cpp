@@ -12,8 +12,6 @@
 #include "scanner.h"
 #include "parser.h"
 
-constexpr bool DEBUG = true;
-
 int main() {
     std::ifstream file("../example/test.ark");
     std::stringstream buffer;
@@ -33,52 +31,35 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~        Name Resolver         ~~~~~~~~~~~~" << std::endl;
 
-    NameResolver name_resolver;
-    program.accept(name_resolver);
+    auto name_resolver = NameResolver::resolve(program);
     if (name_resolver.has_failed()) {
         exit(1);
     }
 
     std::cout << "~~~~~~~~~~~~        Type Resolver         ~~~~~~~~~~~~" << std::endl;
 
-    TypeResolver type_resolver;
-    program.accept(type_resolver);
+    auto type_resolver = TypeResolver::resolve(program);
     if (type_resolver.has_failed()) {
         exit(1);
     }
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    IRGenerator ir_generator;
-    program.accept(ir_generator);
+    auto ir_generator = IRGenerator::generate(program);
 
-    ILPrinter il_printer;
-    for (const auto &item: ir_generator.instructions()) {
-        item->accept(il_printer);
-    }
-
-    std::cout << il_printer.output().str();
+    auto printer = ILPrinter::print(ir_generator.instructions());
+    std::cout << printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Memory Resolver        ~~~~~~~~~~~~" << std::endl;
 
-    MemoryResolver memoryResolver;
-    for (const auto &item: ir_generator.instructions()) {
-        item->accept(memoryResolver);
-    }
-
-    if (DEBUG) {
-        for (const auto &item: memoryResolver.resolved()) {
-            std::cout << ":> " << *item.first << " = " << item.second << std::endl;
-        }
+    auto memory_resolver = MemoryResolver::resolve(ir_generator.instructions());
+    for (const auto &item: memory_resolver.resolved()) {
+        std::cout << ":> " << *item.first << " = " << item.second << std::endl;
     }
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    GASGenerator gas_generator(DEBUG);
-    for (const auto &item: ir_generator.instructions()) {
-        item->accept(gas_generator);
-    }
-
+    auto gas_generator = GASGenerator::generate(ir_generator.instructions(), memory_resolver.data());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();
@@ -94,6 +75,8 @@ int main() {
 
     std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
     int assemble_result = std::system(assemble_command.c_str());
+//    std::filesystem::remove(asm_file_path);
+
     if (WEXITSTATUS(assemble_result) != 0) {
         exit(1);
     }
@@ -102,6 +85,8 @@ int main() {
 
     std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
     int link_result = std::system(link_command.c_str());
+    std::filesystem::remove(obj_file_path);
+
     if (WEXITSTATUS(link_result) != 0) {
         exit(1);
     }
@@ -109,6 +94,8 @@ int main() {
     std::cout << "~~~~~~~~~~~~           Execute            ~~~~~~~~~~~~" << std::endl;
 
     int exec_result = std::system(exe_file_path.string().c_str());
+    std::filesystem::remove(exe_file_path);
+
     std::cout << "Execute Code: " << WEXITSTATUS(exec_result) << std::endl;
 
     return 0;

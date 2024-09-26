@@ -7,6 +7,24 @@
 #include "instruction.h"
 #include "utils.h"
 
+ILPrinter ILPrinter::print(const std::vector<std::unique_ptr<Instruction>> &instructions) {
+    ILPrinter printer;
+
+    for (const auto &item: instructions) {
+        item->accept(printer);
+    }
+
+    return printer;
+}
+
+ILPrinter ILPrinter::print(Instruction &instruction) {
+    ILPrinter printer;
+
+    instruction.accept(printer);
+
+    return printer;
+}
+
 void ILPrinter::visit(LabelInstruction &instruction) {
     _output << "LABEL " << *instruction.symbol() << ":\n";
 }
