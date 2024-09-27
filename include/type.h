@@ -39,7 +39,7 @@ private:
     int64_t _size;
 };
 
-struct Type : std::variant<IntegerType, FloatingType, std::monostate> {
+struct Type : std::variant<std::monostate, IntegerType, FloatingType> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Type &type);

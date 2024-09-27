@@ -26,6 +26,10 @@ public:
 
     void visit(CastInstruction &instruction) override;
 
+    void visit(CallInstruction &instruction) override;
+
+    void visit(ArgumentInstruction &instruction) override;
+
     [[nodiscard]] auto &resolved() const { return _resolved; }
 
     [[nodiscard]] auto &data() const { return _data; }
@@ -40,6 +44,8 @@ private:
     [[nodiscard]] Operand _resolve_temporary(const TemporarySymbol &symbol);
 
     [[nodiscard]] Operand _resolve_parameter(const ParameterSymbol &symbol);
+
+    [[nodiscard]] std::optional<Register> _resolve_argument(const ParameterSymbol &symbol);
 
     [[nodiscard]] static int64_t _type_to_byte_size(const Type &type);
 

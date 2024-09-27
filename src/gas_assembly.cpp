@@ -42,8 +42,9 @@ void Assembly::mov(const Operand &destination, const Operand &src) {
     _output << "\tmov " << destination << ", " << src << "\n";
 }
 
-void Assembly::label(const Symbol &symbol) {
-    _output << symbol << ":\n";
+void Assembly::label(const Symbol &symbol, bool newline) {
+    _output << symbol << ": ";
+    if (newline) _output << "\n";
 }
 
 void Assembly::pop(const Operand &destination) {
@@ -110,24 +111,30 @@ void Assembly::mulss(const Operand &destination, const Operand &src) {
     _output << "\tmulss " << destination << ", " << src << "\n";
 }
 
+void Assembly::directive(const std::string &name, const std::vector<std::string> &settings) {
+    _output << name;
+
+    for (size_t index = 0; index < settings.size(); index++) {
+        const auto &setting = settings[index];
+        _output << " " << setting;
+        if (index != settings.size() - 1) _output << ",";
+    }
+
+    _output << "\n";
+}
+
+void Assembly::call(const Symbol &symbol) {
+    _output << "\tcall " << symbol << "\n";
+}
+
+void Assembly::syscall() {
+    _output << "\tsyscall\n";
+}
+
 void Assembly::comment(const std::string &comment) {
     _output << "\t# " << comment;
 }
 
 void Assembly::newline() {
     _output << "\n";
-}
-
-std::string Assembly::double_to_hex(double value) {
-    uint64_t hex_value = *reinterpret_cast<uint64_t *>(&value);
-    std::stringstream ss;
-    ss << std::hex << std::showbase << std::setw(16) << std::setfill('0') << hex_value;
-    return ss.str();
-}
-
-std::string Assembly::float_to_hex(float value) {
-    uint32_t hex_value = *reinterpret_cast<uint32_t *>(&value);
-    std::stringstream ss;
-    ss << std::hex << std::showbase << std::setw(8) << std::setfill('0') << hex_value;
-    return ss.str();
 }

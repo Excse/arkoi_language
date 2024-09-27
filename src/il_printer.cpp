@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-#include "type_resolver.h"
 #include "symbol_table.h"
 #include "instruction.h"
 #include "utils.h"
@@ -51,6 +50,10 @@ void ILPrinter::visit(EndInstruction &) {
     _output << "END" << "\n";
 }
 
-void ILPrinter::clear() {
-    _output.str(std::string());
+void ILPrinter::visit(CallInstruction &instruction) {
+    _output << instruction.result() << " = CALL " << *instruction.symbol() << "\n";
+}
+
+void ILPrinter::visit(ArgumentInstruction &instruction) {
+    _output << "ARG " << instruction.expression() << "\n";
 }

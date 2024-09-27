@@ -28,7 +28,11 @@ public:
 
     void visit(EndInstruction &instruction) override;
 
-    [[nodiscard]] auto &output() { return _assembly.output(); }
+    void visit(CallInstruction &instruction) override;
+
+    void visit(ArgumentInstruction &instruction) override;
+
+    [[nodiscard]] auto &output() const { return _assembly.output(); }
 
 private:
     void _preamble();

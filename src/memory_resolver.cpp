@@ -2,6 +2,13 @@
 
 #include "instruction.h"
 
+static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
+                                                Register::Base::C, Register::Base::R8, Register::Base::R9};
+static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
+                                                Register::Base::XMM2, Register::Base::XMM3,
+                                                Register::Base::XMM4, Register::Base::XMM5,
+                                                Register::Base::XMM6, Register::Base::XMM7};
+
 inline Register RBP(Register::Base::BP, Size::QWORD);
 
 MemoryResolver MemoryResolver::resolve(const std::vector<std::unique_ptr<Instruction>> &instructions) {
@@ -32,6 +39,19 @@ void MemoryResolver::visit(BinaryInstruction &instruction) {
 void MemoryResolver::visit(CastInstruction &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_expression(_resolve_operand(instruction.expression()));
+}
+
+void MemoryResolver::visit(ArgumentInstruction &instruction) {
+    auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
+
+    auto reg = _resolve_argument(parameter);
+    if (reg.has_value()) instruction.set_result(reg.value());
+
+    instruction.set_expression(_resolve_operand(instruction.expression()));
+}
+
+void MemoryResolver::visit(CallInstruction &instruction) {
+    instruction.set_result(_resolve_operand(instruction.result()));
 }
 
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
@@ -85,19 +105,11 @@ Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
 }
 
 Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
-    static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
-                                                    Register::Base::C, Register::Base::R8, Register::Base::R9};
     if (std::holds_alternative<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = INT_REG_ORDER[symbol.int_index()];
         return Register(base, size);
-    }
-
-    static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
-                                                    Register::Base::XMM2, Register::Base::XMM3,
-                                                    Register::Base::XMM4, Register::Base::XMM5,
-                                                    Register::Base::XMM6, Register::Base::XMM7};
-    if (std::holds_alternative<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
+    } else if (std::holds_alternative<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = SSE_REG_ORDER[symbol.int_index()];
         return Register(base, size);
@@ -108,6 +120,20 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
 
     auto size = _byte_size_to_size(byte_size);
     return Memory(size, RBP, _parameter_offset);
+}
+
+std::optional<Register> MemoryResolver::_resolve_argument(const ParameterSymbol &symbol) {
+    if (std::holds_alternative<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
+        auto size = Register::type_to_register_size(symbol.type());
+        auto base = INT_REG_ORDER[symbol.int_index()];
+        return Register(base, size);
+    } else if (std::holds_alternative<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
+        auto size = Register::type_to_register_size(symbol.type());
+        auto base = SSE_REG_ORDER[symbol.int_index()];
+        return Register(base, size);
+    }
+
+    return std::nullopt;
 }
 
 int64_t MemoryResolver::_type_to_byte_size(const Type &type) {

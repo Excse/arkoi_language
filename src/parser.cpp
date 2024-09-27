@@ -182,7 +182,8 @@ std::unique_ptr<Node> Parser::_parse_block_statement() {
     auto &current = _current();
     switch (current.type()) {
         case Token::Type::Return: return _parse_return();
-        default: throw UnexpectedToken("return", current);
+        case Token::Type::Identifier: return _parse_call_statement();
+        default: throw UnexpectedToken("return or call", current);
     }
 }
 
@@ -208,6 +209,58 @@ std::unique_ptr<ReturnNode> Parser::_parse_return() {
     _consume(Token::Type::Semicolon);
 
     return std::make_unique<ReturnNode>(std::move(expression));
+}
+
+std::unique_ptr<CallNode> Parser::_parse_call(const Token &identifier) {
+    // No need to check for the identifier and left parenthesis, as the entrance only comes _parse_expression.
+
+    std::vector<std::unique_ptr<Node>> arguments;
+    while (true) {
+        auto &current = _current();
+        if (current.type() == Token::Type::EndOfFile) {
+            throw UnexpectedEndOfTokens();
+        } else if (current.type() == Token::Type::RParent) {
+            break;
+        }
+
+        if (!arguments.empty()) {
+            _consume(Token::Type::Comma);
+        }
+
+        arguments.push_back(_parse_expression());
+    }
+
+    _consume(Token::Type::RParent);
+
+    return std::make_unique<CallNode>(identifier, std::move(arguments));
+}
+
+std::unique_ptr<CallNode> Parser::_parse_call_statement() {
+    auto identifier = _consume(Token::Type::Identifier);
+
+    _consume(Token::Type::LParent);
+
+    std::vector<std::unique_ptr<Node>> arguments;
+    while (true) {
+        auto &current = _current();
+        if (current.type() == Token::Type::EndOfFile) {
+            throw UnexpectedEndOfTokens();
+        } else if (current.type() == Token::Type::RParent) {
+            break;
+        }
+
+        if (!arguments.empty()) {
+            _consume(Token::Type::Comma);
+        }
+
+        arguments.push_back(_parse_expression());
+    }
+
+    _consume(Token::Type::RParent);
+
+    _consume(Token::Type::Semicolon);
+
+    return std::make_unique<CallNode>(identifier, std::move(arguments));
 }
 
 std::unique_ptr<Node> Parser::_parse_expression() {
@@ -257,6 +310,8 @@ std::unique_ptr<Node> Parser::_parse_primary() {
 
         return node;
     } else if (auto *identifier = _try_consume(Token::Type::Identifier)) {
+        if (_try_consume(Token::Type::LParent)) return _parse_call(*identifier);
+
         return std::make_unique<IdentifierNode>(*identifier);
     }
 

@@ -24,9 +24,15 @@ void NameResolver::visit(FunctionNode &node) {
 
     _scopes.push(node.table());
 
+    std::vector<std::shared_ptr<Symbol>> parameters;
     for (auto &item: node.parameters()) {
         item.accept(*this);
+
+        parameters.push_back(item.symbol());
     }
+
+    auto &function = std::get<FunctionSymbol>(*function_symbol);
+    function.set_parameters(std::move(parameters));
 
     node.block().accept(*this);
     _scopes.pop();
@@ -61,4 +67,9 @@ void NameResolver::visit(BinaryNode &node) {
 
 void NameResolver::visit(CastNode &node) {
     node.expression()->accept(*this);
+}
+
+void NameResolver::visit(CallNode &node) {
+    auto symbol = _check_existence<FunctionSymbol>(node.name());
+    node.set_symbol(symbol);
 }

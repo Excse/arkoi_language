@@ -119,7 +119,28 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    Type _type{std::monostate()};
+    Type _type{};
+};
+
+class CallNode : public Node {
+public:
+    explicit CallNode(Token name, std::vector<std::unique_ptr<Node>> &&arguments)
+            : _arguments(std::move(arguments)), _name(std::move(name)) {}
+
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+
+    [[nodiscard]] auto &arguments() { return _arguments; }
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
+
+    [[nodiscard]] auto &name() const { return _name; }
+
+private:
+    std::vector<std::unique_ptr<Node>> _arguments;
+    std::shared_ptr<Symbol> _symbol{};
+    Token _name;
 };
 
 class IntegerNode : public Node {
@@ -194,7 +215,7 @@ public:
 
 private:
     std::unique_ptr<Node> _left, _right;
-    Type _type{std::monostate()};
+    Type _type{};
     Operator _op;
 };
 
@@ -204,7 +225,7 @@ public:
             : _expression(std::move(expression)), _from(from), _to(to) {}
 
     CastNode(std::unique_ptr<Node> &&expression, Type to)
-            : _expression(std::move(expression)), _from(std::monostate()), _to(to) {}
+            : _expression(std::move(expression)), _from(), _to(to) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 

@@ -109,6 +109,25 @@ void IRGenerator::visit(CastNode &node) {
     _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from(), node.to()));
 }
 
+void IRGenerator::visit(CallNode &node) {
+    auto function = std::get<FunctionSymbol>(*node.symbol());
+
+    for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
+        auto &parameter = function.parameter_symbols()[index];
+
+        auto &argument = node.arguments()[index];
+        argument->accept(*this);
+        auto expression = _current_operand;
+
+        _instructions.emplace_back(std::make_unique<ArgumentInstruction>(std::move(expression), parameter));
+    }
+
+    auto result = _make_temporary(function.return_type());
+    _current_operand = result;
+
+    _instructions.emplace_back(std::make_unique<CallInstruction>(result, node.symbol()));
+}
+
 Operand IRGenerator::_make_temporary(const Type &type) {
     const auto &scope = _scopes.top();
 

@@ -26,7 +26,7 @@ public:
 
     void mov(const Operand &destination, const Operand &src);
 
-    void label(const Symbol &symbol);
+    void label(const Symbol &symbol, bool newline = true);
 
     void pop(const Operand &destination);
 
@@ -60,15 +60,17 @@ public:
 
     void mulss(const Operand &destination, const Operand &src);
 
+    void directive(const std::string &name, const std::vector<std::string> &settings = {});
+
+    void call(const Symbol &symbol);
+
+    void syscall();
+
     void comment(const std::string &comment);
 
     void newline();
 
-    [[nodiscard]] auto &output() { return _output; }
-
-    [[nodiscard]] static std::string double_to_hex(double value);
-
-    [[nodiscard]] static std::string float_to_hex(float value);
+    [[nodiscard]] auto &output() const { return _output; }
 
 private:
     std::stringstream _output{};

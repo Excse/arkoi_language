@@ -24,6 +24,8 @@ class BlockNode;
 
 class CastNode;
 
+class CallNode;
+
 class NodeVisitor {
 public:
     virtual ~NodeVisitor() = default;
@@ -47,7 +49,11 @@ public:
     virtual void visit(BinaryNode &node) = 0;
 
     virtual void visit(CastNode &node) = 0;
+
+    virtual void visit(CallNode &node) = 0;
 };
+
+class ArgumentInstruction;
 
 class BinaryInstruction;
 
@@ -58,6 +64,8 @@ class LabelInstruction;
 class BeginInstruction;
 
 class CastInstruction;
+
+class CallInstruction;
 
 class EndInstruction;
 
@@ -76,4 +84,8 @@ public:
     virtual void visit(EndInstruction &instruction) = 0;
 
     virtual void visit(CastInstruction &instruction) = 0;
+
+    virtual void visit(CallInstruction &instruction) = 0;
+
+    virtual void visit(ArgumentInstruction &instruction) = 0;
 };

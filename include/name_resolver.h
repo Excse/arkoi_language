@@ -33,6 +33,8 @@ public:
 
     void visit(CastNode &node) override;
 
+    void visit(CallNode &node) override;
+
     [[nodiscard]] auto has_failed() const { return _failed; }
 
     template<typename SymbolType, typename... Args>

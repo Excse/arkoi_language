@@ -6,18 +6,25 @@
 
 #include "type.h"
 
+struct Symbol;
+
 class FunctionSymbol {
 public:
     explicit FunctionSymbol(std::string name) : _name(std::move(name)) {}
 
-    void set_parameter_types(std::vector<Type> &&types) { _parameter_types = std::move(types); }
+    void set_parameters(std::vector<std::shared_ptr<Symbol>> &&symbols) { _parameter_symbols = std::move(symbols); }
 
-    [[nodiscard]] auto &parameter_types() const { return _parameter_types; }
+    [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
+
+    void set_return_type(Type type) { _return_type = type; }
+
+    [[nodiscard]] auto &return_type() const { return _return_type; }
 
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<Type> _parameter_types{};
+    std::vector<std::shared_ptr<Symbol>> _parameter_symbols{};
+    Type _return_type{};
     std::string _name;
 };
 
@@ -41,8 +48,8 @@ public:
 
 private:
     size_t _int_index{}, _sse_index{};
-    Type _type{std::monostate()};
     std::string _name;
+    Type _type{};
 };
 
 class TemporarySymbol {

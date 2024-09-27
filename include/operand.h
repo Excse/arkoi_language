@@ -78,7 +78,7 @@ struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, fl
     friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
 };
 
-struct Operand : std::variant<Register, Memory, std::shared_ptr<Symbol>, Immediate, std::monostate> {
+struct Operand : std::variant<std::monostate, Register, Memory, std::shared_ptr<Symbol>, Immediate> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Operand &operand);

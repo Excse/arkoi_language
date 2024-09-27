@@ -6,6 +6,8 @@
 
 inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);
+inline Register RDI(Register::Base::DI, Size::QWORD);
+inline Register RAX(Register::Base::A, Size::QWORD);
 
 GASGenerator GASGenerator::generate(const std::vector<std::unique_ptr<Instruction>> &instructions,
                                     const std::unordered_map<std::string, Immediate> &data) {
@@ -23,7 +25,6 @@ GASGenerator GASGenerator::generate(const std::vector<std::unique_ptr<Instructio
 }
 
 void GASGenerator::visit(LabelInstruction &instruction) {
-    _assembly.newline();
     _assembly.label(*instruction.symbol());
 }
 
@@ -64,7 +65,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
             [&](const Memory &memory) -> Operand { return memory; },
             [&](const Immediate &immediate) -> Operand {
                 if (std::holds_alternative<FloatingType>(instruction.type())) {
-                    auto reg = _temp1_register(instruction.type());
+                    auto reg = _temp2_register(instruction.type());
                     _mov(instruction.type(), reg, instruction.right());
                     return reg;
                 }
@@ -100,40 +101,52 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 void GASGenerator::visit(CastInstruction &instruction) {
     _comment_instruction(instruction);
 
-    const auto &expression = instruction.expression();
-    const auto &destination = instruction.result();
-    const auto &from = instruction.from();
-    const auto &to = instruction.to();
-
-    if (auto *from_float = std::get_if<FloatingType>(&from)) {
-        if (auto *to_float = std::get_if<FloatingType>(&to)) {
-            _convert_float_to_float(*from_float, expression, *to_float, destination);
-            _assembly.newline();
-            return;
+    if (auto *from_float = std::get_if<FloatingType>(&instruction.from())) {
+        if (auto *to_float = std::get_if<FloatingType>(&instruction.to())) {
+            _convert_float_to_float(*from_float, instruction.expression(), *to_float, instruction.result());
+        } else if (auto *to_int = std::get_if<IntegerType>(&instruction.to())) {
+            _convert_float_to_int(*from_float, instruction.expression(), *to_int, instruction.result());
+        } else {
+            throw std::runtime_error("This floating cast is not implemented yet.");
         }
-
-        if (auto *to_int = std::get_if<IntegerType>(&to)) {
-            _convert_float_to_int(*from_float, expression, *to_int, destination);
-            _assembly.newline();
-            return;
+    } else if (auto *from_int = std::get_if<IntegerType>(&instruction.from())) {
+        if (auto *to_float = std::get_if<FloatingType>(&instruction.to())) {
+            _convert_int_to_float(*from_int, instruction.expression(), *to_float, instruction.result());
+        } else if (auto *to_int = std::get_if<IntegerType>(&instruction.to())) {
+            _convert_int_to_int(*from_int, instruction.expression(), *to_int, instruction.result());
+        } else {
+            throw std::runtime_error("This integer cast is not implemented yet.");
         }
-
-        throw std::runtime_error("This floating cast is not implemented yet.");
-    } else if (auto *from_int = std::get_if<IntegerType>(&from)) {
-        if (auto *to_float = std::get_if<FloatingType>(&to)) {
-            _convert_int_to_float(*from_int, expression, *to_float, destination);
-            _assembly.newline();
-            return;
-        } else if (auto *to_int = std::get_if<IntegerType>(&to)) {
-            _convert_int_to_int(*from_int, expression, *to_int, destination);
-            _assembly.newline();
-            return;
-        }
-
-        throw std::runtime_error("This integer cast is not implemented yet.");
+    } else {
+        throw std::runtime_error("This cast is not implemented yet.");
     }
 
-    throw std::runtime_error("This cast is not implemented yet.");
+    _assembly.newline();
+}
+
+void GASGenerator::visit(CallInstruction &instruction) {
+    _comment_instruction(instruction);
+
+    _assembly.call(*instruction.symbol());
+
+    auto function = std::get<FunctionSymbol>(*instruction.symbol());
+    auto return_reg = _returning_register(function.return_type());
+    _mov(function.return_type(), instruction.result(), return_reg);
+
+    _assembly.newline();
+}
+
+void GASGenerator::visit(ArgumentInstruction &instruction) {
+    _comment_instruction(instruction);
+
+    if (instruction.result()) {
+        auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
+        _mov(parameter.type(), *instruction.result(), instruction.expression());
+    } else {
+        _assembly.push(instruction.expression());
+    }
+
+    _assembly.newline();
 }
 
 void GASGenerator::visit(EndInstruction &instruction) {
@@ -147,32 +160,28 @@ void GASGenerator::visit(EndInstruction &instruction) {
 }
 
 void GASGenerator::_preamble() {
-    _assembly.output() << R"(
-.intel_syntax noprefix
-.section .text
-.global _start
+    _assembly.directive(".intel_syntax", {"noprefix"});
+    _assembly.directive(".section", {".text"});
+    _assembly.directive(".global", {"_start"});
 
-_start:
-    call main
+    _assembly.newline();
+    _assembly.label(TemporarySymbol("_start", {}));
+    _assembly.call(TemporarySymbol("main", {}));
+    _assembly.mov(RDI, RAX);
+    _assembly.mov(RAX, Immediate(60));
+    _assembly.syscall();
 
-    mov rdi, rax
-    mov rax, 60
-    syscall
-)";
+    _assembly.newline();
 }
 
 void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
-    auto &os = _assembly.output();
-
-    os << ".section .data" << "\n";
+    _assembly.directive(".section", {".data"});
     for (const auto &[name, value]: data) {
-        os << name << ": ";
+        _assembly.label(TemporarySymbol(name, {}), false);
 
-        if (std::holds_alternative<float>(value)) os << ".float";
-        else if (std::holds_alternative<double>(value)) os << ".double";
-        else std::invalid_argument("This type is not implemented.");
-
-        os << " " << value << "\n";
+        if (std::holds_alternative<float>(value)) _assembly.directive(".float", {to_string(value)});
+        else if (std::holds_alternative<double>(value)) _assembly.directive(".double", {to_string(value)});
+        else throw std::invalid_argument("This type is not implemented.");
     }
 }
 

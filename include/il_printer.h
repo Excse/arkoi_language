@@ -26,7 +26,9 @@ public:
 
     void visit(EndInstruction &node) override;
 
-    void clear();
+    void visit(CallInstruction &instruction) override;
+
+    void visit(ArgumentInstruction &instruction) override;
 
     [[nodiscard]] auto &output() const { return _output; }
 

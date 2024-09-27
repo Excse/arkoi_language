@@ -24,19 +24,14 @@ void TypeResolver::visit(FunctionNode &node) {
     _sse_index = 0;
     _int_index = 0;
 
-    std::vector<Type> parameter_types;
     for (auto &item: node.parameters()) {
-        // This will set _current_type
         item.accept(*this);
-        auto type = _current_type;
-
-        parameter_types.push_back(type);
     }
 
-    auto &function = std::get<FunctionSymbol>(*node.symbol());
-    function.set_parameter_types(std::move(parameter_types));
-
     _return_type = node.type();
+
+    auto &function = std::get<FunctionSymbol>(*node.symbol());
+    function.set_return_type(_return_type);
 
     node.block().accept(*this);
 }
@@ -142,6 +137,34 @@ void TypeResolver::visit(CastNode &node) {
     _current_type = node.to();
 }
 
+void TypeResolver::visit(CallNode &node) {
+    auto function = std::get<FunctionSymbol>(*node.symbol());
+
+    if (function.parameter_symbols().size() != node.arguments().size()) {
+        // TODO: Handle this error.
+        throw std::runtime_error("The argument count doesn't equal to the parameters count.");
+    }
+
+    for (size_t index = 0; index < node.arguments().size(); index++) {
+        auto &parameter = std::get<ParameterSymbol>(*function.parameter_symbols()[index]);
+
+        auto &argument = node.arguments()[index];
+        argument->accept(*this);
+        auto type = _current_type;
+
+        if (type == parameter.type()) continue;
+
+        if (!_can_implicit_convert(type, parameter.type())) {
+            throw std::runtime_error("The arguments type doesn't match the parameters one.");
+        }
+
+        // Replace the argument with its implicit conversion.
+        node.arguments()[index] = std::make_unique<CastNode>(std::move(argument), type, _return_type);
+    }
+
+    _current_type = function.return_type();
+}
+
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
 Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &right_type) {
     auto floating_left = std::get_if<FloatingType>(&left_type);
@@ -222,5 +245,5 @@ bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destinati
     // The result is exact if possible.
     if (std::holds_alternative<IntegerType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
 
-    return false;
+    return from == destination;
 }

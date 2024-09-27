@@ -35,6 +35,8 @@ public:
 
     void visit(CastNode &node) override;
 
+    void visit(CallNode &node) override;
+
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
@@ -43,8 +45,7 @@ private:
     static bool _can_implicit_convert(const Type &from, const Type &destination);
 
 private:
-    Type _current_type{std::monostate()};
-    Type _return_type{std::monostate()};
+    Type _current_type{}, _return_type{};
     size_t _sse_index{}, _int_index{};
     bool _failed{};
 };

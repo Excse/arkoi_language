@@ -29,6 +29,24 @@ private:
     std::shared_ptr<Symbol> _symbol;
 };
 
+class CallInstruction : public Instruction {
+public:
+    explicit CallInstruction(Operand result, std::shared_ptr<Symbol> symbol)
+            : _symbol(std::move(symbol)), _result(std::move(result)) {}
+
+    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_result(Operand operand) { _result = std::move(operand); };
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
+
+private:
+    std::shared_ptr<Symbol> _symbol;
+    Operand _result;
+};
+
 class ReturnInstruction : public Instruction {
 public:
     explicit ReturnInstruction(Operand value, Type type) : _value(std::move(value)), _type(type) {}
@@ -129,4 +147,27 @@ public:
 private:
     Operand _result, _expression;
     Type _from, _to;
+};
+
+class ArgumentInstruction : public Instruction {
+public:
+    explicit ArgumentInstruction(Operand expression, std::shared_ptr<Symbol> symbol)
+            : _symbol(std::move(symbol)), _expression(std::move(expression)) {}
+
+    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_expression(Operand operand) { _expression = std::move(operand); };
+
+    [[nodiscard]] auto &expression() const { return _expression; };
+
+    void set_result(Register reg) { _result = std::move(reg); };
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
+
+private:
+    std::optional<Operand> _result{};
+    std::shared_ptr<Symbol> _symbol;
+    Operand _expression;
 };

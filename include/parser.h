@@ -39,6 +39,10 @@ private:
 
     [[nodiscard]] std::unique_ptr<ReturnNode> _parse_return();
 
+    [[nodiscard]] std::unique_ptr<CallNode> _parse_call_statement();
+
+    [[nodiscard]] std::unique_ptr<CallNode> _parse_call(const Token &identifier);
+
     [[nodiscard]] std::unique_ptr<Node> _parse_expression();
 
     [[nodiscard]] std::unique_ptr<Node> _parse_term();
