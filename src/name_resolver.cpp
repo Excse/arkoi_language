@@ -12,16 +12,26 @@ NameResolver NameResolver::resolve(ProgramNode &node) {
 
 void NameResolver::visit(ProgramNode &node) {
     _scopes.push(node.table());
+
+    // At first all function prototypes are name resolved.
+    for (const auto &item: node.statements()) {
+        auto *function = dynamic_cast<FunctionNode *>(item.get());
+        if (function) visit_as_prototype(*function);
+    }
+
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
+
     _scopes.pop();
 }
 
-void NameResolver::visit(FunctionNode &node) {
-    auto function_symbol = _check_non_existence<FunctionSymbol>(node.name());
-    node.set_symbol(function_symbol);
+void NameResolver::visit_as_prototype(FunctionNode &node) {
+    auto symbol = _check_non_existence<FunctionSymbol>(node.name());
+    node.set_symbol(symbol);
+}
 
+void NameResolver::visit(FunctionNode &node) {
     _scopes.push(node.table());
 
     std::vector<std::shared_ptr<Symbol>> parameters;
@@ -31,7 +41,7 @@ void NameResolver::visit(FunctionNode &node) {
         parameters.push_back(item.symbol());
     }
 
-    auto &function = std::get<FunctionSymbol>(*function_symbol);
+    auto &function = std::get<FunctionSymbol>(*node.symbol());
     function.set_parameters(std::move(parameters));
 
     node.block().accept(*this);

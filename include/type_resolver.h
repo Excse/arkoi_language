@@ -17,6 +17,8 @@ public:
 
     void visit(ProgramNode &node) override;
 
+    void visit_as_prototype(FunctionNode &node);
+
     void visit(FunctionNode &node) override;
 
     void visit(BlockNode &node) override;

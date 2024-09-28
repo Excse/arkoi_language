@@ -4,13 +4,10 @@
 #include <vector>
 #include <memory>
 
+#include "symbol_table.h"
 #include "visitor.h"
 #include "token.h"
 #include "type.h"
-
-class SymbolTable;
-
-struct Symbol;
 
 class Node {
 public:

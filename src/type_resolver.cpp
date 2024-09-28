@@ -14,12 +14,18 @@ TypeResolver TypeResolver::resolve(ProgramNode &node) {
 }
 
 void TypeResolver::visit(ProgramNode &node) {
+    // At first all function prototypes are type resolved.
+    for (const auto &item: node.statements()) {
+        auto *function = dynamic_cast<FunctionNode *>(item.get());
+        if (function) visit_as_prototype(*function);
+    }
+
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
 }
 
-void TypeResolver::visit(FunctionNode &node) {
+void TypeResolver::visit_as_prototype(FunctionNode &node) {
     // Reset the register counters for the parameters
     _sse_index = 0;
     _int_index = 0;
@@ -28,10 +34,12 @@ void TypeResolver::visit(FunctionNode &node) {
         item.accept(*this);
     }
 
-    _return_type = node.type();
-
     auto &function = std::get<FunctionSymbol>(*node.symbol());
-    function.set_return_type(_return_type);
+    function.set_return_type(node.type());
+}
+
+void TypeResolver::visit(FunctionNode &node) {
+    _return_type = node.type();
 
     node.block().accept(*this);
 }

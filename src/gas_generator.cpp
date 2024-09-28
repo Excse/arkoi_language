@@ -129,7 +129,7 @@ void GASGenerator::visit(CallInstruction &instruction) {
 
     _assembly.call(*instruction.symbol());
 
-    auto function = std::get<FunctionSymbol>(*instruction.symbol());
+    auto &function = std::get<FunctionSymbol>(*instruction.symbol());
     auto return_reg = _returning_register(function.return_type());
     _mov(function.return_type(), instruction.result(), return_reg);
 
@@ -348,9 +348,9 @@ Register GASGenerator::_returning_register(const Type &type) {
 }
 
 Register GASGenerator::_temp1_register(const Type &type) {
-    return _select_register(type, Register::Base::A, Register::Base::XMM11);
+    return _select_register(type, Register::Base::A, Register::Base::XMM0);
 }
 
 Register GASGenerator::_temp2_register(const Type &type) {
-    return _select_register(type, Register::Base::R11, Register::Base::XMM12);
+    return _select_register(type, Register::Base::R11, Register::Base::XMM11);
 }

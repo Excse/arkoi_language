@@ -13,7 +13,12 @@ private:
 public:
     [[nodiscard]] static NameResolver resolve(ProgramNode &node);
 
+    [[nodiscard]] auto has_failed() const { return _failed; }
+
+private:
     void visit(ProgramNode &node) override;
+
+    void visit_as_prototype(FunctionNode &node);
 
     void visit(FunctionNode &node) override;
 
@@ -34,8 +39,6 @@ public:
     void visit(CastNode &node) override;
 
     void visit(CallNode &node) override;
-
-    [[nodiscard]] auto has_failed() const { return _failed; }
 
     template<typename SymbolType, typename... Args>
     [[nodiscard]] std::shared_ptr<Symbol> _check_non_existence(const Token &token, Args &&... args);
