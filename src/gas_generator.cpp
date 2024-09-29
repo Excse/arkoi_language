@@ -205,7 +205,9 @@ void GASGenerator::_convert_int_to_int(const IntegerType &from, const Operand &e
 void GASGenerator::_convert_float_to_float(const FloatingType &from, const Operand &expression,
                                            const FloatingType &to, const Operand &destination) {
     auto from_temporary = _temp1_register(from);
-    _assembly.movss(from_temporary, expression);
+    if (from.size() == 32) _assembly.movss(from_temporary, expression);
+    else if (from.size() == 64) _assembly.movsd(from_temporary, expression);
+    else throw std::runtime_error("This floating size is not implemented.");
 
     auto to_temporary = _temp1_register(to);
     if (from.size() == 32 && to.size() == 64) {
@@ -348,9 +350,9 @@ Register GASGenerator::_returning_register(const Type &type) {
 }
 
 Register GASGenerator::_temp1_register(const Type &type) {
-    return _select_register(type, Register::Base::A, Register::Base::XMM0);
+    return _select_register(type, Register::Base::A, Register::Base::XMM11);
 }
 
 Register GASGenerator::_temp2_register(const Type &type) {
-    return _select_register(type, Register::Base::R11, Register::Base::XMM11);
+    return _select_register(type, Register::Base::R11, Register::Base::XMM12);
 }

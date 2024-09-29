@@ -167,7 +167,7 @@ void TypeResolver::visit(CallNode &node) {
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<CastNode>(std::move(argument), type, _return_type);
+        node.arguments()[index] = std::make_unique<CastNode>(std::move(argument), type, parameter.type());
     }
 
     _current_type = function.return_type();

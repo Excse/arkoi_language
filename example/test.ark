@@ -1,8 +1,8 @@
 # This is the entry point for this program
 fun main() @u64 {
-    return test(2) * 2.01;
+    return test(2, 10.5) * 2.01;
 }
 
-fun test(foo @s32) @f32 {
-    return 10.5 * foo;
+fun test(foo @s32, bar @f64) @f32 {
+    return bar * foo;
 }
