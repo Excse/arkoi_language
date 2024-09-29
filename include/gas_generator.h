@@ -53,6 +53,8 @@ private:
     void _convert_float_to_int(const FloatingType &from, const Operand &expression,
                                const IntegerType &to, const Operand &destination);
 
+    Operand _integer_promote(const IntegerType &type, const Operand &operand);
+
     void _mov(const Type &type, const Operand &destination, const Operand &src);
 
     void _add(const Type &type, const Operand &destination, const Operand &src);

@@ -30,6 +30,10 @@ void Assembly::movsx(const Operand &destination, const Operand &src) {
     _output << "\tmovsx " << destination << ", " << src << "\n";
 }
 
+void Assembly::movsxd(const Operand &destination, const Operand &src) {
+    _output << "\tmovsxd " << destination << ", " << src << "\n";
+}
+
 void Assembly::movss(const Operand &destination, const Operand &src) {
     _output << "\tmovss " << destination << ", " << src << "\n";
 }

@@ -20,6 +20,8 @@ public:
 
     void movsx(const Operand &destination, const Operand &src);
 
+    void movsxd(const Operand &destination, const Operand &src);
+
     void movss(const Operand &destination, const Operand &src);
 
     void movsd(const Operand &destination, const Operand &src);
