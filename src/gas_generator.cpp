@@ -54,6 +54,11 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     auto left_reg = std::visit(match{
             [](const Register &reg) -> Operand { return reg; },
             [&](const Memory &memory) -> Operand {
+                if (std::holds_alternative<IntegerType>(instruction.type()) &&
+                    !std::holds_alternative<Memory>(instruction.right())) {
+                    if (instruction.op() != BinaryInstruction::Operator::Div) return memory;
+                }
+
                 auto reg = _temp1_register(instruction.type());
                 _mov(instruction.type(), reg, memory);
                 return reg;
