@@ -219,7 +219,6 @@ void GASGenerator::_convert_int_to_int(const IntegerType &from, const Operand &e
     }, expression);
 
     Operand temporary = _temp1_register(to);
-
     if (from.size() == 32 && to.size() == 64) {
         _assembly.movsxd(temporary, src);
     } else if (to.size() > from.size()) {

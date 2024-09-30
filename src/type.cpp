@@ -9,12 +9,20 @@ bool IntegerType::operator==(const IntegerType &other) const {
     return _size == other._size && _sign == other._sign;
 }
 
+bool IntegerType::operator!=(const IntegerType &other) const {
+    return !(other == *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const IntegerType &type) {
     return os << (type.sign() ? "s" : "u") << type.size();
 }
 
 bool FloatingType::operator==(const FloatingType &other) const {
     return _size == other._size;
+}
+
+bool FloatingType::operator!=(const FloatingType &other) const {
+    return !(other == *this);
 }
 
 std::ostream &operator<<(std::ostream &os, const FloatingType &type) {

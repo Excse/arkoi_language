@@ -2,7 +2,6 @@
 
 #include <limits>
 
-#include "type_resolver.h"
 #include "utils.h"
 #include "ast.h"
 
@@ -25,19 +24,15 @@ void IRGenerator::visit(FunctionNode &node) {
 
     _instructions.emplace_back(std::make_unique<BeginInstruction>());
 
-    _scopes.push(node.table());
     node.block().accept(*this);
-    _scopes.pop();
 
     _instructions.emplace_back(std::make_unique<EndInstruction>());
 }
 
 void IRGenerator::visit(BlockNode &node) {
-    _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
-    _scopes.pop();
 }
 
 void IRGenerator::visit(IntegerNode &node) {
@@ -129,11 +124,6 @@ void IRGenerator::visit(CallNode &node) {
 }
 
 Operand IRGenerator::_make_temporary(const Type &type) {
-    const auto &scope = _scopes.top();
-
-    auto name = "$tmp" + to_string(_temp_index);
-    auto &symbol = scope->insert<TemporarySymbol>(name, type);
-    _temp_index++;
-
-    return symbol;
+    auto name = "$tmp" + to_string(_temp_index++);
+    return std::make_shared<Symbol>(TemporarySymbol(name, type));
 }

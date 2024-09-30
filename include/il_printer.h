@@ -5,7 +5,7 @@
 #include "instruction.h"
 #include "visitor.h"
 
-class ILPrinter :  InstructionVisitor {
+class ILPrinter : InstructionVisitor {
 private:
     ILPrinter() = default;
 

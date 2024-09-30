@@ -26,6 +26,10 @@ public:
 public:
     Register(Base base, Size size) : _size(size), _base(base) {}
 
+    bool operator==(const Register &other) const;
+
+    bool operator!=(const Register &other) const;
+
     friend std::ostream &operator<<(std::ostream &os, const Register &reg);
 
     [[nodiscard]] auto size() const { return _size; }
@@ -39,11 +43,12 @@ private:
     Base _base;
 };
 
-struct Address : std::variant<std::string, int64_t, Register, std::monostate> {
-    friend std::ostream &operator<<(std::ostream &os, const Address &memory);
-};
-
 class Memory {
+public:
+    struct Address : std::variant<std::string, int64_t, Register, std::monostate> {
+        friend std::ostream &operator<<(std::ostream &os, const Address &memory);
+    };
+
 public:
     explicit Memory(Size size, Register address, int64_t index, int64_t scale, int64_t displacement)
             : _index(index), _scale(scale), _displacement(displacement), _address(address), _size(size) {}
@@ -52,7 +57,11 @@ public:
             : _index(1), _scale(1), _displacement(displacement), _address(address), _size(size) {}
 
     explicit Memory(Size size, Address address)
-            : _index(1), _scale(1), _displacement(0), _address(address), _size(size) {}
+            : _index(1), _scale(1), _displacement(0), _address(std::move(address)), _size(size) {}
+
+    bool operator==(const Memory &other) const;
+
+    bool operator!=(const Memory &other) const;
 
     friend std::ostream &operator<<(std::ostream &os, const Memory &memory);
 

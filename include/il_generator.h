@@ -42,7 +42,6 @@ private:
 
 private:
     std::vector<std::unique_ptr<Instruction>> _instructions{};
-    std::stack<std::shared_ptr<SymbolTable>> _scopes{};
     Operand _current_operand{};
     size_t _temp_index{};
 };

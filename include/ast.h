@@ -1,9 +1,5 @@
 #pragma once
 
-#include <utility>
-#include <vector>
-#include <memory>
-
 #include "symbol_table.h"
 #include "visitor.h"
 #include "token.h"

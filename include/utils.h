@@ -3,7 +3,7 @@
 #include <sstream>
 
 template<class... Ts>
-struct match : Ts... {
+struct match : Ts ... {
     using Ts::operator()...;
 };
 

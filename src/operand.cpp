@@ -14,6 +14,14 @@ std::ostream &operator<<(std::ostream &os, const Size &size) {
     std::unreachable();
 }
 
+bool Register::operator==(const Register &other) const {
+    return _size == other._size && _base == other._base;
+}
+
+bool Register::operator!=(const Register &other) const {
+    return !(other == *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const Register &reg) {
     if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
         switch (reg.size()) {
@@ -109,7 +117,7 @@ Size Register::type_to_register_size(const Type &type) {
     throw std::runtime_error("This type is not implemented.");
 }
 
-std::ostream &operator<<(std::ostream &os, const Address &memory) {
+std::ostream &operator<<(std::ostream &os, const Memory::Address &memory) {
     std::visit(match{
             [](const std::monostate &) {},
             [&os](const auto &value) { os << value; },
@@ -138,6 +146,15 @@ std::ostream &operator<<(std::ostream &os, const Memory &memory) {
 
     os << "]";
     return os;
+}
+
+bool Memory::operator==(const Memory &other) const {
+    return _index == other._index && _scale == other._scale && _displacement == other._displacement &&
+           _address == other._address && _size == other._size;
+}
+
+bool Memory::operator!=(const Memory &other) const {
+    return !(other == *this);
 }
 
 std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {

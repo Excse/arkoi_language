@@ -5,8 +5,8 @@
 
 class MemoryResolver : InstructionVisitor {
 public:
-    using Resolved = std::unordered_map<const Symbol *, Operand>;
-    using Data = std::unordered_map<std::string, Immediate>;
+    using Resolved = std::unordered_map<std::shared_ptr<Symbol>, Operand>;
+    using ConstantData = std::unordered_map<std::string, Immediate>;
 
 private:
     MemoryResolver() = default;
@@ -39,13 +39,13 @@ private:
 
     [[nodiscard]] Operand _resolve_immediate(const Immediate &immediate);
 
-    [[nodiscard]] Operand _resolve_symbol(const Symbol &symbol);
+    [[nodiscard]] Operand _resolve_symbol(const std::shared_ptr<Symbol> &symbol);
 
     [[nodiscard]] Operand _resolve_temporary(const TemporarySymbol &symbol);
 
     [[nodiscard]] Operand _resolve_parameter(const ParameterSymbol &symbol);
 
-    [[nodiscard]] std::optional<Register> _resolve_argument(const ParameterSymbol &symbol);
+    [[nodiscard]] static std::optional<Register> _resolve_argument(const ParameterSymbol &symbol);
 
     [[nodiscard]] static int64_t _type_to_byte_size(const Type &type);
 
@@ -56,5 +56,5 @@ private:
     int64_t _parameter_offset{};
     int64_t _data_index{};
     Resolved _resolved{};
-    Data _data{};
+    ConstantData _data{};
 };

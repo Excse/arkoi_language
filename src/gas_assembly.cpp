@@ -27,22 +27,27 @@ void Assembly::cvtsi2sd(const Operand &destination, const Operand &src) {
 }
 
 void Assembly::movsx(const Operand &destination, const Operand &src) {
+    if(src == destination) return;
     _output << "\tmovsx " << destination << ", " << src << "\n";
 }
 
 void Assembly::movsxd(const Operand &destination, const Operand &src) {
+    if(src == destination) return;
     _output << "\tmovsxd " << destination << ", " << src << "\n";
 }
 
 void Assembly::movss(const Operand &destination, const Operand &src) {
+    if(src == destination) return;
     _output << "\tmovss " << destination << ", " << src << "\n";
 }
 
 void Assembly::movsd(const Operand &destination, const Operand &src) {
+    if(src == destination) return;
     _output << "\tmovsd " << destination << ", " << src << "\n";
 }
 
 void Assembly::mov(const Operand &destination, const Operand &src) {
+    if(src == destination) return;
     _output << "\tmov " << destination << ", " << src << "\n";
 }
 

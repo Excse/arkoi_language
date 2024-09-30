@@ -55,7 +55,7 @@ void MemoryResolver::visit(CallInstruction &instruction) {
 }
 
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
-    if (auto *symbolic = std::get_if<std::shared_ptr<Symbol>>(&operand)) return _resolve_symbol(**symbolic);
+    if (auto *symbolic = std::get_if<std::shared_ptr<Symbol>>(&operand)) return _resolve_symbol(*symbolic);
     if (auto *immediate = std::get_if<Immediate>(&operand)) return _resolve_immediate(*immediate);
 
     // If nothing has to be resolved, the operand is already finished.
@@ -69,27 +69,27 @@ Operand MemoryResolver::_resolve_immediate(const Immediate &immediate) {
     _data[data_name] = immediate;
 
     if (std::holds_alternative<float>(immediate)) {
-        return Memory(Size::DWORD, Address(data_name));
+        return Memory(Size::DWORD, Memory::Address(data_name));
     } else if (std::holds_alternative<double>(immediate)) {
-        return Memory(Size::QWORD, Address(data_name));
+        return Memory(Size::QWORD, Memory::Address(data_name));
     } else {
         throw std::invalid_argument("This type is not implemented.");
     }
 }
 
-Operand MemoryResolver::_resolve_symbol(const Symbol &symbol) {
-    auto result = _resolved.find(&symbol);
+Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
+    auto result = _resolved.find(symbol);
     if (result != _resolved.end()) return result->second;
 
-    if (auto *temporary = std::get_if<TemporarySymbol>(&symbol)) {
+    if (auto *temporary = std::get_if<TemporarySymbol>(symbol.get())) {
         auto location = _resolve_temporary(*temporary);
-        _resolved.emplace(&symbol, location);
+        _resolved.emplace(symbol, location);
         return location;
     }
 
-    if (auto *parameter = std::get_if<ParameterSymbol>(&symbol)) {
+    if (auto *parameter = std::get_if<ParameterSymbol>(symbol.get())) {
         auto location = _resolve_parameter(*parameter);
-        _resolved.emplace(&symbol, location);
+        _resolved.emplace(symbol, location);
         return location;
     }
 

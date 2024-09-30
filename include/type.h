@@ -9,6 +9,8 @@ public:
 
     bool operator==(const IntegerType &other) const;
 
+    bool operator!=(const IntegerType &other) const;
+
     friend std::ostream &operator<<(std::ostream &os, const IntegerType &type);
 
     [[nodiscard]] uint64_t max() const {
@@ -30,6 +32,8 @@ public:
     explicit FloatingType(const int64_t size) : _size(size) {}
 
     bool operator==(const FloatingType &other) const;
+
+    bool operator!=(const FloatingType &other) const;
 
     friend std::ostream &operator<<(std::ostream &os, const FloatingType &type);
 
