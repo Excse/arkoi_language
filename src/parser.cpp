@@ -131,19 +131,20 @@ Type Parser::_parse_type() {
 
     auto token = _consume_any();
     switch (token.type()) {
-        case Token::Type::U8: return IntegerType(8, false);
-        case Token::Type::S8: return IntegerType(8, true);
-        case Token::Type::U16: return IntegerType(16, false);
-        case Token::Type::S16: return IntegerType(16, true);
-        case Token::Type::U32: return IntegerType(32, false);
-        case Token::Type::S32: return IntegerType(32, true);
-        case Token::Type::U64: return IntegerType(64, false);
-        case Token::Type::S64: return IntegerType(64, true);
-        case Token::Type::USize: return IntegerType(64, false);
-        case Token::Type::SSize: return IntegerType(64, true);
+        case Token::Type::U8: return IntegralType(8, false);
+        case Token::Type::S8: return IntegralType(8, true);
+        case Token::Type::U16: return IntegralType(16, false);
+        case Token::Type::S16: return IntegralType(16, true);
+        case Token::Type::U32: return IntegralType(32, false);
+        case Token::Type::S32: return IntegralType(32, true);
+        case Token::Type::U64: return IntegralType(64, false);
+        case Token::Type::S64: return IntegralType(64, true);
+        case Token::Type::USize: return IntegralType(64, false);
+        case Token::Type::SSize: return IntegralType(64, true);
         case Token::Type::F32: return FloatingType(32);
         case Token::Type::F64: return FloatingType(64);
-        default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize", token);
+        case Token::Type::Bool: return BooleanType();
+        default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize, bool", token);
     }
 }
 
@@ -313,9 +314,13 @@ std::unique_ptr<Node> Parser::_parse_primary() {
         if (_try_consume(Token::Type::LParent)) return _parse_call(*identifier);
 
         return std::make_unique<IdentifierNode>(*identifier);
+    } else if (_try_consume(Token::Type::True)) {
+        return std::make_unique<BooleanNode>(true);
+    } else if (_try_consume(Token::Type::False)) {
+        return std::make_unique<BooleanNode>(false);
     }
 
-    throw UnexpectedToken("number or identifier", _current());
+    throw UnexpectedToken("integer, float, identifier, function call, true or false", _current());
 }
 
 std::shared_ptr<SymbolTable> Parser::_current_scope() {

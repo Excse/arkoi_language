@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "ast.h"
 
+inline IntegralType BOOL_PROMOTED_INT_TYPE(32, false);
+
 TypeResolver TypeResolver::resolve(ProgramNode &node) {
     TypeResolver resolver;
 
@@ -54,7 +56,7 @@ void TypeResolver::visit(ParameterNode &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
-    if (std::holds_alternative<IntegerType>(node.type())) {
+    if (std::holds_alternative<IntegralType>(node.type())) {
         parameter.set_int_index(_int_index++);
     } else if (std::holds_alternative<FloatingType>(node.type())) {
         parameter.set_sse_index(_sse_index++);
@@ -72,7 +74,7 @@ void TypeResolver::visit(IntegerNode &node) {
         size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? 64 : 32;
     }
 
-    _current_type = IntegerType(size, sign);
+    _current_type = IntegralType(size, sign);
 }
 
 void TypeResolver::visit(FloatingNode &node) {
@@ -80,6 +82,10 @@ void TypeResolver::visit(FloatingNode &node) {
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? 64 : 32;
     _current_type = FloatingType(size);
+}
+
+void TypeResolver::visit(BooleanNode &) {
+    _current_type = BooleanType();
 }
 
 void TypeResolver::visit(ReturnNode &node) {
@@ -191,25 +197,26 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
         // Otherwise, if the floating-point conversion ranks of the types of the operands are ordered but(since C++23)
         // not equal, then the operand of the type with the lesser floating-point conversion rank is converted to the
         // type of the other operand.
-        if (floating_left && floating_right) {
-            if (floating_left->size() > floating_right->size()) return left_type;
-            if (floating_right->size() > floating_left->size()) return right_type;
-        }
-    }
-
-    // Otherwise, both operands are of integer types, proceed to the next stage.
-    if (!std::holds_alternative<IntegerType>(left_type) || !std::holds_alternative<IntegerType>(right_type)) {
-        throw std::invalid_argument("This arithmetic conversion is not allowed.");
+        if (floating_left->size() > floating_right->size()) return left_type;
+        if (floating_right->size() > floating_left->size()) return right_type;
     }
 
     // Stage 5: Both operands are converted to a common op C.
-    auto t1 = std::get<IntegerType>(left_type);
-    auto t2 = std::get<IntegerType>(right_type);
+    auto t1 = std::visit(match{
+            [](const IntegralType &type) -> IntegralType { return type; },
+            [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
+            [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
+    }, left_type);
+    auto t2 = std::visit(match{
+            [](const IntegralType &type) -> IntegralType { return type; },
+            [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
+            [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
+    }, right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    if (t1.size() < 32) t1 = IntegerType(32, t1.sign());
-    if (t2.size() < 32) t2 = IntegerType(32, t2.sign());
+    if (t1.size() < 32) t1 = IntegralType(32, t1.sign());
+    if (t2.size() < 32) t2 = IntegralType(32, t2.sign());
 
     // 1. If T1 and T2 are the same type, C is that op.
     if (t1 == t2) return t1;
@@ -233,25 +240,38 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     if (_signed.max() >= _unsigned.max()) return _signed;
 
     // 3.3. Otherwise, C is the unsigned integer op corresponding to S.
-    return IntegerType(_signed.size(), false);
+    return IntegralType(_signed.size(), false);
 }
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion
 bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destination) {
     // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type. If the
     // conversion is listed under integral promotions, it is a promotion and not a conversion.
-    if (std::holds_alternative<IntegerType>(from) && std::holds_alternative<IntegerType>(destination)) return true;
+    if (std::holds_alternative<IntegralType>(from) && std::holds_alternative<IntegralType>(destination)) return true;
+
+    // If the source type is bool, the value false is converted to zero and the value true is converted to the value one
+    // of the destination type (note that if the destination type is int, this is an integer promotion, not an integer
+    // conversion).
+    if (std::holds_alternative<BooleanType>(from) && std::holds_alternative<IntegralType>(destination)) return true;
 
     // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
     if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
 
     // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
     // truncated, that is, the fractional part is discarded.
-    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<IntegerType>(destination)) return true;
+    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<IntegralType>(destination)) return true;
 
     // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
     // The result is exact if possible.
-    if (std::holds_alternative<IntegerType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
+    if (std::holds_alternative<IntegralType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
+
+    // If the source type is bool, the value false is converted to zero, and the value true is converted to one.
+    if (std::holds_alternative<BooleanType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
+
+    // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
+    // converted to a prvalue of type bool.
+    if (std::holds_alternative<IntegralType>(from) && std::holds_alternative<BooleanType>(destination)) return true;
+    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<BooleanType>(destination)) return true;
 
     return from == destination;
 }

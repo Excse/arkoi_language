@@ -20,6 +20,8 @@ public:
 
     void movsx(const Operand &destination, const Operand &src);
 
+    void movzx(const Operand &destination, const Operand &src);
+
     void movsxd(const Operand &destination, const Operand &src);
 
     void movss(const Operand &destination, const Operand &src);
@@ -35,6 +37,16 @@ public:
     void push(const Operand &src);
 
     void ret();
+
+    void ucomiss(const Operand &destination, const Operand &source);
+
+    void ucomisd(const Operand &destination, const Operand &source);
+
+    void pxor(const Operand &destination, const Operand &source);
+
+    void cmp(const Operand &first, const Operand &second);
+
+    void setne(const Operand &destination);
 
     void add(const Operand &destination, const Operand &src);
 

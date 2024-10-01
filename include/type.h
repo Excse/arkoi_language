@@ -3,15 +3,15 @@
 #include <cstdint>
 #include <memory>
 
-class IntegerType {
+class IntegralType {
 public:
-    IntegerType(const int64_t size, const bool sign) : _size(size), _sign(sign) {}
+    IntegralType(const int64_t size, const bool sign) : _size(size), _sign(sign) {}
 
-    bool operator==(const IntegerType &other) const;
+    bool operator==(const IntegralType &other) const;
 
-    bool operator!=(const IntegerType &other) const;
+    bool operator!=(const IntegralType &other) const;
 
-    friend std::ostream &operator<<(std::ostream &os, const IntegerType &type);
+    friend std::ostream &operator<<(std::ostream &os, const IntegralType &type);
 
     [[nodiscard]] uint64_t max() const {
         if (_sign) return (1ULL << (_size - 1)) - 1;
@@ -43,7 +43,16 @@ private:
     int64_t _size;
 };
 
-struct Type : std::variant<std::monostate, IntegerType, FloatingType> {
+class BooleanType {
+public:
+    friend std::ostream &operator<<(std::ostream &os, const BooleanType &type);
+
+    bool operator==(const BooleanType &other) const;
+
+    bool operator!=(const BooleanType &other) const;
+};
+
+struct Type : std::variant<std::monostate, IntegralType, FloatingType, BooleanType> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Type &type);

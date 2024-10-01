@@ -67,6 +67,10 @@ void IRGenerator::visit(FloatingNode &node) {
     }
 }
 
+void IRGenerator::visit(BooleanNode &node) {
+    _current_operand = (bool) node.value();
+}
+
 void IRGenerator::visit(ReturnNode &node) {
     // This will set _current_operand
     node.expression()->accept(*this);

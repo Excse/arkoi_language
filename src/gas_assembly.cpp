@@ -27,8 +27,11 @@ void Assembly::cvtsi2sd(const Operand &destination, const Operand &src) {
 }
 
 void Assembly::movsx(const Operand &destination, const Operand &src) {
-    if(src == destination) return;
     _output << "\tmovsx " << destination << ", " << src << "\n";
+}
+
+void Assembly::movzx(const Operand &destination, const Operand &src) {
+    _output << "\tmovzx " << destination << ", " << src << "\n";
 }
 
 void Assembly::movsxd(const Operand &destination, const Operand &src) {
@@ -66,6 +69,26 @@ void Assembly::push(const Operand &src) {
 
 void Assembly::ret() {
     _output << "\tret\n";
+}
+
+void Assembly::ucomiss(const Operand &destination, const Operand &source) {
+    _output << "\tucomiss " << destination << ", " << source << "\n";
+}
+
+void Assembly::ucomisd(const Operand &destination, const Operand &source) {
+    _output << "\tucomisd " << destination << ", " << source << "\n";
+}
+
+void Assembly::pxor(const Operand &destination, const Operand &source) {
+    _output << "\tpxor " << destination << ", " << source << "\n";
+}
+
+void Assembly::cmp(const Operand &first, const Operand &second) {
+    _output << "\tcmp " << first << ", " << second << "\n";
+}
+
+void Assembly::setne(const Operand &destination) {
+    _output << "\tsetne " << destination << "\n";
 }
 
 void Assembly::add(const Operand &destination, const Operand &src) {

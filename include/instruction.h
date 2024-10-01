@@ -114,7 +114,9 @@ public:
 
     void increase_local_size(int64_t amount) { _local_size += amount; }
 
-    [[nodiscard]] auto local_size() const { return _local_size; }
+    void set_local_size(int64_t size) { _local_size = size; }
+
+    [[nodiscard]] auto &local_size() const { return _local_size; }
 
 private:
     int64_t _local_size;

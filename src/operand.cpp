@@ -98,7 +98,7 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
 }
 
 Size Register::type_to_register_size(const Type &type) {
-    if (auto *integer = std::get_if<IntegerType>(&type)) {
+    if (auto *integer = std::get_if<IntegralType>(&type)) {
         switch (integer->size()) {
             case 8: return Size::BYTE;
             case 16: return Size::WORD;
@@ -112,6 +112,8 @@ Size Register::type_to_register_size(const Type &type) {
             case 64: return Size::QWORD;
             default: throw std::invalid_argument("This is a invalid floating type size.");
         }
+    } else if (std::get_if<BooleanType>(&type)) {
+        return Size::BYTE;
     }
 
     throw std::runtime_error("This type is not implemented.");
@@ -158,7 +160,10 @@ bool Memory::operator!=(const Memory &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
-    std::visit([&os](const auto &value) { os << value; }, immediate);
+    std::visit(match{
+            [&os](const bool &value) { os << (value ? "1" : "0"); },
+            [&os](const auto &value) { os << value; },
+    }, immediate);
     return os;
 }
 

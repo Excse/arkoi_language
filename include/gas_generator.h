@@ -41,19 +41,31 @@ private:
 
     void _comment_instruction(Instruction &instruction);
 
-    void _convert_int_to_int(const IntegerType &from, const Operand &expression,
-                             const IntegerType &to, const Operand &destination);
+    void _convert_int_to_int(const IntegralType &from, const Operand &expression,
+                             const IntegralType &to, const Operand &destination);
+
+    void _convert_int_to_float(const IntegralType &from, const Operand &expression,
+                               const FloatingType &to, const Operand &destination);
+
+    void _convert_int_to_bool(const IntegralType &from, const Operand &expression,
+                              const BooleanType &to, const Operand &destination);
 
     void _convert_float_to_float(const FloatingType &from, const Operand &expression,
                                  const FloatingType &to, const Operand &destination);
 
-    void _convert_int_to_float(const IntegerType &from, const Operand &expression,
-                               const FloatingType &to, const Operand &destination);
-
     void _convert_float_to_int(const FloatingType &from, const Operand &expression,
-                               const IntegerType &to, const Operand &destination);
+                               const IntegralType &to, const Operand &destination);
 
-    Operand _integer_promote(const IntegerType &type, const Operand &operand);
+    void _convert_float_to_bool(const FloatingType &from, const Operand &expression,
+                                const BooleanType &to, const Operand &destination);
+
+    void _convert_bool_to_int(const BooleanType &from, const Operand &expression,
+                              const IntegralType &to, const Operand &destination);
+
+    void _convert_bool_to_float(const BooleanType &from, const Operand &expression,
+                                const FloatingType &to, const Operand &destination);
+
+    Operand _integer_promote(const IntegralType &type, const Operand &operand);
 
     void _mov(const Type &type, const Operand &destination, const Operand &src);
 

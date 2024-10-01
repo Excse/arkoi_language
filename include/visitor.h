@@ -16,6 +16,8 @@ class IntegerNode;
 
 class ProgramNode;
 
+class BooleanNode;
+
 class ReturnNode;
 
 class BinaryNode;
@@ -41,6 +43,8 @@ public:
     virtual void visit(IntegerNode &node) = 0;
 
     virtual void visit(FloatingNode &node) = 0;
+
+    virtual void visit(BooleanNode &node) = 0;
 
     virtual void visit(ReturnNode &node) = 0;
 

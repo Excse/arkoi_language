@@ -81,7 +81,7 @@ private:
     Size _size;
 };
 
-struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float> {
+struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);

@@ -29,6 +29,9 @@ public:
         SSize,
         F32,
         F64,
+        Bool,
+        True,
+        False,
 
         // Special 1
         LParent,

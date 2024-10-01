@@ -11,6 +11,8 @@ static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::
 
 inline Register RBP(Register::Base::BP, Size::QWORD);
 
+inline int64_t STACK_ALIGNMENT = 16;
+
 MemoryResolver MemoryResolver::resolve(const std::vector<std::unique_ptr<Instruction>> &instructions) {
     MemoryResolver resolver;
 
@@ -52,6 +54,13 @@ void MemoryResolver::visit(ArgumentInstruction &instruction) {
 
 void MemoryResolver::visit(CallInstruction &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
+}
+
+void MemoryResolver::visit(EndInstruction &) {
+    // Align the stack to comfort the specifications
+    auto local_size = _current_begin->local_size();
+    local_size = (local_size + STACK_ALIGNMENT - 1) & ~(STACK_ALIGNMENT - 1);
+    _current_begin->set_local_size(local_size);
 }
 
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
@@ -105,13 +114,17 @@ Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
 }
 
 Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
-    if (std::holds_alternative<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
+    if (std::holds_alternative<IntegralType>(symbol.type()) && symbol.int_index() < 6) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = INT_REG_ORDER[symbol.int_index()];
         return Register(base, size);
     } else if (std::holds_alternative<FloatingType>(symbol.type()) && symbol.sse_index() < 8) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = SSE_REG_ORDER[symbol.int_index()];
+        return Register(base, size);
+    } else if (std::holds_alternative<BooleanType>(symbol.type()) && symbol.int_index() < 6) {
+        auto size = Register::type_to_register_size(symbol.type());
+        auto base = INT_REG_ORDER[symbol.int_index()];
         return Register(base, size);
     }
 
@@ -123,7 +136,7 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
 }
 
 std::optional<Register> MemoryResolver::_resolve_argument(const ParameterSymbol &symbol) {
-    if (std::holds_alternative<IntegerType>(symbol.type()) && symbol.int_index() < 6) {
+    if (std::holds_alternative<IntegralType>(symbol.type()) && symbol.int_index() < 6) {
         auto size = Register::type_to_register_size(symbol.type());
         auto base = INT_REG_ORDER[symbol.int_index()];
         return Register(base, size);
@@ -131,13 +144,17 @@ std::optional<Register> MemoryResolver::_resolve_argument(const ParameterSymbol 
         auto size = Register::type_to_register_size(symbol.type());
         auto base = SSE_REG_ORDER[symbol.int_index()];
         return Register(base, size);
+    } else if (std::holds_alternative<BooleanType>(symbol.type()) && symbol.int_index() < 6) {
+        auto size = Register::type_to_register_size(symbol.type());
+        auto base = INT_REG_ORDER[symbol.int_index()];
+        return Register(base, size);
     }
 
     return std::nullopt;
 }
 
 int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
-    if (auto *integer = std::get_if<IntegerType>(&type)) {
+    if (auto *integer = std::get_if<IntegralType>(&type)) {
         switch (integer->size()) {
             case 8: return 1;
             case 16: return 2;
@@ -151,6 +168,8 @@ int64_t MemoryResolver::_type_to_byte_size(const Type &type) {
             case 64: return 8;
             default: throw std::invalid_argument("This floating point size is not supported.");
         }
+    } else if (std::get_if<BooleanType>(&type)) {
+        return 1;
     }
 
     throw std::invalid_argument("This type is not implemented.");

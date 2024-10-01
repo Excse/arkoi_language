@@ -4,20 +4,23 @@
 
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
     static const std::unordered_map<std::string_view, Type> KEYWORDS = {
-        {"fun", Type::Fun},
-        {"return", Type::Return},
-        {"u8", Type::U8},
-        {"s8", Type::S8},
-        {"u16", Type::U16},
-        {"s16", Type::S16},
-        {"u32", Type::U32},
-        {"s32", Type::S32},
-        {"u64", Type::U64},
-        {"s64", Type::S64},
-        {"usize", Type::USize},
-        {"ssize", Type::SSize},
-        {"f64", Type::F64},
-        {"f32", Type::F32},
+            {"fun",    Type::Fun},
+            {"return", Type::Return},
+            {"u8",     Type::U8},
+            {"s8",     Type::S8},
+            {"u16",    Type::U16},
+            {"s16",    Type::S16},
+            {"u32",    Type::U32},
+            {"s32",    Type::S32},
+            {"u64",    Type::U64},
+            {"s64",    Type::S64},
+            {"usize",  Type::USize},
+            {"ssize",  Type::SSize},
+            {"f64",    Type::F64},
+            {"f32",    Type::F32},
+            {"bool",   Type::Bool},
+            {"true",   Type::True},
+            {"false",  Type::False},
     };
 
     const auto keyword = KEYWORDS.find(value);
@@ -66,6 +69,9 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::SSize: return os << "ssize";
         case Token::Type::F32: return os << "f32";
         case Token::Type::F64: return os << "f64";
+        case Token::Type::Bool: return os << "bool";
+        case Token::Type::True: return os << "true";
+        case Token::Type::False: return os << "false";
 
         case Token::Type::LParent: return os << "(";
         case Token::Type::RParent: return os << ")";

@@ -160,6 +160,18 @@ private:
     Token _value;
 };
 
+class BooleanNode : public Node {
+public:
+    explicit BooleanNode(bool value) : _value(value) {}
+
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &value() const { return _value; }
+
+private:
+    bool _value;
+};
+
 class IdentifierNode : public Node {
 public:
     explicit IdentifierNode(Token value) : _value(std::move(value)) {}

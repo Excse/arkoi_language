@@ -29,7 +29,9 @@ void ILPrinter::visit(LabelInstruction &instruction) {
 }
 
 void ILPrinter::visit(BeginInstruction &instruction) {
-    _output << "BEGIN " << instruction.local_size() << "\n";
+    _output << "BEGIN";
+    if (instruction.local_size()) _output << " " << instruction.local_size();
+    _output << "\n";
 }
 
 void ILPrinter::visit(ReturnInstruction &instruction) {

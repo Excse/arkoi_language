@@ -75,8 +75,6 @@ int main() {
 
     std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
     int assemble_result = std::system(assemble_command.c_str());
-//    std::filesystem::remove(asm_file_path);
-
     if (WEXITSTATUS(assemble_result) != 0) {
         exit(1);
     }
@@ -85,8 +83,6 @@ int main() {
 
     std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
     int link_result = std::system(link_command.c_str());
-    std::filesystem::remove(obj_file_path);
-
     if (WEXITSTATUS(link_result) != 0) {
         exit(1);
     }
@@ -94,8 +90,6 @@ int main() {
     std::cout << "~~~~~~~~~~~~           Execute            ~~~~~~~~~~~~" << std::endl;
 
     int exec_result = std::system(exe_file_path.string().c_str());
-    std::filesystem::remove(exe_file_path);
-
     std::cout << "Execute Code: " << WEXITSTATUS(exec_result) << std::endl;
 
     return 0;

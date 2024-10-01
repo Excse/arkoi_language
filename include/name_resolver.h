@@ -32,6 +32,8 @@ private:
 
     void visit(FloatingNode &) override {};
 
+    void visit(BooleanNode &) override {};
+
     void visit(ReturnNode &node) override;
 
     void visit(BinaryNode &node) override;

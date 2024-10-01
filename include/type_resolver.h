@@ -29,6 +29,8 @@ public:
 
     void visit(FloatingNode &node) override;
 
+    void visit(BooleanNode &node) override;
+
     void visit(ReturnNode &node) override;
 
     void visit(IdentifierNode &node) override;

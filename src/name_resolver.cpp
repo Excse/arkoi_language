@@ -82,4 +82,8 @@ void NameResolver::visit(CastNode &node) {
 void NameResolver::visit(CallNode &node) {
     auto symbol = _check_existence<FunctionSymbol>(node.name());
     node.set_symbol(symbol);
+
+    for (const auto &item: node.arguments()) {
+        item->accept(*this);
+    }
 }

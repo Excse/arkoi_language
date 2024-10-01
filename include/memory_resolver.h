@@ -22,13 +22,13 @@ public:
 
     void visit(BinaryInstruction &instruction) override;
 
-    void visit(EndInstruction &) override {};
-
     void visit(CastInstruction &instruction) override;
 
     void visit(CallInstruction &instruction) override;
 
     void visit(ArgumentInstruction &instruction) override;
+
+    void visit(EndInstruction &) override;
 
     [[nodiscard]] auto &resolved() const { return _resolved; }
 
