@@ -21,13 +21,24 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(pretty_diagnostics)
 
 # =====================
-# Own project
+# Google Test
+# =====================
+
+FetchContent_Declare(
+        google_test
+        URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
+)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(google_test)
+
+# =====================
+# Library
 # =====================
 
 include_directories(include)
 
-add_executable(arkoi_language
-        src/main.cpp
+add_library(${PROJECT_NAME}_lib
         src/scanner.cpp
         src/token.cpp
         src/parser.cpp
@@ -45,4 +56,25 @@ add_executable(arkoi_language
         src/type.cpp
         src/gas_assembly.cpp)
 
-target_link_libraries(arkoi_language pretty_diagnostics)
+target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
+
+# =====================
+# Executable
+# =====================
+
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
+
+# =====================
+# Tests
+# =====================
+
+enable_testing()
+
+add_executable(${PROJECT_NAME}_tests
+        test/test_scanner.cpp)
+
+target_link_libraries(${PROJECT_NAME}_tests gtest gtest_main ${PROJECT_NAME}_lib)
+
+add_test(NAME test_${PROJECT_NAME} COMMAND test_${PROJECT_NAME})
