@@ -1,41 +1,75 @@
 #include "scanner.h"
 
+#include <sstream>
+
+static constexpr size_t SPACE_INDENTATION = 4;
+
 std::vector<Token> Scanner::tokenize() {
     std::vector<Token> tokens;
 
-    while (true) {
-        try {
-            auto token = _next_token();
-            tokens.push_back(token);
+    std::istringstream stream(_data);
+    std::string line;
 
-            if (token.type() == Token::Type::EndOfFile) {
-                break;
-            }
-        } catch (const UnexpectedEndOfFile &error) {
-            std::cerr << error.what() << std::endl;
+    while (std::getline(stream, line)) {
+        if (line.empty()) continue;
+        _current_line = line;
+
+        auto leading_spaces = _leading_spaces(line);
+        if (leading_spaces % SPACE_INDENTATION != 0) {
+            std::cerr << "Leading spaces are not of a multiple of 4" << std::endl;
             _failed = true;
-            break;
-        } catch (const UnexpectedChar &error) {
-            std::cerr << error.what() << std::endl;
-            _failed = true;
-            _next();
-        } catch (const UnknownChar &error) {
-            std::cerr << error.what() << std::endl;
-            _failed = true;
-            _next();
+            continue;
         }
+
+        while (leading_spaces > _indentation) {
+            tokens.emplace_back(Token::Type::Indentation, _column, _row, "");
+            _indentation += SPACE_INDENTATION;
+            _column += SPACE_INDENTATION;
+        }
+
+        while (leading_spaces < _indentation) {
+            tokens.emplace_back(Token::Type::Dedentation, _column, _row, "");
+            _indentation -= SPACE_INDENTATION;
+            _column -= SPACE_INDENTATION;
+        }
+
+        while (!_is_eol()) {
+            try {
+                auto token = _next_token();
+                tokens.push_back(token);
+            } catch (const UnexpectedEndOfLine &error) {
+                std::cerr << error.what() << std::endl;
+                _failed = true;
+                break;
+            } catch (const UnexpectedChar &error) {
+                std::cerr << error.what() << std::endl;
+                _failed = true;
+                _next();
+            } catch (const UnknownChar &error) {
+                std::cerr << error.what() << std::endl;
+                _failed = true;
+                _next();
+            }
+        }
+
+        tokens.emplace_back(Token::Type::Newline, _column, _row, "");
+
+        _column = _indentation;
+        _row++;
     }
+
+    while (_indentation) {
+        tokens.emplace_back(Token::Type::Dedentation, _column, _row, "");
+        _indentation -= SPACE_INDENTATION;
+    }
+
+    tokens.emplace_back(Token::Type::EndOfFile, 0, 0, "");
 
     return tokens;
 }
 
 Token Scanner::_next_token() {
     while (_try_consume(_is_space));
-
-    Location start = _mark_start();
-    if (_is_eof()) {
-        return {Token::Type::EndOfFile, start.column, start.row, ""};
-    }
 
     auto current = _current_char();
     if (_is_ident_start(current)) {
@@ -156,36 +190,29 @@ Token Scanner::_lex_special() {
 }
 
 char Scanner::_current_char() {
-    return _data[_position];
+    return _current_line[_column];
 }
 
-bool Scanner::_is_eof() {
-    return _position >= _data.size();
+bool Scanner::_is_eol() {
+    return _column >= _current_line.size();
 }
 
 Scanner::Location Scanner::_mark_start() {
-    _start = _position;
+    _start = _column;
     return Location{_column, _row};
 }
 
 std::string Scanner::_current_view() {
-    return std::string(_data.substr(_start, (_position - _start)));
+    return std::string(_current_line.substr(_start, (_column - _start)));
 }
 
 void Scanner::_next() {
-    if (_current_char() == '\n') {
-        _column++;
-        _row = 0;
-    } else {
-        _row++;
-    }
-
-    _position += 1;
+    _column += 1;
 }
 
 char Scanner::_peek() {
-    if (_position >= _data.size()) return 0;
-    return _data[_position];
+    if (_column >= _current_line.size()) return 0;
+    return _current_line[_column];
 }
 
 void Scanner::_consume(char expected) {
@@ -203,8 +230,8 @@ bool Scanner::_try_consume(char expected) {
 
 char Scanner::_consume(const std::function<bool(char)> &predicate, const std::string &expected) {
     auto current = _current_char();
-    if (_position >= _data.size()) {
-        throw UnexpectedEndOfFile();
+    if (_column >= _current_line.size()) {
+        throw UnexpectedEndOfLine();
     }
 
     if (!predicate(current)) {
@@ -223,6 +250,17 @@ std::optional<char> Scanner::_try_consume(const std::function<bool(char)> &predi
     } catch (const ScannerError &) {
         return std::nullopt;
     }
+}
+
+size_t Scanner::_leading_spaces(const std::string &line) {
+    size_t count = 0;
+
+    for (const auto &current: line) {
+        if (current != ' ') break;
+        count++;
+    }
+
+    return count;
 }
 
 bool Scanner::_is_digit(char input) {

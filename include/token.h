@@ -9,6 +9,10 @@
 class Token {
 public:
     enum class Type {
+        Indentation,
+        Dedentation,
+        Newline,
+
         Integer,
         Floating,
         Identifier,
@@ -36,10 +40,7 @@ public:
         // Special 1
         LParent,
         RParent,
-        LCBracket,
-        RCBracket,
         At,
-        Semicolon,
         Comma,
         Plus,
         Minus,
@@ -51,8 +52,8 @@ public:
     };
 
 public:
-    Token(Type type, int64_t column, int64_t row, std::string contents)
-            : _column(column), _row(row), _contents(std::move(contents)), _type(type) {}
+    Token(Type type, size_t column, size_t row, std::string contents)
+            : _contents(std::move(contents)), _column(column), _row(row), _type(type) {}
 
     [[nodiscard]] auto &contents() const { return _contents; }
 
@@ -71,7 +72,7 @@ public:
     friend std::ostream &operator<<(std::ostream &os, const Type &type);
 
 private:
-    int64_t _column, _row;
     std::string _contents;
+    size_t _column, _row;
     Type _type;
 };

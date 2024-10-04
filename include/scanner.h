@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <utility>
 #include <string>
 #include <vector>
 
@@ -9,11 +10,11 @@
 class Scanner {
 private:
     struct Location {
-        int64_t column, row;
+        size_t column, row;
     };
 
 public:
-    explicit Scanner(std::string_view data) : _data(data) {}
+    explicit Scanner(std::string data) : _data(std::move(data)) {}
 
     [[nodiscard]] std::vector<Token> tokenize();
 
@@ -36,7 +37,7 @@ private:
 
     [[nodiscard]] char _current_char();
 
-    [[nodiscard]] bool _is_eof();
+    [[nodiscard]] bool _is_eol();
 
     [[nodiscard]] Location _mark_start();
 
@@ -51,6 +52,8 @@ private:
     [[nodiscard]] bool _try_consume(char expected);
 
     [[nodiscard]] std::optional<char> _try_consume(const std::function<bool(char)> &predicate);
+
+    [[nodiscard]] static size_t _leading_spaces(const std::string &line);
 
     [[nodiscard]] static bool _is_digit(char input);
 
@@ -73,9 +76,9 @@ private:
     [[nodiscard]] static bool _is_decimal_sign(char input);
 
 private:
-    size_t _position{}, _start{};
-    int64_t _column{}, _row{};
-    std::string_view _data;
+    size_t _start{}, _row{}, _column{}, _indentation{};
+    std::string_view _current_line;
+    std::string _data;
     bool _failed{};
 };
 
@@ -84,9 +87,9 @@ public:
     explicit ScannerError(const std::string &error) : std::runtime_error(error) {}
 };
 
-class UnexpectedEndOfFile : public ScannerError {
+class UnexpectedEndOfLine : public ScannerError {
 public:
-    UnexpectedEndOfFile() : ScannerError("Unexpectedly reached the End Of File") {}
+    UnexpectedEndOfLine() : ScannerError("Unexpectedly reached the End Of Line") {}
 };
 
 class UnexpectedChar : public ScannerError {

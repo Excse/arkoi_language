@@ -35,10 +35,7 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
     switch (value) {
         case '(': return Type::LParent;
         case ')': return Type::RParent;
-        case '{': return Type::LCBracket;
-        case '}': return Type::RCBracket;
         case '@': return Type::At;
-        case ';': return Type::Semicolon;
         case ',': return Type::Comma;
         case '+': return Type::Plus;
         case '-': return Type::Minus;
@@ -50,6 +47,10 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
 
 std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
     switch (type) {
+        case Token::Type::Indentation: return os << "Indentation";
+        case Token::Type::Dedentation: return os << "Dedentation";
+        case Token::Type::Newline: return os << "Newline";
+
         case Token::Type::Integer: return os << "Integer";
         case Token::Type::Floating: return os << "Floating";
         case Token::Type::Identifier: return os << "Identifier";
@@ -75,17 +76,14 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
 
         case Token::Type::LParent: return os << "(";
         case Token::Type::RParent: return os << ")";
-        case Token::Type::LCBracket: return os << "{";
-        case Token::Type::RCBracket: return os << "}";
         case Token::Type::At: return os << "@";
-        case Token::Type::Semicolon: return os << ";";
         case Token::Type::Comma: return os << ",";
         case Token::Type::Plus: return os << "+";
         case Token::Type::Minus: return os << "-";
         case Token::Type::Slash: return os << "/";
         case Token::Type::Asterisk: return os << "*";
 
-        case Token::Type::EndOfFile: return os << "UnexpectedEndOfFile";
+        case Token::Type::EndOfFile: return os << "UnexpectedEndOfLine";
         case Token::Type::Unknown: return os << "Unknown";
     }
 

@@ -21,7 +21,7 @@ private:
 
     void _recover_program();
 
-    [[nodiscard]] std::unique_ptr<FunctionNode> _parse_function();
+    [[nodiscard]] std::unique_ptr<FunctionNode> _parse_function(const Token &keyword);
 
     [[nodiscard]] std::vector<ParameterNode> _parse_parameters();
 
@@ -37,9 +37,7 @@ private:
 
     void _recover_block();
 
-    [[nodiscard]] std::unique_ptr<ReturnNode> _parse_return();
-
-    [[nodiscard]] std::unique_ptr<CallNode> _parse_call_statement();
+    [[nodiscard]] std::unique_ptr<ReturnNode> _parse_return(const Token &keyword);
 
     [[nodiscard]] std::unique_ptr<CallNode> _parse_call(const Token &identifier);
 
@@ -66,8 +64,6 @@ private:
     const Token &_consume(Token::Type type);
 
     const Token &_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected);
-
-    [[nodiscard]] const Token *_try_consume(Token::Type type);
 
     [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
 

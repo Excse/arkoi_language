@@ -116,7 +116,7 @@ public:
 
     void set_local_size(int64_t size) { _local_size = size; }
 
-    [[nodiscard]] auto &local_size() const { return _local_size; }
+    [[nodiscard]] auto local_size() const { return _local_size; }
 
 private:
     int64_t _local_size;
@@ -162,7 +162,7 @@ public:
 
     [[nodiscard]] auto &expression() const { return _expression; };
 
-    void set_result(Register reg) { _result = std::move(reg); };
+    void set_result(Register reg) { _result = reg; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
