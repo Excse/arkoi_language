@@ -1,10 +1,10 @@
-#include "parser.h"
+#include "parser.hpp"
 
-#include "symbol_table.h"
+#include "symbol_table.hpp"
 
 ProgramNode Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
-    auto own_scope = _enter_scope();
+    auto &own_scope = _enter_scope();
 
     while (true) {
         auto &current = _current();
@@ -54,7 +54,7 @@ void Parser::_recover_program() {
 }
 
 std::unique_ptr<FunctionNode> Parser::_parse_function(const Token &) {
-    auto own_scope = _enter_scope();
+    auto &own_scope = _enter_scope();
 
     auto &name = _consume(Token::Type::Identifier);
 
@@ -151,7 +151,7 @@ Type Parser::_parse_type() {
 BlockNode Parser::_parse_block() {
     std::vector<std::unique_ptr<Node>> statements;
 
-    auto own_scope = _enter_scope();
+    auto &own_scope = _enter_scope();
     _consume(Token::Type::Indentation);
 
     while (true) {
@@ -245,8 +245,8 @@ std::unique_ptr<Node> Parser::_parse_expression() {
 std::unique_ptr<Node> Parser::_parse_term() {
     auto expression = _parse_factor();
 
-    while (auto *operator_token = _try_consume(is_term_operator)) {
-        auto type = to_binary_operator(*operator_token);
+    while (auto op = _try_consume(_is_term_operator)) {
+        auto type = _to_binary_operator(op.value());
 
         expression = std::make_unique<BinaryNode>(std::move(expression), type, _parse_factor());
     }
@@ -257,8 +257,8 @@ std::unique_ptr<Node> Parser::_parse_term() {
 std::unique_ptr<Node> Parser::_parse_factor() {
     auto expression = _parse_primary();
 
-    while (auto *operator_token = _try_consume(is_factor_operator)) {
-        auto type = to_binary_operator(*operator_token);
+    while (auto op = _try_consume(_is_factor_operator)) {
+        auto type = _to_binary_operator(op.value());
 
         expression = std::make_unique<BinaryNode>(std::move(expression), type, _parse_primary());
     }
@@ -288,31 +288,30 @@ std::unique_ptr<Node> Parser::_parse_primary() {
         return std::make_unique<BooleanNode>(true);
     } else if (consumed.type() == Token::Type::False) {
         return std::make_unique<BooleanNode>(false);
+    } else if (consumed.type() == Token::Type::LParent) {
+        auto expression = _parse_expression();
+        _consume(Token::Type::RParent);
+        return expression;
     }
 
-    throw UnexpectedToken("integer, float, identifier, function call, true or false", consumed);
+    throw UnexpectedToken("integer, float, identifier, function call, grouping, true or false", consumed);
 }
 
-std::shared_ptr<SymbolTable> Parser::_current_scope() {
+std::shared_ptr<SymbolTable> &Parser::_current_scope() {
     return _scopes.top();
 }
 
-std::shared_ptr<SymbolTable> Parser::_enter_scope() {
-    std::shared_ptr<SymbolTable> new_scope;
+std::shared_ptr<SymbolTable> &Parser::_enter_scope() {
     if (_scopes.empty()) {
-        _scopes.push(std::make_shared<SymbolTable>());
-    } else {
-        auto parent = _current_scope();
-        _scopes.push(std::make_shared<SymbolTable>(parent));
+        return _scopes.emplace(std::make_shared<SymbolTable>());
     }
 
-    return _current_scope();
+    auto parent = _current_scope();
+    return _scopes.emplace(std::make_shared<SymbolTable>(parent));
 }
 
-std::shared_ptr<SymbolTable> Parser::_exit_scope() {
-    auto current = _current_scope();
+void Parser::_exit_scope() {
     _scopes.pop();
-    return current;
 }
 
 const Token &Parser::_current() {
@@ -331,29 +330,25 @@ const Token &Parser::_consume_any() {
 }
 
 const Token &Parser::_consume(Token::Type type) {
-    return _consume([&](const Token &input) { return input.type() == type; }, to_string(type));
-}
-
-const Token &Parser::_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected) {
     auto &current = _current();
     _next();
 
-    if (!predicate(current)) throw UnexpectedToken(expected, current);
+    if (current.type() != type) throw UnexpectedToken(to_string(type), current);
 
     return current;
 }
 
-const Token *Parser::_try_consume(const std::function<bool(const Token &)> &predicate) {
+std::optional<Token> Parser::_try_consume(const std::function<bool(const Token &)> &predicate) {
     auto &current = _current();
 
-    if (!predicate(current)) return nullptr;
+    if (!predicate(current)) return std::nullopt;
 
     _next();
 
-    return &current;
+    return current;
 }
 
-BinaryNode::Operator Parser::to_binary_operator(const Token &token) {
+BinaryNode::Operator Parser::_to_binary_operator(const Token &token) {
     switch (token.type()) {
         case Token::Type::Slash: return BinaryNode::Operator::Div;
         case Token::Type::Asterisk: return BinaryNode::Operator::Mul;
@@ -363,10 +358,10 @@ BinaryNode::Operator Parser::to_binary_operator(const Token &token) {
     }
 }
 
-bool Parser::is_factor_operator(const Token &token) {
+bool Parser::_is_factor_operator(const Token &token) {
     return token.type() == Token::Type::Asterisk || token.type() == Token::Type::Slash;
 }
 
-bool Parser::is_term_operator(const Token &token) {
+bool Parser::_is_term_operator(const Token &token) {
     return token.type() == Token::Type::Plus || token.type() == Token::Type::Minus;
 }

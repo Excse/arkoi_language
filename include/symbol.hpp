@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-#include "type.h"
+#include "type.hpp"
 
 struct Symbol;
 

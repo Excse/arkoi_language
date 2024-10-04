@@ -2,9 +2,9 @@
 
 #include <stack>
 
-#include "symbol_table.h"
-#include "visitor.h"
-#include "token.h"
+#include "symbol_table.hpp"
+#include "visitor.hpp"
+#include "token.hpp"
 
 class NameResolver : NodeVisitor {
 private:

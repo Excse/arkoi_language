@@ -1,9 +1,9 @@
-#include "il_generator.h"
+#include "il_generator.hpp"
 
 #include <limits>
 
-#include "utils.h"
-#include "ast.h"
+#include "utils.hpp"
+#include "ast.hpp"
 
 IRGenerator IRGenerator::generate(ProgramNode &node) {
     IRGenerator generator;

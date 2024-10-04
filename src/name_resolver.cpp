@@ -1,6 +1,6 @@
-#include "name_resolver.h"
+#include "name_resolver.hpp"
 
-#include "ast.h"
+#include "ast.hpp"
 
 NameResolver NameResolver::resolve(ProgramNode &node) {
     NameResolver resolver;

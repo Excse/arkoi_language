@@ -1,6 +1,6 @@
-#include "token.h"
+#include "token.hpp"
 
-#include "utils.h"
+#include "utils.hpp"
 
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
     static const std::unordered_map<std::string_view, Type> KEYWORDS = {

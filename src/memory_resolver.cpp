@@ -1,6 +1,6 @@
-#include "memory_resolver.h"
+#include "memory_resolver.hpp"
 
-#include "instruction.h"
+#include "instruction.hpp"
 
 static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
                                                 Register::Base::C, Register::Base::R8, Register::Base::R9};

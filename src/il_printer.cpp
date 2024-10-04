@@ -1,10 +1,10 @@
-#include "il_printer.h"
+#include "il_printer.hpp"
 
 #include <iostream>
 
-#include "symbol_table.h"
-#include "instruction.h"
-#include "utils.h"
+#include "symbol_table.hpp"
+#include "instruction.hpp"
+#include "utils.hpp"
 
 ILPrinter ILPrinter::print(const std::vector<std::unique_ptr<Instruction>> &instructions) {
     ILPrinter printer;

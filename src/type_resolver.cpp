@@ -1,9 +1,9 @@
-#include "type_resolver.h"
+#include "type_resolver.hpp"
 
 #include <limits>
 
-#include "utils.h"
-#include "ast.h"
+#include "utils.hpp"
+#include "ast.hpp"
 
 inline IntegralType BOOL_PROMOTED_INT_TYPE(32, false);
 

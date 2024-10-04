@@ -2,11 +2,11 @@
 
 #include <sstream>
 
-#include "gas_assembly.h"
-#include "symbol_table.h"
-#include "instruction.h"
-#include "il_printer.h"
-#include "visitor.h"
+#include "gas_assembly.hpp"
+#include "symbol_table.hpp"
+#include "instruction.hpp"
+#include "il_printer.hpp"
+#include "visitor.hpp"
 
 class GASGenerator : InstructionVisitor {
 private:

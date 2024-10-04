@@ -6,7 +6,7 @@
 #include <utility>
 #include <memory>
 
-#include "symbol.h"
+#include "symbol.hpp"
 
 class SymbolTable {
 public:

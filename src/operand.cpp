@@ -1,6 +1,6 @@
-#include "operand.h"
+#include "operand.hpp"
 
-#include "utils.h"
+#include "utils.hpp"
 
 std::ostream &operator<<(std::ostream &os, const Size &size) {
     switch (size) {

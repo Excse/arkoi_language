@@ -1,4 +1,4 @@
-#include "type.h"
+#include "type.hpp"
 
 std::ostream &operator<<(std::ostream &os, const Type &type) {
     std::visit([&os](const auto &value) { os << value; }, type);

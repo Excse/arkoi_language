@@ -6,7 +6,7 @@
 #include <cassert>
 #include <memory>
 
-#include "symbol_table.h"
+#include "symbol_table.hpp"
 
 enum class Size {
     BYTE, WORD, DWORD, QWORD

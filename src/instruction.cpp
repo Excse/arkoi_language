@@ -1,4 +1,4 @@
-#include "instruction.h"
+#include "instruction.hpp"
 
 BinaryInstruction::Operator BinaryInstruction::node_to_instruction(BinaryNode::Operator op) {
     switch (op) {

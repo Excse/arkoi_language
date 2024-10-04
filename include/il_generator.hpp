@@ -2,9 +2,9 @@
 
 #include <stack>
 
-#include "instruction.h"
-#include "visitor.h"
-#include "type.h"
+#include "instruction.hpp"
+#include "visitor.hpp"
+#include "type.hpp"
 
 class IRGenerator : NodeVisitor {
 private:

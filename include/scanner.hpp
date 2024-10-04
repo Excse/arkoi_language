@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "token.h"
+#include "token.hpp"
 
 class Scanner {
 private:

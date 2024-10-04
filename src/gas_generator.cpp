@@ -1,8 +1,8 @@
-#include "gas_generator.h"
+#include "gas_generator.hpp"
 
-#include "instruction.h"
-#include "il_printer.h"
-#include "utils.h"
+#include "instruction.hpp"
+#include "il_printer.hpp"
+#include "utils.hpp"
 
 inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);

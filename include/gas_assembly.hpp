@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "operand.h"
+#include "operand.hpp"
 
 class Assembly {
 public:

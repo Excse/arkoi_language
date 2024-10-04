@@ -1,4 +1,4 @@
-#include "gas_assembly.h"
+#include "gas_assembly.hpp"
 
 #include <iomanip>
 

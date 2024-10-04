@@ -3,14 +3,14 @@
 #include <sstream>
 #include <filesystem>
 
-#include "memory_resolver.h"
-#include "name_resolver.h"
-#include "type_resolver.h"
-#include "gas_generator.h"
-#include "il_generator.h"
-#include "il_printer.h"
-#include "scanner.h"
-#include "parser.h"
+#include "memory_resolver.hpp"
+#include "name_resolver.hpp"
+#include "type_resolver.hpp"
+#include "gas_generator.hpp"
+#include "il_generator.hpp"
+#include "il_printer.hpp"
+#include "scanner.hpp"
+#include "parser.hpp"
 
 int main() {
     std::ifstream file("../example/test.ark");

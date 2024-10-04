@@ -5,10 +5,10 @@
 #include <memory>
 #include <string>
 
-#include "symbol_table.h"
-#include "operand.h"
-#include "visitor.h"
-#include "ast.h"
+#include "symbol_table.hpp"
+#include "operand.hpp"
+#include "visitor.hpp"
+#include "ast.hpp"
 
 class Instruction {
 public:

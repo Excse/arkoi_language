@@ -1,7 +1,7 @@
 #pragma once
 
-#include "instruction.h"
-#include "visitor.h"
+#include "instruction.hpp"
+#include "visitor.hpp"
 
 class MemoryResolver : InstructionVisitor {
 public:

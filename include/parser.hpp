@@ -4,9 +4,9 @@
 #include <vector>
 #include <stack>
 
-#include "token.h"
-#include "utils.h"
-#include "ast.h"
+#include "token.hpp"
+#include "utils.hpp"
+#include "ast.hpp"
 
 class Parser {
 public:
@@ -49,11 +49,11 @@ private:
 
     [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
-    [[nodiscard]] std::shared_ptr<SymbolTable> _current_scope();
+    [[nodiscard]] std::shared_ptr<SymbolTable> &_current_scope();
 
-    std::shared_ptr<SymbolTable> _enter_scope();
+    std::shared_ptr<SymbolTable> &_enter_scope();
 
-    std::shared_ptr<SymbolTable> _exit_scope();
+    void _exit_scope();
 
     [[nodiscard]] const Token &_current();
 
@@ -63,15 +63,13 @@ private:
 
     const Token &_consume(Token::Type type);
 
-    const Token &_consume(const std::function<bool(const Token &)> &predicate, const std::string &expected);
+    [[nodiscard]] std::optional<Token> _try_consume(const std::function<bool(const Token &)> &predicate);
 
-    [[nodiscard]] const Token *_try_consume(const std::function<bool(const Token &)> &predicate);
+    [[nodiscard]] static BinaryNode::Operator _to_binary_operator(const Token &token);
 
-    [[nodiscard]] static BinaryNode::Operator to_binary_operator(const Token &token);
+    [[nodiscard]] static bool _is_factor_operator(const Token &token);
 
-    [[nodiscard]] static bool is_factor_operator(const Token &token);
-
-    [[nodiscard]] static bool is_term_operator(const Token &token);
+    [[nodiscard]] static bool _is_term_operator(const Token &token);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};
