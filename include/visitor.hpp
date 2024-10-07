@@ -28,6 +28,8 @@ class CastNode;
 
 class CallNode;
 
+class IfNode;
+
 class NodeVisitor {
 public:
     virtual ~NodeVisitor() = default;
@@ -55,6 +57,8 @@ public:
     virtual void visit(CastNode &node) = 0;
 
     virtual void visit(CallNode &node) = 0;
+
+    virtual void visit(IfNode &node) = 0;
 };
 
 class ArgumentInstruction;

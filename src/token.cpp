@@ -4,6 +4,8 @@
 
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
     static const std::unordered_map<std::string_view, Type> KEYWORDS = {
+            {"if",    Type::If},
+            {"else",    Type::Else},
             {"fun",    Type::Fun},
             {"return", Type::Return},
             {"u8",     Type::U8},
@@ -56,6 +58,8 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::Identifier: return os << "Identifier";
         case Token::Type::Comment: return os << "Comment";
 
+        case Token::Type::If: return os << "if";
+        case Token::Type::Else: return os << "else";
         case Token::Type::Fun: return os << "fun";
         case Token::Type::Return: return os << "return";
         case Token::Type::U8: return os << "u8";

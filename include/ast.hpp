@@ -66,7 +66,7 @@ private:
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, Type type, BlockNode &&block,
+    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, Type type, std::unique_ptr<BlockNode> &&block,
                  std::shared_ptr<SymbolTable> table)
             : _parameters(std::move(parameters)), _table(std::move(table)), _block(std::move(block)),
               _name(std::move(name)), _type(type) {}
@@ -91,7 +91,7 @@ private:
     std::vector<ParameterNode> _parameters;
     std::shared_ptr<SymbolTable> _table;
     std::shared_ptr<Symbol> _symbol{};
-    BlockNode _block;
+    std::unique_ptr<BlockNode> _block;
     Token _name;
     Type _type;
 };
@@ -113,6 +113,31 @@ public:
 private:
     std::unique_ptr<Node> _expression;
     Type _type{};
+};
+
+class IfNode : public Node {
+public:
+    using Else = std::variant<std::monostate, std::unique_ptr<BlockNode>, std::unique_ptr<IfNode>, std::unique_ptr<Node>>;
+    using Then = std::variant<std::unique_ptr<BlockNode>, std::unique_ptr<Node>>;
+
+public:
+    explicit IfNode(std::unique_ptr<Node> &&condition, Then &&then, Else &&_else)
+            : _condition(std::move(condition)), _then(std::move(then)), _else(std::move(_else)) {}
+
+    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_condition(std::unique_ptr<Node> &&condition) { _condition = std::move(condition); }
+
+    [[nodiscard]] auto &condition() const { return _condition; }
+
+    [[nodiscard]] auto &then() const { return _then; }
+
+    [[nodiscard]] auto &els() const { return _else; }
+
+private:
+    std::unique_ptr<Node> _condition;
+    Then _then;
+    Else _else;
 };
 
 class CallNode : public Node {

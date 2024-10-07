@@ -42,6 +42,8 @@ private:
 
     void visit(CallNode &node) override;
 
+    void visit(IfNode &node) override;
+
     template<typename SymbolType, typename... Args>
     [[nodiscard]] std::shared_ptr<Symbol> _check_non_existence(const Token &token, Args &&... args);
 

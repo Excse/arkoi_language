@@ -31,13 +31,15 @@ private:
 
     [[nodiscard]] Type _parse_type();
 
-    [[nodiscard]] BlockNode _parse_block();
+    [[nodiscard]] std::unique_ptr<BlockNode> _parse_block();
 
     [[nodiscard]] std::unique_ptr<Node> _parse_block_statement();
 
     void _recover_block();
 
     [[nodiscard]] std::unique_ptr<ReturnNode> _parse_return(const Token &keyword);
+
+    [[nodiscard]] std::unique_ptr<IfNode> _parse_if(const Token &keyword);
 
     [[nodiscard]] std::unique_ptr<CallNode> _parse_call(const Token &identifier);
 
@@ -49,9 +51,9 @@ private:
 
     [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
-    [[nodiscard]] std::shared_ptr<SymbolTable> &_current_scope();
+    [[nodiscard]] std::shared_ptr<SymbolTable> _current_scope();
 
-    std::shared_ptr<SymbolTable> &_enter_scope();
+    std::shared_ptr<SymbolTable> _enter_scope();
 
     void _exit_scope();
 
@@ -64,6 +66,8 @@ private:
     const Token &_consume(Token::Type type);
 
     [[nodiscard]] std::optional<Token> _try_consume(const std::function<bool(const Token &)> &predicate);
+
+    std::optional<Token> _try_consume(Token::Type type);
 
     [[nodiscard]] static BinaryNode::Operator _to_binary_operator(const Token &token);
 

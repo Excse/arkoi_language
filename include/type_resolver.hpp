@@ -41,6 +41,8 @@ public:
 
     void visit(CallNode &node) override;
 
+    void visit(IfNode &node) override;
+
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:

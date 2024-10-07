@@ -37,6 +37,8 @@ public:
 
     void visit(CallNode &node) override;
 
+    void visit(IfNode &node) override;
+
     [[nodiscard]] auto &instructions() const { return _instructions; }
 
 private:

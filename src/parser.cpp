@@ -4,7 +4,7 @@
 
 ProgramNode Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
-    auto &own_scope = _enter_scope();
+    auto own_scope = _enter_scope();
 
     while (true) {
         auto &current = _current();
@@ -54,7 +54,7 @@ void Parser::_recover_program() {
 }
 
 std::unique_ptr<FunctionNode> Parser::_parse_function(const Token &) {
-    auto &own_scope = _enter_scope();
+    auto own_scope = _enter_scope();
 
     auto &name = _consume(Token::Type::Identifier);
 
@@ -148,10 +148,10 @@ Type Parser::_parse_type() {
     }
 }
 
-BlockNode Parser::_parse_block() {
+std::unique_ptr<BlockNode> Parser::_parse_block() {
     std::vector<std::unique_ptr<Node>> statements;
 
-    auto &own_scope = _enter_scope();
+    auto own_scope = _enter_scope();
     _consume(Token::Type::Indentation);
 
     while (true) {
@@ -176,7 +176,7 @@ BlockNode Parser::_parse_block() {
     _consume(Token::Type::Dedentation);
     _exit_scope();
 
-    return {std::move(statements), own_scope};
+    return std::make_unique<BlockNode>(std::move(statements), own_scope);
 }
 
 std::unique_ptr<Node> Parser::_parse_block_statement() {
@@ -185,13 +185,16 @@ std::unique_ptr<Node> Parser::_parse_block_statement() {
     auto &current = _consume_any();
     if (current.type() == Token::Type::Return) {
         result = _parse_return(current);
+        _consume(Token::Type::Newline);
     } else if (current.type() == Token::Type::Identifier) {
         result = _parse_call(current);
+        _consume(Token::Type::Newline);
+    } else if (current.type() == Token::Type::If) {
+        result = _parse_if(current);
+        // Don't need to consume a newline, as the then node already parsed it
     } else {
-        throw UnexpectedToken("return or call", current);
+        throw UnexpectedToken("return, if or call", current);
     }
-
-    _consume(Token::Type::Newline);
 
     return result;
 }
@@ -212,6 +215,34 @@ std::unique_ptr<ReturnNode> Parser::_parse_return(const Token &) {
     auto expression = _parse_expression();
 
     return std::make_unique<ReturnNode>(std::move(expression));
+}
+
+std::unique_ptr<IfNode> Parser::_parse_if(const Token &) {
+    auto expression = _parse_expression();
+
+    IfNode::Then then;
+    if (_try_consume(Token::Type::Newline)) {
+        then = _parse_block();
+    } else {
+        then = _parse_block_statement();
+    }
+
+    if (!_try_consume(Token::Type::Else)) {
+        return std::make_unique<IfNode>(std::move(expression), std::move(then), std::monostate());
+    }
+
+    if (auto token = _try_consume(Token::Type::If)) {
+        return std::make_unique<IfNode>(std::move(expression), std::move(then), _parse_if(*token));
+    }
+
+    IfNode::Else _else;
+    if (_try_consume(Token::Type::Newline)) {
+        _else = _parse_block();
+    } else {
+        _else = _parse_block_statement();
+    }
+
+    return std::make_unique<IfNode>(std::move(expression), std::move(then), std::move(_else));
 }
 
 std::unique_ptr<CallNode> Parser::_parse_call(const Token &identifier) {
@@ -297,11 +328,11 @@ std::unique_ptr<Node> Parser::_parse_primary() {
     throw UnexpectedToken("integer, float, identifier, function call, grouping, true or false", consumed);
 }
 
-std::shared_ptr<SymbolTable> &Parser::_current_scope() {
+std::shared_ptr<SymbolTable> Parser::_current_scope() {
     return _scopes.top();
 }
 
-std::shared_ptr<SymbolTable> &Parser::_enter_scope() {
+std::shared_ptr<SymbolTable> Parser::_enter_scope() {
     if (_scopes.empty()) {
         return _scopes.emplace(std::make_shared<SymbolTable>());
     }
@@ -342,6 +373,16 @@ std::optional<Token> Parser::_try_consume(const std::function<bool(const Token &
     auto &current = _current();
 
     if (!predicate(current)) return std::nullopt;
+
+    _next();
+
+    return current;
+}
+
+std::optional<Token> Parser::_try_consume(Token::Type type) {
+    auto &current = _current();
+
+    if (current.type() != type) return std::nullopt;
 
     _next();
 

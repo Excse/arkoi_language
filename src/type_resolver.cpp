@@ -5,7 +5,8 @@
 #include "utils.hpp"
 #include "ast.hpp"
 
-inline IntegralType BOOL_PROMOTED_INT_TYPE(32, false);
+static IntegralType BOOL_PROMOTED_INT_TYPE(32, false);
+static BooleanType BOOL_TYPE;
 
 TypeResolver TypeResolver::resolve(ProgramNode &node) {
     TypeResolver resolver;
@@ -43,7 +44,7 @@ void TypeResolver::visit_as_prototype(FunctionNode &node) {
 void TypeResolver::visit(FunctionNode &node) {
     _return_type = node.type();
 
-    node.block().accept(*this);
+    node.block()->accept(*this);
 }
 
 void TypeResolver::visit(BlockNode &node) {
@@ -177,6 +178,29 @@ void TypeResolver::visit(CallNode &node) {
     }
 
     _current_type = function.return_type();
+}
+
+void TypeResolver::visit(IfNode &node) {
+    // This will set _current_type
+    node.condition()->accept(*this);
+    auto type = _current_type;
+
+    if (!_can_implicit_convert(type, BOOL_TYPE)) {
+        throw std::runtime_error("Return statement has a wrong return op.");
+    }
+
+    if (!std::holds_alternative<BooleanType>(type)) {
+        // We assure to override the const casted node with a new node. Thus, this exception is legal.
+        auto &expression = const_cast<std::unique_ptr<Node> &>(node.condition());
+        node.set_condition(std::make_unique<CastNode>(std::move(expression), type, BOOL_TYPE));
+    }
+
+    std::visit([&](const auto &value) { value->accept(*this); }, node.then());
+
+    std::visit(match{
+            [](const std::monostate &) {},
+            [&](const auto &value) { value->accept(*this); }
+    }, node.els());
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions

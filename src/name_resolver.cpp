@@ -1,5 +1,6 @@
 #include "name_resolver.hpp"
 
+#include "utils.hpp"
 #include "ast.hpp"
 
 NameResolver NameResolver::resolve(ProgramNode &node) {
@@ -44,7 +45,7 @@ void NameResolver::visit(FunctionNode &node) {
     auto &function = std::get<FunctionSymbol>(*node.symbol());
     function.set_parameters(std::move(parameters));
 
-    node.block().accept(*this);
+    node.block()->accept(*this);
     _scopes.pop();
 }
 
@@ -77,6 +78,17 @@ void NameResolver::visit(BinaryNode &node) {
 
 void NameResolver::visit(CastNode &node) {
     node.expression()->accept(*this);
+}
+
+void NameResolver::visit(IfNode &node) {
+    node.condition()->accept(*this);
+
+    std::visit([&](const auto &value) { value->accept(*this); }, node.then());
+
+    std::visit(match{
+            [](const std::monostate &) {},
+            [&](const auto &value) { value->accept(*this); }
+    }, node.els());
 }
 
 void NameResolver::visit(CallNode &node) {

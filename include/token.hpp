@@ -19,6 +19,8 @@ public:
         Comment,
 
         // Keyword
+        If,
+        Else,
         Fun,
         Return,
         U8,

@@ -24,7 +24,7 @@ void IRGenerator::visit(FunctionNode &node) {
 
     _instructions.emplace_back(std::make_unique<BeginInstruction>());
 
-    node.block().accept(*this);
+    node.block()->accept(*this);
 
     _instructions.emplace_back(std::make_unique<EndInstruction>());
 }
@@ -125,6 +125,10 @@ void IRGenerator::visit(CallNode &node) {
     _current_operand = result;
 
     _instructions.emplace_back(std::make_unique<CallInstruction>(result, node.symbol()));
+}
+
+void IRGenerator::visit(IfNode &) {
+    throw std::runtime_error("Not implemented yet.");
 }
 
 Operand IRGenerator::_make_temporary(const Type &type) {
