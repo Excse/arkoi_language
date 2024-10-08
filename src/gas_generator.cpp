@@ -8,6 +8,9 @@ inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);
 inline Register RDI(Register::Base::DI, Size::QWORD);
 inline Register RAX(Register::Base::A, Size::QWORD);
+inline Register AL(Register::Base::A, Size::BYTE);
+
+static BooleanType BOOL_TYPE;
 
 GASGenerator GASGenerator::generate(const std::vector<std::unique_ptr<Instruction>> &instructions,
                                     const std::unordered_map<std::string, Immediate> &data) {
@@ -30,6 +33,8 @@ void GASGenerator::visit(LabelInstruction &instruction) {
 
 void GASGenerator::visit(BeginInstruction &instruction) {
     _comment_instruction(instruction);
+
+    _assembly.label(*instruction.label());
 
     _assembly.push(RBP);
     _assembly.mov(RBP, RSP);
@@ -172,8 +177,32 @@ void GASGenerator::visit(ArgumentInstruction &instruction) {
     _assembly.newline();
 }
 
+void GASGenerator::visit(GotoInstruction &instruction) {
+    _assembly.jmp(instruction.label());
+}
+
+void GASGenerator::visit(IfNotInstruction &instruction) {
+    _comment_instruction(instruction);
+
+    auto src = std::visit(match{
+            [](const Register &reg) -> Operand { return reg; },
+            [](const Memory &memory) -> Operand { return memory; },
+            [&](const Immediate &immediate) -> Operand {
+                auto temporary = _temp1_register(BOOL_TYPE);
+                _assembly.mov(temporary, immediate);
+                return temporary;
+            },
+            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
+    }, instruction.condition());
+
+    _assembly.cmp(src, Immediate((uint32_t) 0));
+    _assembly.je(instruction.label());
+}
+
 void GASGenerator::visit(EndInstruction &instruction) {
     _comment_instruction(instruction);
+
+    _assembly.label(*instruction.label());
 
     _assembly.mov(RSP, RBP);
     _assembly.pop(RBP);
@@ -222,7 +251,7 @@ void GASGenerator::_convert_int_to_int(const IntegralType &from, const Operand &
     auto src = std::visit(match{
             [](const Register &reg) -> Operand { return reg; },
             [&](const Memory &memory) -> Operand {
-                if(std::holds_alternative<Memory>(destination)) {
+                if (std::holds_alternative<Memory>(destination)) {
                     auto temporary = _temp1_register(from);
                     _assembly.mov(temporary, memory);
                     return temporary;
@@ -361,9 +390,9 @@ void GASGenerator::_convert_float_to_bool(const FloatingType &from, const Operan
     auto zero = _temp2_register(from);
     _assembly.pxor(zero, zero);
 
-    if(from.size() == 32) {
+    if (from.size() == 32) {
         _assembly.ucomiss(zero, src);
-    } else if(from.size() == 64) {
+    } else if (from.size() == 64) {
         _assembly.ucomisd(zero, src);
     } else {
         throw std::runtime_error("This cast is not implemented.");

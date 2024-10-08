@@ -29,8 +29,8 @@ void ILPrinter::visit(LabelInstruction &instruction) {
 }
 
 void ILPrinter::visit(BeginInstruction &instruction) {
-    _output << "BEGIN";
-    if (instruction.local_size()) _output << " " << instruction.local_size();
+    _output << "BEGIN " << *instruction.label();
+    if (instruction.local_size()) _output << " LOCALS " << " " << instruction.local_size();
     _output << "\n";
 }
 
@@ -48,8 +48,8 @@ void ILPrinter::visit(CastInstruction &instruction) {
             << " TO @" << instruction.to() << "\n";
 }
 
-void ILPrinter::visit(EndInstruction &) {
-    _output << "END" << "\n";
+void ILPrinter::visit(EndInstruction &instruction) {
+    _output << "END " << *instruction.label() << "\n";
 }
 
 void ILPrinter::visit(CallInstruction &instruction) {
@@ -58,4 +58,12 @@ void ILPrinter::visit(CallInstruction &instruction) {
 
 void ILPrinter::visit(ArgumentInstruction &instruction) {
     _output << "ARG " << instruction.expression() << "\n";
+}
+
+void ILPrinter::visit(GotoInstruction &instruction) {
+    _output << "GOTO " << *instruction.label() << "\n";
+}
+
+void ILPrinter::visit(IfNotInstruction &instruction) {
+    _output << "IF NOT " << instruction.condition() << " GOTO " << *instruction.label() << "\n";
 }

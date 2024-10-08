@@ -56,6 +56,10 @@ void MemoryResolver::visit(CallInstruction &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
 }
 
+void MemoryResolver::visit(IfNotInstruction &instruction) {
+    instruction.set_condition(_resolve_operand(instruction.condition()));
+}
+
 void MemoryResolver::visit(EndInstruction &) {
     // Align the stack to comfort the specifications
     auto local_size = _current_begin->local_size();

@@ -71,9 +71,13 @@ class LabelInstruction;
 
 class BeginInstruction;
 
+class IfNotInstruction;
+
 class CastInstruction;
 
 class CallInstruction;
+
+class GotoInstruction;
 
 class EndInstruction;
 
@@ -96,4 +100,8 @@ public:
     virtual void visit(CallInstruction &instruction) = 0;
 
     virtual void visit(ArgumentInstruction &instruction) = 0;
+
+    virtual void visit(IfNotInstruction &instruction) = 0;
+
+    virtual void visit(GotoInstruction &instruction) = 0;
 };

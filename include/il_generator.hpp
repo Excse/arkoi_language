@@ -44,8 +44,11 @@ public:
 private:
     Operand _make_temporary(const Type &type);
 
+    std::shared_ptr<Symbol> _make_label_symbol();
+
 private:
     std::vector<std::unique_ptr<Instruction>> _instructions{};
+    std::shared_ptr<Symbol> _function_end{};
+    size_t _temp_index{}, _label_index{};
     Operand _current_operand{};
-    size_t _temp_index{};
 };

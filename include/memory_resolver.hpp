@@ -28,6 +28,10 @@ public:
 
     void visit(ArgumentInstruction &instruction) override;
 
+    void visit(IfNotInstruction &instruction) override;
+
+    void visit(GotoInstruction &) override {};
+
     void visit(EndInstruction &) override;
 
     [[nodiscard]] auto &resolved() const { return _resolved; }

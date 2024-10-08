@@ -32,6 +32,10 @@ public:
 
     void label(const Symbol &symbol, bool newline = true);
 
+    void jmp(const Operand &destination);
+
+    void je(const Operand &destination);
+
     void pop(const Operand &destination);
 
     void push(const Operand &src);

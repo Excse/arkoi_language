@@ -35,28 +35,36 @@ void Assembly::movzx(const Operand &destination, const Operand &src) {
 }
 
 void Assembly::movsxd(const Operand &destination, const Operand &src) {
-    if(src == destination) return;
+    if (src == destination) return;
     _output << "\tmovsxd " << destination << ", " << src << "\n";
 }
 
 void Assembly::movss(const Operand &destination, const Operand &src) {
-    if(src == destination) return;
+    if (src == destination) return;
     _output << "\tmovss " << destination << ", " << src << "\n";
 }
 
 void Assembly::movsd(const Operand &destination, const Operand &src) {
-    if(src == destination) return;
+    if (src == destination) return;
     _output << "\tmovsd " << destination << ", " << src << "\n";
 }
 
 void Assembly::mov(const Operand &destination, const Operand &src) {
-    if(src == destination) return;
+    if (src == destination) return;
     _output << "\tmov " << destination << ", " << src << "\n";
 }
 
 void Assembly::label(const Symbol &symbol, bool newline) {
     _output << symbol << ": ";
     if (newline) _output << "\n";
+}
+
+void Assembly::jmp(const Operand &destination) {
+    _output << "\tjmp " << destination << "\n";
+}
+
+void Assembly::je(const Operand &destination) {
+    _output << "\tje " << destination << "\n";
 }
 
 void Assembly::pop(const Operand &destination) {

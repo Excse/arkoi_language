@@ -32,6 +32,10 @@ public:
 
     void visit(ArgumentInstruction &instruction) override;
 
+    void visit(GotoInstruction &instruction) override;
+
+    void visit(IfNotInstruction &instruction) override;
+
     [[nodiscard]] auto &output() const { return _assembly.output(); }
 
 private:

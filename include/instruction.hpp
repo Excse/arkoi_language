@@ -29,6 +29,36 @@ private:
     std::shared_ptr<Symbol> _symbol;
 };
 
+class GotoInstruction : public Instruction {
+public:
+    explicit GotoInstruction(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
+
+    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &label() const { return _label; }
+
+private:
+    std::shared_ptr<Symbol> _label;
+};
+
+class IfNotInstruction : public Instruction {
+public:
+    IfNotInstruction(Operand condition, std::shared_ptr<Symbol> label)
+            : _label(std::move(label)), _condition(std::move(condition)) {}
+
+    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_condition(Operand condition) { _condition = std::move(condition); }
+
+    [[nodiscard]] auto &condition() const { return _condition; }
+
+    [[nodiscard]] auto &label() const { return _label; }
+
+private:
+    std::shared_ptr<Symbol> _label;
+    Operand _condition;
+};
+
 class CallInstruction : public Instruction {
 public:
     explicit CallInstruction(Operand result, std::shared_ptr<Symbol> symbol)
@@ -108,7 +138,8 @@ private:
 
 class BeginInstruction : public Instruction {
 public:
-    explicit BeginInstruction(int64_t local_size = 0) : _local_size(local_size) {}
+    explicit BeginInstruction(std::shared_ptr<Symbol> label, int64_t local_size = 0)
+            : _label(std::move(label)), _local_size(local_size) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -118,13 +149,23 @@ public:
 
     [[nodiscard]] auto local_size() const { return _local_size; }
 
+    [[nodiscard]] auto &label() const { return _label; }
+
 private:
+    std::shared_ptr<Symbol> _label;
     int64_t _local_size;
 };
 
 class EndInstruction : public Instruction {
 public:
+    explicit EndInstruction(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
+
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &label() const { return _label; }
+
+private:
+    std::shared_ptr<Symbol> _label;
 };
 
 class CastInstruction : public Instruction {

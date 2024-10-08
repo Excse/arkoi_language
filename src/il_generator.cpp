@@ -20,13 +20,12 @@ void IRGenerator::visit(ProgramNode &node) {
 }
 
 void IRGenerator::visit(FunctionNode &node) {
-    _instructions.emplace_back(std::make_unique<LabelInstruction>(node.symbol()));
-
-    _instructions.emplace_back(std::make_unique<BeginInstruction>());
+    _function_end = _make_label_symbol();
+    _instructions.emplace_back(std::make_unique<BeginInstruction>(node.symbol()));
 
     node.block()->accept(*this);
 
-    _instructions.emplace_back(std::make_unique<EndInstruction>());
+    _instructions.emplace_back(std::make_unique<EndInstruction>(_function_end));
 }
 
 void IRGenerator::visit(BlockNode &node) {
@@ -76,6 +75,7 @@ void IRGenerator::visit(ReturnNode &node) {
     node.expression()->accept(*this);
 
     _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand), node.type()));
+    _instructions.emplace_back(std::make_unique<GotoInstruction>(_function_end));
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
@@ -127,11 +127,43 @@ void IRGenerator::visit(CallNode &node) {
     _instructions.emplace_back(std::make_unique<CallInstruction>(result, node.symbol()));
 }
 
-void IRGenerator::visit(IfNode &) {
-    throw std::runtime_error("Not implemented yet.");
+void IRGenerator::visit(IfNode &node) {
+    auto after_label = _make_label_symbol();
+    auto then_label = _make_label_symbol();
+    auto else_label = _make_label_symbol();
+
+    // This will set _current_operand
+    node.condition()->accept(*this);
+    auto condition = _current_operand;
+
+    _instructions.push_back(std::make_unique<IfNotInstruction>(condition, else_label));
+
+    _instructions.push_back(std::make_unique<LabelInstruction>(then_label));
+
+    std::visit([&](const auto &value) { value->accept(*this); }, node.then());
+
+    if (std::holds_alternative<std::monostate>(node.els())) {
+        _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
+    } else {
+        _instructions.push_back(std::make_unique<GotoInstruction>(after_label));
+
+        _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
+
+        std::visit(match{
+                [&](const auto &value) { value->accept(*this); },
+                [&](const std::monostate &) {},
+        }, node.els());
+
+        _instructions.push_back(std::make_unique<LabelInstruction>(after_label));
+    }
 }
 
 Operand IRGenerator::_make_temporary(const Type &type) {
     auto name = "$tmp" + to_string(_temp_index++);
     return std::make_shared<Symbol>(TemporarySymbol(name, type));
+}
+
+std::shared_ptr<Symbol> IRGenerator::_make_label_symbol() {
+    auto name = "L" + to_string(_label_index++);
+    return std::make_shared<Symbol>(TemporarySymbol(name, std::monostate()));
 }
