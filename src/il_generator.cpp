@@ -109,12 +109,12 @@ void IRGenerator::visit(CastNode &node) {
 }
 
 void IRGenerator::visit(CallNode &node) {
-    auto &function = std::get<FunctionSymbol>(*node.symbol());
+    const auto &function = std::get<FunctionSymbol>(*node.symbol());
 
     for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
-        auto &parameter = function.parameter_symbols()[index];
+        const auto &parameter = function.parameter_symbols()[index];
 
-        auto &argument = node.arguments()[index];
+        const auto &argument = node.arguments()[index];
         argument->accept(*this);
         auto expression = _current_operand;
 

@@ -45,7 +45,7 @@ void MemoryResolver::visit(CastInstruction &instruction) {
 }
 
 void MemoryResolver::visit(ArgumentInstruction &instruction) {
-    auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
+    const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
 
     auto resolved = _resolve_parameter_register(parameter);
     if (resolved.has_value()) instruction.set_result(*resolved);

@@ -109,7 +109,7 @@ void TypeResolver::visit(ReturnNode &node) {
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
-    auto &parameter = std::get<ParameterSymbol>(*node.symbol());
+    const auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     _current_type = parameter.type();
 }
 
@@ -160,7 +160,7 @@ void TypeResolver::visit(CallNode &node) {
     }
 
     for (size_t index = 0; index < node.arguments().size(); index++) {
-        auto &parameter = std::get<ParameterSymbol>(*function.parameter_symbols()[index]);
+        const auto &parameter = std::get<ParameterSymbol>(*function.parameter_symbols()[index]);
 
         auto &argument = node.arguments()[index];
         argument->accept(*this);
@@ -225,12 +225,12 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     auto t1 = std::visit(match{
         [](const IntegralType &type) -> IntegralType { return type; },
         [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
+        [](const auto &) -> IntegralType { throw std::runtime_error("The left type must be of integral type."); }
     }, left_type);
     auto t2 = std::visit(match{
         [](const IntegralType &type) -> IntegralType { return type; },
         [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
+        [](const auto &) -> IntegralType { throw std::runtime_error("The left type must be of integral type."); }
     }, right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the

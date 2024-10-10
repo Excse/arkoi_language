@@ -7,7 +7,7 @@ ProgramNode Parser::parse_program() {
     auto own_scope = _enter_scope();
 
     while (true) {
-        auto &current = _current();
+        const auto &current = _current();
         if (current.type() == Token::Type::Comment || current.type() == Token::Type::Newline) {
             _next();
             continue;
@@ -34,7 +34,7 @@ ProgramNode Parser::parse_program() {
 }
 
 std::unique_ptr<Node> Parser::_parse_program_statement() {
-    auto &current = _consume_any();
+    const auto &current = _consume_any();
     if (current.type() == Token::Type::Fun) {
         return _parse_function(current);
     } else {
@@ -44,7 +44,7 @@ std::unique_ptr<Node> Parser::_parse_program_statement() {
 
 void Parser::_recover_program() {
     while (true) {
-        auto &current = _current();
+        const auto &current = _current();
         switch (current.type()) {
             case Token::Type::Fun:
             case Token::Type::EndOfFile: return;
@@ -56,7 +56,7 @@ void Parser::_recover_program() {
 std::unique_ptr<FunctionNode> Parser::_parse_function(const Token &) {
     auto own_scope = _enter_scope();
 
-    auto &name = _consume(Token::Type::Identifier);
+    const auto &name = _consume(Token::Type::Identifier);
 
     auto parameters = _parse_parameters();
 
@@ -77,12 +77,9 @@ std::vector<ParameterNode> Parser::_parse_parameters() {
     _consume(Token::Type::LParent);
 
     while (true) {
-        auto &current = _current();
-        if (current.type() == Token::Type::EndOfFile) {
-            throw UnexpectedEndOfTokens();
-        } else if (current.type() == Token::Type::RParent) {
-            break;
-        }
+        const auto &current = _current();
+        if (current.type() == Token::Type::EndOfFile) throw UnexpectedEndOfTokens();
+        if (current.type() == Token::Type::RParent) break;
 
         if (!parameters.empty()) {
             _consume(Token::Type::Comma);
@@ -108,7 +105,7 @@ std::vector<ParameterNode> Parser::_parse_parameters() {
 
 void Parser::_recover_parameters() {
     while (true) {
-        auto &current = _current();
+        const auto &current = _current();
         switch (current.type()) {
             case Token::Type::Comma:
             case Token::Type::RParent:
@@ -119,7 +116,7 @@ void Parser::_recover_parameters() {
 }
 
 ParameterNode Parser::_parse_parameter() {
-    auto &name = _consume(Token::Type::Identifier);
+    const auto &name = _consume(Token::Type::Identifier);
 
     auto type = _parse_type();
 
@@ -155,12 +152,9 @@ std::unique_ptr<BlockNode> Parser::_parse_block() {
     _consume(Token::Type::Indentation);
 
     while (true) {
-        auto &current = _current();
-        if (current.type() == Token::Type::EndOfFile) {
-            throw UnexpectedEndOfTokens();
-        } else if (current.type() == Token::Type::Dedentation) {
-            break;
-        }
+        const auto &current = _current();
+        if (current.type() == Token::Type::EndOfFile) throw UnexpectedEndOfTokens();
+        if (current.type() == Token::Type::Dedentation) break;
 
         try {
             statements.push_back(_parse_block_statement());
@@ -182,7 +176,7 @@ std::unique_ptr<BlockNode> Parser::_parse_block() {
 std::unique_ptr<Node> Parser::_parse_block_statement() {
     std::unique_ptr<Node> result;
 
-    auto &current = _consume_any();
+    const auto &current = _consume_any();
     if (current.type() == Token::Type::Return) {
         result = _parse_return(current);
         _consume(Token::Type::Newline);
@@ -201,7 +195,7 @@ std::unique_ptr<Node> Parser::_parse_block_statement() {
 
 void Parser::_recover_block() {
     while (true) {
-        auto &current = _current();
+        const auto &current = _current();
         switch (current.type()) {
             case Token::Type::Dedentation:
             case Token::Type::Return:
@@ -250,12 +244,9 @@ std::unique_ptr<CallNode> Parser::_parse_call(const Token &identifier) {
 
     std::vector<std::unique_ptr<Node>> arguments;
     while (true) {
-        auto &current = _current();
-        if (current.type() == Token::Type::EndOfFile) {
-            throw UnexpectedEndOfTokens();
-        } else if (current.type() == Token::Type::RParent) {
-            break;
-        }
+        const auto &current = _current();
+        if (current.type() == Token::Type::EndOfFile) throw UnexpectedEndOfTokens();
+        if (current.type() == Token::Type::RParent) break;
 
         if (!arguments.empty()) {
             _consume(Token::Type::Comma);
@@ -299,7 +290,7 @@ std::unique_ptr<Node> Parser::_parse_factor() {
 
 
 std::unique_ptr<Node> Parser::_parse_primary() {
-    auto &consumed = _consume_any();
+    const auto &consumed = _consume_any();
     if (consumed.type() == Token::Type::Integer) {
         auto node = std::make_unique<IntegerNode>(consumed);
         if (_current().type() != Token::Type::At) return node;
@@ -355,13 +346,13 @@ void Parser::_next() {
 }
 
 const Token &Parser::_consume_any() {
-    auto &current = _current();
+    const auto &current = _current();
     _next();
     return current;
 }
 
 const Token &Parser::_consume(Token::Type type) {
-    auto &current = _current();
+    const auto &current = _current();
     _next();
 
     if (current.type() != type) throw UnexpectedToken(to_string(type), current);
@@ -370,7 +361,7 @@ const Token &Parser::_consume(Token::Type type) {
 }
 
 std::optional<Token> Parser::_try_consume(const std::function<bool(const Token &)> &predicate) {
-    auto &current = _current();
+    const auto &current = _current();
 
     if (!predicate(current)) return std::nullopt;
 
@@ -380,7 +371,7 @@ std::optional<Token> Parser::_try_consume(const std::function<bool(const Token &
 }
 
 std::optional<Token> Parser::_try_consume(Token::Type type) {
-    auto &current = _current();
+    const auto &current = _current();
 
     if (current.type() != type) return std::nullopt;
 
@@ -395,7 +386,7 @@ BinaryNode::Operator Parser::_to_binary_operator(const Token &token) {
         case Token::Type::Asterisk: return BinaryNode::Operator::Mul;
         case Token::Type::Plus: return BinaryNode::Operator::Add;
         case Token::Type::Minus: return BinaryNode::Operator::Sub;
-        default: throw std::invalid_argument("This token is a invalid binary operator.");
+        default: std::unreachable();
     }
 }
 

@@ -67,7 +67,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
             return _move_to_temp1(instruction.type(), memory);
         },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(instruction.type(), immediate); },
-        [](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
     }, instruction.left());
 
     auto right_reg = std::visit(match{
@@ -80,7 +80,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 
             return immediate;
         },
-        [](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
+        [](const std::shared_ptr<Symbol> &)-> Operand { std::unreachable(); }
     }, instruction.right());
 
     switch (instruction.op()) {
@@ -129,8 +129,8 @@ void GASGenerator::visit(CallInstruction &instruction) {
 
     _assembly.call(*instruction.symbol());
 
-    auto &function = std::get<FunctionSymbol>(*instruction.symbol());
-    auto return_reg = _returning_register(function.return_type().value());
+    const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
+    const auto return_reg = _returning_register(function.return_type().value());
     _mov(function.return_type().value(), instruction.result(), return_reg);
 
     _assembly.newline();
@@ -140,7 +140,7 @@ void GASGenerator::visit(ArgumentInstruction &instruction) {
     _comment_instruction(instruction);
 
     if (instruction.result()) {
-        auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
+        const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
         _mov(parameter.type().value(), *instruction.result(), instruction.expression());
     } else {
         _assembly.push(instruction.expression());
@@ -160,7 +160,7 @@ void GASGenerator::visit(IfNotInstruction &instruction) {
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(BOOL_TYPE, immediate); },
-        [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
+        [](const std::shared_ptr<Symbol> &)-> Operand { std::unreachable(); }
     }, instruction.condition());
 
     _assembly.cmp(src, Immediate((uint32_t) 0));
@@ -223,7 +223,7 @@ void GASGenerator::_convert_int_to_int(const CastInstruction &instruction, const
             }, instruction.result());
         },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
+        [](const std::shared_ptr<Symbol> &)-> Operand { std::unreachable(); }
     }, instruction.expression());
 
     Operand temporary = _temp1_register(to);
