@@ -4,13 +4,14 @@
 
 #include "instruction.hpp"
 #include "visitor.hpp"
+#include "cfg.hpp"
 
 class ILPrinter : InstructionVisitor {
 private:
     ILPrinter() = default;
 
 public:
-    [[nodiscard]] static ILPrinter print(const std::vector<std::unique_ptr<Instruction>> &instructions);
+    [[nodiscard]] static ILPrinter print(const std::vector<Function> &functions);
 
     [[nodiscard]] static ILPrinter print(Instruction &instruction);
 

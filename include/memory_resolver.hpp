@@ -2,6 +2,7 @@
 
 #include "instruction.hpp"
 #include "visitor.hpp"
+#include "cfg.hpp"
 
 class MemoryResolver : InstructionVisitor {
 public:
@@ -12,7 +13,7 @@ private:
     MemoryResolver() = default;
 
 public:
-    [[nodiscard]] static MemoryResolver resolve(const std::vector<std::unique_ptr<Instruction>> &instructions);
+    [[nodiscard]] static MemoryResolver resolve(const std::vector<Function> &function);
 
     void visit(LabelInstruction &) override {};
 

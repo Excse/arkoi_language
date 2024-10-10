@@ -7,13 +7,14 @@
 #include "instruction.hpp"
 #include "il_printer.hpp"
 #include "visitor.hpp"
+#include "cfg.hpp"
 
 class GASGenerator : InstructionVisitor {
 private:
     GASGenerator() = default;
 
 public:
-    [[nodiscard]] static GASGenerator generate(const std::vector<std::unique_ptr<Instruction>> &instructions,
+    [[nodiscard]] static GASGenerator generate(const std::vector<Function> &functions,
                                                const std::unordered_map<std::string, Immediate> &data);
 
     void visit(LabelInstruction &instruction) override;

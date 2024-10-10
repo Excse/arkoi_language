@@ -6,11 +6,17 @@
 #include "instruction.hpp"
 #include "utils.hpp"
 
-ILPrinter ILPrinter::print(const std::vector<std::unique_ptr<Instruction>> &instructions) {
+ILPrinter ILPrinter::print(const std::vector<Function> &functions) {
     ILPrinter printer;
 
-    for (const auto &item: instructions) {
-        item->accept(printer);
+    auto visit_instructions = [&](const BasicBlock &block) {
+        for (const auto &item: block.instructions()) {
+            item->accept(printer);
+        }
+    };
+
+    for (const auto &function: functions) {
+        function.depth_first_search(visit_instructions);
     }
 
     return printer;
@@ -48,8 +54,8 @@ void ILPrinter::visit(CastInstruction &instruction) {
             << " TO @" << instruction.to() << "\n";
 }
 
-void ILPrinter::visit(EndInstruction &instruction) {
-    _output << "END " << *instruction.label() << "\n";
+void ILPrinter::visit(EndInstruction &) {
+    _output << "END\n";
 }
 
 void ILPrinter::visit(CallInstruction &instruction) {

@@ -158,14 +158,7 @@ private:
 
 class EndInstruction : public Instruction {
 public:
-    explicit EndInstruction(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
-
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &label() const { return _label; }
-
-private:
-    std::shared_ptr<Symbol> _label;
 };
 
 class CastInstruction : public Instruction {

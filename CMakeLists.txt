@@ -64,7 +64,8 @@ target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 # Executable
 # =====================
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp
+        src/cfg.tpp)
 
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 

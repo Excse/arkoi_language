@@ -26,16 +26,17 @@ void IRGenerator::visit(FunctionNode &node) {
 
     // Creates a new basic block that will get populated with instructions
     _current_block = std::make_shared<BasicBlock>();
-    _functions.push_back(_current_block);
-    _current_block->instructions.push_back(std::make_unique<BeginInstruction>(node.symbol()));
+    _functions.emplace_back(_current_block, _function_end_block);
+    _current_block->emplace_back<BeginInstruction>(node.symbol());
 
     node.block()->accept(*this);
 
     // Connect the last current block of this function with the end basic block
-    _current_block->next = _function_end_block;
+    _current_block->set_next(_function_end_block);
 
     _current_block = _function_end_block;
-    _current_block->instructions.push_back(std::make_unique<EndInstruction>(_function_end_symbol));
+    _current_block->emplace_back<LabelInstruction>(_function_end_symbol);
+    _current_block->emplace_back<EndInstruction>();
 }
 
 void IRGenerator::visit(BlockNode &node) {
@@ -85,12 +86,11 @@ void IRGenerator::visit(ReturnNode &node) {
     node.expression()->accept(*this);
 
     // Populate the current basic block with instructions
-    _current_block->instructions.push_back(std::make_unique<ReturnInstruction>(std::move(_current_operand),
-                                                                               node.type().value()));
-    _current_block->instructions.push_back(std::make_unique<GotoInstruction>(_function_end_symbol));
+    _current_block->emplace_back<ReturnInstruction>(std::move(_current_operand), node.type().value());
+    _current_block->emplace_back<GotoInstruction>(_function_end_symbol);
 
     // Connect the current basic block with the function end basic block
-    _current_block->next = _function_end_block;
+    _current_block->set_next(_function_end_block);
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
@@ -110,8 +110,7 @@ void IRGenerator::visit(BinaryNode &node) {
     auto result = _make_temporary(node.type().value());
     _current_operand = result;
 
-    _current_block->instructions.push_back(std::make_unique<BinaryInstruction>(result, left, type, right,
-                                                                               node.type().value()));
+    _current_block->emplace_back<BinaryInstruction>(result, left, type, right, node.type().value());
 }
 
 void IRGenerator::visit(CastNode &node) {
@@ -121,8 +120,7 @@ void IRGenerator::visit(CastNode &node) {
     auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _current_block->instructions.push_back(std::make_unique<CastInstruction>(result, expression, node.from().value(),
-                                                                             node.to()));
+    _current_block->emplace_back<CastInstruction>(result, expression, node.from().value(), node.to());
 }
 
 void IRGenerator::visit(CallNode &node) {
@@ -135,14 +133,13 @@ void IRGenerator::visit(CallNode &node) {
         argument->accept(*this);
         auto expression = _current_operand;
 
-        _current_block->instructions.push_back(std::make_unique<ArgumentInstruction>(std::move(expression),
-                                                                                     parameter));
+        _current_block->emplace_back<ArgumentInstruction>(std::move(expression), parameter);
     }
 
     auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
-    _current_block->instructions.push_back(std::make_unique<CallInstruction>(result, node.symbol()));
+    _current_block->emplace_back<CallInstruction>(result, node.symbol());
 }
 
 void IRGenerator::visit(IfNode &node) {
@@ -152,44 +149,43 @@ void IRGenerator::visit(IfNode &node) {
 
     auto then_label = _make_label_symbol();
     auto then_block = std::make_shared<BasicBlock>();
-    then_block->next = after_block;
+    then_block->set_next(after_block);
 
     auto branch_label = _make_label_symbol();
     std::shared_ptr<BasicBlock> branch_block = nullptr;
     if (node.branch()) {
         branch_block = std::make_shared<BasicBlock>();
-        branch_block->next = after_block;
+        branch_block->set_next(after_block);
     }
 
     // At first the condition will be evaluated and then an "if not" instruction is inserted into the current basic block
     node.condition()->accept(*this);
     auto condition = _current_operand;
 
-    _current_block->instructions.push_back(std::make_unique<IfNotInstruction>(
-        condition, branch_block ? branch_label : after_label));
+    _current_block->emplace_back<IfNotInstruction>(condition, branch_block ? branch_label : after_label);
 
     // Link the current basic block to the branch/after and then basic block
-    _current_block->branch = branch_block ? branch_block : after_block;
-    _current_block->next = then_block;
+    _current_block->set_branch(branch_block ? branch_block : after_block);
+    _current_block->set_next(then_block);
 
     // Generate the instructions for the then basic block
     _current_block = then_block;
-    _current_block->instructions.push_back(std::make_unique<LabelInstruction>(then_label));
+    then_block->emplace_back<LabelInstruction>(then_label);
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
     if (branch_block) {
-        _current_block->instructions.push_back(std::make_unique<GotoInstruction>(after_label));
+        then_block->emplace_back<GotoInstruction>(after_label);
 
         // Generate the instructions for the branch basic block
         _current_block = branch_block;
-        _current_block->instructions.push_back(std::make_unique<LabelInstruction>(branch_label));
+        branch_block->emplace_back<LabelInstruction>(branch_label);
 
         std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
     }
 
     _current_block = after_block;
-    _current_block->instructions.push_back(std::make_unique<LabelInstruction>(after_label));
+    after_block->emplace_back<LabelInstruction>(after_label);
 }
 
 Operand IRGenerator::_make_temporary(const Type &type) {

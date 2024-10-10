@@ -11,14 +11,20 @@ inline Register RAX(Register::Base::A, Size::QWORD);
 
 static BooleanType BOOL_TYPE;
 
-GASGenerator GASGenerator::generate(const std::vector<std::unique_ptr<Instruction>> &instructions,
+GASGenerator GASGenerator::generate(const std::vector<Function> &functions,
                                     const std::unordered_map<std::string, Immediate> &data) {
     GASGenerator generator;
 
     generator._preamble();
 
-    for (const auto &item: instructions) {
-        item->accept(generator);
+    auto visit_instructions = [&](const BasicBlock &block) {
+        for (const auto &item: block.instructions()) {
+            item->accept(generator);
+        }
+    };
+
+    for (const auto &function: functions) {
+        function.depth_first_search(visit_instructions);
     }
 
     generator._data_section(data);
@@ -80,7 +86,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 
             return immediate;
         },
-        [](const std::shared_ptr<Symbol> &)-> Operand { std::unreachable(); }
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
     }, instruction.right());
 
     switch (instruction.op()) {
@@ -160,7 +166,7 @@ void GASGenerator::visit(IfNotInstruction &instruction) {
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(BOOL_TYPE, immediate); },
-        [](const std::shared_ptr<Symbol> &)-> Operand { std::unreachable(); }
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
     }, instruction.condition());
 
     _assembly.cmp(src, Immediate((uint32_t) 0));
@@ -169,8 +175,6 @@ void GASGenerator::visit(IfNotInstruction &instruction) {
 
 void GASGenerator::visit(EndInstruction &instruction) {
     _comment_instruction(instruction);
-
-    _assembly.label(*instruction.label());
 
     _assembly.mov(RSP, RBP);
     _assembly.pop(RBP);
@@ -223,7 +227,7 @@ void GASGenerator::_convert_int_to_int(const CastInstruction &instruction, const
             }, instruction.result());
         },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const std::shared_ptr<Symbol> &)-> Operand { std::unreachable(); }
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     Operand temporary = _temp1_register(to);

@@ -14,11 +14,17 @@ inline Register RBP(Register::Base::BP, Size::QWORD);
 
 inline int64_t STACK_ALIGNMENT = 16;
 
-MemoryResolver MemoryResolver::resolve(const std::vector<std::unique_ptr<Instruction>> &instructions) {
+MemoryResolver MemoryResolver::resolve(const std::vector<Function> &functions) {
     MemoryResolver resolver;
+    
+    auto visit_instructions = [&](const BasicBlock &block) {
+        for (const auto &item: block.instructions()) {
+            item->accept(resolver);
+        }
+    };
 
-    for (const auto &item: instructions) {
-        item->accept(resolver);
+    for (const auto &function: functions) {
+        function.depth_first_search(visit_instructions);
     }
 
     return resolver;
