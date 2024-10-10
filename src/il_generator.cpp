@@ -142,12 +142,12 @@ void IRGenerator::visit(IfNode &node) {
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    if (auto &_else = node.els()) {
+    if (node.els().has_value()) {
         _instructions.push_back(std::make_unique<GotoInstruction>(after_label));
 
         _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
 
-        std::visit([&](const auto &value) { value->accept(*this); }, *_else);
+        std::visit([&](const auto &value) { value->accept(*this); }, *node.els());
 
         _instructions.push_back(std::make_unique<LabelInstruction>(after_label));
     } else {

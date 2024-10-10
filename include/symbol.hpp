@@ -10,7 +10,7 @@ struct Symbol;
 
 class FunctionSymbol {
 public:
-    explicit FunctionSymbol(std::string name) : _name(std::move(name)) {}
+    FunctionSymbol(std::string name) : _name(std::move(name)) {}
 
     void set_parameters(std::vector<std::shared_ptr<Symbol>> &&symbols) { _parameter_symbols = std::move(symbols); }
 

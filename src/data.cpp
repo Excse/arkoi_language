@@ -17,3 +17,7 @@ std::ostream &operator<<(std::ostream &os, const Size &size) {
 size_t _size_to_bytes(const Size &size) {
     return std::to_underlying(size);
 }
+
+size_t _size_to_bits(const Size &size) {
+    return 8 * _size_to_bytes(size);
+}

@@ -12,3 +12,5 @@ enum class Size : size_t {
 std::ostream &operator<<(std::ostream &os, const Size &size);
 
 size_t _size_to_bytes(const Size &size);
+
+size_t _size_to_bits(const Size &size);

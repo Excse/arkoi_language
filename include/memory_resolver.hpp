@@ -49,7 +49,7 @@ private:
 
     [[nodiscard]] Operand _resolve_parameter(const ParameterSymbol &symbol);
 
-    [[nodiscard]] static std::optional<Register> _resolve_argument(const ParameterSymbol &symbol);
+    [[nodiscard]] static std::optional<Register> _resolve_parameter_register(const ParameterSymbol &symbol);
 
 private:
     BeginInstruction *_current_begin{};

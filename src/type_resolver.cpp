@@ -196,7 +196,7 @@ void TypeResolver::visit(IfNode &node) {
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    if (auto &_else = node.els()) std::visit([&](const auto &value) { value->accept(*this); }, *_else);
+    if (node.els().has_value()) std::visit([&](const auto &value) { value->accept(*this); }, *node.els());
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions

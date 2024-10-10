@@ -47,8 +47,8 @@ void MemoryResolver::visit(CastInstruction &instruction) {
 void MemoryResolver::visit(ArgumentInstruction &instruction) {
     auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
 
-    auto reg = _resolve_argument(parameter);
-    if (reg.has_value()) instruction.set_result(reg.value());
+    auto resolved = _resolve_parameter_register(parameter);
+    if (resolved.has_value()) instruction.set_result(*resolved);
 
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
@@ -109,17 +109,8 @@ Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
 }
 
 Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
-    auto &type = symbol.type().value();
-    if (std::holds_alternative<IntegralType>(type) && symbol.int_index() < 6) {
-        auto base = INT_REG_ORDER[symbol.int_index()];
-        return Register(base, type.size());
-    } else if (std::holds_alternative<FloatingType>(type) && symbol.sse_index() < 8) {
-        auto base = SSE_REG_ORDER[symbol.int_index()];
-        return Register(base, type.size());
-    } else if (std::holds_alternative<BooleanType>(type) && symbol.int_index() < 6) {
-        auto base = INT_REG_ORDER[symbol.int_index()];
-        return Register(base, type.size());
-    }
+    auto resolved_register = _resolve_parameter_register(symbol);
+    if (resolved_register.has_value()) { return *resolved_register; }
 
     auto size = symbol.type().value().size();
 
@@ -129,18 +120,22 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     return resolved;
 }
 
-std::optional<Register> MemoryResolver::_resolve_argument(const ParameterSymbol &symbol) {
-    auto &type = symbol.type().value();
-    if (std::holds_alternative<IntegralType>(type) && symbol.int_index() < 6) {
-        auto base = INT_REG_ORDER[symbol.int_index()];
-        return Register(base, type.size());
-    } else if (std::holds_alternative<FloatingType>(type) && symbol.sse_index() < 8) {
-        auto base = SSE_REG_ORDER[symbol.int_index()];
-        return Register(base, type.size());
-    } else if (std::holds_alternative<BooleanType>(type) && symbol.int_index() < 6) {
-        auto base = INT_REG_ORDER[symbol.int_index()];
-        return Register(base, type.size());
-    }
+std::optional<Register> MemoryResolver::_resolve_parameter_register(const ParameterSymbol &symbol) {
+    return std::visit(match{
+        [&](const IntegralType &type) -> std::optional<Register> {
+            if (symbol.int_index() >= 6) return std::nullopt;
 
-    return std::nullopt;
+            return Register(INT_REG_ORDER[symbol.int_index()], type.size());
+        },
+        [&](const BooleanType &type) -> std::optional<Register> {
+            if (symbol.int_index() >= 6) return std::nullopt;
+
+            return Register(INT_REG_ORDER[symbol.int_index()], type.size());
+        },
+        [&](const FloatingType &type) -> std::optional<Register> {
+            if (symbol.sse_index() >= 8) return std::nullopt;
+
+            return Register(SSE_REG_ORDER[symbol.int_index()], type.size());
+        },
+    }, symbol.type().value());
 }

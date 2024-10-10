@@ -20,7 +20,7 @@ bool IntegralType::operator!=(const IntegralType &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const IntegralType &type) {
-    return os << (type.sign() ? "s" : "u") << type.size();
+    return os << (type.sign() ? "s" : "u") << _size_to_bits(type.size());
 }
 
 uint64_t IntegralType::max() const {
@@ -44,7 +44,7 @@ bool FloatingType::operator!=(const FloatingType &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const FloatingType &type) {
-    return os << "f" << type.size();
+    return os << "f" << _size_to_bits(type.size());
 }
 
 std::ostream &operator<<(std::ostream &os, const BooleanType &) {
