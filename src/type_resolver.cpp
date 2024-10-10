@@ -5,7 +5,7 @@
 #include "utils.hpp"
 #include "ast.hpp"
 
-static IntegralType BOOL_PROMOTED_INT_TYPE(32, false);
+static IntegralType BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
 static BooleanType BOOL_TYPE;
 
 TypeResolver TypeResolver::resolve(ProgramNode &node) {
@@ -57,22 +57,22 @@ void TypeResolver::visit(ParameterNode &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
-    if (std::holds_alternative<IntegralType>(node.type())) {
-        parameter.set_int_index(_int_index++);
-    } else if (std::holds_alternative<FloatingType>(node.type())) {
-        parameter.set_sse_index(_sse_index++);
-    }
+    std::visit(match {
+        [&](const IntegralType &) { parameter.set_int_index(_int_index++); },
+        [&](const BooleanType &) { parameter.set_int_index(_int_index++); },
+        [&](const FloatingType &) { parameter.set_sse_index(_sse_index++); }
+    }, node.type());
 }
 
 void TypeResolver::visit(IntegerNode &node) {
     const auto &number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
-    int64_t size;
+    Size size;
     if (sign) {
-        size = std::stoll(number_string) > std::numeric_limits<int32_t>::max() ? 64 : 32;
+        size = std::stoll(number_string) > std::numeric_limits<int32_t>::max() ? Size::QWORD : Size::DWORD;
     } else {
-        size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? 64 : 32;
+        size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? Size::QWORD : Size::DWORD;
     }
 
     _current_type = IntegralType(size, sign);
@@ -81,7 +81,7 @@ void TypeResolver::visit(IntegerNode &node) {
 void TypeResolver::visit(FloatingNode &node) {
     const auto &number_string = node.value().contents();
 
-    auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? 64 : 32;
+    auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
     _current_type = FloatingType(size);
 }
 
@@ -91,21 +91,21 @@ void TypeResolver::visit(BooleanNode &) {
 
 void TypeResolver::visit(ReturnNode &node) {
     node.expression()->accept(*this);
-    auto type = _current_type;
+    auto type = _current_type.value();
 
-    node.set_type(_return_type);
+    node.set_type(_return_type.value());
 
-    if (type == _return_type) {
+    if (type == _return_type.value()) {
         return;
     }
 
-    if (!_can_implicit_convert(type, _return_type)) {
+    if (!_can_implicit_convert(type, _return_type.value())) {
         throw std::runtime_error("Return statement has a wrong return op.");
     }
 
     // We assure to override the const casted node with a new node. Thus, this exception is legal.
     auto &expression = const_cast<std::unique_ptr<Node> &>(node.expression());
-    node.set_expression(std::make_unique<CastNode>(std::move(expression), type, _return_type));
+    node.set_expression(std::make_unique<CastNode>(std::move(expression), type, _return_type.value()));
 }
 
 void TypeResolver::visit(IdentifierNode &node) {
@@ -116,11 +116,11 @@ void TypeResolver::visit(IdentifierNode &node) {
 void TypeResolver::visit(BinaryNode &node) {
     // This will set _current_type
     node.left()->accept(*this);
-    auto left = _current_type;
+    auto left = _current_type.value();
 
     // This will set _current_type
     node.right()->accept(*this);
-    auto right = _current_type;
+    auto right = _current_type.value();
 
     auto result = _arithmetic_conversion(left, right);
     _current_type = result;
@@ -142,7 +142,7 @@ void TypeResolver::visit(BinaryNode &node) {
 void TypeResolver::visit(CastNode &node) {
     // This will set _current_type
     node.expression()->accept(*this);
-    auto from = _current_type;
+    auto from = _current_type.value();
     node.set_from(from);
 
     if (!_can_implicit_convert(from, node.to())) {
@@ -156,7 +156,6 @@ void TypeResolver::visit(CallNode &node) {
     auto function = std::get<FunctionSymbol>(*node.symbol());
 
     if (function.parameter_symbols().size() != node.arguments().size()) {
-        // TODO: Handle this error.
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");
     }
 
@@ -165,16 +164,16 @@ void TypeResolver::visit(CallNode &node) {
 
         auto &argument = node.arguments()[index];
         argument->accept(*this);
-        auto type = _current_type;
+        auto type = _current_type.value();
 
         if (type == parameter.type()) continue;
 
-        if (!_can_implicit_convert(type, parameter.type())) {
+        if (!_can_implicit_convert(type, *parameter.type())) {
             throw std::runtime_error("The arguments type doesn't match the parameters one.");
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<CastNode>(std::move(argument), type, parameter.type());
+        node.arguments()[index] = std::make_unique<CastNode>(std::move(argument), type, *parameter.type());
     }
 
     _current_type = function.return_type();
@@ -183,7 +182,7 @@ void TypeResolver::visit(CallNode &node) {
 void TypeResolver::visit(IfNode &node) {
     // This will set _current_type
     node.condition()->accept(*this);
-    auto type = _current_type;
+    auto type = _current_type.value();
 
     if (!_can_implicit_convert(type, BOOL_TYPE)) {
         throw std::runtime_error("Return statement has a wrong return op.");
@@ -197,10 +196,7 @@ void TypeResolver::visit(IfNode &node) {
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    std::visit(match{
-            [](const std::monostate &) {},
-            [&](const auto &value) { value->accept(*this); }
-    }, node.els());
+    if (auto &_else = node.els()) std::visit([&](const auto &value) { value->accept(*this); }, *_else);
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
@@ -227,20 +223,20 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
 
     // Stage 5: Both operands are converted to a common op C.
     auto t1 = std::visit(match{
-            [](const IntegralType &type) -> IntegralType { return type; },
-            [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
-            [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
+        [](const IntegralType &type) -> IntegralType { return type; },
+        [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
+        [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
     }, left_type);
     auto t2 = std::visit(match{
-            [](const IntegralType &type) -> IntegralType { return type; },
-            [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
-            [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
+        [](const IntegralType &type) -> IntegralType { return type; },
+        [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
+        [](const auto &) -> IntegralType { throw std::invalid_argument("The left type must be of integral type."); }
     }, right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    if (t1.size() < 32) t1 = IntegralType(32, t1.sign());
-    if (t2.size() < 32) t2 = IntegralType(32, t2.sign());
+    if (t1.size() < Size::DWORD) t1 = IntegralType(Size::DWORD, t1.sign());
+    if (t2.size() < Size::DWORD) t2 = IntegralType(Size::DWORD, t2.sign());
 
     // 1. If T1 and T2 are the same type, C is that op.
     if (t1 == t2) return t1;
@@ -269,33 +265,30 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion
 bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destination) {
-    // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type. If the
-    // conversion is listed under integral promotions, it is a promotion and not a conversion.
-    if (std::holds_alternative<IntegralType>(from) && std::holds_alternative<IntegralType>(destination)) return true;
-
-    // If the source type is bool, the value false is converted to zero and the value true is converted to the value one
-    // of the destination type (note that if the destination type is int, this is an integer promotion, not an integer
-    // conversion).
-    if (std::holds_alternative<BooleanType>(from) && std::holds_alternative<IntegralType>(destination)) return true;
-
-    // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
-    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
-
-    // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
-    // truncated, that is, the fractional part is discarded.
-    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<IntegralType>(destination)) return true;
-
-    // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
-    // The result is exact if possible.
-    if (std::holds_alternative<IntegralType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
-
-    // If the source type is bool, the value false is converted to zero, and the value true is converted to one.
-    if (std::holds_alternative<BooleanType>(from) && std::holds_alternative<FloatingType>(destination)) return true;
-
-    // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
-    // converted to a prvalue of type bool.
-    if (std::holds_alternative<IntegralType>(from) && std::holds_alternative<BooleanType>(destination)) return true;
-    if (std::holds_alternative<FloatingType>(from) && std::holds_alternative<BooleanType>(destination)) return true;
-
-    return from == destination;
+    return std::visit(match{
+        // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type.
+        // If the conversion is listed under integral promotions, it is a promotion and not a conversion.
+        [](const IntegralType &, const IntegralType &) { return true; },
+        // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
+        // converted to a prvalue of type bool.
+        [](const IntegralType &, const BooleanType &) { return true; },
+        // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
+        // The result is exact if possible.
+        [](const IntegralType &, const FloatingType &) { return true; },
+        // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
+        [](const FloatingType &, const FloatingType &) { return true; },
+        // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
+        // truncated, that is, the fractional part is discarded.
+        [](const FloatingType &, const IntegralType &) { return true; },
+        // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
+        // converted to a prvalue of type bool.
+        [](const FloatingType &, const BooleanType &) { return true; },
+        // If the source type is bool, the value false is converted to zero and the value true is converted to the value
+        // one of the destination type (note that if the destination type is int, this is an integer promotion, not an
+        // integer conversion).
+        [](const BooleanType &, const IntegralType &) { return true; },
+        // If the source type is bool, the value false is converted to zero, and the value true is converted to one.
+        [](const BooleanType &, const FloatingType &) { return true; },
+        [&](const auto &, const auto &) { return from == destination; },
+    }, from, destination);
 }

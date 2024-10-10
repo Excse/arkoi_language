@@ -15,7 +15,7 @@ public:
 class ProgramNode : public Node {
 public:
     ProgramNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
-            : _statements(std::move(statements)), _table(std::move(table)) {}
+        : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -31,7 +31,7 @@ private:
 class BlockNode : public Node {
 public:
     BlockNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
-            : _statements(std::move(statements)), _table(std::move(table)) {}
+        : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -68,8 +68,8 @@ class FunctionNode : public Node {
 public:
     FunctionNode(Token name, std::vector<ParameterNode> &&parameters, Type type, std::unique_ptr<BlockNode> &&block,
                  std::shared_ptr<SymbolTable> table)
-            : _parameters(std::move(parameters)), _table(std::move(table)), _block(std::move(block)),
-              _name(std::move(name)), _type(type) {}
+        : _parameters(std::move(parameters)), _table(std::move(table)), _block(std::move(block)),
+          _name(std::move(name)), _type(type) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -112,17 +112,17 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    Type _type{};
+    std::optional<Type> _type{};
 };
 
 class IfNode : public Node {
 public:
-    using Else = std::variant<std::monostate, std::unique_ptr<BlockNode>, std::unique_ptr<IfNode>, std::unique_ptr<Node>>;
+    using Else = std::variant<std::unique_ptr<BlockNode>, std::unique_ptr<IfNode>, std::unique_ptr<Node>>;
     using Then = std::variant<std::unique_ptr<BlockNode>, std::unique_ptr<Node>>;
 
 public:
-    explicit IfNode(std::unique_ptr<Node> &&condition, Then &&then, Else &&_else)
-            : _condition(std::move(condition)), _then(std::move(then)), _else(std::move(_else)) {}
+    explicit IfNode(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&_else)
+        : _condition(std::move(condition)), _else(std::move(_else)), _then(std::move(then)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -136,14 +136,14 @@ public:
 
 private:
     std::unique_ptr<Node> _condition;
+    std::optional<Else> _else;
     Then _then;
-    Else _else;
 };
 
 class CallNode : public Node {
 public:
     explicit CallNode(Token name, std::vector<std::unique_ptr<Node>> &&arguments)
-            : _arguments(std::move(arguments)), _name(std::move(name)) {}
+        : _arguments(std::move(arguments)), _name(std::move(name)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -225,7 +225,7 @@ public:
 
 public:
     BinaryNode(std::unique_ptr<Node> &&left, Operator op, std::unique_ptr<Node> &&right)
-            : _left(std::move(left)), _right(std::move(right)), _op(op) {}
+        : _left(std::move(left)), _right(std::move(right)), _op(op) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -245,17 +245,17 @@ public:
 
 private:
     std::unique_ptr<Node> _left, _right;
-    Type _type{};
+    std::optional<Type> _type{};
     Operator _op;
 };
 
 class CastNode : public Node {
 public:
     CastNode(std::unique_ptr<Node> &&expression, Type from, Type to)
-            : _expression(std::move(expression)), _from(from), _to(to) {}
+        : _expression(std::move(expression)), _from(from), _to(to) {}
 
     CastNode(std::unique_ptr<Node> &&expression, Type to)
-            : _expression(std::move(expression)), _from(), _to(to) {}
+        : _expression(std::move(expression)), _from(), _to(to) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -269,5 +269,6 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    Type _from, _to;
+    std::optional<Type> _from;
+    Type _to;
 };

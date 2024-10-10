@@ -55,7 +55,7 @@ public:
 
 public:
     Token(Type type, size_t column, size_t row, std::string contents)
-            : _contents(std::move(contents)), _column(column), _row(row), _type(type) {}
+        : _contents(std::move(contents)), _column(column), _row(row), _type(type) {}
 
     [[nodiscard]] auto &contents() const { return _contents; }
 

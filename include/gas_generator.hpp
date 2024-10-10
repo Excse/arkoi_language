@@ -45,29 +45,21 @@ private:
 
     void _comment_instruction(Instruction &instruction);
 
-    void _convert_int_to_int(const IntegralType &from, const Operand &expression,
-                             const IntegralType &to, const Operand &destination);
+    void _convert_int_to_int(const CastInstruction &instruction, const IntegralType &from, const IntegralType &to);
 
-    void _convert_int_to_float(const IntegralType &from, const Operand &expression,
-                               const FloatingType &to, const Operand &destination);
+    void _convert_int_to_float(const CastInstruction &instruction, const IntegralType &from, const FloatingType &to);
 
-    void _convert_int_to_bool(const IntegralType &from, const Operand &expression,
-                              const BooleanType &to, const Operand &destination);
+    void _convert_int_to_bool(const CastInstruction &instruction, const IntegralType &from, const BooleanType &to);
 
-    void _convert_float_to_float(const FloatingType &from, const Operand &expression,
-                                 const FloatingType &to, const Operand &destination);
+    void _convert_float_to_float(const CastInstruction &instruction, const FloatingType &from, const FloatingType &to);
 
-    void _convert_float_to_int(const FloatingType &from, const Operand &expression,
-                               const IntegralType &to, const Operand &destination);
+    void _convert_float_to_int(const CastInstruction &instruction, const FloatingType &from, const IntegralType &to);
 
-    void _convert_float_to_bool(const FloatingType &from, const Operand &expression,
-                                const BooleanType &to, const Operand &destination);
+    void _convert_float_to_bool(const CastInstruction &instruction, const FloatingType &from, const BooleanType &to);
 
-    void _convert_bool_to_int(const BooleanType &from, const Operand &expression,
-                              const IntegralType &to, const Operand &destination);
+    void _convert_bool_to_int(const CastInstruction &instruction, const BooleanType &from, const IntegralType &to);
 
-    void _convert_bool_to_float(const BooleanType &from, const Operand &expression,
-                                const FloatingType &to, const Operand &destination);
+    void _convert_bool_to_float(const CastInstruction &instruction, const BooleanType &from, const FloatingType &to);
 
     Operand _integer_promote(const IntegralType &type, const Operand &operand);
 
@@ -80,6 +72,10 @@ private:
     void _div(const Type &type, const Operand &destination, const Operand &src);
 
     void _mul(const Type &type, const Operand &destination, const Operand &src);
+
+    [[nodiscard]] Register _move_to_temp1(const Type &type, const Operand &src);
+
+    [[nodiscard]] Register _move_to_temp2(const Type &type, const Operand &src);
 
     [[nodiscard]] static Register _select_register(const Type &type, Register::Base integer, Register::Base floating);
 

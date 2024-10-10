@@ -131,18 +131,18 @@ Type Parser::_parse_type() {
 
     auto token = _consume_any();
     switch (token.type()) {
-        case Token::Type::U8: return IntegralType(8, false);
-        case Token::Type::S8: return IntegralType(8, true);
-        case Token::Type::U16: return IntegralType(16, false);
-        case Token::Type::S16: return IntegralType(16, true);
-        case Token::Type::U32: return IntegralType(32, false);
-        case Token::Type::S32: return IntegralType(32, true);
-        case Token::Type::U64: return IntegralType(64, false);
-        case Token::Type::S64: return IntegralType(64, true);
-        case Token::Type::USize: return IntegralType(64, false);
-        case Token::Type::SSize: return IntegralType(64, true);
-        case Token::Type::F32: return FloatingType(32);
-        case Token::Type::F64: return FloatingType(64);
+        case Token::Type::U8: return IntegralType(Size::BYTE, false);
+        case Token::Type::S8: return IntegralType(Size::BYTE, true);
+        case Token::Type::U16: return IntegralType(Size::WORD, false);
+        case Token::Type::S16: return IntegralType(Size::WORD, true);
+        case Token::Type::U32: return IntegralType(Size::DWORD, false);
+        case Token::Type::S32: return IntegralType(Size::DWORD, true);
+        case Token::Type::U64: return IntegralType(Size::QWORD, false);
+        case Token::Type::S64: return IntegralType(Size::QWORD, true);
+        case Token::Type::USize: return IntegralType(Size::QWORD, false);
+        case Token::Type::SSize: return IntegralType(Size::QWORD, true);
+        case Token::Type::F32: return FloatingType(Size::DWORD);
+        case Token::Type::F64: return FloatingType(Size::QWORD);
         case Token::Type::Bool: return BooleanType();
         default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize, bool", token);
     }
@@ -228,7 +228,7 @@ std::unique_ptr<IfNode> Parser::_parse_if(const Token &) {
     }
 
     if (!_try_consume(Token::Type::Else)) {
-        return std::make_unique<IfNode>(std::move(expression), std::move(then), std::monostate());
+        return std::make_unique<IfNode>(std::move(expression), std::move(then), std::nullopt);
     }
 
     if (auto token = _try_consume(Token::Type::If)) {

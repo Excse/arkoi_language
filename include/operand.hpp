@@ -7,12 +7,7 @@
 #include <memory>
 
 #include "symbol_table.hpp"
-
-enum class Size {
-    BYTE, WORD, DWORD, QWORD
-};
-
-std::ostream &operator<<(std::ostream &os, const Size &size);
+#include "data.hpp"
 
 class Register {
 public:
@@ -36,8 +31,6 @@ public:
 
     [[nodiscard]] auto base() const { return _base; }
 
-    static Size type_to_register_size(const Type &type);
-
 private:
     Size _size;
     Base _base;
@@ -45,19 +38,19 @@ private:
 
 class Memory {
 public:
-    struct Address : std::variant<std::string, int64_t, Register, std::monostate> {
+    struct Address : std::variant<std::string, int64_t, Register> {
         friend std::ostream &operator<<(std::ostream &os, const Address &memory);
     };
 
 public:
     explicit Memory(Size size, Register address, int64_t index, int64_t scale, int64_t displacement)
-            : _index(index), _scale(scale), _displacement(displacement), _address(address), _size(size) {}
+        : _index(index), _scale(scale), _displacement(displacement), _address(address), _size(size) {}
 
     explicit Memory(Size size, Register address, int64_t displacement)
-            : _index(1), _scale(1), _displacement(displacement), _address(address), _size(size) {}
+        : _index(1), _scale(1), _displacement(displacement), _address(address), _size(size) {}
 
     explicit Memory(Size size, Address address)
-            : _index(1), _scale(1), _displacement(0), _address(std::move(address)), _size(size) {}
+        : _index(1), _scale(1), _displacement(0), _address(std::move(address)), _size(size) {}
 
     bool operator==(const Memory &other) const;
 
@@ -85,9 +78,11 @@ struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, fl
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
+
+    [[nodiscard]] Size size() const;
 };
 
-struct Operand : std::variant<std::monostate, Register, Memory, std::shared_ptr<Symbol>, Immediate> {
+struct Operand : std::variant<Register, Memory, std::shared_ptr<Symbol>, Immediate> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Operand &operand);

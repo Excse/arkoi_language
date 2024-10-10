@@ -85,10 +85,7 @@ void NameResolver::visit(IfNode &node) {
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    std::visit(match{
-            [](const std::monostate &) {},
-            [&](const auto &value) { value->accept(*this); }
-    }, node.els());
+    if (auto &_else = node.els()) std::visit([&](const auto &value) { value->accept(*this); }, *_else);
 }
 
 void NameResolver::visit(CallNode &node) {

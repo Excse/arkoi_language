@@ -95,5 +95,5 @@ public:
 class UnexpectedToken : public ParserError {
 public:
     UnexpectedToken(const std::string &expected, const Token &got)
-            : ParserError("Expected " + expected + " but got " + to_string(got.type())) {}
+        : ParserError("Expected " + expected + " but got " + to_string(got.type())) {}
 };

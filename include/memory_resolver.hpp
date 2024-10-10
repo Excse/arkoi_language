@@ -51,10 +51,6 @@ private:
 
     [[nodiscard]] static std::optional<Register> _resolve_argument(const ParameterSymbol &symbol);
 
-    [[nodiscard]] static int64_t _type_to_byte_size(const Type &type);
-
-    [[nodiscard]] static Size _byte_size_to_size(int64_t bytes);
-
 private:
     BeginInstruction *_current_begin{};
     int64_t _parameter_offset{};

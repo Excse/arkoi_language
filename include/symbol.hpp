@@ -24,7 +24,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Symbol>> _parameter_symbols{};
-    Type _return_type{};
+    std::optional<Type> _return_type{};
     std::string _name;
 };
 
@@ -48,21 +48,23 @@ public:
 
 private:
     size_t _int_index{}, _sse_index{};
+    std::optional<Type> _type{};
     std::string _name;
-    Type _type{};
 };
 
 class TemporarySymbol {
 public:
-    TemporarySymbol(std::string name, Type type) : _name(std::move(name)), _type(type) {}
+    TemporarySymbol(std::string name, Type type) : _type(type), _name(std::move(name)) {}
+
+    explicit TemporarySymbol(std::string name) : _type(), _name(std::move(name)) {}
 
     [[nodiscard]] auto &type() const { return _type; }
 
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
+    std::optional<Type> _type;
     std::string _name;
-    Type _type;
 };
 
 struct Symbol : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {

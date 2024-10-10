@@ -54,7 +54,8 @@ add_library(${PROJECT_NAME}_lib
         src/symbol.cpp
         src/type_resolver.cpp
         src/type.cpp
-        src/gas_assembly.cpp)
+        src/gas_assembly.cpp
+        src/data.cpp)
 
 target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 

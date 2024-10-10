@@ -95,7 +95,7 @@ public:
 class UnexpectedChar : public ScannerError {
 public:
     UnexpectedChar(const std::string &expected, char got)
-            : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
+        : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
 };
 
 class UnknownChar : public ScannerError {
@@ -106,5 +106,5 @@ public:
 class NumberOutOfRange : public ScannerError {
 public:
     explicit NumberOutOfRange(const std::string &number) : ScannerError(
-            "The number " + number + " exceeds the 64bit limitations.") {}
+        "The number " + number + " exceeds the 64bit limitations.") {}
 };

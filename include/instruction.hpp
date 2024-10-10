@@ -44,7 +44,7 @@ private:
 class IfNotInstruction : public Instruction {
 public:
     IfNotInstruction(Operand condition, std::shared_ptr<Symbol> label)
-            : _label(std::move(label)), _condition(std::move(condition)) {}
+        : _label(std::move(label)), _condition(std::move(condition)) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -62,7 +62,7 @@ private:
 class CallInstruction : public Instruction {
 public:
     explicit CallInstruction(Operand result, std::shared_ptr<Symbol> symbol)
-            : _symbol(std::move(symbol)), _result(std::move(result)) {}
+        : _symbol(std::move(symbol)), _result(std::move(result)) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -105,8 +105,8 @@ public:
 
 public:
     BinaryInstruction(Operand result, Operand left, Operator op, Operand right, Type type)
-            : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
-              _type(type) {}
+        : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
+          _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -139,7 +139,7 @@ private:
 class BeginInstruction : public Instruction {
 public:
     explicit BeginInstruction(std::shared_ptr<Symbol> label, int64_t local_size = 0)
-            : _label(std::move(label)), _local_size(local_size) {}
+        : _label(std::move(label)), _local_size(local_size) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -171,7 +171,7 @@ private:
 class CastInstruction : public Instruction {
 public:
     CastInstruction(Operand result, Operand expression, Type from, Type to)
-            : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
+        : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -195,7 +195,7 @@ private:
 class ArgumentInstruction : public Instruction {
 public:
     explicit ArgumentInstruction(Operand expression, std::shared_ptr<Symbol> symbol)
-            : _symbol(std::move(symbol)), _expression(std::move(expression)) {}
+        : _symbol(std::move(symbol)), _expression(std::move(expression)) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 

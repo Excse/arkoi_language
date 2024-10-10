@@ -8,7 +8,6 @@ inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);
 inline Register RDI(Register::Base::DI, Size::QWORD);
 inline Register RAX(Register::Base::A, Size::QWORD);
-inline Register AL(Register::Base::A, Size::BYTE);
 
 static BooleanType BOOL_TYPE;
 
@@ -57,38 +56,31 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     _comment_instruction(instruction);
 
     auto left_reg = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [&](const Memory &memory) -> Operand {
-                if (std::holds_alternative<IntegralType>(instruction.type()) &&
-                    !std::holds_alternative<Memory>(instruction.right())) {
-                    if (instruction.op() != BinaryInstruction::Operator::Div) return memory;
-                }
+        [](const Register &reg) -> Operand { return reg; },
+        [&](const Memory &memory) -> Operand {
+            if (std::holds_alternative<IntegralType>(instruction.type())
+                && !std::holds_alternative<Memory>(instruction.right())
+                && instruction.op() != BinaryInstruction::Operator::Div) {
+                return memory;
+            }
 
-                auto reg = _temp1_register(instruction.type());
-                _mov(instruction.type(), reg, memory);
-                return reg;
-            },
-            [&](const Immediate &immediate) -> Operand {
-                auto reg = _temp1_register(instruction.type());
-                _mov(instruction.type(), reg, immediate);
-                return reg;
-            },
-            [](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
+            return _move_to_temp1(instruction.type(), memory);
+        },
+        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(instruction.type(), immediate); },
+        [](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
     }, instruction.left());
 
     auto right_reg = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [&](const Immediate &immediate) -> Operand {
-                if (instruction.op() == BinaryInstruction::Operator::Div) {
-                    auto temporary = _temp2_register(instruction.type());
-                    _mov(instruction.type(), temporary, immediate);
-                    return temporary;
-                }
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Immediate &immediate) -> Operand {
+            if (instruction.op() == BinaryInstruction::Operator::Div) {
+                return _move_to_temp2(instruction.type(), immediate);
+            }
 
-                return immediate;
-            },
-            [](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
+            return immediate;
+        },
+        [](const auto &) -> Operand { throw std::invalid_argument("This operand is not supported."); },
     }, instruction.right());
 
     switch (instruction.op()) {
@@ -117,37 +109,17 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
 void GASGenerator::visit(CastInstruction &instruction) {
     _comment_instruction(instruction);
 
-    if (auto *from_float = std::get_if<FloatingType>(&instruction.from())) {
-        if (auto *to_float = std::get_if<FloatingType>(&instruction.to())) {
-            _convert_float_to_float(*from_float, instruction.expression(), *to_float, instruction.result());
-        } else if (auto *to_int = std::get_if<IntegralType>(&instruction.to())) {
-            _convert_float_to_int(*from_float, instruction.expression(), *to_int, instruction.result());
-        } else if (auto *to_bool = std::get_if<BooleanType>(&instruction.to())) {
-            _convert_float_to_bool(*from_float, instruction.expression(), *to_bool, instruction.result());
-        } else {
-            throw std::runtime_error("This floating cast is not implemented yet.");
-        }
-    } else if (auto *from_int = std::get_if<IntegralType>(&instruction.from())) {
-        if (auto *to_float = std::get_if<FloatingType>(&instruction.to())) {
-            _convert_int_to_float(*from_int, instruction.expression(), *to_float, instruction.result());
-        } else if (auto *to_int = std::get_if<IntegralType>(&instruction.to())) {
-            _convert_int_to_int(*from_int, instruction.expression(), *to_int, instruction.result());
-        } else if (auto *to_bool = std::get_if<BooleanType>(&instruction.to())) {
-            _convert_int_to_bool(*from_int, instruction.expression(), *to_bool, instruction.result());
-        } else {
-            throw std::runtime_error("This integer cast is not implemented yet.");
-        }
-    } else if (auto *from_bool = std::get_if<BooleanType>(&instruction.from())) {
-        if (auto *to_float = std::get_if<FloatingType>(&instruction.to())) {
-            _convert_bool_to_float(*from_bool, instruction.expression(), *to_float, instruction.result());
-        } else if (auto *to_int = std::get_if<IntegralType>(&instruction.to())) {
-            _convert_bool_to_int(*from_bool, instruction.expression(), *to_int, instruction.result());
-        } else {
-            throw std::runtime_error("This boolean cast is not implemented yet.");
-        }
-    } else {
-        throw std::runtime_error("This cast is not implemented yet.");
-    }
+    std::visit(match{
+        [&](const FloatingType &from, const FloatingType &to) { _convert_float_to_float(instruction, from, to); },
+        [&](const FloatingType &from, const IntegralType &to) { _convert_float_to_int(instruction, from, to); },
+        [&](const FloatingType &from, const BooleanType &to) { _convert_float_to_bool(instruction, from, to); },
+        [&](const IntegralType &from, const IntegralType &to) { _convert_int_to_int(instruction, from, to); },
+        [&](const IntegralType &from, const FloatingType &to) { _convert_int_to_float(instruction, from, to); },
+        [&](const IntegralType &from, const BooleanType &to) { _convert_int_to_bool(instruction, from, to); },
+        [&](const BooleanType &from, const FloatingType &to) { _convert_bool_to_float(instruction, from, to); },
+        [&](const BooleanType &from, const IntegralType &to) { _convert_bool_to_int(instruction, from, to); },
+        [&](const BooleanType &, const BooleanType &) { throw std::runtime_error("Unsupported type conversion."); },
+    }, instruction.from(), instruction.to());
 
     _assembly.newline();
 }
@@ -158,8 +130,8 @@ void GASGenerator::visit(CallInstruction &instruction) {
     _assembly.call(*instruction.symbol());
 
     auto &function = std::get<FunctionSymbol>(*instruction.symbol());
-    auto return_reg = _returning_register(function.return_type());
-    _mov(function.return_type(), instruction.result(), return_reg);
+    auto return_reg = _returning_register(function.return_type().value());
+    _mov(function.return_type().value(), instruction.result(), return_reg);
 
     _assembly.newline();
 }
@@ -169,7 +141,7 @@ void GASGenerator::visit(ArgumentInstruction &instruction) {
 
     if (instruction.result()) {
         auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
-        _mov(parameter.type(), *instruction.result(), instruction.expression());
+        _mov(parameter.type().value(), *instruction.result(), instruction.expression());
     } else {
         _assembly.push(instruction.expression());
     }
@@ -185,14 +157,10 @@ void GASGenerator::visit(IfNotInstruction &instruction) {
     _comment_instruction(instruction);
 
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [&](const Immediate &immediate) -> Operand {
-                auto temporary = _temp1_register(BOOL_TYPE);
-                _assembly.mov(temporary, immediate);
-                return temporary;
-            },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(BOOL_TYPE, immediate); },
+        [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
     }, instruction.condition());
 
     _assembly.cmp(src, Immediate((uint32_t) 0));
@@ -217,8 +185,8 @@ void GASGenerator::_preamble() {
     _assembly.directive(".global", {"_start"});
 
     _assembly.newline();
-    _assembly.label(TemporarySymbol("_start", {}));
-    _assembly.call(TemporarySymbol("main", {}));
+    _assembly.label(TemporarySymbol("_start"));
+    _assembly.call(TemporarySymbol("main"));
     _assembly.mov(RDI, RAX);
     _assembly.mov(RAX, Immediate(60));
     _assembly.syscall();
@@ -229,15 +197,13 @@ void GASGenerator::_preamble() {
 void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
     _assembly.directive(".section", {".data"});
     for (const auto &[name, value]: data) {
-        _assembly.label(TemporarySymbol(name, {}), false);
+        _assembly.label(TemporarySymbol(name), false);
 
-        if (std::holds_alternative<float>(value)) {
-            _assembly.directive(".float", {to_string(value)});
-        } else if (std::holds_alternative<double>(value)) {
-            _assembly.directive(".double", {to_string(value)});
-        } else {
-            throw std::invalid_argument("This type is not implemented.");
-        }
+        std::visit(match{
+            [&](const float &) { _assembly.directive(".float", {to_string(value)}); },
+            [&](const double &) { _assembly.directive(".double", {to_string(value)}); },
+            [](const auto &) { throw std::runtime_error("This immediate is not implemented yet."); }
+        }, value);
     }
 }
 
@@ -246,29 +212,22 @@ void GASGenerator::_comment_instruction(Instruction &instruction) {
     _assembly.comment(printer.output().str());
 }
 
-void GASGenerator::_convert_int_to_int(const IntegralType &from, const Operand &expression,
-                                       const IntegralType &to, const Operand &destination) {
+void GASGenerator::_convert_int_to_int(const CastInstruction &instruction, const IntegralType &from,
+                                       const IntegralType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [&](const Memory &memory) -> Operand {
-                if (std::holds_alternative<Memory>(destination)) {
-                    auto temporary = _temp1_register(from);
-                    _assembly.mov(temporary, memory);
-                    return temporary;
-                }
-
-                return memory;
-            },
-            [&](const Immediate &immediate) -> Operand {
-                auto temporary = _temp1_register(from);
-                _assembly.mov(temporary, immediate);
-                return temporary;
-            },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [&](const Memory &memory) -> Operand {
+            return std::visit(match{
+                [&](const Memory &) -> Operand { return _move_to_temp1(from, memory); },
+                [&](const auto &) -> Operand { return memory; },
+            }, instruction.result());
+        },
+        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
+        [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
+    }, instruction.expression());
 
     Operand temporary = _temp1_register(to);
-    if (from.size() == 32 && to.size() == 64) {
+    if (from.size() == Size::DWORD && to.size() == Size::QWORD) {
         _assembly.movsxd(temporary, src);
     } else if (to.size() > from.size()) {
         _assembly.movsx(temporary, src);
@@ -280,181 +239,186 @@ void GASGenerator::_convert_int_to_int(const IntegralType &from, const Operand &
         throw std::runtime_error("This cast is not implemented.");
     }
 
-    _assembly.mov(destination, temporary);
+    _assembly.mov(instruction.result(), temporary);
 }
 
-void GASGenerator::_convert_int_to_float(const IntegralType &from, const Operand &expression,
-                                         const FloatingType &to, const Operand &destination) {
-    auto src = (from.size() >= 32) ? expression : _integer_promote(from, expression);
+void GASGenerator::_convert_int_to_float(const CastInstruction &instruction, const IntegralType &from,
+                                         const FloatingType &to) {
+    auto src = (from.size() >= Size::DWORD)
+               ? instruction.expression()
+               : _integer_promote(from, instruction.expression());
     src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [&](const Immediate &value) -> Operand {
-                auto temporary = _temp1_register(from);
-                _assembly.mov(temporary, value);
-                return temporary;
-            },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Immediate &value) -> Operand { return _move_to_temp1(from, value); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, src);
 
     auto temporary = _temp1_register(to);
-    if (to.size() == 32) {
-        _assembly.cvtsi2ss(temporary, src);
-        _assembly.movss(destination, temporary);
-    } else if (to.size() == 64) {
-        _assembly.cvtsi2sd(temporary, src);
-        _assembly.movsd(destination, temporary);
-    } else {
-        throw std::runtime_error("This cast is not implemented.");
+    switch (to.size()) {
+        case Size::DWORD: {
+            _assembly.cvtsi2ss(temporary, src);
+            _assembly.movss(instruction.result(), temporary);
+            break;
+        }
+        case Size::QWORD: {
+            _assembly.cvtsi2sd(temporary, src);
+            _assembly.movsd(instruction.result(), temporary);
+            break;
+        }
+        default: throw std::runtime_error("This cast is not implemented.");
     }
 }
 
-void GASGenerator::_convert_int_to_bool(const IntegralType &from, const Operand &expression,
-                                        const BooleanType &to, const Operand &destination) {
+void GASGenerator::_convert_int_to_bool(const CastInstruction &instruction, const IntegralType &from,
+                                        const BooleanType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [&](const Immediate &immediate) -> Operand {
-                auto temporary = _temp1_register(from);
-                _assembly.mov(temporary, immediate);
-                return temporary;
-            },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.expression());
 
     auto temporary = _temp1_register(to);
     _assembly.cmp(src, Immediate((uint32_t) 0));
     _assembly.setne(temporary);
-    _assembly.mov(destination, temporary);
+    _assembly.mov(instruction.result(), temporary);
 }
 
-void GASGenerator::_convert_float_to_float(const FloatingType &from, const Operand &expression,
-                                           const FloatingType &to, const Operand &destination) {
+void GASGenerator::_convert_float_to_float(const CastInstruction &instruction, const FloatingType &from,
+                                           const FloatingType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [](const Immediate &) -> Operand { std::unreachable(); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.expression());
 
-    if (from.size() == 32 && to.size() == 32) {
-        _assembly.movss(destination, src);
-    } else if (from.size() == 32 && to.size() == 64) {
+    if (from.size() == Size::DWORD && to.size() == Size::DWORD) {
+        _assembly.movss(instruction.result(), src);
+    } else if (from.size() == Size::DWORD && to.size() == Size::QWORD) {
         auto temporary = _temp1_register(to);
         _assembly.cvtss2sd(temporary, src);
-        _assembly.movsd(destination, temporary);
-    } else if (from.size() == 64 && to.size() == 32) {
+        _assembly.movsd(instruction.result(), temporary);
+    } else if (from.size() == Size::QWORD && to.size() == Size::DWORD) {
         auto temporary = _temp1_register(to);
         _assembly.cvtsd2ss(temporary, src);
-        _assembly.movss(destination, temporary);
-    } else if (from.size() == 64 && to.size() == 64) {
-        _assembly.movsd(destination, src);
+        _assembly.movss(instruction.result(), temporary);
+    } else if (from.size() == Size::QWORD && to.size() == Size::QWORD) {
+        _assembly.movsd(instruction.result(), src);
     } else {
         throw std::runtime_error("This cast is not implemented.");
     }
 }
 
-void GASGenerator::_convert_float_to_int(const FloatingType &from, const Operand &expression,
-                                         const IntegralType &to, const Operand &destination) {
+void GASGenerator::_convert_float_to_int(const CastInstruction &instruction, const FloatingType &from,
+                                         const IntegralType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [](const Immediate &) -> Operand { std::unreachable(); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.expression());
 
     auto bigger_to_temporary = _temp1_register(to);
-    if (to.size() < 32) {
-        auto temp_type = std::make_shared<IntegralType>(32, to.sign());
+    if (to.size() < Size::DWORD) {
+        auto temp_type = std::make_shared<IntegralType>(Size::DWORD, to.sign());
         bigger_to_temporary = _temp1_register(*temp_type);
     }
 
-    if (from.size() == 32) {
-        _assembly.cvttss2si(bigger_to_temporary, src);
-    } else if (from.size() == 64) {
-        _assembly.cvttsd2si(bigger_to_temporary, src);
-    } else {
-        throw std::runtime_error("This cast is not implemented.");
+    switch (from.size()) {
+        case Size::DWORD: {
+            _assembly.cvttss2si(bigger_to_temporary, src);
+            break;
+        }
+        case Size::QWORD: {
+            _assembly.cvttsd2si(bigger_to_temporary, src);
+            break;
+        }
+        default: std::unreachable();
     }
 
     auto to_temporary = _temp1_register(to);
-    _assembly.mov(destination, to_temporary);
+    _assembly.mov(instruction.result(), to_temporary);
 }
 
-void GASGenerator::_convert_float_to_bool(const FloatingType &from, const Operand &expression,
-                                          const BooleanType &to, const Operand &destination) {
+void GASGenerator::_convert_float_to_bool(const CastInstruction &instruction, const FloatingType &from,
+                                          const BooleanType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [](const Immediate &) -> Operand { std::unreachable(); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.expression());
 
     auto zero = _temp2_register(from);
     _assembly.pxor(zero, zero);
 
-    if (from.size() == 32) {
-        _assembly.ucomiss(zero, src);
-    } else if (from.size() == 64) {
-        _assembly.ucomisd(zero, src);
-    } else {
-        throw std::runtime_error("This cast is not implemented.");
+    switch (from.size()) {
+        case Size::DWORD: {
+            _assembly.ucomiss(zero, src);
+            break;
+        }
+        case Size::QWORD: {
+            _assembly.ucomisd(zero, src);
+            break;
+        }
+        default: std::unreachable();
     }
 
     auto temporary = _temp1_register(to);
     _assembly.setne(temporary);
-    _mov(to, destination, temporary);
+    _mov(to, instruction.result(), temporary);
 }
 
-void GASGenerator::_convert_bool_to_int(const BooleanType &from, const Operand &expression,
-                                        const IntegralType &to, const Operand &destination) {
+void GASGenerator::_convert_bool_to_int(const CastInstruction &instruction, const BooleanType &from,
+                                        const IntegralType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [&](const Immediate &immediate) -> Operand {
-                auto temporary = _temp1_register(from);
-                _assembly.mov(temporary, immediate);
-                return temporary;
-            },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.expression());
 
     auto to_temporary = _temp1_register(to);
     _assembly.movzx(to_temporary, src);
-    _assembly.mov(destination, to_temporary);
+    _assembly.mov(instruction.result(), to_temporary);
 }
 
-void GASGenerator::_convert_bool_to_float(const BooleanType &from, const Operand &expression,
-                                          const FloatingType &to, const Operand &destination) {
+void GASGenerator::_convert_bool_to_float(const CastInstruction &instruction, const BooleanType &from,
+                                          const FloatingType &to) {
     auto src = std::visit(match{
-            [](const Register &reg) -> Operand { return reg; },
-            [](const Memory &memory) -> Operand { return memory; },
-            [&](const Immediate &immediate) -> Operand {
-                auto temporary = _temp1_register(from);
-                _assembly.mov(temporary, immediate);
-                return temporary;
-            },
-            [](const auto &) -> Operand { throw std::runtime_error("This operand is not implemented."); }
-    }, expression);
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.expression());
 
-    auto to_int_temporary = _temp1_register(IntegralType(32, false));
+    auto to_int_temporary = _temp1_register(IntegralType(Size::DWORD, false));
     auto to_float_temporary = _temp1_register(to);
 
     _assembly.movzx(to_int_temporary, src);
     _assembly.pxor(to_float_temporary, to_float_temporary);
 
-    if (to.size() == 32) {
-        _assembly.cvtsi2ss(to_float_temporary, to_int_temporary);
-        _assembly.movss(destination, to_float_temporary);
-    } else if (to.size() == 64) {
-        _assembly.cvtsi2sd(to_float_temporary, to_int_temporary);
-        _assembly.movsd(destination, to_float_temporary);
-    } else {
-        throw std::runtime_error("This cast is not implemented.");
+    switch (to.size()) {
+        case Size::DWORD: {
+            _assembly.cvtsi2ss(to_float_temporary, to_int_temporary);
+            _assembly.movss(instruction.result(), to_float_temporary);
+            break;
+        }
+        case Size::QWORD: {
+            _assembly.cvtsi2sd(to_float_temporary, to_int_temporary);
+            _assembly.movsd(instruction.result(), to_float_temporary);
+            break;
+        }
+        default: std::unreachable();
     }
 }
 
 Operand GASGenerator::_integer_promote(const IntegralType &type, const Operand &src) {
-    if (type.size() >= 32) return src;
+    if (type.size() >= Size::DWORD) return src;
 
-    auto new_type = std::make_shared<IntegralType>(32, type.sign());
+    auto new_type = std::make_shared<IntegralType>(Size::DWORD, type.sign());
     auto temporary = _temp1_register(*new_type);
 
     _assembly.movsx(temporary, src);
@@ -463,91 +427,126 @@ Operand GASGenerator::_integer_promote(const IntegralType &type, const Operand &
 }
 
 void GASGenerator::_mov(const Type &type, const Operand &destination, const Operand &src) {
-    if (std::holds_alternative<IntegralType>(type)) return _assembly.mov(destination, src);
-    if (std::holds_alternative<BooleanType>(type)) return _assembly.mov(destination, src);
-
-    if (auto floating = std::get_if<FloatingType>(&type)) {
-        switch (floating->size()) {
-            case 64: return _assembly.movsd(destination, src);
-            case 32: return _assembly.movss(destination, src);
-            default: throw std::invalid_argument("Unsupported floating point size.");
+    std::visit(match{
+        [&](const IntegralType &) { _assembly.mov(destination, src); },
+        [&](const BooleanType &) { _assembly.mov(destination, src); },
+        [&](const FloatingType &type) {
+            switch (type.size()) {
+                case Size::QWORD: {
+                    _assembly.movsd(destination, src);
+                    break;
+                }
+                case Size::DWORD: {
+                    _assembly.movss(destination, src);
+                    break;
+                }
+                default: std::unreachable();
+            }
         }
-    }
-
-    throw std::invalid_argument("This type is not implemented yet.");
+    }, type);
 }
 
 void GASGenerator::_add(const Type &type, const Operand &destination, const Operand &src) {
-    if (std::holds_alternative<IntegralType>(type)) return _assembly.add(destination, src);
-    if (std::holds_alternative<BooleanType>(type)) return _assembly.add(destination, src);
-
-    if (auto floating = std::get_if<FloatingType>(&type)) {
-        switch (floating->size()) {
-            case 64: return _assembly.addsd(destination, src);
-            case 32: return _assembly.addss(destination, src);
-            default: throw std::invalid_argument("Unsupported floating point size.");
+    std::visit(match{
+        [&](const IntegralType &) { _assembly.add(destination, src); },
+        [&](const BooleanType &) { _assembly.add(destination, src); },
+        [&](const FloatingType &type) {
+            switch (type.size()) {
+                case Size::QWORD: {
+                    _assembly.addsd(destination, src);
+                    break;
+                }
+                case Size::DWORD: {
+                    _assembly.addss(destination, src);
+                    break;
+                }
+                default: std::unreachable();
+            }
         }
-    }
-
-    throw std::invalid_argument("This type is not implemented yet.");
+    }, type);
 }
 
 void GASGenerator::_sub(const Type &type, const Operand &destination, const Operand &src) {
-    if (std::holds_alternative<IntegralType>(type)) return _assembly.sub(destination, src);
-    if (std::holds_alternative<BooleanType>(type)) return _assembly.sub(destination, src);
-
-    if (auto floating = std::get_if<FloatingType>(&type)) {
-        switch (floating->size()) {
-            case 64: return _assembly.subsd(destination, src);
-            case 32: return _assembly.subss(destination, src);
-            default: throw std::invalid_argument("Unsupported floating point size.");
+    std::visit(match{
+        [&](const IntegralType &) { _assembly.sub(destination, src); },
+        [&](const BooleanType &) { _assembly.sub(destination, src); },
+        [&](const FloatingType &type) {
+            switch (type.size()) {
+                case Size::QWORD: {
+                    _assembly.subsd(destination, src);
+                    break;
+                }
+                case Size::DWORD: {
+                    _assembly.subss(destination, src);
+                    break;
+                }
+                default: std::unreachable();
+            }
         }
-    }
-
-    throw std::invalid_argument("This type is not implemented yet.");
+    }, type);
 }
 
 void GASGenerator::_div(const Type &type, const Operand &destination, const Operand &src) {
-    if (auto integer = std::get_if<IntegralType>(&type)) {
-        if (integer->sign()) return _assembly.idiv(src);
-        else return _assembly.div(src);
-    }
-    if (std::holds_alternative<BooleanType>(type)) return _assembly.div(src);
-
-    if (auto floating = std::get_if<FloatingType>(&type)) {
-        switch (floating->size()) {
-            case 64: return _assembly.divsd(destination, src);
-            case 32: return _assembly.divss(destination, src);
-            default: throw std::invalid_argument("Unsupported floating point size.");
+    std::visit(match{
+        [&](const IntegralType &type) {
+            if (type.sign()) _assembly.idiv(src);
+            else _assembly.div(src);
+        },
+        [&](const BooleanType &) { _assembly.div(src); },
+        [&](const FloatingType &type) {
+            switch (type.size()) {
+                case Size::QWORD: {
+                    _assembly.divsd(destination, src);
+                    break;
+                }
+                case Size::DWORD: {
+                    _assembly.divss(destination, src);
+                    break;
+                }
+                default: std::unreachable();
+            }
         }
-    }
-
-    throw std::invalid_argument("This type is not implemented yet.");
+    }, type);
 }
 
 void GASGenerator::_mul(const Type &type, const Operand &destination, const Operand &src) {
-    if (std::get_if<IntegralType>(&type)) return _assembly.imul(destination, src);
-    if (std::get_if<BooleanType>(&type)) return _assembly.imul(destination, src);
-
-    if (auto floating = std::get_if<FloatingType>(&type)) {
-        switch (floating->size()) {
-            case 64: return _assembly.mulsd(destination, src);
-            case 32: return _assembly.mulss(destination, src);
-            default: throw std::invalid_argument("Unsupported floating point size.");
+    std::visit(match{
+        [&](const IntegralType &) { _assembly.imul(destination, src); },
+        [&](const BooleanType &) { _assembly.imul(destination, src); },
+        [&](const FloatingType &type) {
+            switch (type.size()) {
+                case Size::QWORD: {
+                    _assembly.mulsd(destination, src);
+                    break;
+                }
+                case Size::DWORD: {
+                    _assembly.mulss(destination, src);
+                    break;
+                }
+                default: std::unreachable();
+            }
         }
-    }
+    }, type);
+}
 
-    throw std::invalid_argument("This type is not implemented yet.");
+Register GASGenerator::_move_to_temp1(const Type &type, const Operand &src) {
+    auto reg = _temp1_register(type);
+    _mov(type, reg, src);
+    return reg;
+}
+
+Register GASGenerator::_move_to_temp2(const Type &type, const Operand &src) {
+    auto reg = _temp2_register(type);
+    _mov(type, reg, src);
+    return reg;
 }
 
 Register GASGenerator::_select_register(const Type &type, Register::Base integer, Register::Base floating) {
-    auto size = Register::type_to_register_size(type);
-
-    if (std::holds_alternative<FloatingType>(type)) return {floating, size};
-    if (std::holds_alternative<IntegralType>(type)) return {integer, size};
-    if (std::holds_alternative<BooleanType>(type)) return {integer, size};
-
-    throw std::invalid_argument("This type is not implemented.");
+    return std::visit(match{
+        [&](const FloatingType &type) -> Register { return {floating, type.size()}; },
+        [&](const IntegralType &type) -> Register { return {integer, type.size()}; },
+        [&](const BooleanType &type) -> Register { return {integer, type.size()}; },
+    }, type);
 }
 
 Register GASGenerator::_returning_register(const Type &type) {

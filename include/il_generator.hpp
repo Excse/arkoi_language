@@ -50,5 +50,5 @@ private:
     std::vector<std::unique_ptr<Instruction>> _instructions{};
     std::shared_ptr<Symbol> _function_end{};
     size_t _temp_index{}, _label_index{};
-    Operand _current_operand{};
+    Operand _current_operand{nullptr};
 };

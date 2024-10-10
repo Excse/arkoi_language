@@ -74,7 +74,7 @@ void IRGenerator::visit(ReturnNode &node) {
     // This will set _current_operand
     node.expression()->accept(*this);
 
-    _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand), node.type()));
+    _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand), node.type().value()));
     _instructions.emplace_back(std::make_unique<GotoInstruction>(_function_end));
 }
 
@@ -92,10 +92,10 @@ void IRGenerator::visit(BinaryNode &node) {
     auto right = _current_operand;
 
     auto type = BinaryInstruction::node_to_instruction(node.op());
-    auto result = _make_temporary(node.type());
+    auto result = _make_temporary(node.type().value());
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right, node.type()));
+    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right, node.type().value()));
 }
 
 void IRGenerator::visit(CastNode &node) {
@@ -105,7 +105,7 @@ void IRGenerator::visit(CastNode &node) {
     auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from(), node.to()));
+    _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from().value(), node.to()));
 }
 
 void IRGenerator::visit(CallNode &node) {
@@ -121,7 +121,7 @@ void IRGenerator::visit(CallNode &node) {
         _instructions.emplace_back(std::make_unique<ArgumentInstruction>(std::move(expression), parameter));
     }
 
-    auto result = _make_temporary(function.return_type());
+    auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
     _instructions.emplace_back(std::make_unique<CallInstruction>(result, node.symbol()));
@@ -142,19 +142,16 @@ void IRGenerator::visit(IfNode &node) {
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    if (std::holds_alternative<std::monostate>(node.els())) {
-        _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
-    } else {
+    if (auto &_else = node.els()) {
         _instructions.push_back(std::make_unique<GotoInstruction>(after_label));
 
         _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
 
-        std::visit(match{
-                [&](const auto &value) { value->accept(*this); },
-                [&](const std::monostate &) {},
-        }, node.els());
+        std::visit([&](const auto &value) { value->accept(*this); }, *_else);
 
         _instructions.push_back(std::make_unique<LabelInstruction>(after_label));
+    } else {
+        _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
     }
 }
 
@@ -165,5 +162,5 @@ Operand IRGenerator::_make_temporary(const Type &type) {
 
 std::shared_ptr<Symbol> IRGenerator::_make_label_symbol() {
     auto name = "L" + to_string(_label_index++);
-    return std::make_shared<Symbol>(TemporarySymbol(name, std::monostate()));
+    return std::make_shared<Symbol>(TemporarySymbol(name));
 }

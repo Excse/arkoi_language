@@ -26,13 +26,13 @@ private:
 class IdentifierAlreadyTaken : public std::runtime_error {
 public:
     explicit IdentifierAlreadyTaken(const std::string &name)
-            : std::runtime_error("The identifier " + name + " is already taken.") {}
+        : std::runtime_error("The identifier " + name + " is already taken.") {}
 };
 
 class IdentifierNotFound : public std::runtime_error {
 public:
     explicit IdentifierNotFound(const std::string &name)
-            : std::runtime_error("The identifier " + name + " was not found.") {}
+        : std::runtime_error("The identifier " + name + " was not found.") {}
 };
 
 #include "../src/symbol_table.tpp"

@@ -2,18 +2,6 @@
 
 #include "utils.hpp"
 
-std::ostream &operator<<(std::ostream &os, const Size &size) {
-    switch (size) {
-        case Size::BYTE: return os << "BYTE";
-        case Size::WORD: return os << "WORD";
-        case Size::DWORD: return os << "DWORD";
-        case Size::QWORD: return os << "QWORD";
-    }
-
-    // As the -Wswitch flag is set, this will never be reached.
-    std::unreachable();
-}
-
 bool Register::operator==(const Register &other) const {
     return _size == other._size && _base == other._base;
 }
@@ -97,32 +85,10 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
     std::unreachable();
 }
 
-Size Register::type_to_register_size(const Type &type) {
-    if (auto *integer = std::get_if<IntegralType>(&type)) {
-        switch (integer->size()) {
-            case 8: return Size::BYTE;
-            case 16: return Size::WORD;
-            case 32: return Size::DWORD;
-            case 64: return Size::QWORD;
-            default: throw std::invalid_argument("This is a invalid integer type size.");
-        }
-    } else if (auto *floating = std::get_if<FloatingType>(&type)) {
-        switch (floating->size()) {
-            case 32: return Size::DWORD;
-            case 64: return Size::QWORD;
-            default: throw std::invalid_argument("This is a invalid floating type size.");
-        }
-    } else if (std::get_if<BooleanType>(&type)) {
-        return Size::BYTE;
-    }
-
-    throw std::runtime_error("This type is not implemented.");
-}
-
 std::ostream &operator<<(std::ostream &os, const Memory::Address &memory) {
     std::visit(match{
-            [](const std::monostate &) {},
-            [&os](const auto &value) { os << value; },
+        [](const std::monostate &) {},
+        [&os](const auto &value) { os << value; },
     }, memory);
     return os;
 }
@@ -161,17 +127,29 @@ bool Memory::operator!=(const Memory &other) const {
 
 std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
     std::visit(match{
-            [&os](const bool &value) { os << (value ? "1" : "0"); },
-            [&os](const auto &value) { os << value; },
+        [&os](const bool &value) { os << (value ? "1" : "0"); },
+        [&os](const auto &value) { os << value; },
     }, immediate);
     return os;
 }
 
+Size Immediate::size() const {
+    return std::visit(match{
+        [](const double &) { return Size::QWORD; },
+        [](const float &) { return Size::DWORD; },
+        [](const bool &) { return Size::BYTE; },
+        [](const uint32_t &) { return Size::DWORD; },
+        [](const int32_t &) { return Size::DWORD; },
+        [](const uint64_t &) { return Size::QWORD; },
+        [](const int64_t &) { return Size::QWORD; },
+    }, *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const Operand &operand) {
     std::visit(match{
-            [](const std::monostate &) {},
-            [&os](const std::shared_ptr<Symbol> &symbol) { os << *symbol; },
-            [&os](const auto &other) { os << other; },
+        [](const std::monostate &) {},
+        [&os](const std::shared_ptr<Symbol> &symbol) { os << *symbol; },
+        [&os](const auto &other) { os << other; },
     }, operand);
     return os;
 }

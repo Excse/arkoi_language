@@ -3,9 +3,11 @@
 #include <cstdint>
 #include <memory>
 
+#include "data.hpp"
+
 class IntegralType {
 public:
-    IntegralType(const int64_t size, const bool sign) : _size(size), _sign(sign) {}
+    IntegralType(const Size size, const bool sign) : _size(size), _sign(sign) {}
 
     bool operator==(const IntegralType &other) const;
 
@@ -13,23 +15,20 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, const IntegralType &type);
 
-    [[nodiscard]] uint64_t max() const {
-        if (_sign) return (1ULL << (_size - 1)) - 1;
-        return (1ULL << _size) - 1;
-    }
+    [[nodiscard]] uint64_t max() const;
 
     [[nodiscard]] auto size() const { return _size; }
 
     [[nodiscard]] auto sign() const { return _sign; }
 
 private:
-    int64_t _size;
+    Size _size;
     bool _sign;
 };
 
 class FloatingType {
 public:
-    explicit FloatingType(const int64_t size) : _size(size) {}
+    explicit FloatingType(const Size size) : _size(size) {}
 
     bool operator==(const FloatingType &other) const;
 
@@ -40,7 +39,7 @@ public:
     [[nodiscard]] auto size() const { return _size; }
 
 private:
-    int64_t _size;
+    Size _size;
 };
 
 class BooleanType {
@@ -50,10 +49,14 @@ public:
     bool operator==(const BooleanType &other) const;
 
     bool operator!=(const BooleanType &other) const;
+
+    [[nodiscard]] auto size() const { return Size::BYTE; }
 };
 
-struct Type : std::variant<std::monostate, IntegralType, FloatingType, BooleanType> {
+struct Type : std::variant<IntegralType, FloatingType, BooleanType> {
     using variant::variant;
 
     friend std::ostream &operator<<(std::ostream &os, const Type &type);
+
+    [[nodiscard]] Size size() const;
 };

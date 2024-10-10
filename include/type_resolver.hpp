@@ -51,7 +51,7 @@ private:
     static bool _can_implicit_convert(const Type &from, const Type &destination);
 
 private:
-    Type _current_type{}, _return_type{};
+    std::optional<Type> _current_type{}, _return_type{};
     size_t _sse_index{}, _int_index{};
     bool _failed{};
 };
