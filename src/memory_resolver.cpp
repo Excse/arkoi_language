@@ -48,7 +48,7 @@ void MemoryResolver::visit(ArgumentInstruction &instruction) {
     const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
 
     auto resolved = _resolve_parameter_register(parameter);
-    if (resolved.has_value()) instruction.set_result(*resolved);
+    if (resolved) instruction.set_result(*resolved);
 
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
@@ -92,7 +92,7 @@ Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
     Operand resolved = std::visit(match{
         [&](const TemporarySymbol &symbol) -> Operand { return _resolve_temporary(symbol); },
         [&](const ParameterSymbol &symbol) -> Operand { return _resolve_parameter(symbol); },
-        [](const auto &) -> Operand { std::unreachable(); }
+        [](const FunctionSymbol &) -> Operand { std::unreachable(); }
     }, *symbol);
 
     _resolved.emplace(symbol, resolved);
@@ -102,7 +102,7 @@ Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
 Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
     auto size = symbol.type().value().size();
 
-    _current_begin->increase_local_size(_size_to_bytes(size));
+    _current_begin->increase_local_size((int64_t) _size_to_bytes(size));
     auto resolved = Memory(symbol.type().value().size(), RBP, -_current_begin->local_size());
 
     return resolved;
@@ -110,11 +110,11 @@ Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
 
 Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     auto resolved_register = _resolve_parameter_register(symbol);
-    if (resolved_register.has_value()) { return *resolved_register; }
+    if (resolved_register) return *resolved_register;
 
     auto size = symbol.type().value().size();
 
-    _parameter_offset += _size_to_bytes(size);
+    _parameter_offset += (int64_t) _size_to_bytes(size);
     auto resolved = Memory(size, RBP, _parameter_offset);
 
     return resolved;

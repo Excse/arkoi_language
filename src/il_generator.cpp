@@ -20,12 +20,22 @@ void IRGenerator::visit(ProgramNode &node) {
 }
 
 void IRGenerator::visit(FunctionNode &node) {
-    _function_end = _make_label_symbol();
-    _instructions.emplace_back(std::make_unique<BeginInstruction>(node.symbol()));
+    // Create the function end symbol and basic block
+    _function_end_block = std::make_shared<BasicBlock>();
+    _function_end_symbol = _make_label_symbol();
+
+    // Creates a new basic block that will get populated with instructions
+    _current_block = std::make_shared<BasicBlock>();
+    _functions.push_back(_current_block);
+    _current_block->instructions.push_back(std::make_unique<BeginInstruction>(node.symbol()));
 
     node.block()->accept(*this);
 
-    _instructions.emplace_back(std::make_unique<EndInstruction>(_function_end));
+    // Connect the last current block of this function with the end basic block
+    _current_block->next = _function_end_block;
+
+    _current_block = _function_end_block;
+    _current_block->instructions.push_back(std::make_unique<EndInstruction>(_function_end_symbol));
 }
 
 void IRGenerator::visit(BlockNode &node) {
@@ -74,8 +84,13 @@ void IRGenerator::visit(ReturnNode &node) {
     // This will set _current_operand
     node.expression()->accept(*this);
 
-    _instructions.emplace_back(std::make_unique<ReturnInstruction>(std::move(_current_operand), node.type().value()));
-    _instructions.emplace_back(std::make_unique<GotoInstruction>(_function_end));
+    // Populate the current basic block with instructions
+    _current_block->instructions.push_back(std::make_unique<ReturnInstruction>(std::move(_current_operand),
+                                                                               node.type().value()));
+    _current_block->instructions.push_back(std::make_unique<GotoInstruction>(_function_end_symbol));
+
+    // Connect the current basic block with the function end basic block
+    _current_block->next = _function_end_block;
 }
 
 void IRGenerator::visit(IdentifierNode &node) {
@@ -95,7 +110,8 @@ void IRGenerator::visit(BinaryNode &node) {
     auto result = _make_temporary(node.type().value());
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<BinaryInstruction>(result, left, type, right, node.type().value()));
+    _current_block->instructions.push_back(std::make_unique<BinaryInstruction>(result, left, type, right,
+                                                                               node.type().value()));
 }
 
 void IRGenerator::visit(CastNode &node) {
@@ -105,7 +121,8 @@ void IRGenerator::visit(CastNode &node) {
     auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<CastInstruction>(result, expression, node.from().value(), node.to()));
+    _current_block->instructions.push_back(std::make_unique<CastInstruction>(result, expression, node.from().value(),
+                                                                             node.to()));
 }
 
 void IRGenerator::visit(CallNode &node) {
@@ -118,41 +135,61 @@ void IRGenerator::visit(CallNode &node) {
         argument->accept(*this);
         auto expression = _current_operand;
 
-        _instructions.emplace_back(std::make_unique<ArgumentInstruction>(std::move(expression), parameter));
+        _current_block->instructions.push_back(std::make_unique<ArgumentInstruction>(std::move(expression),
+                                                                                     parameter));
     }
 
     auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
-    _instructions.emplace_back(std::make_unique<CallInstruction>(result, node.symbol()));
+    _current_block->instructions.push_back(std::make_unique<CallInstruction>(result, node.symbol()));
 }
 
 void IRGenerator::visit(IfNode &node) {
+    // The basic blocks and labels that are necessary for an if statement
     auto after_label = _make_label_symbol();
-    auto then_label = _make_label_symbol();
-    auto else_label = _make_label_symbol();
+    auto after_block = std::make_shared<BasicBlock>();
 
-    // This will set _current_operand
+    auto then_label = _make_label_symbol();
+    auto then_block = std::make_shared<BasicBlock>();
+    then_block->next = after_block;
+
+    auto branch_label = _make_label_symbol();
+    std::shared_ptr<BasicBlock> branch_block = nullptr;
+    if (node.branch()) {
+        branch_block = std::make_shared<BasicBlock>();
+        branch_block->next = after_block;
+    }
+
+    // At first the condition will be evaluated and then an "if not" instruction is inserted into the current basic block
     node.condition()->accept(*this);
     auto condition = _current_operand;
 
-    _instructions.push_back(std::make_unique<IfNotInstruction>(condition, else_label));
+    _current_block->instructions.push_back(std::make_unique<IfNotInstruction>(
+        condition, branch_block ? branch_label : after_label));
 
-    _instructions.push_back(std::make_unique<LabelInstruction>(then_label));
+    // Link the current basic block to the branch/after and then basic block
+    _current_block->branch = branch_block ? branch_block : after_block;
+    _current_block->next = then_block;
+
+    // Generate the instructions for the then basic block
+    _current_block = then_block;
+    _current_block->instructions.push_back(std::make_unique<LabelInstruction>(then_label));
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    if (node.els().has_value()) {
-        _instructions.push_back(std::make_unique<GotoInstruction>(after_label));
+    if (branch_block) {
+        _current_block->instructions.push_back(std::make_unique<GotoInstruction>(after_label));
 
-        _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
+        // Generate the instructions for the branch basic block
+        _current_block = branch_block;
+        _current_block->instructions.push_back(std::make_unique<LabelInstruction>(branch_label));
 
-        std::visit([&](const auto &value) { value->accept(*this); }, *node.els());
-
-        _instructions.push_back(std::make_unique<LabelInstruction>(after_label));
-    } else {
-        _instructions.push_back(std::make_unique<LabelInstruction>(else_label));
+        std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
     }
+
+    _current_block = after_block;
+    _current_block->instructions.push_back(std::make_unique<LabelInstruction>(after_label));
 }
 
 Operand IRGenerator::_make_temporary(const Type &type) {

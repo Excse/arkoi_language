@@ -121,8 +121,8 @@ public:
     using Then = std::variant<std::unique_ptr<BlockNode>, std::unique_ptr<Node>>;
 
 public:
-    explicit IfNode(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&_else)
-        : _condition(std::move(condition)), _else(std::move(_else)), _then(std::move(then)) {}
+    explicit IfNode(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&branch)
+        : _condition(std::move(condition)), _branch(std::move(branch)), _then(std::move(then)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -130,13 +130,13 @@ public:
 
     [[nodiscard]] auto &condition() const { return _condition; }
 
-    [[nodiscard]] auto &then() const { return _then; }
+    [[nodiscard]] auto &branch() const { return _branch; }
 
-    [[nodiscard]] auto &els() const { return _else; }
+    [[nodiscard]] auto &then() const { return _then; }
 
 private:
     std::unique_ptr<Node> _condition;
-    std::optional<Else> _else;
+    std::optional<Else> _branch;
     Then _then;
 };
 

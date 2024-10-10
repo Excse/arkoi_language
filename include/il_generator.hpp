@@ -1,10 +1,9 @@
 #pragma once
 
-#include <stack>
-
 #include "instruction.hpp"
 #include "visitor.hpp"
 #include "type.hpp"
+#include "cfg.hpp"
 
 class IRGenerator : NodeVisitor {
 private:
@@ -39,7 +38,7 @@ public:
 
     void visit(IfNode &node) override;
 
-    [[nodiscard]] auto &instructions() const { return _instructions; }
+    [[nodiscard]] auto &functions() const { return _functions; }
 
 private:
     Operand _make_temporary(const Type &type);
@@ -47,8 +46,10 @@ private:
     std::shared_ptr<Symbol> _make_label_symbol();
 
 private:
-    std::vector<std::unique_ptr<Instruction>> _instructions{};
-    std::shared_ptr<Symbol> _function_end{};
+    std::vector<std::shared_ptr<BasicBlock>> _functions{};
+    std::shared_ptr<BasicBlock> _function_end_block{};
+    std::shared_ptr<Symbol> _function_end_symbol{};
+    std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
     Operand _current_operand{nullptr};
 };

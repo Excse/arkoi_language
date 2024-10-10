@@ -3,10 +3,10 @@
 #include <iostream>
 
 enum class Size : size_t {
-    BYTE = 8,
-    WORD = 16,
-    DWORD = 32,
-    QWORD = 64,
+    BYTE = 1,
+    WORD = 2,
+    DWORD = 4,
+    QWORD = 8,
 };
 
 std::ostream &operator<<(std::ostream &os, const Size &size);
