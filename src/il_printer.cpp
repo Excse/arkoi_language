@@ -6,7 +6,7 @@
 #include "instruction.hpp"
 #include "utils.hpp"
 
-ILPrinter ILPrinter::print(const std::vector<Function> &functions) {
+ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
     ILPrinter printer;
 
     auto visit_instructions = [&](const BasicBlock &block) {
@@ -15,8 +15,8 @@ ILPrinter ILPrinter::print(const std::vector<Function> &functions) {
         }
     };
 
-    for (const auto &function: functions) {
-        function.depth_first_search(visit_instructions);
+    for (auto &cfg: cfgs) {
+        cfg.depth_first_search(visit_instructions);
     }
 
     return printer;

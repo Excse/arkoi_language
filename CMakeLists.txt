@@ -49,14 +49,15 @@ add_library(${PROJECT_NAME}_lib
         src/il_generator.cpp
         src/il_printer.cpp
         src/gas_generator.cpp
-        src/memory_resolver.cpp
+        src/symbol_resolver.cpp
         src/operand.cpp
         src/symbol.cpp
         src/type_resolver.cpp
         src/type.cpp
         src/gas_assembly.cpp
         src/data.cpp
-        src/cfg.cpp)
+        src/cfg.cpp
+        src/optimization.cpp)
 
 target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 
@@ -64,8 +65,7 @@ target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 # Executable
 # =====================
 
-add_executable(${PROJECT_NAME} src/main.cpp
-        src/cfg.tpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_lib)
 

@@ -11,7 +11,7 @@ private:
     ILPrinter() = default;
 
 public:
-    [[nodiscard]] static ILPrinter print(const std::vector<Function> &functions);
+    [[nodiscard]] static ILPrinter print(std::vector<CFG> &cfgs);
 
     [[nodiscard]] static ILPrinter print(Instruction &instruction);
 

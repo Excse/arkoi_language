@@ -11,8 +11,8 @@ public:
     template<typename InstructionType, typename... Args>
     void emplace_back(Args &&... args);
 
-    void depth_first_search(const std::function<void(const BasicBlock &)> &callback,
-                            std::unordered_set<const BasicBlock *> &visited) const;
+    void depth_first_search(const std::function<void(BasicBlock &)> &callback,
+                            std::unordered_set<BasicBlock *> &visited);
 
     [[nodiscard]] auto &instructions() const { return _instructions; }
 
@@ -29,12 +29,12 @@ private:
     std::shared_ptr<BasicBlock> _next{}, _branch{};
 };
 
-class Function {
+class CFG {
 public:
-    Function(std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
+    CFG(std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
         : _start(std::move(start)), _end(std::move(end)) {}
 
-    void depth_first_search(const std::function<void(const BasicBlock &)> &callback) const;
+    void depth_first_search(const std::function<void(BasicBlock &)> &callback);
 
     [[nodiscard]] auto &start() const { return _start; }
 

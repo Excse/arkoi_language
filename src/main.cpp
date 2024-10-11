@@ -3,7 +3,7 @@
 #include <sstream>
 #include <filesystem>
 
-#include "memory_resolver.hpp"
+#include "symbol_resolver.hpp"
 #include "name_resolver.hpp"
 #include "type_resolver.hpp"
 #include "gas_generator.hpp"
@@ -45,20 +45,19 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    auto ir_generator = IRGenerator::generate(program);
-    auto printer = ILPrinter::print(ir_generator.functions());
-    std::cout << printer.output().str();
+    auto il_generator = IRGenerator::generate(program);
+    auto il_printer = ILPrinter::print(il_generator.cfgs());
+    std::cout << il_printer.output().str();
 
-    std::cout << "~~~~~~~~~~~~       Memory Resolver        ~~~~~~~~~~~~" << std::endl;
+    std::cout << "~~~~~~~~~~~~         Optimizing           ~~~~~~~~~~~~" << std::endl;
 
-    auto memory_resolver = MemoryResolver::resolve(ir_generator.functions());
-    for (const auto &item: memory_resolver.resolved()) {
-        std::cout << ":> " << *item.first << " = " << item.second << std::endl;
-    }
+    OptimizationManager optimization_manager;
+    optimization_manager.push_back(std::make_unique<SymbolResolver>());
+    optimization_manager.optimize(il_generator.cfgs());
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    auto gas_generator = GASGenerator::generate(ir_generator.functions(), memory_resolver.data());
+    auto gas_generator = GASGenerator::generate(il_generator.cfgs(), il_generator.constants());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();

@@ -11,7 +11,7 @@ inline Register RAX(Register::Base::A, Size::QWORD);
 
 static BooleanType BOOL_TYPE;
 
-GASGenerator GASGenerator::generate(const std::vector<Function> &functions,
+GASGenerator GASGenerator::generate(std::vector<CFG> &cfgs,
                                     const std::unordered_map<std::string, Immediate> &data) {
     GASGenerator generator;
 
@@ -23,8 +23,8 @@ GASGenerator GASGenerator::generate(const std::vector<Function> &functions,
         }
     };
 
-    for (const auto &function: functions) {
-        function.depth_first_search(visit_instructions);
+    for (auto &cfg: cfgs) {
+        cfg.depth_first_search(visit_instructions);
     }
 
     generator._data_section(data);

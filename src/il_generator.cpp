@@ -26,7 +26,7 @@ void IRGenerator::visit(FunctionNode &node) {
 
     // Creates a new basic block that will get populated with instructions
     _current_block = std::make_shared<BasicBlock>();
-    _functions.emplace_back(_current_block, _function_end_block);
+    _cfgs.emplace_back(_current_block, _function_end_block);
     _current_block->emplace_back<BeginInstruction>(node.symbol());
 
     node.block()->accept(*this);
@@ -35,8 +35,8 @@ void IRGenerator::visit(FunctionNode &node) {
     _current_block->set_next(_function_end_block);
 
     _current_block = _function_end_block;
-    _current_block->emplace_back<LabelInstruction>(_function_end_symbol);
-    _current_block->emplace_back<EndInstruction>();
+    _function_end_block->emplace_back<LabelInstruction>(_function_end_symbol);
+    _function_end_block->emplace_back<EndInstruction>();
 }
 
 void IRGenerator::visit(BlockNode &node) {
@@ -69,11 +69,15 @@ void IRGenerator::visit(IntegerNode &node) {
 void IRGenerator::visit(FloatingNode &node) {
     const auto &number_string = node.value().contents();
 
+    auto name = ".LC" + std::to_string(_data_index++);
     auto value = std::stold(number_string);
+
     if (value > std::numeric_limits<float>::max()) {
-        _current_operand = (double) value;
+        _constants[name] = (double) value;
+        _current_operand = Memory(Size::QWORD, Memory::Address(name));;
     } else {
-        _current_operand = (float) value;
+        _constants[name] = (float) value;
+        _current_operand = Memory(Size::DWORD, Memory::Address(name));;
     }
 }
 
@@ -143,6 +147,10 @@ void IRGenerator::visit(CallNode &node) {
 }
 
 void IRGenerator::visit(IfNode &node) {
+    // At first the condition will be evaluated and then an "if not" instruction is inserted into the current basic block
+    node.condition()->accept(*this);
+    auto condition = _current_operand;
+
     // The basic blocks and labels that are necessary for an if statement
     auto after_label = _make_label_symbol();
     auto after_block = std::make_shared<BasicBlock>();
@@ -150,23 +158,24 @@ void IRGenerator::visit(IfNode &node) {
     auto then_label = _make_label_symbol();
     auto then_block = std::make_shared<BasicBlock>();
     then_block->set_next(after_block);
+    _current_block->set_next(then_block);
 
-    auto branch_label = _make_label_symbol();
-    std::shared_ptr<BasicBlock> branch_block = nullptr;
+    std::shared_ptr<BasicBlock> branch_block;
+    std::shared_ptr<Symbol> branch_label;
     if (node.branch()) {
+        branch_label = _make_label_symbol();
         branch_block = std::make_shared<BasicBlock>();
+
+        _current_block->set_branch(branch_block);
         branch_block->set_next(after_block);
+    } else {
+        branch_label = after_label;
+        branch_block = after_block;
+
+        _current_block->set_branch(after_block);
     }
 
-    // At first the condition will be evaluated and then an "if not" instruction is inserted into the current basic block
-    node.condition()->accept(*this);
-    auto condition = _current_operand;
-
-    _current_block->emplace_back<IfNotInstruction>(condition, branch_block ? branch_label : after_label);
-
-    // Link the current basic block to the branch/after and then basic block
-    _current_block->set_branch(branch_block ? branch_block : after_block);
-    _current_block->set_next(then_block);
+    _current_block->emplace_back<IfNotInstruction>(condition, branch_label);
 
     // Generate the instructions for the then basic block
     _current_block = then_block;
@@ -174,7 +183,7 @@ void IRGenerator::visit(IfNode &node) {
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    if (branch_block) {
+    if (node.branch()) {
         then_block->emplace_back<GotoInstruction>(after_label);
 
         // Generate the instructions for the branch basic block

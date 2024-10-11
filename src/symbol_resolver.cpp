@@ -1,4 +1,4 @@
-#include "memory_resolver.hpp"
+#include "symbol_resolver.hpp"
 
 #include "instruction.hpp"
 #include "utils.hpp"
@@ -14,43 +14,31 @@ inline Register RBP(Register::Base::BP, Size::QWORD);
 
 inline int64_t STACK_ALIGNMENT = 16;
 
-MemoryResolver MemoryResolver::resolve(const std::vector<Function> &functions) {
-    MemoryResolver resolver;
-    
-    auto visit_instructions = [&](const BasicBlock &block) {
-        for (const auto &item: block.instructions()) {
-            item->accept(resolver);
-        }
-    };
-
-    for (const auto &function: functions) {
-        function.depth_first_search(visit_instructions);
-    }
-
-    return resolver;
+void SymbolResolver::instruction(Instruction &instruction) {
+    instruction.accept(*this);
 }
 
-void MemoryResolver::visit(BeginInstruction &instruction) {
+void SymbolResolver::visit(BeginInstruction &instruction) {
     _current_begin = &instruction;
     _parameter_offset = 8;
 }
 
-void MemoryResolver::visit(ReturnInstruction &instruction) {
+void SymbolResolver::visit(ReturnInstruction &instruction) {
     instruction.set_value(_resolve_operand(instruction.value()));
 }
 
-void MemoryResolver::visit(BinaryInstruction &instruction) {
+void SymbolResolver::visit(BinaryInstruction &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_left(_resolve_operand(instruction.left()));
     instruction.set_right(_resolve_operand(instruction.right()));
 }
 
-void MemoryResolver::visit(CastInstruction &instruction) {
+void SymbolResolver::visit(CastInstruction &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-void MemoryResolver::visit(ArgumentInstruction &instruction) {
+void SymbolResolver::visit(ArgumentInstruction &instruction) {
     const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
 
     auto resolved = _resolve_parameter_register(parameter);
@@ -59,39 +47,29 @@ void MemoryResolver::visit(ArgumentInstruction &instruction) {
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-void MemoryResolver::visit(CallInstruction &instruction) {
+void SymbolResolver::visit(CallInstruction &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
 }
 
-void MemoryResolver::visit(IfNotInstruction &instruction) {
+void SymbolResolver::visit(IfNotInstruction &instruction) {
     instruction.set_condition(_resolve_operand(instruction.condition()));
 }
 
-void MemoryResolver::visit(EndInstruction &) {
+void SymbolResolver::visit(EndInstruction &) {
     // Align the stack to comfort the specifications
     auto local_size = _current_begin->local_size();
     local_size = (local_size + STACK_ALIGNMENT - 1) & ~(STACK_ALIGNMENT - 1);
     _current_begin->set_local_size(local_size);
 }
 
-Operand MemoryResolver::_resolve_operand(const Operand &operand) {
+Operand SymbolResolver::_resolve_operand(const Operand &operand) {
     return std::visit(match{
         [&](const std::shared_ptr<Symbol> &value) -> Operand { return _resolve_symbol(value); },
-        [&](const Immediate &value) -> Operand { return _resolve_immediate(value); },
         [](const auto &value) -> Operand { return value; }
     }, operand);
 }
 
-Operand MemoryResolver::_resolve_immediate(const Immediate &immediate) {
-    if (!std::holds_alternative<float>(immediate) && !std::holds_alternative<double>(immediate)) return immediate;
-
-    auto data_name = ".LC" + std::to_string(_data_index++);
-    _data[data_name] = immediate;
-
-    return Memory(immediate.size(), Memory::Address(data_name));
-}
-
-Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
+Operand SymbolResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
     auto result = _resolved.find(symbol);
     if (result != _resolved.end()) return result->second;
 
@@ -105,7 +83,7 @@ Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
     return resolved;
 }
 
-Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
+Operand SymbolResolver::_resolve_temporary(const TemporarySymbol &symbol) {
     auto size = symbol.type().value().size();
 
     _current_begin->increase_local_size((int64_t) _size_to_bytes(size));
@@ -114,7 +92,7 @@ Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
     return resolved;
 }
 
-Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
+Operand SymbolResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     auto resolved_register = _resolve_parameter_register(symbol);
     if (resolved_register) return *resolved_register;
 
@@ -126,7 +104,7 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
     return resolved;
 }
 
-std::optional<Register> MemoryResolver::_resolve_parameter_register(const ParameterSymbol &symbol) {
+std::optional<Register> SymbolResolver::_resolve_parameter_register(const ParameterSymbol &symbol) {
     return std::visit(match{
         [&](const IntegralType &type) -> std::optional<Register> {
             if (symbol.int_index() >= 6) return std::nullopt;

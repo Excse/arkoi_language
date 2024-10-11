@@ -14,7 +14,7 @@ private:
     GASGenerator() = default;
 
 public:
-    [[nodiscard]] static GASGenerator generate(const std::vector<Function> &functions,
+    [[nodiscard]] static GASGenerator generate(std::vector<CFG> &cfgs,
                                                const std::unordered_map<std::string, Immediate> &data);
 
     void visit(LabelInstruction &instruction) override;
