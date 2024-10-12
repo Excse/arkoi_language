@@ -19,7 +19,7 @@ GASGenerator GASGenerator::generate(std::vector<CFG> &cfgs,
 
     auto visit_instructions = [&](BasicBlock &block) {
         for (auto &instruction: block.instructions()) {
-            std::visit([&](auto &value) { value.accept(generator); }, instruction);
+            instruction->accept(generator);
         }
     };
 
@@ -230,7 +230,7 @@ void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate
     }
 }
 
-void GASGenerator::_comment_instruction(InstructionBase &instruction) {
+void GASGenerator::_comment_instruction(Instruction &instruction) {
     auto printer = ILPrinter::print(instruction);
     _assembly.comment(printer.output().str());
 }

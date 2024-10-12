@@ -2,19 +2,25 @@
 
 #include "utils.hpp"
 
-void ConstantFolding::instruction(Instruction &to_replace) {
-    std::visit(match{
-        [&](const BinaryInstruction &instruction) { to_replace = _binary(instruction); },
-        [&](const CastInstruction &instruction) { to_replace = _cast(instruction); },
-        [](const auto &) {},
-    }, to_replace);
+void ConstantFolding::new_block(BasicBlock &block) {
+    for (auto &instruction: block.instructions()) {
+        std::optional<std::unique_ptr<Instruction>> new_instruction;
+
+        if (auto binary = dynamic_cast<BinaryInstruction *>(instruction.get())) {
+            new_instruction = _binary(*binary);
+        } else if (auto cast = dynamic_cast<CastInstruction *>(instruction.get())) {
+            new_instruction = _cast(*cast);
+        }
+
+        if (new_instruction) instruction = std::move(*new_instruction);
+    }
 }
 
-Instruction ConstantFolding::_binary(const BinaryInstruction &instruction) {
+std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const BinaryInstruction &instruction) {
     auto *right_immediate = std::get_if<Immediate>(&instruction.right());
     auto *left_immediate = std::get_if<Immediate>(&instruction.left());
 
-    if (!right_immediate || !left_immediate) return instruction;
+    if (!right_immediate || !left_immediate) return std::nullopt;
 
     auto apply_operator = [&](auto left, auto right) -> Operand {
         switch (instruction.op()) {
@@ -39,13 +45,13 @@ Instruction ConstantFolding::_binary(const BinaryInstruction &instruction) {
         [](const auto &, const auto &) -> Operand { std::unreachable(); }
     }, *right_immediate, *left_immediate);
 
-    return StoreInstruction(instruction.result(), value, instruction.type());
+    return std::make_unique<StoreInstruction>(instruction.result(), value, instruction.type());
 }
 
-Instruction ConstantFolding::_cast(const CastInstruction &instruction) {
+std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const CastInstruction &instruction) {
     auto *expression = std::get_if<Immediate>(&instruction.expression());
 
-    if (!expression) return instruction;
+    if (!expression) return std::nullopt;
 
     auto apply_operator = [&](auto expression, const Type &to) -> Operand {
         return std::visit(match{
@@ -73,7 +79,5 @@ Instruction ConstantFolding::_cast(const CastInstruction &instruction) {
         return apply_operator(value, instruction.to());
     }, *expression);
 
-//    return instruction;
-
-    return StoreInstruction(instruction.result(), value, instruction.to());
+    return std::make_unique<StoreInstruction>(instruction.result(), value, instruction.to());
 }

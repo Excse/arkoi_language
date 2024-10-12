@@ -9,9 +9,7 @@ class MemoryResolver : public OptimizationPass, InstructionVisitor {
 public:
     void new_cfg(CFG &) override {}
 
-    void new_block(BasicBlock &) override {}
-
-    void instruction(Instruction &instruction) override;
+    void new_block(BasicBlock &block) override;
 
     void visit(LabelInstruction &) override {};
 

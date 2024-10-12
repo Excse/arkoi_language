@@ -9,8 +9,6 @@ public:
     virtual void new_cfg(CFG &cfg) = 0;
 
     virtual void new_block(BasicBlock &block) = 0;
-
-    virtual void instruction(Instruction &instruction) = 0;
 };
 
 class OptimizationManager {

@@ -46,7 +46,7 @@ private:
 
     void _data_section(const std::unordered_map<std::string, Immediate> &data);
 
-    void _comment_instruction(InstructionBase &instruction);
+    void _comment_instruction(Instruction &instruction);
 
     void _convert_int_to_int(const CastInstruction &instruction, const IntegralType &from, const IntegralType &to);
 

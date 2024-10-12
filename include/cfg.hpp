@@ -25,8 +25,8 @@ public:
     [[nodiscard]] auto &next() const { return _next; }
 
 private:
+    std::vector<std::unique_ptr<Instruction>> _instructions{};
     std::shared_ptr<BasicBlock> _next{}, _branch{};
-    std::vector<Instruction> _instructions{};
 };
 
 class CFG {

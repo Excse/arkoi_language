@@ -14,8 +14,10 @@ inline Register RBP(Register::Base::BP, Size::QWORD);
 
 inline int64_t STACK_ALIGNMENT = 16;
 
-void MemoryResolver::instruction(Instruction &instruction) {
-    std::visit([&](auto &value) { value.accept(*this); }, instruction);
+void MemoryResolver::new_block(BasicBlock &block) {
+    for (const auto &instruction: block.instructions()) {
+        instruction->accept(*this);
+    }
 }
 
 void MemoryResolver::visit(BeginInstruction &instruction) {

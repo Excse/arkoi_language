@@ -11,7 +11,7 @@ ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
 
     auto visit_instructions = [&](BasicBlock &block) {
         for (auto &instruction: block.instructions()) {
-            std::visit([&](auto &value) { value.accept(printer); }, instruction);
+            instruction->accept(printer);
         }
     };
 
@@ -22,7 +22,7 @@ ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
     return printer;
 }
 
-ILPrinter ILPrinter::print(InstructionBase &instruction) {
+ILPrinter ILPrinter::print(Instruction &instruction) {
     ILPrinter printer;
 
     instruction.accept(printer);

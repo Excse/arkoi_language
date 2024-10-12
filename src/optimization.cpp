@@ -10,12 +10,6 @@ void OptimizationManager::optimize(std::vector<CFG> &cfgs) {
             for (const auto &pass: _passes) {
                 pass->new_block(block);
             }
-
-            for (const auto &pass: _passes) {
-                for (auto &instruction: block.instructions()) {
-                    pass->instruction(instruction);
-                }
-            }
         });
     }
 }
