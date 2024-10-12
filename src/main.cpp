@@ -3,7 +3,8 @@
 #include <sstream>
 #include <filesystem>
 
-#include "symbol_resolver.hpp"
+#include "constant_folding.hpp"
+#include "memory_resolver.hpp"
 #include "name_resolver.hpp"
 #include "type_resolver.hpp"
 #include "gas_generator.hpp"
@@ -25,23 +26,17 @@ int main() {
     Parser parser(scanner.tokenize());
     auto program = parser.parse_program();
 
-    if (scanner.has_failed() || parser.has_failed()) {
-        exit(1);
-    }
+    if (scanner.has_failed() || parser.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~        Name Resolver         ~~~~~~~~~~~~" << std::endl;
 
     auto name_resolver = NameResolver::resolve(program);
-    if (name_resolver.has_failed()) {
-        exit(1);
-    }
+    if (name_resolver.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~        Type Resolver         ~~~~~~~~~~~~" << std::endl;
 
     auto type_resolver = TypeResolver::resolve(program);
-    if (type_resolver.has_failed()) {
-        exit(1);
-    }
+    if (type_resolver.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
@@ -49,15 +44,21 @@ int main() {
     auto il_printer = ILPrinter::print(il_generator.cfgs());
     std::cout << il_printer.output().str();
 
-    std::cout << "~~~~~~~~~~~~         Optimizing           ~~~~~~~~~~~~" << std::endl;
+    std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
     OptimizationManager optimization_manager;
-    optimization_manager.push_back(std::make_unique<SymbolResolver>());
+    optimization_manager.emplace_back<ConstantFolding>();
+    auto &memory_resolver = optimization_manager.emplace_back<MemoryResolver>();
     optimization_manager.optimize(il_generator.cfgs());
+
+    std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
+
+    auto optimized_printer = ILPrinter::print(il_generator.cfgs());
+    std::cout << optimized_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    auto gas_generator = GASGenerator::generate(il_generator.cfgs(), il_generator.constants());
+    auto gas_generator = GASGenerator::generate(il_generator.cfgs(), memory_resolver.constants());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();
@@ -73,17 +74,13 @@ int main() {
 
     std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
     int assemble_result = std::system(assemble_command.c_str());
-    if (WEXITSTATUS(assemble_result) != 0) {
-        exit(1);
-    }
+    if (WEXITSTATUS(assemble_result) != 0) exit(1);
 
     std::cout << "~~~~~~~~~~~~            Link              ~~~~~~~~~~~~" << std::endl;
 
     std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
     int link_result = std::system(link_command.c_str());
-    if (WEXITSTATUS(link_result) != 0) {
-        exit(1);
-    }
+    if (WEXITSTATUS(link_result) != 0) exit(1);
 
     std::cout << "~~~~~~~~~~~~           Execute            ~~~~~~~~~~~~" << std::endl;
 

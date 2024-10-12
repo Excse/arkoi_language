@@ -10,14 +10,14 @@
 #include "visitor.hpp"
 #include "ast.hpp"
 
-class Instruction {
+class InstructionBase {
 public:
-    virtual ~Instruction() = default;
+    virtual ~InstructionBase() = default;
 
     virtual void accept(InstructionVisitor &visitor) = 0;
 };
 
-class LabelInstruction : public Instruction {
+class LabelInstruction : public InstructionBase {
 public:
     explicit LabelInstruction(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
 
@@ -29,7 +29,7 @@ private:
     std::shared_ptr<Symbol> _symbol;
 };
 
-class GotoInstruction : public Instruction {
+class GotoInstruction : public InstructionBase {
 public:
     explicit GotoInstruction(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
 
@@ -41,7 +41,7 @@ private:
     std::shared_ptr<Symbol> _label;
 };
 
-class IfNotInstruction : public Instruction {
+class IfNotInstruction : public InstructionBase {
 public:
     IfNotInstruction(Operand condition, std::shared_ptr<Symbol> label)
         : _label(std::move(label)), _condition(std::move(condition)) {}
@@ -59,7 +59,7 @@ private:
     Operand _condition;
 };
 
-class CallInstruction : public Instruction {
+class CallInstruction : public InstructionBase {
 public:
     explicit CallInstruction(Operand result, std::shared_ptr<Symbol> symbol)
         : _symbol(std::move(symbol)), _result(std::move(result)) {}
@@ -77,7 +77,7 @@ private:
     Operand _result;
 };
 
-class ReturnInstruction : public Instruction {
+class ReturnInstruction : public InstructionBase {
 public:
     explicit ReturnInstruction(Operand value, Type type) : _value(std::move(value)), _type(type) {}
 
@@ -94,7 +94,7 @@ private:
     Type _type;
 };
 
-class BinaryInstruction : public Instruction {
+class BinaryInstruction : public InstructionBase {
 public:
     enum class Operator {
         Add,
@@ -136,7 +136,7 @@ private:
     Type _type;
 };
 
-class BeginInstruction : public Instruction {
+class BeginInstruction : public InstructionBase {
 public:
     explicit BeginInstruction(std::shared_ptr<Symbol> label, int64_t local_size = 0)
         : _label(std::move(label)), _local_size(local_size) {}
@@ -156,12 +156,12 @@ private:
     int64_t _local_size;
 };
 
-class EndInstruction : public Instruction {
+class EndInstruction : public InstructionBase {
 public:
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 };
 
-class CastInstruction : public Instruction {
+class CastInstruction : public InstructionBase {
 public:
     CastInstruction(Operand result, Operand expression, Type from, Type to)
         : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
@@ -185,7 +185,7 @@ private:
     Type _from, _to;
 };
 
-class ArgumentInstruction : public Instruction {
+class ArgumentInstruction : public InstructionBase {
 public:
     explicit ArgumentInstruction(Operand expression, std::shared_ptr<Symbol> symbol)
         : _symbol(std::move(symbol)), _expression(std::move(expression)) {}
@@ -207,3 +207,29 @@ private:
     std::shared_ptr<Symbol> _symbol;
     Operand _expression;
 };
+
+class StoreInstruction : public InstructionBase {
+public:
+    explicit StoreInstruction(Operand result, Operand value, Type type)
+        : _value(std::move(value)), _result(std::move(result)), _type(type) {}
+
+    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+
+    void set_value(Operand operand) { _value = std::move(operand); };
+
+    [[nodiscard]] auto &value() const { return _value; };
+
+    void set_result(Operand result) { _result = std::move(result); };
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &type() const { return _type; };
+
+private:
+    Operand _value, _result;
+    Type _type;
+};
+
+using Instruction = std::variant<LabelInstruction, GotoInstruction, IfNotInstruction, CallInstruction,
+    ReturnInstruction, BinaryInstruction, BeginInstruction, EndInstruction, CastInstruction, ArgumentInstruction,
+    StoreInstruction>;

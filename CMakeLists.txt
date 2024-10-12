@@ -49,7 +49,7 @@ add_library(${PROJECT_NAME}_lib
         src/il_generator.cpp
         src/il_printer.cpp
         src/gas_generator.cpp
-        src/symbol_resolver.cpp
+        src/memory_resolver.cpp
         src/operand.cpp
         src/symbol.cpp
         src/type_resolver.cpp
@@ -57,7 +57,8 @@ add_library(${PROJECT_NAME}_lib
         src/gas_assembly.cpp
         src/data.cpp
         src/cfg.cpp
-        src/optimization.cpp)
+        src/optimization.cpp
+        src/constant_folding.cpp)
 
 target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 

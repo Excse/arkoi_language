@@ -17,9 +17,9 @@ GASGenerator GASGenerator::generate(std::vector<CFG> &cfgs,
 
     generator._preamble();
 
-    auto visit_instructions = [&](const BasicBlock &block) {
-        for (const auto &item: block.instructions()) {
-            item->accept(generator);
+    auto visit_instructions = [&](BasicBlock &block) {
+        for (auto &instruction: block.instructions()) {
+            std::visit([&](auto &value) { value.accept(generator); }, instruction);
         }
     };
 
@@ -173,6 +173,25 @@ void GASGenerator::visit(IfNotInstruction &instruction) {
     _assembly.je(instruction.label());
 }
 
+void GASGenerator::visit(StoreInstruction &instruction) {
+    _comment_instruction(instruction);
+
+    auto value = std::visit(match{
+        [](const Register &reg) -> Operand { return reg; },
+        [&](const Memory &memory) -> Operand {
+            if (!std::holds_alternative<Memory>(instruction.result())) return memory;
+
+            return _move_to_temp1(instruction.type(), memory);
+        },
+        [&](const Immediate &immediate) -> Operand { return immediate; },
+        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+    }, instruction.value());
+
+    _mov(instruction.type(), instruction.result(), value);
+
+    _assembly.newline();
+}
+
 void GASGenerator::visit(EndInstruction &instruction) {
     _comment_instruction(instruction);
 
@@ -211,7 +230,7 @@ void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate
     }
 }
 
-void GASGenerator::_comment_instruction(Instruction &instruction) {
+void GASGenerator::_comment_instruction(InstructionBase &instruction) {
     auto printer = ILPrinter::print(instruction);
     _assembly.comment(printer.output().str());
 }

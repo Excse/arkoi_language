@@ -50,7 +50,7 @@ public:
 
     bool operator!=(const BooleanType &other) const;
 
-    [[nodiscard]] auto size() const { return Size::BYTE; }
+    [[nodiscard]] static auto size() { return Size::BYTE; }
 };
 
 struct Type : std::variant<IntegralType, FloatingType, BooleanType> {

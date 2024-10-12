@@ -71,6 +71,8 @@ class BeginInstruction;
 
 class IfNotInstruction;
 
+class StoreInstruction;
+
 class CastInstruction;
 
 class CallInstruction;
@@ -102,4 +104,6 @@ public:
     virtual void visit(IfNotInstruction &instruction) = 0;
 
     virtual void visit(GotoInstruction &instruction) = 0;
+
+    virtual void visit(StoreInstruction &instruction) = 0;
 };

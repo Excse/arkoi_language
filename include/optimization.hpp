@@ -17,8 +17,11 @@ class OptimizationManager {
 public:
     void optimize(std::vector<CFG> &cfgs);
 
-    void push_back(std::unique_ptr<OptimizationPass> pass);
+    template<typename OptimizationType, typename... Args>
+    OptimizationType &emplace_back(Args &&... args);
 
 private:
     std::vector<std::unique_ptr<OptimizationPass>> _passes;
 };
+
+#include "../src/optimization.tpp"

@@ -9,9 +9,9 @@
 ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
     ILPrinter printer;
 
-    auto visit_instructions = [&](const BasicBlock &block) {
-        for (const auto &item: block.instructions()) {
-            item->accept(printer);
+    auto visit_instructions = [&](BasicBlock &block) {
+        for (auto &instruction: block.instructions()) {
+            std::visit([&](auto &value) { value.accept(printer); }, instruction);
         }
     };
 
@@ -22,7 +22,7 @@ ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
     return printer;
 }
 
-ILPrinter ILPrinter::print(Instruction &instruction) {
+ILPrinter ILPrinter::print(InstructionBase &instruction) {
     ILPrinter printer;
 
     instruction.accept(printer);
@@ -72,4 +72,8 @@ void ILPrinter::visit(GotoInstruction &instruction) {
 
 void ILPrinter::visit(IfNotInstruction &instruction) {
     _output << "IF NOT " << instruction.condition() << " GOTO " << *instruction.label() << "\n";
+}
+
+void ILPrinter::visit(StoreInstruction &instruction) {
+    _output << instruction.result() << " = " << instruction.value() << "\n";
 }

@@ -38,8 +38,6 @@ public:
 
     void visit(IfNode &node) override;
 
-    [[nodiscard]] auto &constants() { return _constants; }
-
     [[nodiscard]] auto &cfgs() { return _cfgs; }
 
 private:
@@ -48,11 +46,10 @@ private:
     std::shared_ptr<Symbol> _make_label_symbol();
 
 private:
-    std::unordered_map<std::string, Immediate> _constants{};
-    size_t _temp_index{}, _label_index{}, _data_index{};
     std::shared_ptr<BasicBlock> _function_end_block{};
     std::shared_ptr<Symbol> _function_end_symbol{};
     std::shared_ptr<BasicBlock> _current_block{};
+    size_t _temp_index{}, _label_index{};
     Operand _current_operand{nullptr};
     std::vector<CFG> _cfgs{};
 };

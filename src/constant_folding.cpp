@@ -1,0 +1,79 @@
+#include "constant_folding.hpp"
+
+#include "utils.hpp"
+
+void ConstantFolding::instruction(Instruction &to_replace) {
+    std::visit(match{
+        [&](const BinaryInstruction &instruction) { to_replace = _binary(instruction); },
+        [&](const CastInstruction &instruction) { to_replace = _cast(instruction); },
+        [](const auto &) {},
+    }, to_replace);
+}
+
+Instruction ConstantFolding::_binary(const BinaryInstruction &instruction) {
+    auto *right_immediate = std::get_if<Immediate>(&instruction.right());
+    auto *left_immediate = std::get_if<Immediate>(&instruction.left());
+
+    if (!right_immediate || !left_immediate) return instruction;
+
+    auto apply_operator = [&](auto left, auto right) -> Operand {
+        switch (instruction.op()) {
+            case BinaryInstruction::Operator::Add: return left + right;
+            case BinaryInstruction::Operator::Sub: return left - right;
+            case BinaryInstruction::Operator::Mul: return left * right;
+            case BinaryInstruction::Operator::Div: return left / right;
+        }
+
+        // As the -Wswitch flag is set, this will never be reached.
+        std::unreachable();
+    };
+
+    auto value = std::visit(match{
+        [&](const double &left, const double &right) -> Operand { return apply_operator(left, right); },
+        [&](const float &left, const float &right) -> Operand { return apply_operator(left, right); },
+        [&](const int32_t &left, const int32_t &right) -> Operand { return apply_operator(left, right); },
+        [&](const uint32_t &left, const uint32_t &right) -> Operand { return apply_operator(left, right); },
+        [&](const int64_t &left, const int64_t &right) -> Operand { return apply_operator(left, right); },
+        [&](const uint64_t &left, const uint64_t &right) -> Operand { return apply_operator(left, right); },
+        [&](const bool &left, const bool &right) -> Operand { return apply_operator(left, right); },
+        [](const auto &, const auto &) -> Operand { std::unreachable(); }
+    }, *right_immediate, *left_immediate);
+
+    return StoreInstruction(instruction.result(), value, instruction.type());
+}
+
+Instruction ConstantFolding::_cast(const CastInstruction &instruction) {
+    auto *expression = std::get_if<Immediate>(&instruction.expression());
+
+    if (!expression) return instruction;
+
+    auto apply_operator = [&](auto expression, const Type &to) -> Operand {
+        return std::visit(match{
+            [&](const IntegralType &type) -> Operand {
+                switch (type.size()) {
+                    case Size::BYTE: return type.sign() ? (int8_t) expression : (uint8_t) expression;
+                    case Size::WORD: return type.sign() ? (int16_t) expression : (uint16_t) expression;
+                    case Size::DWORD: return type.sign() ? (int32_t) expression : (uint32_t) expression;
+                    case Size::QWORD: return type.sign() ? (int64_t) expression : (uint64_t) expression;
+                    default: std::unreachable();
+                }
+            },
+            [&](const FloatingType &type) -> Operand {
+                switch (type.size()) {
+                    case Size::DWORD: return (float) expression;
+                    case Size::QWORD: return (double) expression;
+                    default: std::unreachable();
+                }
+            },
+            [&](const BooleanType &) -> Operand { return (bool) expression; }
+        }, to);
+    };
+
+    auto value = std::visit([&](const auto &value) -> Operand {
+        return apply_operator(value, instruction.to());
+    }, *expression);
+
+//    return instruction;
+
+    return StoreInstruction(instruction.result(), value, instruction.to());
+}

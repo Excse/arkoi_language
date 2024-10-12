@@ -13,7 +13,7 @@ private:
 public:
     [[nodiscard]] static ILPrinter print(std::vector<CFG> &cfgs);
 
-    [[nodiscard]] static ILPrinter print(Instruction &instruction);
+    [[nodiscard]] static ILPrinter print(InstructionBase &instruction);
 
     void visit(LabelInstruction &instruction) override;
 
@@ -34,6 +34,8 @@ public:
     void visit(GotoInstruction &instruction) override;
 
     void visit(IfNotInstruction &instruction) override;
+
+    void visit(StoreInstruction &instruction) override;
 
     [[nodiscard]] auto &output() const { return _output; }
 

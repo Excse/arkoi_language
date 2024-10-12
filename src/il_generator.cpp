@@ -69,15 +69,11 @@ void IRGenerator::visit(IntegerNode &node) {
 void IRGenerator::visit(FloatingNode &node) {
     const auto &number_string = node.value().contents();
 
-    auto name = ".LC" + std::to_string(_data_index++);
     auto value = std::stold(number_string);
-
     if (value > std::numeric_limits<float>::max()) {
-        _constants[name] = (double) value;
-        _current_operand = Memory(Size::QWORD, Memory::Address(name));;
+        _current_operand = (double) value;
     } else {
-        _constants[name] = (float) value;
-        _current_operand = Memory(Size::DWORD, Memory::Address(name));;
+        _current_operand = (float) value;
     }
 }
 
