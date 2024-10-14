@@ -1,15 +1,29 @@
 #include "optimization.hpp"
 
 void OptimizationManager::optimize(std::vector<CFG> &cfgs) {
-    for (auto &cfg: cfgs) {
-        for (const auto &pass: _passes) {
-            pass->new_cfg(cfg);
+    while (true) {
+        auto changed = false;
+
+        for (const auto &pass: _iterative_passes) {
+            std::for_each(cfgs.begin(), cfgs.end(), [&](auto &cfg) {
+                changed |= pass->new_cfg(cfg);
+
+                cfg.depth_first_search([&](BasicBlock &block) {
+                    changed |= pass->new_block(block);
+                });
+            });
         }
 
-        cfg.depth_first_search([&](BasicBlock &block) {
-            for (const auto &pass: _passes) {
+        if (!changed) break;
+    }
+    
+    for (const auto &pass: _single_passes) {
+        std::for_each(cfgs.begin(), cfgs.end(), [&](auto &cfg) {
+            pass->new_cfg(cfg);
+
+            cfg.depth_first_search([&](BasicBlock &block) {
                 pass->new_block(block);
-            }
+            });
         });
     }
 }

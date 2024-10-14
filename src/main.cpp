@@ -47,8 +47,8 @@ int main() {
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
     OptimizationManager optimization_manager;
-    optimization_manager.emplace_back<ConstantFolding>();
-    auto &memory_resolver = optimization_manager.emplace_back<MemoryResolver>();
+    optimization_manager.emplace_iterative<ConstantFolding>();
+    auto &memory_resolver = optimization_manager.emplace_single<MemoryResolver>();
     optimization_manager.optimize(il_generator.cfgs());
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;

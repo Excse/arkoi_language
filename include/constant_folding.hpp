@@ -2,11 +2,11 @@
 
 #include "optimization.hpp"
 
-class ConstantFolding : public OptimizationPass {
+class ConstantFolding : public IterativePass {
 public:
-    void new_cfg(CFG &) override {}
+    bool new_cfg(CFG &) override { return false; }
 
-    void new_block(BasicBlock &block) override;
+    bool new_block(BasicBlock &block) override;
 
 private:
     [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _binary(const BinaryInstruction &instruction);

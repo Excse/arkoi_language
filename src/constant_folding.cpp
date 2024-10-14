@@ -2,7 +2,9 @@
 
 #include "utils.hpp"
 
-void ConstantFolding::new_block(BasicBlock &block) {
+bool ConstantFolding::new_block(BasicBlock &block) {
+    auto changed = false;
+
     for (auto &instruction: block.instructions()) {
         std::optional<std::unique_ptr<Instruction>> new_instruction;
 
@@ -12,8 +14,13 @@ void ConstantFolding::new_block(BasicBlock &block) {
             new_instruction = _cast(*cast);
         }
 
-        if (new_instruction) instruction = std::move(*new_instruction);
+        if (!new_instruction) continue;
+
+        instruction = std::move(*new_instruction);
+        changed = true;
     }
+
+    return changed;
 }
 
 std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const BinaryInstruction &instruction) {

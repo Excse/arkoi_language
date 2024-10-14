@@ -5,9 +5,9 @@
 #include "visitor.hpp"
 #include "cfg.hpp"
 
-class MemoryResolver : public OptimizationPass, InstructionVisitor {
+class MemoryResolver : public SinglePass, InstructionVisitor {
 public:
-    void new_cfg(CFG &) override {}
+    void new_cfg(CFG &) override { }
 
     void new_block(BasicBlock &block) override;
 
