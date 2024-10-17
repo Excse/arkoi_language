@@ -2,6 +2,10 @@
 
 #include "semantic/symbol_table.hpp"
 
+using namespace arkoi::type;
+using namespace arkoi::ast;
+using namespace arkoi;
+
 ProgramNode Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
     auto own_scope = _enter_scope();

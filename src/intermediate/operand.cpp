@@ -2,6 +2,8 @@
 
 #include "utils/utils.hpp"
 
+using namespace arkoi;
+
 bool Register::operator==(const Register &other) const {
     return _size == other._size && _base == other._base;
 }

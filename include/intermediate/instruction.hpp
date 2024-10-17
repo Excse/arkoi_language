@@ -10,6 +10,8 @@
 #include "utils/visitor.hpp"
 #include "frontend/ast.hpp"
 
+namespace arkoi::intermediate {
+
 class Instruction {
 public:
     virtual ~Instruction() = default;
@@ -79,7 +81,7 @@ private:
 
 class ReturnInstruction : public Instruction {
 public:
-    explicit ReturnInstruction(Operand value, Type type) : _value(std::move(value)), _type(type) {}
+    explicit ReturnInstruction(Operand value, type::Type type) : _value(std::move(value)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
 
@@ -91,7 +93,7 @@ public:
 
 private:
     Operand _value;
-    Type _type;
+    type::Type _type;
 };
 
 class BinaryInstruction : public Instruction {
@@ -104,7 +106,7 @@ public:
     };
 
 public:
-    BinaryInstruction(Operand result, Operand left, Operator op, Operand right, Type type)
+    BinaryInstruction(Operand result, Operand left, Operator op, Operand right, type::Type type)
         : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
           _type(type) {}
 
@@ -126,14 +128,12 @@ public:
 
     [[nodiscard]] auto &op() const { return _op; };
 
-    [[nodiscard]] static Operator node_to_instruction(BinaryNode::Operator op);
-
-    friend std::ostream &operator<<(std::ostream &os, const BinaryInstruction::Operator &op);
+    [[nodiscard]] static Operator node_to_instruction(ast::BinaryNode::Operator op);
 
 private:
     Operand _result, _left, _right;
     Operator _op;
-    Type _type;
+    type::Type _type;
 };
 
 class BeginInstruction : public Instruction {
@@ -163,7 +163,7 @@ public:
 
 class CastInstruction : public Instruction {
 public:
-    CastInstruction(Operand result, Operand expression, Type from, Type to)
+    CastInstruction(Operand result, Operand expression, type::Type from, type::Type to)
         : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
@@ -182,7 +182,7 @@ public:
 
 private:
     Operand _result, _expression;
-    Type _from, _to;
+    type::Type _from, _to;
 };
 
 class ArgumentInstruction : public Instruction {
@@ -210,7 +210,7 @@ private:
 
 class StoreInstruction : public Instruction {
 public:
-    explicit StoreInstruction(Operand result, Operand value, Type type)
+    explicit StoreInstruction(Operand result, Operand value, type::Type type)
         : _value(std::move(value)), _result(std::move(result)), _type(type) {}
 
     void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
@@ -227,5 +227,9 @@ public:
 
 private:
     Operand _value, _result;
-    Type _type;
+    type::Type _type;
 };
+
+}
+
+std::ostream &operator<<(std::ostream &os, const arkoi::intermediate::BinaryInstruction::Operator &op);

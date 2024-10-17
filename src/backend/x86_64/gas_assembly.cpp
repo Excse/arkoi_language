@@ -2,6 +2,8 @@
 
 #include <iomanip>
 
+using namespace arkoi::x86_64;
+
 void Assembly::cvttsd2si(const Operand &destination, const Operand &src) {
     _output << "\tcvttsd2si " << destination << ", " << src << "\n";
 }

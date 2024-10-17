@@ -4,6 +4,11 @@
 #include "intermediate/il_printer.hpp"
 #include "utils/utils.hpp"
 
+using namespace arkoi::intermediate;
+using namespace arkoi::x86_64;
+using namespace arkoi::type;
+using namespace arkoi;
+
 inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);
 inline Register RDI(Register::Base::DI, Size::QWORD);

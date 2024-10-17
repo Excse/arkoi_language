@@ -1,11 +1,13 @@
 #include "intermediate/instruction.hpp"
 
-BinaryInstruction::Operator BinaryInstruction::node_to_instruction(BinaryNode::Operator op) {
+using namespace arkoi::intermediate;
+
+BinaryInstruction::Operator BinaryInstruction::node_to_instruction(arkoi::ast::BinaryNode::Operator op) {
     switch (op) {
-        case BinaryNode::Operator::Add: return Operator::Add;
-        case BinaryNode::Operator::Sub: return Operator::Sub;
-        case BinaryNode::Operator::Mul: return Operator::Mul;
-        case BinaryNode::Operator::Div: return Operator::Div;
+        case arkoi::ast::BinaryNode::Operator::Add: return Operator::Add;
+        case arkoi::ast::BinaryNode::Operator::Sub: return Operator::Sub;
+        case arkoi::ast::BinaryNode::Operator::Mul: return Operator::Mul;
+        case arkoi::ast::BinaryNode::Operator::Div: return Operator::Div;
     }
 
     // As the -Wswitch flag is set, this will never be reached.

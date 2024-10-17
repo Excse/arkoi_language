@@ -9,6 +9,8 @@
 #include "semantic/symbol_table.hpp"
 #include "utils/data.hpp"
 
+namespace arkoi {
+
 class Register {
 public:
     enum class Base {
@@ -16,16 +18,12 @@ public:
         XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15,
     };
 
-    friend std::ostream &operator<<(std::ostream &os, const Register::Base &reg);
-
 public:
     Register(Base base, Size size) : _size(size), _base(base) {}
 
     bool operator==(const Register &other) const;
 
     bool operator!=(const Register &other) const;
-
-    friend std::ostream &operator<<(std::ostream &os, const Register &reg);
 
     [[nodiscard]] auto size() const { return _size; }
 
@@ -38,9 +36,7 @@ private:
 
 class Memory {
 public:
-    struct Address : std::variant<std::string, int64_t, Register> {
-        friend std::ostream &operator<<(std::ostream &os, const Address &memory);
-    };
+    struct Address : std::variant<std::string, int64_t, Register> { };
 
 public:
     explicit Memory(Size size, Register address, int64_t index, int64_t scale, int64_t displacement)
@@ -55,8 +51,6 @@ public:
     bool operator==(const Memory &other) const;
 
     bool operator!=(const Memory &other) const;
-
-    friend std::ostream &operator<<(std::ostream &os, const Memory &memory);
 
     [[nodiscard]] auto displacement() const { return _displacement; }
 
@@ -77,13 +71,23 @@ private:
 struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 
-    friend std::ostream &operator<<(std::ostream &os, const Immediate &immediate);
-
     [[nodiscard]] Size size() const;
 };
 
 struct Operand : std::variant<Register, Memory, std::shared_ptr<Symbol>, Immediate> {
     using variant::variant;
-
-    friend std::ostream &operator<<(std::ostream &os, const Operand &operand);
 };
+
+}
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Register &reg);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Register::Base &reg);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Operand &operand);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Memory &memory);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Memory::Address &memory);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Immediate &immediate);

@@ -5,6 +5,8 @@
 
 #include "utils/data.hpp"
 
+namespace arkoi::type {
+
 class IntegralType {
 public:
     IntegralType(const Size size, const bool sign) : _size(size), _sign(sign) {}
@@ -12,8 +14,6 @@ public:
     bool operator==(const IntegralType &other) const;
 
     bool operator!=(const IntegralType &other) const;
-
-    friend std::ostream &operator<<(std::ostream &os, const IntegralType &type);
 
     [[nodiscard]] uint64_t max() const;
 
@@ -34,8 +34,6 @@ public:
 
     bool operator!=(const FloatingType &other) const;
 
-    friend std::ostream &operator<<(std::ostream &os, const FloatingType &type);
-
     [[nodiscard]] auto size() const { return _size; }
 
 private:
@@ -44,8 +42,6 @@ private:
 
 class BooleanType {
 public:
-    friend std::ostream &operator<<(std::ostream &os, const BooleanType &type);
-
     bool operator==(const BooleanType &other) const;
 
     bool operator!=(const BooleanType &other) const;
@@ -56,7 +52,15 @@ public:
 struct Type : std::variant<IntegralType, FloatingType, BooleanType> {
     using variant::variant;
 
-    friend std::ostream &operator<<(std::ostream &os, const Type &type);
-
     [[nodiscard]] Size size() const;
 };
+
+}
+
+std::ostream &operator<<(std::ostream &os, const arkoi::type::IntegralType &type);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::type::FloatingType &type);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::type::BooleanType &type);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::type::Type &type);

@@ -5,6 +5,10 @@
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
+using namespace arkoi::type;
+using namespace arkoi::ast;
+using namespace arkoi;
+
 static IntegralType BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
 static BooleanType BOOL_TYPE;
 

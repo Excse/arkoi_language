@@ -6,43 +6,45 @@
 #include "utils/visitor.hpp"
 #include "frontend/token.hpp"
 
-class NameResolver : NodeVisitor {
+namespace arkoi {
+
+class NameResolver : ast::NodeVisitor {
 private:
     NameResolver() = default;
 
 public:
-    [[nodiscard]] static NameResolver resolve(ProgramNode &node);
+    [[nodiscard]] static NameResolver resolve(ast::ProgramNode &node);
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    void visit(ProgramNode &node) override;
+    void visit(ast::ProgramNode &node) override;
 
-    void visit_as_prototype(FunctionNode &node);
+    void visit_as_prototype(ast::FunctionNode &node);
 
-    void visit(FunctionNode &node) override;
+    void visit(ast::FunctionNode &node) override;
 
-    void visit(BlockNode &node) override;
+    void visit(ast::BlockNode &node) override;
 
-    void visit(ParameterNode &) override;
+    void visit(ast::ParameterNode &) override;
 
-    void visit(IdentifierNode &node) override;
+    void visit(ast::IdentifierNode &node) override;
 
-    void visit(IntegerNode &) override {};
+    void visit(ast::IntegerNode &) override {};
 
-    void visit(FloatingNode &) override {};
+    void visit(ast::FloatingNode &) override {};
 
-    void visit(BooleanNode &) override {};
+    void visit(ast::BooleanNode &) override {};
 
-    void visit(ReturnNode &node) override;
+    void visit(ast::ReturnNode &node) override;
 
-    void visit(BinaryNode &node) override;
+    void visit(ast::BinaryNode &node) override;
 
-    void visit(CastNode &node) override;
+    void visit(ast::CastNode &node) override;
 
-    void visit(CallNode &node) override;
+    void visit(ast::CallNode &node) override;
 
-    void visit(IfNode &node) override;
+    void visit(ast::IfNode &node) override;
 
     template<typename SymbolType, typename... Args>
     [[nodiscard]] std::shared_ptr<Symbol> _check_non_existence(const Token &token, Args &&... args);
@@ -56,3 +58,5 @@ private:
 };
 
 #include "../../src/semantic/name_resolver.tpp"
+
+}

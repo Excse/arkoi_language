@@ -1,6 +1,6 @@
 #pragma once
 
-class SymbolTable;
+namespace arkoi::ast {
 
 class IdentifierNode;
 
@@ -59,6 +59,10 @@ public:
     virtual void visit(IfNode &node) = 0;
 };
 
+}
+
+namespace arkoi::intermediate {
+
 class ArgumentInstruction;
 
 class BinaryInstruction;
@@ -107,3 +111,5 @@ public:
 
     virtual void visit(StoreInstruction &instruction) = 0;
 };
+
+}

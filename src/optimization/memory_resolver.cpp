@@ -3,6 +3,10 @@
 #include "intermediate/instruction.hpp"
 #include "utils/utils.hpp"
 
+using namespace arkoi::intermediate;
+using namespace arkoi::type;
+using namespace arkoi;
+
 static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
                                                 Register::Base::C, Register::Base::R8, Register::Base::R9};
 static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
@@ -103,7 +107,7 @@ Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
 Operand MemoryResolver::_resolve_temporary(const TemporarySymbol &symbol) {
     auto size = symbol.type().value().size();
 
-    _current_begin->increase_local_size((int64_t) _size_to_bytes(size));
+    _current_begin->increase_local_size((int64_t) size_to_bytes(size));
     auto resolved = Memory(symbol.type().value().size(), RBP, -_current_begin->local_size());
 
     return resolved;
@@ -115,7 +119,7 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
 
     auto size = symbol.type().value().size();
 
-    _parameter_offset += (int64_t) _size_to_bytes(size);
+    _parameter_offset += (int64_t) size_to_bytes(size);
     auto resolved = Memory(size, RBP, _parameter_offset);
 
     return resolved;

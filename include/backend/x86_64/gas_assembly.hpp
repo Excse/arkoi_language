@@ -4,6 +4,8 @@
 
 #include "intermediate/operand.hpp"
 
+namespace arkoi::x86_64 {
+
 class Assembly {
 public:
     void cvttsd2si(const Operand &destination, const Operand &src);
@@ -93,3 +95,5 @@ public:
 private:
     std::stringstream _output{};
 };
+
+}

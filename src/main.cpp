@@ -13,6 +13,9 @@
 #include "frontend/scanner.hpp"
 #include "frontend/parser.hpp"
 
+using namespace arkoi::intermediate;
+using namespace arkoi;
+
 int main() {
     std::ifstream file("../example/test.ark");
     std::stringstream buffer;
@@ -58,7 +61,7 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    auto gas_generator = GASGenerator::generate(il_generator.cfgs(), memory_resolver.constants());
+    auto gas_generator = x86_64::GASGenerator::generate(il_generator.cfgs(), memory_resolver.constants());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();

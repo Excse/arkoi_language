@@ -5,33 +5,35 @@
 #include "utils/visitor.hpp"
 #include "intermediate/cfg.hpp"
 
-class MemoryResolver : public SinglePass, InstructionVisitor {
+namespace arkoi {
+
+class MemoryResolver : public SinglePass, intermediate::InstructionVisitor {
 public:
     void new_cfg(CFG &) override { }
 
     void new_block(BasicBlock &block) override;
 
-    void visit(LabelInstruction &) override {};
+    void visit(intermediate::LabelInstruction &) override {};
 
-    void visit(BeginInstruction &instruction) override;
+    void visit(intermediate::BeginInstruction &instruction) override;
 
-    void visit(ReturnInstruction &instruction) override;
+    void visit(intermediate::ReturnInstruction &instruction) override;
 
-    void visit(BinaryInstruction &instruction) override;
+    void visit(intermediate::BinaryInstruction &instruction) override;
 
-    void visit(CastInstruction &instruction) override;
+    void visit(intermediate::CastInstruction &instruction) override;
 
-    void visit(CallInstruction &instruction) override;
+    void visit(intermediate::CallInstruction &instruction) override;
 
-    void visit(ArgumentInstruction &instruction) override;
+    void visit(intermediate::ArgumentInstruction &instruction) override;
 
-    void visit(IfNotInstruction &instruction) override;
+    void visit(intermediate::IfNotInstruction &instruction) override;
 
-    void visit(StoreInstruction &instruction) override;
+    void visit(intermediate::StoreInstruction &instruction) override;
 
-    void visit(GotoInstruction &) override {};
+    void visit(intermediate::GotoInstruction &) override {};
 
-    void visit(EndInstruction &) override;
+    void visit(intermediate::EndInstruction &) override;
 
     [[nodiscard]] auto &constants() const { return _constants; }
 
@@ -51,7 +53,9 @@ private:
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Operand> _resolved{};
     std::unordered_map<std::string, Immediate> _constants{};
-    BeginInstruction *_current_begin{};
+    intermediate::BeginInstruction *_current_begin{};
     int64_t _parameter_offset{};
     size_t _constant_index{};
 };
+
+}

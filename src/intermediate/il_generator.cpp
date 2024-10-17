@@ -5,6 +5,11 @@
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
+using namespace arkoi::intermediate;
+using namespace arkoi::type;
+using namespace arkoi::ast;
+using namespace arkoi;
+
 IRGenerator IRGenerator::generate(ProgramNode &node) {
     IRGenerator generator;
 

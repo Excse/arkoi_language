@@ -6,6 +6,8 @@
 
 #include "instruction.hpp"
 
+namespace arkoi {
+
 class BasicBlock {
 public:
     template<typename InstructionType, typename... Args>
@@ -25,7 +27,7 @@ public:
     [[nodiscard]] auto &next() const { return _next; }
 
 private:
-    std::vector<std::unique_ptr<Instruction>> _instructions{};
+    std::vector<std::unique_ptr<intermediate::Instruction>> _instructions{};
     std::shared_ptr<BasicBlock> _next{}, _branch{};
 };
 
@@ -45,3 +47,5 @@ private:
 };
 
 #include "../../src/intermediate/cfg.tpp"
+
+}

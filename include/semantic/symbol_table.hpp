@@ -8,6 +8,8 @@
 
 #include "semantic/symbol.hpp"
 
+namespace arkoi {
+
 class SymbolTable {
 public:
     explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
@@ -36,3 +38,5 @@ public:
 };
 
 #include "../../src/semantic/symbol_table.tpp"
+
+}

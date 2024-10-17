@@ -1,7 +1,10 @@
 #include "semantic/name_resolver.hpp"
 
-#include "utils/utils.hpp"
 #include "frontend/ast.hpp"
+#include "utils/utils.hpp"
+
+using namespace arkoi::ast;
+using namespace arkoi;
 
 NameResolver NameResolver::resolve(ProgramNode &node) {
     NameResolver resolver;

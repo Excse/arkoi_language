@@ -2,6 +2,8 @@
 
 #include "utils/utils.hpp"
 
+using namespace arkoi;
+
 std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) {
     static const std::unordered_map<std::string_view, Type> KEYWORDS = {
             {"if",    Type::If},

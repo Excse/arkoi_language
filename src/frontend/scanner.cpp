@@ -2,6 +2,8 @@
 
 #include <sstream>
 
+using namespace arkoi;
+
 static constexpr size_t SPACE_INDENTATION = 4;
 
 std::vector<Token> Scanner::tokenize() {

@@ -6,6 +6,8 @@
 #include "intermediate/instruction.hpp"
 #include "utils/utils.hpp"
 
+using namespace arkoi::intermediate;
+
 ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
     ILPrinter printer;
 

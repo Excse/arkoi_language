@@ -2,6 +2,8 @@
 
 #include "intermediate/cfg.hpp"
 
+namespace arkoi {
+
 class IterativePass {
 public:
     virtual ~IterativePass() = default;
@@ -36,3 +38,5 @@ private:
 };
 
 #include "../../src/optimization/optimization.tpp"
+
+}

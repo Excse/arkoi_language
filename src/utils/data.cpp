@@ -14,10 +14,10 @@ std::ostream &operator<<(std::ostream &os, const Size &size) {
     std::unreachable();
 }
 
-size_t _size_to_bytes(const Size &size) {
+size_t size_to_bytes(const Size &size) {
     return std::to_underlying(size);
 }
 
-size_t _size_to_bits(const Size &size) {
-    return 8 * _size_to_bytes(size);
+size_t size_to_bits(const Size &size) {
+    return 8 * size_to_bytes(size);
 }

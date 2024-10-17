@@ -5,6 +5,8 @@
 #include "token.hpp"
 #include "semantic/type.hpp"
 
+namespace arkoi::ast {
+
 class Node {
 public:
     virtual ~Node() = default;
@@ -46,7 +48,7 @@ private:
 
 class ParameterNode : public Node {
 public:
-    ParameterNode(Token name, Type type) : _name(std::move(name)), _type(type) {}
+    ParameterNode(Token name, type::Type type) : _type(type), _name(std::move(name)) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
@@ -60,13 +62,13 @@ public:
 
 private:
     std::shared_ptr<Symbol> _symbol{};
+    type::Type _type;
     Token _name;
-    Type _type;
 };
 
 class FunctionNode : public Node {
 public:
-    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, Type type, std::unique_ptr<BlockNode> &&block,
+    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, type::Type type, std::unique_ptr<BlockNode> &&block,
                  std::shared_ptr<SymbolTable> table)
         : _parameters(std::move(parameters)), _table(std::move(table)), _block(std::move(block)),
           _name(std::move(name)), _type(type) {}
@@ -93,7 +95,7 @@ private:
     std::shared_ptr<Symbol> _symbol{};
     std::unique_ptr<BlockNode> _block;
     Token _name;
-    Type _type;
+    type::Type _type;
 };
 
 class ReturnNode : public Node {
@@ -106,13 +108,13 @@ public:
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_type(Type type) { _type = type; }
+    void set_type(type::Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<Type> _type{};
+    std::optional<type::Type> _type{};
 };
 
 class IfNode : public Node {
@@ -239,29 +241,29 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; }
 
-    void set_type(Type type) { _type = type; }
+    void set_type(type::Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::unique_ptr<Node> _left, _right;
-    std::optional<Type> _type{};
+    std::optional<type::Type> _type{};
     Operator _op;
 };
 
 class CastNode : public Node {
 public:
-    CastNode(std::unique_ptr<Node> &&expression, Type from, Type to)
+    CastNode(std::unique_ptr<Node> &&expression, type::Type from, type::Type to)
         : _expression(std::move(expression)), _from(from), _to(to) {}
 
-    CastNode(std::unique_ptr<Node> &&expression, Type to)
+    CastNode(std::unique_ptr<Node> &&expression, type::Type to)
         : _expression(std::move(expression)), _from(), _to(to) {}
 
     void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_from(Type type) { _from = type; }
+    void set_from(type::Type type) { _from = type; }
 
     [[nodiscard]] auto &from() { return _from; }
 
@@ -269,6 +271,8 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<Type> _from;
-    Type _to;
+    std::optional<type::Type> _from;
+    type::Type _to;
 };
+
+}

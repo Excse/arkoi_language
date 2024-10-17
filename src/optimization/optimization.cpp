@@ -1,5 +1,7 @@
 #include "optimization/optimization.hpp"
 
+using namespace arkoi;
+
 void OptimizationManager::optimize(std::vector<CFG> &cfgs) {
     while (true) {
         auto changed = false;

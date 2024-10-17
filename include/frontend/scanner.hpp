@@ -7,6 +7,8 @@
 
 #include "token.hpp"
 
+namespace arkoi {
+
 class Scanner {
 private:
     struct Location {
@@ -108,3 +110,5 @@ public:
     explicit NumberOutOfRange(const std::string &number) : ScannerError(
         "The number " + number + " exceeds the 64bit limitations.") {}
 };
+
+}

@@ -6,6 +6,8 @@
 #include "utils/visitor.hpp"
 #include "intermediate/cfg.hpp"
 
+namespace arkoi::intermediate {
+
 class ILPrinter : InstructionVisitor {
 private:
     ILPrinter() = default;
@@ -42,3 +44,5 @@ public:
 private:
     std::stringstream _output{};
 };
+
+}

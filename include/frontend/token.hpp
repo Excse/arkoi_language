@@ -6,6 +6,8 @@
 #include <cstdint>
 #include <utility>
 
+namespace arkoi {
+
 class Token {
 public:
     enum class Type {
@@ -69,12 +71,14 @@ public:
 
     [[nodiscard]] static std::optional<Token::Type> lookup_special_1(char value);
 
-    friend std::ostream &operator<<(std::ostream &os, const Token &token);
-
-    friend std::ostream &operator<<(std::ostream &os, const Type &type);
-
 private:
     std::string _contents;
     size_t _column, _row;
     Type _type;
 };
+
+}
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Token &token);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::Token::Type &type);
