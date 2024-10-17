@@ -4,9 +4,7 @@
 #include "intermediate/printer.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi::intermediate;
 using namespace arkoi::x86_64;
-using namespace arkoi::type;
 using namespace arkoi;
 
 inline Register RBP(Register::Base::BP, Size::QWORD);
@@ -14,7 +12,7 @@ inline Register RSP(Register::Base::SP, Size::QWORD);
 inline Register RDI(Register::Base::DI, Size::QWORD);
 inline Register RAX(Register::Base::A, Size::QWORD);
 
-static Boolean BOOL_TYPE;
+static type::Boolean BOOL_TYPE;
 
 Generator Generator::generate(std::vector<CFG> &cfgs,
                               const std::unordered_map<std::string, Immediate> &data) {
@@ -37,11 +35,11 @@ Generator Generator::generate(std::vector<CFG> &cfgs,
     return generator;
 }
 
-void Generator::visit(Label &instruction) {
+void Generator::visit(intermediate::Label &instruction) {
     _assembly.label(*instruction.symbol());
 }
 
-void Generator::visit(Begin &instruction) {
+void Generator::visit(intermediate::Begin &instruction) {
     _comment_instruction(instruction);
 
     _assembly.label(*instruction.label());
@@ -54,7 +52,7 @@ void Generator::visit(Begin &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(Return &instruction) {
+void Generator::visit(intermediate::Return &instruction) {
     _comment_instruction(instruction);
 
     auto destination = _returning_register(instruction.type());
@@ -63,15 +61,15 @@ void Generator::visit(Return &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(Binary &instruction) {
+void Generator::visit(intermediate::Binary &instruction) {
     _comment_instruction(instruction);
 
     auto left_reg = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
-            if (std::holds_alternative<Integral>(instruction.type())
+            if (std::holds_alternative<type::Integral>(instruction.type())
                 && !std::holds_alternative<Memory>(instruction.right())
-                && instruction.op() != Binary::Operator::Div) {
+                && instruction.op() != intermediate::Binary::Operator::Div) {
                 return memory;
             }
 
@@ -85,7 +83,7 @@ void Generator::visit(Binary &instruction) {
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand {
-            if (instruction.op() == Binary::Operator::Div) {
+            if (instruction.op() == intermediate::Binary::Operator::Div) {
                 return _move_to_temp2(instruction.type(), immediate);
             }
 
@@ -95,19 +93,19 @@ void Generator::visit(Binary &instruction) {
     }, instruction.right());
 
     switch (instruction.op()) {
-        case Binary::Operator::Add: {
+        case intermediate::Binary::Operator::Add: {
             _add(instruction.type(), left_reg, right_reg);
             break;
         }
-        case Binary::Operator::Sub: {
+        case intermediate::Binary::Operator::Sub: {
             _sub(instruction.type(), left_reg, right_reg);
             break;
         }
-        case Binary::Operator::Div: {
+        case intermediate::Binary::Operator::Div: {
             _div(instruction.type(), left_reg, right_reg);
             break;
         }
-        case Binary::Operator::Mul: {
+        case intermediate::Binary::Operator::Mul: {
             _mul(instruction.type(), left_reg, right_reg);
             break;
         }
@@ -117,25 +115,25 @@ void Generator::visit(Binary &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(Cast &instruction) {
+void Generator::visit(intermediate::Cast &instruction) {
     _comment_instruction(instruction);
 
     std::visit(match{
-        [&](const Floating &from, const Floating &to) { _convert_float_to_float(instruction, from, to); },
-        [&](const Floating &from, const Integral &to) { _convert_float_to_int(instruction, from, to); },
-        [&](const Floating &from, const Boolean &to) { _convert_float_to_bool(instruction, from, to); },
-        [&](const Integral &from, const Integral &to) { _convert_int_to_int(instruction, from, to); },
-        [&](const Integral &from, const Floating &to) { _convert_int_to_float(instruction, from, to); },
-        [&](const Integral &from, const Boolean &to) { _convert_int_to_bool(instruction, from, to); },
-        [&](const Boolean &from, const Floating &to) { _convert_bool_to_float(instruction, from, to); },
-        [&](const Boolean &from, const Integral &to) { _convert_bool_to_int(instruction, from, to); },
-        [&](const Boolean &, const Boolean &) { throw std::runtime_error("Unsupported type conversion."); },
+        [&](const type::Floating &from, const type::Floating &to) { _convert_float_to_float(instruction, from, to); },
+        [&](const type::Floating &from, const type::Integral &to) { _convert_float_to_int(instruction, from, to); },
+        [&](const type::Floating &from, const type::Boolean &to) { _convert_float_to_bool(instruction, from, to); },
+        [&](const type::Integral &from, const type::Integral &to) { _convert_int_to_int(instruction, from, to); },
+        [&](const type::Integral &from, const type::Floating &to) { _convert_int_to_float(instruction, from, to); },
+        [&](const type::Integral &from, const type::Boolean &to) { _convert_int_to_bool(instruction, from, to); },
+        [&](const type::Boolean &from, const type::Floating &to) { _convert_bool_to_float(instruction, from, to); },
+        [&](const type::Boolean &from, const type::Integral &to) { _convert_bool_to_int(instruction, from, to); },
+        [&](const type::Boolean &, const type::Boolean &) { throw std::runtime_error("Unsupported type conversion."); },
     }, instruction.from(), instruction.to());
 
     _assembly.newline();
 }
 
-void Generator::visit(Call &instruction) {
+void Generator::visit(intermediate::Call &instruction) {
     _comment_instruction(instruction);
 
     _assembly.call(*instruction.symbol());
@@ -147,7 +145,7 @@ void Generator::visit(Call &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(Argument &instruction) {
+void Generator::visit(intermediate::Argument &instruction) {
     _comment_instruction(instruction);
 
     if (instruction.result()) {
@@ -160,11 +158,11 @@ void Generator::visit(Argument &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(Goto &instruction) {
+void Generator::visit(intermediate::Goto &instruction) {
     _assembly.jmp(instruction.label());
 }
 
-void Generator::visit(IfNot &instruction) {
+void Generator::visit(intermediate::IfNot &instruction) {
     _comment_instruction(instruction);
 
     auto src = std::visit(match{
@@ -178,7 +176,7 @@ void Generator::visit(IfNot &instruction) {
     _assembly.je(instruction.label());
 }
 
-void Generator::visit(Store &instruction) {
+void Generator::visit(intermediate::Store &instruction) {
     _comment_instruction(instruction);
 
     auto value = std::visit(match{
@@ -197,7 +195,7 @@ void Generator::visit(Store &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(End &instruction) {
+void Generator::visit(intermediate::End &instruction) {
     _comment_instruction(instruction);
 
     _assembly.mov(RSP, RBP);
@@ -236,12 +234,12 @@ void Generator::_data_section(const std::unordered_map<std::string, Immediate> &
 }
 
 void Generator::_comment_instruction(Instruction &instruction) {
-    auto printer = Printer::print(instruction);
+    auto printer = intermediate::Printer::print(instruction);
     _assembly.comment(printer.output().str());
 }
 
-void Generator::_convert_int_to_int(const Cast &instruction, const Integral &from,
-                                    const Integral &to) {
+void Generator::_convert_int_to_int(const intermediate::Cast &instruction, const type::Integral &from,
+                                    const type::Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
@@ -270,8 +268,8 @@ void Generator::_convert_int_to_int(const Cast &instruction, const Integral &fro
     _assembly.mov(instruction.result(), temporary);
 }
 
-void Generator::_convert_int_to_float(const Cast &instruction, const Integral &from,
-                                      const Floating &to) {
+void Generator::_convert_int_to_float(const intermediate::Cast &instruction, const type::Integral &from,
+                                      const type::Floating &to) {
     auto src = (from.size() >= Size::DWORD)
                ? instruction.expression()
                : _integer_promote(from, instruction.expression());
@@ -298,8 +296,8 @@ void Generator::_convert_int_to_float(const Cast &instruction, const Integral &f
     }
 }
 
-void Generator::_convert_int_to_bool(const Cast &instruction, const Integral &from,
-                                     const Boolean &to) {
+void Generator::_convert_int_to_bool(const intermediate::Cast &instruction, const type::Integral &from,
+                                     const type::Boolean &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -313,8 +311,8 @@ void Generator::_convert_int_to_bool(const Cast &instruction, const Integral &fr
     _assembly.mov(instruction.result(), temporary);
 }
 
-void Generator::_convert_float_to_float(const Cast &instruction, const Floating &from,
-                                        const Floating &to) {
+void Generator::_convert_float_to_float(const intermediate::Cast &instruction, const type::Floating &from,
+                                        const type::Floating &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -339,8 +337,8 @@ void Generator::_convert_float_to_float(const Cast &instruction, const Floating 
     }
 }
 
-void Generator::_convert_float_to_int(const Cast &instruction, const Floating &from,
-                                      const Integral &to) {
+void Generator::_convert_float_to_int(const intermediate::Cast &instruction, const type::Floating &from,
+                                      const type::Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -350,7 +348,7 @@ void Generator::_convert_float_to_int(const Cast &instruction, const Floating &f
 
     auto bigger_to_temporary = _temp1_register(to);
     if (to.size() < Size::DWORD) {
-        auto temp_type = std::make_shared<Integral>(Size::DWORD, to.sign());
+        auto temp_type = std::make_shared<type::Integral>(Size::DWORD, to.sign());
         bigger_to_temporary = _temp1_register(*temp_type);
     }
 
@@ -370,8 +368,8 @@ void Generator::_convert_float_to_int(const Cast &instruction, const Floating &f
     _assembly.mov(instruction.result(), to_temporary);
 }
 
-void Generator::_convert_float_to_bool(const Cast &instruction, const Floating &from,
-                                       const Boolean &to) {
+void Generator::_convert_float_to_bool(const intermediate::Cast &instruction, const type::Floating &from,
+                                       const type::Boolean &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -399,8 +397,8 @@ void Generator::_convert_float_to_bool(const Cast &instruction, const Floating &
     _mov(to, instruction.result(), temporary);
 }
 
-void Generator::_convert_bool_to_int(const Cast &instruction, const Boolean &from,
-                                     const Integral &to) {
+void Generator::_convert_bool_to_int(const intermediate::Cast &instruction, const type::Boolean &from,
+                                     const type::Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -413,8 +411,8 @@ void Generator::_convert_bool_to_int(const Cast &instruction, const Boolean &fro
     _assembly.mov(instruction.result(), to_temporary);
 }
 
-void Generator::_convert_bool_to_float(const Cast &instruction, const Boolean &from,
-                                       const Floating &to) {
+void Generator::_convert_bool_to_float(const intermediate::Cast &instruction, const type::Boolean &from,
+                                       const type::Floating &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -422,7 +420,7 @@ void Generator::_convert_bool_to_float(const Cast &instruction, const Boolean &f
         [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
-    auto to_int_temporary = _temp1_register(Integral(Size::DWORD, false));
+    auto to_int_temporary = _temp1_register(type::Integral(Size::DWORD, false));
     auto to_float_temporary = _temp1_register(to);
 
     _assembly.movzx(to_int_temporary, src);
@@ -443,10 +441,10 @@ void Generator::_convert_bool_to_float(const Cast &instruction, const Boolean &f
     }
 }
 
-Operand Generator::_integer_promote(const Integral &type, const Operand &src) {
+Operand Generator::_integer_promote(const type::Integral &type, const Operand &src) {
     if (type.size() >= Size::DWORD) return src;
 
-    auto new_type = std::make_shared<Integral>(Size::DWORD, type.sign());
+    auto new_type = std::make_shared<type::Integral>(Size::DWORD, type.sign());
     auto temporary = _temp1_register(*new_type);
 
     _assembly.movsx(temporary, src);
@@ -456,9 +454,9 @@ Operand Generator::_integer_promote(const Integral &type, const Operand &src) {
 
 void Generator::_mov(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const Integral &) { _assembly.mov(destination, src); },
-        [&](const Boolean &) { _assembly.mov(destination, src); },
-        [&](const Floating &type) {
+        [&](const type::Integral &) { _assembly.mov(destination, src); },
+        [&](const type::Boolean &) { _assembly.mov(destination, src); },
+        [&](const type::Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.movsd(destination, src);
@@ -476,9 +474,9 @@ void Generator::_mov(const Type &type, const Operand &destination, const Operand
 
 void Generator::_add(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const Integral &) { _assembly.add(destination, src); },
-        [&](const Boolean &) { _assembly.add(destination, src); },
-        [&](const Floating &type) {
+        [&](const type::Integral &) { _assembly.add(destination, src); },
+        [&](const type::Boolean &) { _assembly.add(destination, src); },
+        [&](const type::Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.addsd(destination, src);
@@ -496,9 +494,9 @@ void Generator::_add(const Type &type, const Operand &destination, const Operand
 
 void Generator::_sub(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const Integral &) { _assembly.sub(destination, src); },
-        [&](const Boolean &) { _assembly.sub(destination, src); },
-        [&](const Floating &type) {
+        [&](const type::Integral &) { _assembly.sub(destination, src); },
+        [&](const type::Boolean &) { _assembly.sub(destination, src); },
+        [&](const type::Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.subsd(destination, src);
@@ -516,12 +514,12 @@ void Generator::_sub(const Type &type, const Operand &destination, const Operand
 
 void Generator::_div(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const Integral &type) {
+        [&](const type::Integral &type) {
             if (type.sign()) _assembly.idiv(src);
             else _assembly.div(src);
         },
-        [&](const Boolean &) { _assembly.div(src); },
-        [&](const Floating &type) {
+        [&](const type::Boolean &) { _assembly.div(src); },
+        [&](const type::Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.divsd(destination, src);
@@ -539,9 +537,9 @@ void Generator::_div(const Type &type, const Operand &destination, const Operand
 
 void Generator::_mul(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const Integral &) { _assembly.imul(destination, src); },
-        [&](const Boolean &) { _assembly.imul(destination, src); },
-        [&](const Floating &type) {
+        [&](const type::Integral &) { _assembly.imul(destination, src); },
+        [&](const type::Boolean &) { _assembly.imul(destination, src); },
+        [&](const type::Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.mulsd(destination, src);
@@ -571,9 +569,9 @@ Register Generator::_move_to_temp2(const Type &type, const Operand &src) {
 
 Register Generator::_select_register(const Type &type, Register::Base integer, Register::Base floating) {
     return std::visit(match{
-        [&](const Floating &type) -> Register { return {floating, type.size()}; },
-        [&](const Integral &type) -> Register { return {integer, type.size()}; },
-        [&](const Boolean &type) -> Register { return {integer, type.size()}; },
+        [&](const type::Floating &type) -> Register { return {floating, type.size()}; },
+        [&](const type::Integral &type) -> Register { return {integer, type.size()}; },
+        [&](const type::Boolean &type) -> Register { return {integer, type.size()}; },
     }, type);
 }
 

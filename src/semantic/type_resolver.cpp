@@ -5,13 +5,12 @@
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
-using namespace arkoi::node;
 using namespace arkoi;
 
 static type::Integral BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
 static type::Boolean BOOL_TYPE;
 
-TypeResolver TypeResolver::resolve(Program &node) {
+TypeResolver TypeResolver::resolve(node::Program &node) {
     TypeResolver resolver;
 
     node.accept(resolver);
@@ -19,10 +18,10 @@ TypeResolver TypeResolver::resolve(Program &node) {
     return resolver;
 }
 
-void TypeResolver::visit(Program &node) {
+void TypeResolver::visit(node::Program &node) {
     // At first all function prototypes are type resolved.
     for (const auto &item: node.statements()) {
-        auto *function = dynamic_cast<Function *>(item.get());
+        auto *function = dynamic_cast<node::Function *>(item.get());
         if (function) visit_as_prototype(*function);
     }
 
@@ -31,7 +30,7 @@ void TypeResolver::visit(Program &node) {
     }
 }
 
-void TypeResolver::visit_as_prototype(Function &node) {
+void TypeResolver::visit_as_prototype(node::Function &node) {
     // Reset the register counters for the parameters
     _sse_index = 0;
     _int_index = 0;
@@ -44,19 +43,19 @@ void TypeResolver::visit_as_prototype(Function &node) {
     function.set_return_type(node.type());
 }
 
-void TypeResolver::visit(Function &node) {
+void TypeResolver::visit(node::Function &node) {
     _return_type = node.type();
 
     node.block()->accept(*this);
 }
 
-void TypeResolver::visit(Block &node) {
+void TypeResolver::visit(node::Block &node) {
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
 }
 
-void TypeResolver::visit(Parameter &node) {
+void TypeResolver::visit(node::Parameter &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
@@ -67,7 +66,7 @@ void TypeResolver::visit(Parameter &node) {
     }, node.type());
 }
 
-void TypeResolver::visit(Integer &node) {
+void TypeResolver::visit(node::Integer &node) {
     const auto &number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
@@ -81,18 +80,18 @@ void TypeResolver::visit(Integer &node) {
     _current_type = type::Integral(size, sign);
 }
 
-void TypeResolver::visit(Floating &node) {
+void TypeResolver::visit(node::Floating &node) {
     const auto &number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
     _current_type = type::Floating(size);
 }
 
-void TypeResolver::visit(Boolean &) {
+void TypeResolver::visit(node::Boolean &) {
     _current_type = type::Boolean();
 }
 
-void TypeResolver::visit(Return &node) {
+void TypeResolver::visit(node::Return &node) {
     node.expression()->accept(*this);
     auto type = _current_type.value();
 
@@ -108,15 +107,15 @@ void TypeResolver::visit(Return &node) {
 
     // We assure to override the const casted node with a new node. Thus, this exception is legal.
     auto &expression = const_cast<std::unique_ptr<Node> &>(node.expression());
-    node.set_expression(std::make_unique<Cast>(std::move(expression), type, _return_type.value()));
+    node.set_expression(std::make_unique<node::Cast>(std::move(expression), type, _return_type.value()));
 }
 
-void TypeResolver::visit(Identifier &node) {
+void TypeResolver::visit(node::Identifier &node) {
     const auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     _current_type = parameter.type();
 }
 
-void TypeResolver::visit(Binary &node) {
+void TypeResolver::visit(node::Binary &node) {
     // This will set _current_type
     node.left()->accept(*this);
     auto left = _current_type.value();
@@ -132,17 +131,17 @@ void TypeResolver::visit(Binary &node) {
     if (left != result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &left_node = const_cast<std::unique_ptr<Node> &>(node.left());
-        node.set_left(std::make_unique<Cast>(std::move(left_node), left, result));
+        node.set_left(std::make_unique<node::Cast>(std::move(left_node), left, result));
     }
 
     if (right != result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &right_node = const_cast<std::unique_ptr<Node> &>(node.right());
-        node.set_right(std::make_unique<Cast>(std::move(right_node), right, result));
+        node.set_right(std::make_unique<node::Cast>(std::move(right_node), right, result));
     }
 }
 
-void TypeResolver::visit(Cast &node) {
+void TypeResolver::visit(node::Cast &node) {
     // This will set _current_type
     node.expression()->accept(*this);
     auto from = _current_type.value();
@@ -155,7 +154,7 @@ void TypeResolver::visit(Cast &node) {
     _current_type = node.to();
 }
 
-void TypeResolver::visit(Call &node) {
+void TypeResolver::visit(node::Call &node) {
     auto function = std::get<FunctionSymbol>(*node.symbol());
 
     if (function.parameter_symbols().size() != node.arguments().size()) {
@@ -176,13 +175,13 @@ void TypeResolver::visit(Call &node) {
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<Cast>(std::move(argument), type, *parameter.type());
+        node.arguments()[index] = std::make_unique<node::Cast>(std::move(argument), type, *parameter.type());
     }
 
     _current_type = function.return_type();
 }
 
-void TypeResolver::visit(If &node) {
+void TypeResolver::visit(node::If &node) {
     // This will set _current_type
     node.condition()->accept(*this);
     auto type = _current_type.value();
@@ -194,7 +193,7 @@ void TypeResolver::visit(If &node) {
     if (!std::holds_alternative<type::Boolean>(type)) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &expression = const_cast<std::unique_ptr<Node> &>(node.condition());
-        node.set_condition(std::make_unique<Cast>(std::move(expression), type, BOOL_TYPE));
+        node.set_condition(std::make_unique<node::Cast>(std::move(expression), type, BOOL_TYPE));
     }
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());

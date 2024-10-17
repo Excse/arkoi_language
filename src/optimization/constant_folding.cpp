@@ -2,8 +2,6 @@
 
 #include "utils/utils.hpp"
 
-using namespace arkoi::intermediate;
-using namespace arkoi::type;
 using namespace arkoi;
 
 bool ConstantFolding::new_block(BasicBlock &block) {
@@ -12,9 +10,9 @@ bool ConstantFolding::new_block(BasicBlock &block) {
     for (auto &instruction: block.instructions()) {
         std::optional<std::unique_ptr<Instruction>> new_instruction;
 
-        if (auto binary = dynamic_cast<Binary *>(instruction.get())) {
+        if (auto binary = dynamic_cast<intermediate::Binary *>(instruction.get())) {
             new_instruction = _binary(*binary);
-        } else if (auto cast = dynamic_cast<Cast *>(instruction.get())) {
+        } else if (auto cast = dynamic_cast<intermediate::Cast *>(instruction.get())) {
             new_instruction = _cast(*cast);
         }
 
@@ -27,7 +25,7 @@ bool ConstantFolding::new_block(BasicBlock &block) {
     return changed;
 }
 
-std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const Binary &instruction) {
+std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const intermediate::Binary &instruction) {
     auto *right_immediate = std::get_if<Immediate>(&instruction.right());
     auto *left_immediate = std::get_if<Immediate>(&instruction.left());
 
@@ -35,10 +33,10 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const Binar
 
     auto apply_operator = [&](auto left, auto right) -> Operand {
         switch (instruction.op()) {
-            case Binary::Operator::Add: return left + right;
-            case Binary::Operator::Sub: return left - right;
-            case Binary::Operator::Mul: return left * right;
-            case Binary::Operator::Div: return left / right;
+            case intermediate::Binary::Operator::Add: return left + right;
+            case intermediate::Binary::Operator::Sub: return left - right;
+            case intermediate::Binary::Operator::Mul: return left * right;
+            case intermediate::Binary::Operator::Div: return left / right;
         }
 
         // As the -Wswitch flag is set, this will never be reached.
@@ -56,17 +54,17 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const Binar
         [](const auto &, const auto &) -> Operand { std::unreachable(); }
     }, *right_immediate, *left_immediate);
 
-    return std::make_unique<Store>(instruction.result(), value, instruction.type());
+    return std::make_unique<intermediate::Store>(instruction.result(), value, instruction.type());
 }
 
-std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const Cast &instruction) {
+std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const intermediate::Cast &instruction) {
     auto *expression = std::get_if<Immediate>(&instruction.expression());
 
     if (!expression) return std::nullopt;
 
     auto apply_operator = [&](auto expression, const Type &to) -> Operand {
         return std::visit(match{
-            [&](const Integral &type) -> Operand {
+            [&](const type::Integral &type) -> Operand {
                 switch (type.size()) {
                     case Size::BYTE: return type.sign() ? (int8_t) expression : (uint8_t) expression;
                     case Size::WORD: return type.sign() ? (int16_t) expression : (uint16_t) expression;
@@ -75,14 +73,14 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const Cast &i
                     default: std::unreachable();
                 }
             },
-            [&](const Floating &type) -> Operand {
+            [&](const type::Floating &type) -> Operand {
                 switch (type.size()) {
                     case Size::DWORD: return (float) expression;
                     case Size::QWORD: return (double) expression;
                     default: std::unreachable();
                 }
             },
-            [&](const Boolean &) -> Operand { return (bool) expression; }
+            [&](const type::Boolean &) -> Operand { return (bool) expression; }
         }, to);
     };
 
@@ -90,5 +88,5 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const Cast &i
         return apply_operator(value, instruction.to());
     }, *expression);
 
-    return std::make_unique<Store>(instruction.result(), value, instruction.to());
+    return std::make_unique<intermediate::Store>(instruction.result(), value, instruction.to());
 }

@@ -2,12 +2,12 @@
 
 using namespace arkoi::intermediate;
 
-Binary::Operator Binary::node_to_instruction(arkoi::node::Binary::Operator op) {
+Binary::Operator Binary::node_to_instruction(node::Binary::Operator op) {
     switch (op) {
-        case arkoi::node::Binary::Operator::Add: return Operator::Add;
-        case arkoi::node::Binary::Operator::Sub: return Operator::Sub;
-        case arkoi::node::Binary::Operator::Mul: return Operator::Mul;
-        case arkoi::node::Binary::Operator::Div: return Operator::Div;
+        case node::Binary::Operator::Add: return Operator::Add;
+        case node::Binary::Operator::Sub: return Operator::Sub;
+        case node::Binary::Operator::Mul: return Operator::Mul;
+        case node::Binary::Operator::Div: return Operator::Div;
     }
 
     // As the -Wswitch flag is set, this will never be reached.

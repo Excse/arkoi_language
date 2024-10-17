@@ -2,10 +2,9 @@
 
 #include "semantic/symbol_table.hpp"
 
-using namespace arkoi::node;
 using namespace arkoi;
 
-Program Parser::parse_program() {
+node::Program Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
     auto own_scope = _enter_scope();
 
@@ -56,7 +55,7 @@ void Parser::_recover_program() {
     }
 }
 
-std::unique_ptr<Function> Parser::_parse_function(const Token &) {
+std::unique_ptr<node::Function> Parser::_parse_function(const Token &) {
     auto own_scope = _enter_scope();
 
     const auto &name = _consume(Token::Type::Identifier);
@@ -71,11 +70,11 @@ std::unique_ptr<Function> Parser::_parse_function(const Token &) {
 
     _exit_scope();
 
-    return std::make_unique<Function>(name, std::move(parameters), return_type, std::move(block), own_scope);
+    return std::make_unique<node::Function>(name, std::move(parameters), return_type, std::move(block), own_scope);
 }
 
-std::vector<Parameter> Parser::_parse_parameters() {
-    std::vector<Parameter> parameters;
+std::vector<node::Parameter> Parser::_parse_parameters() {
+    std::vector<node::Parameter> parameters;
 
     _consume(Token::Type::LParent);
 
@@ -118,7 +117,7 @@ void Parser::_recover_parameters() {
     }
 }
 
-Parameter Parser::_parse_parameter() {
+node::Parameter Parser::_parse_parameter() {
     const auto &name = _consume(Token::Type::Identifier);
 
     auto type = _parse_type();
@@ -148,7 +147,7 @@ Type Parser::_parse_type() {
     }
 }
 
-std::unique_ptr<Block> Parser::_parse_block() {
+std::unique_ptr<node::Block> Parser::_parse_block() {
     std::vector<std::unique_ptr<Node>> statements;
 
     auto own_scope = _enter_scope();
@@ -173,7 +172,7 @@ std::unique_ptr<Block> Parser::_parse_block() {
     _consume(Token::Type::Dedentation);
     _exit_scope();
 
-    return std::make_unique<Block>(std::move(statements), own_scope);
+    return std::make_unique<node::Block>(std::move(statements), own_scope);
 }
 
 std::unique_ptr<Node> Parser::_parse_block_statement() {
@@ -208,16 +207,16 @@ void Parser::_recover_block() {
     }
 }
 
-std::unique_ptr<Return> Parser::_parse_return(const Token &) {
+std::unique_ptr<node::Return> Parser::_parse_return(const Token &) {
     auto expression = _parse_expression();
 
-    return std::make_unique<Return>(std::move(expression));
+    return std::make_unique<node::Return>(std::move(expression));
 }
 
-std::unique_ptr<If> Parser::_parse_if(const Token &) {
+std::unique_ptr<node::If> Parser::_parse_if(const Token &) {
     auto expression = _parse_expression();
 
-    If::Then then;
+    node::If::Then then;
     if (_try_consume(Token::Type::Newline)) {
         then = _parse_block();
     } else {
@@ -225,24 +224,24 @@ std::unique_ptr<If> Parser::_parse_if(const Token &) {
     }
 
     if (!_try_consume(Token::Type::Else)) {
-        return std::make_unique<If>(std::move(expression), std::move(then), std::nullopt);
+        return std::make_unique<node::If>(std::move(expression), std::move(then), std::nullopt);
     }
 
     if (auto token = _try_consume(Token::Type::If)) {
-        return std::make_unique<If>(std::move(expression), std::move(then), _parse_if(*token));
+        return std::make_unique<node::If>(std::move(expression), std::move(then), _parse_if(*token));
     }
 
-    If::Else _else;
+    node::If::Else _else;
     if (_try_consume(Token::Type::Newline)) {
         _else = _parse_block();
     } else {
         _else = _parse_block_statement();
     }
 
-    return std::make_unique<If>(std::move(expression), std::move(then), std::move(_else));
+    return std::make_unique<node::If>(std::move(expression), std::move(then), std::move(_else));
 }
 
-std::unique_ptr<Call> Parser::_parse_call(const Token &identifier) {
+std::unique_ptr<node::Call> Parser::_parse_call(const Token &identifier) {
     _consume(Token::Type::LParent);
 
     std::vector<std::unique_ptr<Node>> arguments;
@@ -260,7 +259,7 @@ std::unique_ptr<Call> Parser::_parse_call(const Token &identifier) {
 
     _consume(Token::Type::RParent);
 
-    return std::make_unique<Call>(identifier, std::move(arguments));
+    return std::make_unique<node::Call>(identifier, std::move(arguments));
 }
 
 std::unique_ptr<Node> Parser::_parse_expression() {
@@ -273,7 +272,7 @@ std::unique_ptr<Node> Parser::_parse_term() {
     while (auto op = _try_consume(_is_term_operator)) {
         auto type = _to_binary_operator(op.value());
 
-        expression = std::make_unique<Binary>(std::move(expression), type, _parse_factor());
+        expression = std::make_unique<node::Binary>(std::move(expression), type, _parse_factor());
     }
 
     return expression;
@@ -285,7 +284,7 @@ std::unique_ptr<Node> Parser::_parse_factor() {
     while (auto op = _try_consume(_is_factor_operator)) {
         auto type = _to_binary_operator(op.value());
 
-        expression = std::make_unique<Binary>(std::move(expression), type, _parse_primary());
+        expression = std::make_unique<node::Binary>(std::move(expression), type, _parse_primary());
     }
 
     return expression;
@@ -295,24 +294,24 @@ std::unique_ptr<Node> Parser::_parse_factor() {
 std::unique_ptr<Node> Parser::_parse_primary() {
     const auto &consumed = _consume_any();
     if (consumed.type() == Token::Type::Integer) {
-        auto node = std::make_unique<Integer>(consumed);
+        auto node = std::make_unique<node::Integer>(consumed);
         if (_current().type() != Token::Type::At) return node;
 
-        return std::make_unique<Cast>(std::move(node), _parse_type());
+        return std::make_unique<node::Cast>(std::move(node), _parse_type());
     } else if (consumed.type() == Token::Type::Floating) {
-        auto node = std::make_unique<Floating>(consumed);
+        auto node = std::make_unique<node::Floating>(consumed);
         if (_current().type() != Token::Type::At) return node;
 
-        return std::make_unique<Cast>(std::move(node), _parse_type());
+        return std::make_unique<node::Cast>(std::move(node), _parse_type());
     } else if (consumed.type() == Token::Type::Identifier) {
-        auto node = std::make_unique<Identifier>(consumed);
+        auto node = std::make_unique<node::Identifier>(consumed);
         if (_current().type() != Token::Type::LParent) return node;
 
         return _parse_call(consumed);
     } else if (consumed.type() == Token::Type::True) {
-        return std::make_unique<Boolean>(true);
+        return std::make_unique<node::Boolean>(true);
     } else if (consumed.type() == Token::Type::False) {
-        return std::make_unique<Boolean>(false);
+        return std::make_unique<node::Boolean>(false);
     } else if (consumed.type() == Token::Type::LParent) {
         auto expression = _parse_expression();
         _consume(Token::Type::RParent);
@@ -383,12 +382,12 @@ std::optional<Token> Parser::_try_consume(Token::Type type) {
     return current;
 }
 
-Binary::Operator Parser::_to_binary_operator(const Token &token) {
+node::Binary::Operator Parser::_to_binary_operator(const Token &token) {
     switch (token.type()) {
-        case Token::Type::Slash: return Binary::Operator::Div;
-        case Token::Type::Asterisk: return Binary::Operator::Mul;
-        case Token::Type::Plus: return Binary::Operator::Add;
-        case Token::Type::Minus: return Binary::Operator::Sub;
+        case Token::Type::Slash: return node::Binary::Operator::Div;
+        case Token::Type::Asterisk: return node::Binary::Operator::Mul;
+        case Token::Type::Plus: return node::Binary::Operator::Add;
+        case Token::Type::Minus: return node::Binary::Operator::Sub;
         default: std::unreachable();
     }
 }

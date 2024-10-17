@@ -6,7 +6,6 @@
 #include "frontend/ast.hpp"
 
 using namespace arkoi::intermediate;
-using namespace arkoi::type;
 using namespace arkoi;
 
 Generator Generator::generate(node::Program &node) {

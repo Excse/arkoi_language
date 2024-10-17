@@ -3,8 +3,6 @@
 #include "intermediate/instruction.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi::intermediate;
-using namespace arkoi::type;
 using namespace arkoi;
 
 static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
@@ -24,27 +22,27 @@ void MemoryResolver::new_block(BasicBlock &block) {
     }
 }
 
-void MemoryResolver::visit(Begin &instruction) {
+void MemoryResolver::visit(intermediate::Begin &instruction) {
     _current_begin = &instruction;
     _parameter_offset = 8;
 }
 
-void MemoryResolver::visit(Return &instruction) {
+void MemoryResolver::visit(intermediate::Return &instruction) {
     instruction.set_value(_resolve_operand(instruction.value()));
 }
 
-void MemoryResolver::visit(Binary &instruction) {
+void MemoryResolver::visit(intermediate::Binary &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_left(_resolve_operand(instruction.left()));
     instruction.set_right(_resolve_operand(instruction.right()));
 }
 
-void MemoryResolver::visit(Cast &instruction) {
+void MemoryResolver::visit(intermediate::Cast &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-void MemoryResolver::visit(Argument &instruction) {
+void MemoryResolver::visit(intermediate::Argument &instruction) {
     const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
 
     auto resolved = _resolve_parameter_register(parameter);
@@ -53,20 +51,20 @@ void MemoryResolver::visit(Argument &instruction) {
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-void MemoryResolver::visit(Call &instruction) {
+void MemoryResolver::visit(intermediate::Call &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
 }
 
-void MemoryResolver::visit(IfNot &instruction) {
+void MemoryResolver::visit(intermediate::IfNot &instruction) {
     instruction.set_condition(_resolve_operand(instruction.condition()));
 }
 
-void MemoryResolver::visit(Store &instruction) {
+void MemoryResolver::visit(intermediate::Store &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_value(_resolve_operand(instruction.value()));
 }
 
-void MemoryResolver::visit(End &) {
+void MemoryResolver::visit(intermediate::End &) {
     // Align the stack to comfort the specifications
     auto local_size = _current_begin->local_size();
     local_size = (local_size + STACK_ALIGNMENT - 1) & ~(STACK_ALIGNMENT - 1);
@@ -127,17 +125,17 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
 
 std::optional<Register> MemoryResolver::_resolve_parameter_register(const ParameterSymbol &symbol) {
     return std::visit(match{
-        [&](const Integral &type) -> std::optional<Register> {
+        [&](const type::Integral &type) -> std::optional<Register> {
             if (symbol.int_index() >= 6) return std::nullopt;
 
             return Register(INT_REG_ORDER[symbol.int_index()], type.size());
         },
-        [&](const Boolean &) -> std::optional<Register> {
+        [&](const type::Boolean &) -> std::optional<Register> {
             if (symbol.int_index() >= 6) return std::nullopt;
 
-            return Register(INT_REG_ORDER[symbol.int_index()], Boolean::size());
+            return Register(INT_REG_ORDER[symbol.int_index()], type::Boolean::size());
         },
-        [&](const Floating &type) -> std::optional<Register> {
+        [&](const type::Floating &type) -> std::optional<Register> {
             if (symbol.sse_index() >= 8) return std::nullopt;
 
             return Register(SSE_REG_ORDER[symbol.int_index()], type.size());

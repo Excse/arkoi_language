@@ -13,7 +13,6 @@
 #include "frontend/scanner.hpp"
 #include "frontend/parser.hpp"
 
-using namespace arkoi::intermediate;
 using namespace arkoi;
 
 int main() {
@@ -43,8 +42,8 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    auto il_generator = Generator::generate(program);
-    auto il_printer = Printer::print(il_generator.cfgs());
+    auto il_generator = intermediate::Generator::generate(program);
+    auto il_printer = intermediate::Printer::print(il_generator.cfgs());
     std::cout << il_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
@@ -56,7 +55,7 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
-    auto optimized_printer = Printer::print(il_generator.cfgs());
+    auto optimized_printer = intermediate::Printer::print(il_generator.cfgs());
     std::cout << optimized_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
