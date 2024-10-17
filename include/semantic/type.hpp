@@ -7,13 +7,13 @@
 
 namespace arkoi::type {
 
-class IntegralType {
+class Integral {
 public:
-    IntegralType(const Size size, const bool sign) : _size(size), _sign(sign) {}
+    Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
 
-    bool operator==(const IntegralType &other) const;
+    bool operator==(const Integral &other) const;
 
-    bool operator!=(const IntegralType &other) const;
+    bool operator!=(const Integral &other) const;
 
     [[nodiscard]] uint64_t max() const;
 
@@ -26,13 +26,13 @@ private:
     bool _sign;
 };
 
-class FloatingType {
+class Floating {
 public:
-    explicit FloatingType(const Size size) : _size(size) {}
+    explicit Floating(const Size size) : _size(size) {}
 
-    bool operator==(const FloatingType &other) const;
+    bool operator==(const Floating &other) const;
 
-    bool operator!=(const FloatingType &other) const;
+    bool operator!=(const Floating &other) const;
 
     [[nodiscard]] auto size() const { return _size; }
 
@@ -40,16 +40,20 @@ private:
     Size _size;
 };
 
-class BooleanType {
+class Boolean {
 public:
-    bool operator==(const BooleanType &other) const;
+    bool operator==(const Boolean &other) const;
 
-    bool operator!=(const BooleanType &other) const;
+    bool operator!=(const Boolean &other) const;
 
     [[nodiscard]] static auto size() { return Size::BYTE; }
 };
 
-struct Type : std::variant<IntegralType, FloatingType, BooleanType> {
+}
+
+namespace arkoi {
+
+struct Type : std::variant<type::Integral, type::Floating, type::Boolean> {
     using variant::variant;
 
     [[nodiscard]] Size size() const;
@@ -57,10 +61,10 @@ struct Type : std::variant<IntegralType, FloatingType, BooleanType> {
 
 }
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::IntegralType &type);
+std::ostream &operator<<(std::ostream &os, const arkoi::type::Integral &type);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::FloatingType &type);
+std::ostream &operator<<(std::ostream &os, const arkoi::type::Floating &type);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::BooleanType &type);
+std::ostream &operator<<(std::ostream &os, const arkoi::type::Boolean &type);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Type &type);
+std::ostream &operator<<(std::ostream &os, const arkoi::Type &type);

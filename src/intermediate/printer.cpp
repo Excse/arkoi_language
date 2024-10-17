@@ -1,4 +1,4 @@
-#include "intermediate/il_printer.hpp"
+#include "intermediate/printer.hpp"
 
 #include <iostream>
 
@@ -8,8 +8,8 @@
 
 using namespace arkoi::intermediate;
 
-ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
-    ILPrinter printer;
+Printer Printer::print(std::vector<CFG> &cfgs) {
+    Printer printer;
 
     auto visit_instructions = [&](BasicBlock &block) {
         for (auto &instruction: block.instructions()) {
@@ -24,58 +24,58 @@ ILPrinter ILPrinter::print(std::vector<CFG> &cfgs) {
     return printer;
 }
 
-ILPrinter ILPrinter::print(Instruction &instruction) {
-    ILPrinter printer;
+Printer Printer::print(Instruction &instruction) {
+    Printer printer;
 
     instruction.accept(printer);
 
     return printer;
 }
 
-void ILPrinter::visit(LabelInstruction &instruction) {
+void Printer::visit(Label &instruction) {
     _output << "LABEL " << *instruction.symbol() << ":\n";
 }
 
-void ILPrinter::visit(BeginInstruction &instruction) {
+void Printer::visit(Begin &instruction) {
     _output << "BEGIN " << *instruction.label();
     if (instruction.local_size()) _output << " LOCALS " << " " << instruction.local_size();
     _output << "\n";
 }
 
-void ILPrinter::visit(ReturnInstruction &instruction) {
+void Printer::visit(Return &instruction) {
     _output << "RETURN " << instruction.value() << "\n";
 }
 
-void ILPrinter::visit(BinaryInstruction &instruction) {
+void Printer::visit(Binary &instruction) {
     _output << instruction.result() << " = " << to_string(instruction.op()) << " " << instruction.left() << ", "
             << instruction.right() << "\n";
 }
 
-void ILPrinter::visit(CastInstruction &instruction) {
+void Printer::visit(Cast &instruction) {
     _output << instruction.result() << " = CAST " << instruction.expression() << " FROM @" << instruction.from()
             << " TO @" << instruction.to() << "\n";
 }
 
-void ILPrinter::visit(EndInstruction &) {
+void Printer::visit(End &) {
     _output << "END\n";
 }
 
-void ILPrinter::visit(CallInstruction &instruction) {
+void Printer::visit(Call &instruction) {
     _output << instruction.result() << " = CALL " << *instruction.symbol() << "\n";
 }
 
-void ILPrinter::visit(ArgumentInstruction &instruction) {
+void Printer::visit(Argument &instruction) {
     _output << "ARG " << instruction.expression() << "\n";
 }
 
-void ILPrinter::visit(GotoInstruction &instruction) {
+void Printer::visit(Goto &instruction) {
     _output << "GOTO " << *instruction.label() << "\n";
 }
 
-void ILPrinter::visit(IfNotInstruction &instruction) {
+void Printer::visit(IfNot &instruction) {
     _output << "IF NOT " << instruction.condition() << " GOTO " << *instruction.label() << "\n";
 }
 
-void ILPrinter::visit(StoreInstruction &instruction) {
+void Printer::visit(Store &instruction) {
     _output << instruction.result() << " = " << instruction.value() << "\n";
 }

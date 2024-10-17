@@ -3,10 +3,10 @@
 #include "frontend/ast.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi::ast;
+using namespace arkoi::node;
 using namespace arkoi;
 
-NameResolver NameResolver::resolve(ProgramNode &node) {
+NameResolver NameResolver::resolve(Program &node) {
     NameResolver resolver;
 
     node.accept(resolver);
@@ -14,12 +14,12 @@ NameResolver NameResolver::resolve(ProgramNode &node) {
     return resolver;
 }
 
-void NameResolver::visit(ProgramNode &node) {
+void NameResolver::visit(Program &node) {
     _scopes.push(node.table());
 
     // At first all function prototypes are name resolved.
     for (const auto &item: node.statements()) {
-        auto *function = dynamic_cast<FunctionNode *>(item.get());
+        auto *function = dynamic_cast<Function *>(item.get());
         if (function) visit_as_prototype(*function);
     }
 
@@ -30,12 +30,12 @@ void NameResolver::visit(ProgramNode &node) {
     _scopes.pop();
 }
 
-void NameResolver::visit_as_prototype(FunctionNode &node) {
+void NameResolver::visit_as_prototype(Function &node) {
     auto symbol = _check_non_existence<FunctionSymbol>(node.name());
     node.set_symbol(symbol);
 }
 
-void NameResolver::visit(FunctionNode &node) {
+void NameResolver::visit(Function &node) {
     _scopes.push(node.table());
 
     std::vector<std::shared_ptr<Symbol>> parameters;
@@ -52,12 +52,12 @@ void NameResolver::visit(FunctionNode &node) {
     _scopes.pop();
 }
 
-void NameResolver::visit(ParameterNode &node) {
+void NameResolver::visit(Parameter &node) {
     auto parameter_symbol = _check_non_existence<ParameterSymbol>(node.name());
     node.set_symbol(parameter_symbol);
 }
 
-void NameResolver::visit(BlockNode &node) {
+void NameResolver::visit(Block &node) {
     _scopes.push(node.table());
     for (const auto &item: node.statements()) {
         item->accept(*this);
@@ -65,25 +65,25 @@ void NameResolver::visit(BlockNode &node) {
     _scopes.pop();
 }
 
-void NameResolver::visit(IdentifierNode &node) {
+void NameResolver::visit(Identifier &node) {
     auto symbol = _check_existence<ParameterSymbol>(node.value());
     node.set_symbol(symbol);
 }
 
-void NameResolver::visit(ReturnNode &node) {
+void NameResolver::visit(Return &node) {
     node.expression()->accept(*this);
 }
 
-void NameResolver::visit(BinaryNode &node) {
+void NameResolver::visit(Binary &node) {
     node.left()->accept(*this);
     node.right()->accept(*this);
 }
 
-void NameResolver::visit(CastNode &node) {
+void NameResolver::visit(Cast &node) {
     node.expression()->accept(*this);
 }
 
-void NameResolver::visit(IfNode &node) {
+void NameResolver::visit(If &node) {
     node.condition()->accept(*this);
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
@@ -91,7 +91,7 @@ void NameResolver::visit(IfNode &node) {
     if (node.branch()) std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
 }
 
-void NameResolver::visit(CallNode &node) {
+void NameResolver::visit(Call &node) {
     auto symbol = _check_existence<FunctionSymbol>(node.name());
     node.set_symbol(symbol);
 

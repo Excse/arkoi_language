@@ -46,15 +46,15 @@ add_library(${PROJECT_NAME}_lib
         src/semantic/name_resolver.tpp
         src/semantic/name_resolver.cpp
         src/intermediate/instruction.cpp
-        src/intermediate/il_generator.cpp
-        src/intermediate/il_printer.cpp
-        src/backend/x86_64/gas_generator.cpp
+        src/intermediate/generator.cpp
+        src/intermediate/printer.cpp
+        src/backend/x86_64/generator.cpp
         src/optimization/memory_resolver.cpp
         src/intermediate/operand.cpp
         src/semantic/symbol.cpp
         src/semantic/type_resolver.cpp
         src/semantic/type.cpp
-        src/backend/x86_64/gas_assembly.cpp
+        src/backend/x86_64/assembly.cpp
         src/utils/data.cpp
         src/intermediate/cfg.cpp
         src/optimization/optimization.cpp

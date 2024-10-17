@@ -1,115 +1,115 @@
 #pragma once
 
-namespace arkoi::ast {
+namespace arkoi::node {
 
-class IdentifierNode;
+class Identifier;
 
-class ParameterNode;
+class Parameter;
 
-class FloatingNode;
+class Floating;
 
-class FunctionNode;
+class Function;
 
-class IntegerNode;
+class Integer;
 
-class ProgramNode;
+class Program;
 
-class BooleanNode;
+class Boolean;
 
-class ReturnNode;
+class Return;
 
-class BinaryNode;
+class Binary;
 
-class BlockNode;
+class Block;
 
-class CastNode;
+class Cast;
 
-class CallNode;
+class Call;
 
-class IfNode;
+class If;
 
-class NodeVisitor {
+class Visitor {
 public:
-    virtual ~NodeVisitor() = default;
+    virtual ~Visitor() = default;
 
-    virtual void visit(ProgramNode &node) = 0;
+    virtual void visit(Program &node) = 0;
 
-    virtual void visit(FunctionNode &node) = 0;
+    virtual void visit(Function &node) = 0;
 
-    virtual void visit(BlockNode &node) = 0;
+    virtual void visit(Block &node) = 0;
 
-    virtual void visit(ParameterNode &node) = 0;
+    virtual void visit(Parameter &node) = 0;
 
-    virtual void visit(IntegerNode &node) = 0;
+    virtual void visit(Integer &node) = 0;
 
-    virtual void visit(FloatingNode &node) = 0;
+    virtual void visit(Floating &node) = 0;
 
-    virtual void visit(BooleanNode &node) = 0;
+    virtual void visit(Boolean &node) = 0;
 
-    virtual void visit(ReturnNode &node) = 0;
+    virtual void visit(Return &node) = 0;
 
-    virtual void visit(IdentifierNode &node) = 0;
+    virtual void visit(Identifier &node) = 0;
 
-    virtual void visit(BinaryNode &node) = 0;
+    virtual void visit(Binary &node) = 0;
 
-    virtual void visit(CastNode &node) = 0;
+    virtual void visit(Cast &node) = 0;
 
-    virtual void visit(CallNode &node) = 0;
+    virtual void visit(Call &node) = 0;
 
-    virtual void visit(IfNode &node) = 0;
+    virtual void visit(If &node) = 0;
 };
 
 }
 
 namespace arkoi::intermediate {
 
-class ArgumentInstruction;
+class Argument;
 
-class BinaryInstruction;
+class Binary;
 
-class ReturnInstruction;
+class Return;
 
-class LabelInstruction;
+class Label;
 
-class BeginInstruction;
+class Begin;
 
-class IfNotInstruction;
+class IfNot;
 
-class StoreInstruction;
+class Store;
 
-class CastInstruction;
+class Cast;
 
-class CallInstruction;
+class Call;
 
-class GotoInstruction;
+class Goto;
 
-class EndInstruction;
+class End;
 
-class InstructionVisitor {
+class Visitor {
 public:
-    virtual ~InstructionVisitor() = default;
+    virtual ~Visitor() = default;
 
-    virtual void visit(LabelInstruction &instruction) = 0;
+    virtual void visit(Label &instruction) = 0;
 
-    virtual void visit(BeginInstruction &instruction) = 0;
+    virtual void visit(Begin &instruction) = 0;
 
-    virtual void visit(ReturnInstruction &instruction) = 0;
+    virtual void visit(Return &instruction) = 0;
 
-    virtual void visit(BinaryInstruction &instruction) = 0;
+    virtual void visit(Binary &instruction) = 0;
 
-    virtual void visit(EndInstruction &instruction) = 0;
+    virtual void visit(End &instruction) = 0;
 
-    virtual void visit(CastInstruction &instruction) = 0;
+    virtual void visit(Cast &instruction) = 0;
 
-    virtual void visit(CallInstruction &instruction) = 0;
+    virtual void visit(Call &instruction) = 0;
 
-    virtual void visit(ArgumentInstruction &instruction) = 0;
+    virtual void visit(Argument &instruction) = 0;
 
-    virtual void visit(IfNotInstruction &instruction) = 0;
+    virtual void visit(IfNot &instruction) = 0;
 
-    virtual void visit(GotoInstruction &instruction) = 0;
+    virtual void visit(Goto &instruction) = 0;
 
-    virtual void visit(StoreInstruction &instruction) = 0;
+    virtual void visit(Store &instruction) = 0;
 };
 
 }

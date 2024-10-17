@@ -10,20 +10,24 @@
 #include "utils/visitor.hpp"
 #include "frontend/ast.hpp"
 
-namespace arkoi::intermediate {
+namespace arkoi {
 
 class Instruction {
 public:
     virtual ~Instruction() = default;
 
-    virtual void accept(InstructionVisitor &visitor) = 0;
+    virtual void accept(intermediate::Visitor &visitor) = 0;
 };
 
-class LabelInstruction : public Instruction {
-public:
-    explicit LabelInstruction(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
+}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+namespace arkoi::intermediate {
+
+class Label : public Instruction {
+public:
+    explicit Label(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
@@ -31,11 +35,11 @@ private:
     std::shared_ptr<Symbol> _symbol;
 };
 
-class GotoInstruction : public Instruction {
+class Goto : public Instruction {
 public:
-    explicit GotoInstruction(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
+    explicit Goto(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &label() const { return _label; }
 
@@ -43,12 +47,12 @@ private:
     std::shared_ptr<Symbol> _label;
 };
 
-class IfNotInstruction : public Instruction {
+class IfNot : public Instruction {
 public:
-    IfNotInstruction(Operand condition, std::shared_ptr<Symbol> label)
+    IfNot(Operand condition, std::shared_ptr<Symbol> label)
         : _label(std::move(label)), _condition(std::move(condition)) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_condition(Operand condition) { _condition = std::move(condition); }
 
@@ -61,12 +65,12 @@ private:
     Operand _condition;
 };
 
-class CallInstruction : public Instruction {
+class Call : public Instruction {
 public:
-    explicit CallInstruction(Operand result, std::shared_ptr<Symbol> symbol)
+    explicit Call(Operand result, std::shared_ptr<Symbol> symbol)
         : _symbol(std::move(symbol)), _result(std::move(result)) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_result(Operand operand) { _result = std::move(operand); };
 
@@ -79,11 +83,11 @@ private:
     Operand _result;
 };
 
-class ReturnInstruction : public Instruction {
+class Return : public Instruction {
 public:
-    explicit ReturnInstruction(Operand value, type::Type type) : _value(std::move(value)), _type(type) {}
+    explicit Return(Operand value, Type type) : _value(std::move(value)), _type(type) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &type() const { return _type; };
 
@@ -93,10 +97,10 @@ public:
 
 private:
     Operand _value;
-    type::Type _type;
+    Type _type;
 };
 
-class BinaryInstruction : public Instruction {
+class Binary : public Instruction {
 public:
     enum class Operator {
         Add,
@@ -106,11 +110,11 @@ public:
     };
 
 public:
-    BinaryInstruction(Operand result, Operand left, Operator op, Operand right, type::Type type)
+    Binary(Operand result, Operand left, Operator op, Operand right, Type type)
         : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
           _type(type) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_result(Operand operand) { _result = std::move(operand); };
 
@@ -128,20 +132,20 @@ public:
 
     [[nodiscard]] auto &op() const { return _op; };
 
-    [[nodiscard]] static Operator node_to_instruction(ast::BinaryNode::Operator op);
+    [[nodiscard]] static Operator node_to_instruction(node::Binary::Operator op);
 
 private:
     Operand _result, _left, _right;
     Operator _op;
-    type::Type _type;
+    Type _type;
 };
 
-class BeginInstruction : public Instruction {
+class Begin : public Instruction {
 public:
-    explicit BeginInstruction(std::shared_ptr<Symbol> label, int64_t local_size = 0)
+    explicit Begin(std::shared_ptr<Symbol> label, int64_t local_size = 0)
         : _label(std::move(label)), _local_size(local_size) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void increase_local_size(int64_t amount) { _local_size += amount; }
 
@@ -156,17 +160,17 @@ private:
     int64_t _local_size;
 };
 
-class EndInstruction : public Instruction {
+class End : public Instruction {
 public:
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 };
 
-class CastInstruction : public Instruction {
+class Cast : public Instruction {
 public:
-    CastInstruction(Operand result, Operand expression, type::Type from, type::Type to)
+    Cast(Operand result, Operand expression, Type from, Type to)
         : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_expression(Operand operand) { _expression = std::move(operand); };
 
@@ -182,15 +186,15 @@ public:
 
 private:
     Operand _result, _expression;
-    type::Type _from, _to;
+    Type _from, _to;
 };
 
-class ArgumentInstruction : public Instruction {
+class Argument : public Instruction {
 public:
-    explicit ArgumentInstruction(Operand expression, std::shared_ptr<Symbol> symbol)
+    explicit Argument(Operand expression, std::shared_ptr<Symbol> symbol)
         : _symbol(std::move(symbol)), _expression(std::move(expression)) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_expression(Operand operand) { _expression = std::move(operand); };
 
@@ -208,12 +212,12 @@ private:
     Operand _expression;
 };
 
-class StoreInstruction : public Instruction {
+class Store : public Instruction {
 public:
-    explicit StoreInstruction(Operand result, Operand value, type::Type type)
+    explicit Store(Operand result, Operand value, Type type)
         : _value(std::move(value)), _result(std::move(result)), _type(type) {}
 
-    void accept(InstructionVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_value(Operand operand) { _value = std::move(operand); };
 
@@ -227,9 +231,9 @@ public:
 
 private:
     Operand _value, _result;
-    type::Type _type;
+    Type _type;
 };
 
 }
 
-std::ostream &operator<<(std::ostream &os, const arkoi::intermediate::BinaryInstruction::Operator &op);
+std::ostream &operator<<(std::ostream &os, const arkoi::intermediate::Binary::Operator &op);

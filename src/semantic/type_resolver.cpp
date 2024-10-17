@@ -5,14 +5,13 @@
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
-using namespace arkoi::type;
-using namespace arkoi::ast;
+using namespace arkoi::node;
 using namespace arkoi;
 
-static IntegralType BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
-static BooleanType BOOL_TYPE;
+static type::Integral BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
+static type::Boolean BOOL_TYPE;
 
-TypeResolver TypeResolver::resolve(ProgramNode &node) {
+TypeResolver TypeResolver::resolve(Program &node) {
     TypeResolver resolver;
 
     node.accept(resolver);
@@ -20,10 +19,10 @@ TypeResolver TypeResolver::resolve(ProgramNode &node) {
     return resolver;
 }
 
-void TypeResolver::visit(ProgramNode &node) {
+void TypeResolver::visit(Program &node) {
     // At first all function prototypes are type resolved.
     for (const auto &item: node.statements()) {
-        auto *function = dynamic_cast<FunctionNode *>(item.get());
+        auto *function = dynamic_cast<Function *>(item.get());
         if (function) visit_as_prototype(*function);
     }
 
@@ -32,7 +31,7 @@ void TypeResolver::visit(ProgramNode &node) {
     }
 }
 
-void TypeResolver::visit_as_prototype(FunctionNode &node) {
+void TypeResolver::visit_as_prototype(Function &node) {
     // Reset the register counters for the parameters
     _sse_index = 0;
     _int_index = 0;
@@ -45,30 +44,30 @@ void TypeResolver::visit_as_prototype(FunctionNode &node) {
     function.set_return_type(node.type());
 }
 
-void TypeResolver::visit(FunctionNode &node) {
+void TypeResolver::visit(Function &node) {
     _return_type = node.type();
 
     node.block()->accept(*this);
 }
 
-void TypeResolver::visit(BlockNode &node) {
+void TypeResolver::visit(Block &node) {
     for (const auto &item: node.statements()) {
         item->accept(*this);
     }
 }
 
-void TypeResolver::visit(ParameterNode &node) {
+void TypeResolver::visit(Parameter &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
     std::visit(match {
-        [&](const IntegralType &) { parameter.set_int_index(_int_index++); },
-        [&](const BooleanType &) { parameter.set_int_index(_int_index++); },
-        [&](const FloatingType &) { parameter.set_sse_index(_sse_index++); }
+        [&](const type::Integral &) { parameter.set_int_index(_int_index++); },
+        [&](const type::Boolean &) { parameter.set_int_index(_int_index++); },
+        [&](const type::Floating &) { parameter.set_sse_index(_sse_index++); }
     }, node.type());
 }
 
-void TypeResolver::visit(IntegerNode &node) {
+void TypeResolver::visit(Integer &node) {
     const auto &number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
@@ -79,21 +78,21 @@ void TypeResolver::visit(IntegerNode &node) {
         size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? Size::QWORD : Size::DWORD;
     }
 
-    _current_type = IntegralType(size, sign);
+    _current_type = type::Integral(size, sign);
 }
 
-void TypeResolver::visit(FloatingNode &node) {
+void TypeResolver::visit(Floating &node) {
     const auto &number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
-    _current_type = FloatingType(size);
+    _current_type = type::Floating(size);
 }
 
-void TypeResolver::visit(BooleanNode &) {
-    _current_type = BooleanType();
+void TypeResolver::visit(Boolean &) {
+    _current_type = type::Boolean();
 }
 
-void TypeResolver::visit(ReturnNode &node) {
+void TypeResolver::visit(Return &node) {
     node.expression()->accept(*this);
     auto type = _current_type.value();
 
@@ -109,15 +108,15 @@ void TypeResolver::visit(ReturnNode &node) {
 
     // We assure to override the const casted node with a new node. Thus, this exception is legal.
     auto &expression = const_cast<std::unique_ptr<Node> &>(node.expression());
-    node.set_expression(std::make_unique<CastNode>(std::move(expression), type, _return_type.value()));
+    node.set_expression(std::make_unique<Cast>(std::move(expression), type, _return_type.value()));
 }
 
-void TypeResolver::visit(IdentifierNode &node) {
+void TypeResolver::visit(Identifier &node) {
     const auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     _current_type = parameter.type();
 }
 
-void TypeResolver::visit(BinaryNode &node) {
+void TypeResolver::visit(Binary &node) {
     // This will set _current_type
     node.left()->accept(*this);
     auto left = _current_type.value();
@@ -133,17 +132,17 @@ void TypeResolver::visit(BinaryNode &node) {
     if (left != result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &left_node = const_cast<std::unique_ptr<Node> &>(node.left());
-        node.set_left(std::make_unique<CastNode>(std::move(left_node), left, result));
+        node.set_left(std::make_unique<Cast>(std::move(left_node), left, result));
     }
 
     if (right != result) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &right_node = const_cast<std::unique_ptr<Node> &>(node.right());
-        node.set_right(std::make_unique<CastNode>(std::move(right_node), right, result));
+        node.set_right(std::make_unique<Cast>(std::move(right_node), right, result));
     }
 }
 
-void TypeResolver::visit(CastNode &node) {
+void TypeResolver::visit(Cast &node) {
     // This will set _current_type
     node.expression()->accept(*this);
     auto from = _current_type.value();
@@ -156,7 +155,7 @@ void TypeResolver::visit(CastNode &node) {
     _current_type = node.to();
 }
 
-void TypeResolver::visit(CallNode &node) {
+void TypeResolver::visit(Call &node) {
     auto function = std::get<FunctionSymbol>(*node.symbol());
 
     if (function.parameter_symbols().size() != node.arguments().size()) {
@@ -177,13 +176,13 @@ void TypeResolver::visit(CallNode &node) {
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<CastNode>(std::move(argument), type, *parameter.type());
+        node.arguments()[index] = std::make_unique<Cast>(std::move(argument), type, *parameter.type());
     }
 
     _current_type = function.return_type();
 }
 
-void TypeResolver::visit(IfNode &node) {
+void TypeResolver::visit(If &node) {
     // This will set _current_type
     node.condition()->accept(*this);
     auto type = _current_type.value();
@@ -192,10 +191,10 @@ void TypeResolver::visit(IfNode &node) {
         throw std::runtime_error("Return statement has a wrong return op.");
     }
 
-    if (!std::holds_alternative<BooleanType>(type)) {
+    if (!std::holds_alternative<type::Boolean>(type)) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &expression = const_cast<std::unique_ptr<Node> &>(node.condition());
-        node.set_condition(std::make_unique<CastNode>(std::move(expression), type, BOOL_TYPE));
+        node.set_condition(std::make_unique<Cast>(std::move(expression), type, BOOL_TYPE));
     }
 
     std::visit([&](const auto &value) { value->accept(*this); }, node.then());
@@ -205,8 +204,8 @@ void TypeResolver::visit(IfNode &node) {
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
 Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &right_type) {
-    auto floating_left = std::get_if<FloatingType>(&left_type);
-    auto floating_right = std::get_if<FloatingType>(&right_type);
+    auto floating_left = std::get_if<type::Floating>(&left_type);
+    auto floating_right = std::get_if<type::Floating>(&right_type);
 
     // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
@@ -227,20 +226,20 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
 
     // Stage 5: Both operands are converted to a common op C.
     auto t1 = std::visit(match{
-        [](const IntegralType &type) -> IntegralType { return type; },
-        [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> IntegralType { throw std::runtime_error("The left type must be of integral type."); }
+        [](const type::Integral &type) -> type::Integral { return type; },
+        [](const type::Boolean &) -> type::Integral { return BOOL_PROMOTED_INT_TYPE; },
+        [](const auto &) -> type::Integral { throw std::runtime_error("The left type must be of integral type."); }
     }, left_type);
     auto t2 = std::visit(match{
-        [](const IntegralType &type) -> IntegralType { return type; },
-        [](const BooleanType &) -> IntegralType { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> IntegralType { throw std::runtime_error("The left type must be of integral type."); }
+        [](const type::Integral &type) -> type::Integral { return type; },
+        [](const type::Boolean &) -> type::Integral { return BOOL_PROMOTED_INT_TYPE; },
+        [](const auto &) -> type::Integral { throw std::runtime_error("The left type must be of integral type."); }
     }, right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    if (t1.size() < Size::DWORD) t1 = IntegralType(Size::DWORD, t1.sign());
-    if (t2.size() < Size::DWORD) t2 = IntegralType(Size::DWORD, t2.sign());
+    if (t1.size() < Size::DWORD) t1 = type::Integral(Size::DWORD, t1.sign());
+    if (t2.size() < Size::DWORD) t2 = type::Integral(Size::DWORD, t2.sign());
 
     // 1. If T1 and T2 are the same type, C is that op.
     if (t1 == t2) return t1;
@@ -264,7 +263,7 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     if (_signed.max() >= _unsigned.max()) return _signed;
 
     // 3.3. Otherwise, C is the unsigned integer op corresponding to S.
-    return IntegralType(_signed.size(), false);
+    return type::Integral(_signed.size(), false);
 }
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion
@@ -272,27 +271,27 @@ bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destinati
     return std::visit(match{
         // A prvalue of an integer type or of an unscoped enumeration op can be converted to any other integer type.
         // If the conversion is listed under integral promotions, it is a promotion and not a conversion.
-        [](const IntegralType &, const IntegralType &) { return true; },
+        [](const type::Integral &, const type::Integral &) { return true; },
         // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
         // converted to a prvalue of type bool.
-        [](const IntegralType &, const BooleanType &) { return true; },
+        [](const type::Integral &, const type::Boolean &) { return true; },
         // A prvalue of integer or unscoped enumeration type can be converted to a prvalue of any floating-point type.
         // The result is exact if possible.
-        [](const IntegralType &, const FloatingType &) { return true; },
+        [](const type::Integral &, const type::Floating &) { return true; },
         // A prvalue of a floating-point type can be converted to a prvalue of any other floating-point type. (until C++23)
-        [](const FloatingType &, const FloatingType &) { return true; },
+        [](const type::Floating &, const type::Floating &) { return true; },
         // A prvalue of floating-point type can be converted to a prvalue of any integer type. The fractional part is
         // truncated, that is, the fractional part is discarded.
-        [](const FloatingType &, const IntegralType &) { return true; },
+        [](const type::Floating &, const type::Integral &) { return true; },
         // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
         // converted to a prvalue of type bool.
-        [](const FloatingType &, const BooleanType &) { return true; },
+        [](const type::Floating &, const type::Boolean &) { return true; },
         // If the source type is bool, the value false is converted to zero and the value true is converted to the value
         // one of the destination type (note that if the destination type is int, this is an integer promotion, not an
         // integer conversion).
-        [](const BooleanType &, const IntegralType &) { return true; },
+        [](const type::Boolean &, const type::Integral &) { return true; },
         // If the source type is bool, the value false is converted to zero, and the value true is converted to one.
-        [](const BooleanType &, const FloatingType &) { return true; },
+        [](const type::Boolean &, const type::Floating &) { return true; },
         [&](const auto &, const auto &) { return from == destination; },
     }, from, destination);
 }

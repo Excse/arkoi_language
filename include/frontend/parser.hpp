@@ -4,9 +4,9 @@
 #include <vector>
 #include <stack>
 
-#include "token.hpp"
-#include "utils/utils.hpp"
+#include "frontend/token.hpp"
 #include "frontend/ast.hpp"
+#include "utils/utils.hpp"
 
 namespace arkoi {
 
@@ -14,44 +14,44 @@ class Parser {
 public:
     explicit Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
 
-    [[nodiscard]] ast::ProgramNode parse_program();
+    [[nodiscard]] node::Program parse_program();
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    [[nodiscard]] std::unique_ptr<ast::Node> _parse_program_statement();
+    [[nodiscard]] std::unique_ptr<Node> _parse_program_statement();
 
     void _recover_program();
 
-    [[nodiscard]] std::unique_ptr<ast::FunctionNode> _parse_function(const Token &keyword);
+    [[nodiscard]] std::unique_ptr<node::Function> _parse_function(const Token &keyword);
 
-    [[nodiscard]] std::vector<ast::ParameterNode> _parse_parameters();
+    [[nodiscard]] std::vector<node::Parameter> _parse_parameters();
 
     void _recover_parameters();
 
-    [[nodiscard]] ast::ParameterNode _parse_parameter();
+    [[nodiscard]] node::Parameter _parse_parameter();
 
-    [[nodiscard]] type::Type _parse_type();
+    [[nodiscard]] Type _parse_type();
 
-    [[nodiscard]] std::unique_ptr<ast::BlockNode> _parse_block();
+    [[nodiscard]] std::unique_ptr<node::Block> _parse_block();
 
-    [[nodiscard]] std::unique_ptr<ast::Node> _parse_block_statement();
+    [[nodiscard]] std::unique_ptr<Node> _parse_block_statement();
 
     void _recover_block();
 
-    [[nodiscard]] std::unique_ptr<ast::ReturnNode> _parse_return(const Token &keyword);
+    [[nodiscard]] std::unique_ptr<node::Return> _parse_return(const Token &keyword);
 
-    [[nodiscard]] std::unique_ptr<ast::IfNode> _parse_if(const Token &keyword);
+    [[nodiscard]] std::unique_ptr<node::If> _parse_if(const Token &keyword);
 
-    [[nodiscard]] std::unique_ptr<ast::CallNode> _parse_call(const Token &identifier);
+    [[nodiscard]] std::unique_ptr<node::Call> _parse_call(const Token &identifier);
 
-    [[nodiscard]] std::unique_ptr<ast::Node> _parse_expression();
+    [[nodiscard]] std::unique_ptr<Node> _parse_expression();
 
-    [[nodiscard]] std::unique_ptr<ast::Node> _parse_term();
+    [[nodiscard]] std::unique_ptr<Node> _parse_term();
 
-    [[nodiscard]] std::unique_ptr<ast::Node> _parse_factor();
+    [[nodiscard]] std::unique_ptr<Node> _parse_factor();
 
-    [[nodiscard]] std::unique_ptr<ast::Node> _parse_primary();
+    [[nodiscard]] std::unique_ptr<Node> _parse_primary();
 
     [[nodiscard]] std::shared_ptr<SymbolTable> _current_scope();
 
@@ -71,7 +71,7 @@ private:
 
     std::optional<Token> _try_consume(Token::Type type);
 
-    [[nodiscard]] static ast::BinaryNode::Operator _to_binary_operator(const Token &token);
+    [[nodiscard]] static node::Binary::Operator _to_binary_operator(const Token &token);
 
     [[nodiscard]] static bool _is_factor_operator(const Token &token);
 

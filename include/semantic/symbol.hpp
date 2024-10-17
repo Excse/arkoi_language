@@ -18,7 +18,7 @@ public:
 
     [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
 
-    void set_return_type(type::Type type) { _return_type = type; }
+    void set_return_type(Type type) { _return_type = type; }
 
     [[nodiscard]] auto &return_type() const { return _return_type; }
 
@@ -26,7 +26,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Symbol>> _parameter_symbols{};
-    std::optional<type::Type> _return_type{};
+    std::optional<Type> _return_type{};
     std::string _name;
 };
 
@@ -42,7 +42,7 @@ public:
 
     [[nodiscard]] auto int_index() const { return _int_index; }
 
-    void set_type(type::Type type) { _type = type; }
+    void set_type(Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
@@ -50,13 +50,13 @@ public:
 
 private:
     size_t _int_index{}, _sse_index{};
-    std::optional<type::Type> _type{};
+    std::optional<Type> _type{};
     std::string _name;
 };
 
 class TemporarySymbol {
 public:
-    TemporarySymbol(std::string name, type::Type type) : _type(type), _name(std::move(name)) {}
+    TemporarySymbol(std::string name, Type type) : _type(type), _name(std::move(name)) {}
 
     explicit TemporarySymbol(std::string name) : _type(), _name(std::move(name)) {}
 
@@ -65,7 +65,7 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::optional<type::Type> _type;
+    std::optional<Type> _type;
     std::string _name;
 };
 

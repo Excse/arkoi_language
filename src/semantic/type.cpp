@@ -14,19 +14,19 @@ Size Type::size() const {
     return std::visit([](const auto &value) { return value.size(); }, *this);
 }
 
-bool IntegralType::operator==(const IntegralType &other) const {
+bool Integral::operator==(const Integral &other) const {
     return _size == other._size && _sign == other._sign;
 }
 
-bool IntegralType::operator!=(const IntegralType &other) const {
+bool Integral::operator!=(const Integral &other) const {
     return !(other == *this);
 }
 
-std::ostream &operator<<(std::ostream &os, const IntegralType &type) {
+std::ostream &operator<<(std::ostream &os, const Integral &type) {
     return os << (type.sign() ? "s" : "u") << size_to_bits(type.size());
 }
 
-uint64_t IntegralType::max() const {
+uint64_t Integral::max() const {
     switch (_size) {
         case Size::BYTE: return _sign ? std::numeric_limits<int8_t>::max() : std::numeric_limits<uint8_t>::max();
         case Size::WORD: return _sign ? std::numeric_limits<int16_t>::max() : std::numeric_limits<uint16_t>::max();
@@ -38,26 +38,26 @@ uint64_t IntegralType::max() const {
     std::unreachable();
 }
 
-bool FloatingType::operator==(const FloatingType &other) const {
+bool Floating::operator==(const Floating &other) const {
     return _size == other._size;
 }
 
-bool FloatingType::operator!=(const FloatingType &other) const {
+bool Floating::operator!=(const Floating &other) const {
     return !(other == *this);
 }
 
-std::ostream &operator<<(std::ostream &os, const FloatingType &type) {
+std::ostream &operator<<(std::ostream &os, const Floating &type) {
     return os << "f" << size_to_bits(type.size());
 }
 
-std::ostream &operator<<(std::ostream &os, const BooleanType &) {
+std::ostream &operator<<(std::ostream &os, const Boolean &) {
     return os << "bool";
 }
 
-bool BooleanType::operator==(const BooleanType &) const {
+bool Boolean::operator==(const Boolean &) const {
     return true;
 }
 
-bool BooleanType::operator!=(const BooleanType &) const {
+bool Boolean::operator!=(const Boolean &) const {
     return false;
 }

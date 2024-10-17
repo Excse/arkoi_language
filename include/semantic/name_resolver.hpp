@@ -8,43 +8,43 @@
 
 namespace arkoi {
 
-class NameResolver : ast::NodeVisitor {
+class NameResolver : node::Visitor {
 private:
     NameResolver() = default;
 
 public:
-    [[nodiscard]] static NameResolver resolve(ast::ProgramNode &node);
+    [[nodiscard]] static NameResolver resolve(node::Program &node);
 
     [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    void visit(ast::ProgramNode &node) override;
+    void visit(node::Program &node) override;
 
-    void visit_as_prototype(ast::FunctionNode &node);
+    void visit_as_prototype(node::Function &node);
 
-    void visit(ast::FunctionNode &node) override;
+    void visit(node::Function &node) override;
 
-    void visit(ast::BlockNode &node) override;
+    void visit(node::Block &node) override;
 
-    void visit(ast::ParameterNode &) override;
+    void visit(node::Parameter &) override;
 
-    void visit(ast::IdentifierNode &node) override;
+    void visit(node::Identifier &node) override;
 
-    void visit(ast::IntegerNode &) override {};
+    void visit(node::Integer &) override {};
 
-    void visit(ast::FloatingNode &) override {};
+    void visit(node::Floating &) override {};
 
-    void visit(ast::BooleanNode &) override {};
+    void visit(node::Boolean &) override {};
 
-    void visit(ast::ReturnNode &node) override;
+    void visit(node::Return &node) override;
 
-    void visit(ast::BinaryNode &node) override;
+    void visit(node::Binary &node) override;
 
-    void visit(ast::CastNode &node) override;
+    void visit(node::Cast &node) override;
 
-    void visit(ast::CallNode &node) override;
+    void visit(node::Call &node) override;
 
-    void visit(ast::IfNode &node) override;
+    void visit(node::If &node) override;
 
     template<typename SymbolType, typename... Args>
     [[nodiscard]] std::shared_ptr<Symbol> _check_non_existence(const Token &token, Args &&... args);

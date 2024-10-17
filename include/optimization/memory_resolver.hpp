@@ -7,33 +7,33 @@
 
 namespace arkoi {
 
-class MemoryResolver : public SinglePass, intermediate::InstructionVisitor {
+class MemoryResolver : public SinglePass, intermediate::Visitor {
 public:
     void new_cfg(CFG &) override { }
 
     void new_block(BasicBlock &block) override;
 
-    void visit(intermediate::LabelInstruction &) override {};
+    void visit(intermediate::Label &) override {};
 
-    void visit(intermediate::BeginInstruction &instruction) override;
+    void visit(intermediate::Begin &instruction) override;
 
-    void visit(intermediate::ReturnInstruction &instruction) override;
+    void visit(intermediate::Return &instruction) override;
 
-    void visit(intermediate::BinaryInstruction &instruction) override;
+    void visit(intermediate::Binary &instruction) override;
 
-    void visit(intermediate::CastInstruction &instruction) override;
+    void visit(intermediate::Cast &instruction) override;
 
-    void visit(intermediate::CallInstruction &instruction) override;
+    void visit(intermediate::Call &instruction) override;
 
-    void visit(intermediate::ArgumentInstruction &instruction) override;
+    void visit(intermediate::Argument &instruction) override;
 
-    void visit(intermediate::IfNotInstruction &instruction) override;
+    void visit(intermediate::IfNot &instruction) override;
 
-    void visit(intermediate::StoreInstruction &instruction) override;
+    void visit(intermediate::Store &instruction) override;
 
-    void visit(intermediate::GotoInstruction &) override {};
+    void visit(intermediate::Goto &) override {};
 
-    void visit(intermediate::EndInstruction &) override;
+    void visit(intermediate::End &) override;
 
     [[nodiscard]] auto &constants() const { return _constants; }
 
@@ -53,7 +53,7 @@ private:
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Operand> _resolved{};
     std::unordered_map<std::string, Immediate> _constants{};
-    intermediate::BeginInstruction *_current_begin{};
+    intermediate::Begin *_current_begin{};
     int64_t _parameter_offset{};
     size_t _constant_index{};
 };

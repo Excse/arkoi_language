@@ -7,9 +7,9 @@
 #include "optimization/memory_resolver.hpp"
 #include "semantic/name_resolver.hpp"
 #include "semantic/type_resolver.hpp"
-#include "backend/x86_64/gas_generator.hpp"
-#include "intermediate/il_generator.hpp"
-#include "intermediate/il_printer.hpp"
+#include "backend/x86_64/generator.hpp"
+#include "intermediate/generator.hpp"
+#include "intermediate/printer.hpp"
 #include "frontend/scanner.hpp"
 #include "frontend/parser.hpp"
 
@@ -43,8 +43,8 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    auto il_generator = IRGenerator::generate(program);
-    auto il_printer = ILPrinter::print(il_generator.cfgs());
+    auto il_generator = Generator::generate(program);
+    auto il_printer = Printer::print(il_generator.cfgs());
     std::cout << il_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
@@ -56,12 +56,12 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
-    auto optimized_printer = ILPrinter::print(il_generator.cfgs());
+    auto optimized_printer = Printer::print(il_generator.cfgs());
     std::cout << optimized_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    auto gas_generator = x86_64::GASGenerator::generate(il_generator.cfgs(), memory_resolver.constants());
+    auto gas_generator = x86_64::Generator::generate(il_generator.cfgs(), memory_resolver.constants());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();

@@ -11,9 +11,9 @@ public:
     bool new_block(BasicBlock &block) override;
 
 private:
-    [[nodiscard]] static std::optional<std::unique_ptr<intermediate::Instruction>> _binary(const intermediate::BinaryInstruction &instruction);
+    [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _binary(const intermediate::Binary &instruction);
 
-    [[nodiscard]] static std::optional<std::unique_ptr<intermediate::Instruction>> _cast(const intermediate::CastInstruction &instruction);
+    [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _cast(const intermediate::Cast &instruction);
 };
 
 }

@@ -5,21 +5,25 @@
 #include "token.hpp"
 #include "semantic/type.hpp"
 
-namespace arkoi::ast {
+namespace arkoi {
 
 class Node {
 public:
     virtual ~Node() = default;
 
-    virtual void accept(NodeVisitor &visitor) = 0;
+    virtual void accept(node::Visitor &visitor) = 0;
 };
 
-class ProgramNode : public Node {
+}
+
+namespace arkoi::node {
+
+class Program : public Node {
 public:
-    ProgramNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+    Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
         : _statements(std::move(statements)), _table(std::move(table)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &statements() const { return _statements; };
 
@@ -30,12 +34,12 @@ private:
     std::shared_ptr<SymbolTable> _table;
 };
 
-class BlockNode : public Node {
+class Block : public Node {
 public:
-    BlockNode(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
+    Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<SymbolTable> table)
         : _statements(std::move(statements)), _table(std::move(table)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &statements() const { return _statements; };
 
@@ -46,11 +50,11 @@ private:
     std::shared_ptr<SymbolTable> _table;
 };
 
-class ParameterNode : public Node {
+class Parameter : public Node {
 public:
-    ParameterNode(Token name, type::Type type) : _type(type), _name(std::move(name)) {}
+    Parameter(Token name, Type type) : _type(type), _name(std::move(name)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
 
@@ -62,18 +66,19 @@ public:
 
 private:
     std::shared_ptr<Symbol> _symbol{};
-    type::Type _type;
+    Type _type;
     Token _name;
 };
 
-class FunctionNode : public Node {
+class Function : public Node {
 public:
-    FunctionNode(Token name, std::vector<ParameterNode> &&parameters, type::Type type, std::unique_ptr<BlockNode> &&block,
-                 std::shared_ptr<SymbolTable> table)
+    Function(Token name, std::vector<Parameter> &&parameters, Type type,
+             std::unique_ptr<Block> &&block,
+             std::shared_ptr<SymbolTable> table)
         : _parameters(std::move(parameters)), _table(std::move(table)), _block(std::move(block)),
           _name(std::move(name)), _type(type) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &parameters() { return _parameters; }
 
@@ -90,43 +95,43 @@ public:
     [[nodiscard]] auto &block() { return _block; }
 
 private:
-    std::vector<ParameterNode> _parameters;
+    std::vector<Parameter> _parameters;
     std::shared_ptr<SymbolTable> _table;
     std::shared_ptr<Symbol> _symbol{};
-    std::unique_ptr<BlockNode> _block;
+    std::unique_ptr<Block> _block;
     Token _name;
-    type::Type _type;
+    Type _type;
 };
 
-class ReturnNode : public Node {
+class Return : public Node {
 public:
-    explicit ReturnNode(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
+    explicit Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_type(type::Type type) { _type = type; }
+    void set_type(Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<type::Type> _type{};
+    std::optional<Type> _type{};
 };
 
-class IfNode : public Node {
+class If : public Node {
 public:
-    using Else = std::variant<std::unique_ptr<BlockNode>, std::unique_ptr<IfNode>, std::unique_ptr<Node>>;
-    using Then = std::variant<std::unique_ptr<BlockNode>, std::unique_ptr<Node>>;
+    using Else = std::variant<std::unique_ptr<Block>, std::unique_ptr<If>, std::unique_ptr<Node>>;
+    using Then = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
 
 public:
-    explicit IfNode(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&branch)
+    explicit If(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&branch)
         : _condition(std::move(condition)), _branch(std::move(branch)), _then(std::move(then)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_condition(std::unique_ptr<Node> &&condition) { _condition = std::move(condition); }
 
@@ -142,12 +147,12 @@ private:
     Then _then;
 };
 
-class CallNode : public Node {
+class Call : public Node {
 public:
-    explicit CallNode(Token name, std::vector<std::unique_ptr<Node>> &&arguments)
+    explicit Call(Token name, std::vector<std::unique_ptr<Node>> &&arguments)
         : _arguments(std::move(arguments)), _name(std::move(name)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
 
@@ -163,11 +168,11 @@ private:
     Token _name;
 };
 
-class IntegerNode : public Node {
+class Integer : public Node {
 public:
-    explicit IntegerNode(Token value) : _value(std::move(value)) {}
+    explicit Integer(Token value) : _value(std::move(value)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &value() const { return _value; }
 
@@ -175,11 +180,11 @@ private:
     Token _value;
 };
 
-class FloatingNode : public Node {
+class Floating : public Node {
 public:
-    explicit FloatingNode(Token value) : _value(std::move(value)) {}
+    explicit Floating(Token value) : _value(std::move(value)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &value() const { return _value; }
 
@@ -187,11 +192,11 @@ private:
     Token _value;
 };
 
-class BooleanNode : public Node {
+class Boolean : public Node {
 public:
-    explicit BooleanNode(bool value) : _value(value) {}
+    explicit Boolean(bool value) : _value(value) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &value() const { return _value; }
 
@@ -199,11 +204,11 @@ private:
     bool _value;
 };
 
-class IdentifierNode : public Node {
+class Identifier : public Node {
 public:
-    explicit IdentifierNode(Token value) : _value(std::move(value)) {}
+    explicit Identifier(Token value) : _value(std::move(value)) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
 
@@ -216,7 +221,7 @@ private:
     Token _value;
 };
 
-class BinaryNode : public Node {
+class Binary : public Node {
 public:
     enum class Operator {
         Add,
@@ -226,10 +231,10 @@ public:
     };
 
 public:
-    BinaryNode(std::unique_ptr<Node> &&left, Operator op, std::unique_ptr<Node> &&right)
+    Binary(std::unique_ptr<Node> &&left, Operator op, std::unique_ptr<Node> &&right)
         : _left(std::move(left)), _right(std::move(right)), _op(op) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &op() const { return _op; }
 
@@ -241,29 +246,29 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; }
 
-    void set_type(type::Type type) { _type = type; }
+    void set_type(Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::unique_ptr<Node> _left, _right;
-    std::optional<type::Type> _type{};
+    std::optional<Type> _type{};
     Operator _op;
 };
 
-class CastNode : public Node {
+class Cast : public Node {
 public:
-    CastNode(std::unique_ptr<Node> &&expression, type::Type from, type::Type to)
+    Cast(std::unique_ptr<Node> &&expression, Type from, Type to)
         : _expression(std::move(expression)), _from(from), _to(to) {}
 
-    CastNode(std::unique_ptr<Node> &&expression, type::Type to)
+    Cast(std::unique_ptr<Node> &&expression, Type to)
         : _expression(std::move(expression)), _from(), _to(to) {}
 
-    void accept(NodeVisitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_from(type::Type type) { _from = type; }
+    void set_from(Type type) { _from = type; }
 
     [[nodiscard]] auto &from() { return _from; }
 
@@ -271,8 +276,8 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<type::Type> _from;
-    type::Type _to;
+    std::optional<Type> _from;
+    Type _to;
 };
 
 }

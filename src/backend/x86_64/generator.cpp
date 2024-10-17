@@ -1,7 +1,7 @@
-#include "backend/x86_64/gas_generator.hpp"
+#include "backend/x86_64/generator.hpp"
 
 #include "intermediate/instruction.hpp"
-#include "intermediate/il_printer.hpp"
+#include "intermediate/printer.hpp"
 #include "utils/utils.hpp"
 
 using namespace arkoi::intermediate;
@@ -14,11 +14,11 @@ inline Register RSP(Register::Base::SP, Size::QWORD);
 inline Register RDI(Register::Base::DI, Size::QWORD);
 inline Register RAX(Register::Base::A, Size::QWORD);
 
-static BooleanType BOOL_TYPE;
+static Boolean BOOL_TYPE;
 
-GASGenerator GASGenerator::generate(std::vector<CFG> &cfgs,
-                                    const std::unordered_map<std::string, Immediate> &data) {
-    GASGenerator generator;
+Generator Generator::generate(std::vector<CFG> &cfgs,
+                              const std::unordered_map<std::string, Immediate> &data) {
+    Generator generator;
 
     generator._preamble();
 
@@ -37,11 +37,11 @@ GASGenerator GASGenerator::generate(std::vector<CFG> &cfgs,
     return generator;
 }
 
-void GASGenerator::visit(LabelInstruction &instruction) {
+void Generator::visit(Label &instruction) {
     _assembly.label(*instruction.symbol());
 }
 
-void GASGenerator::visit(BeginInstruction &instruction) {
+void Generator::visit(Begin &instruction) {
     _comment_instruction(instruction);
 
     _assembly.label(*instruction.label());
@@ -54,7 +54,7 @@ void GASGenerator::visit(BeginInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::visit(ReturnInstruction &instruction) {
+void Generator::visit(Return &instruction) {
     _comment_instruction(instruction);
 
     auto destination = _returning_register(instruction.type());
@@ -63,15 +63,15 @@ void GASGenerator::visit(ReturnInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::visit(BinaryInstruction &instruction) {
+void Generator::visit(Binary &instruction) {
     _comment_instruction(instruction);
 
     auto left_reg = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
-            if (std::holds_alternative<IntegralType>(instruction.type())
+            if (std::holds_alternative<Integral>(instruction.type())
                 && !std::holds_alternative<Memory>(instruction.right())
-                && instruction.op() != BinaryInstruction::Operator::Div) {
+                && instruction.op() != Binary::Operator::Div) {
                 return memory;
             }
 
@@ -85,7 +85,7 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand {
-            if (instruction.op() == BinaryInstruction::Operator::Div) {
+            if (instruction.op() == Binary::Operator::Div) {
                 return _move_to_temp2(instruction.type(), immediate);
             }
 
@@ -95,19 +95,19 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     }, instruction.right());
 
     switch (instruction.op()) {
-        case BinaryInstruction::Operator::Add: {
+        case Binary::Operator::Add: {
             _add(instruction.type(), left_reg, right_reg);
             break;
         }
-        case BinaryInstruction::Operator::Sub: {
+        case Binary::Operator::Sub: {
             _sub(instruction.type(), left_reg, right_reg);
             break;
         }
-        case BinaryInstruction::Operator::Div: {
+        case Binary::Operator::Div: {
             _div(instruction.type(), left_reg, right_reg);
             break;
         }
-        case BinaryInstruction::Operator::Mul: {
+        case Binary::Operator::Mul: {
             _mul(instruction.type(), left_reg, right_reg);
             break;
         }
@@ -117,25 +117,25 @@ void GASGenerator::visit(BinaryInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::visit(CastInstruction &instruction) {
+void Generator::visit(Cast &instruction) {
     _comment_instruction(instruction);
 
     std::visit(match{
-        [&](const FloatingType &from, const FloatingType &to) { _convert_float_to_float(instruction, from, to); },
-        [&](const FloatingType &from, const IntegralType &to) { _convert_float_to_int(instruction, from, to); },
-        [&](const FloatingType &from, const BooleanType &to) { _convert_float_to_bool(instruction, from, to); },
-        [&](const IntegralType &from, const IntegralType &to) { _convert_int_to_int(instruction, from, to); },
-        [&](const IntegralType &from, const FloatingType &to) { _convert_int_to_float(instruction, from, to); },
-        [&](const IntegralType &from, const BooleanType &to) { _convert_int_to_bool(instruction, from, to); },
-        [&](const BooleanType &from, const FloatingType &to) { _convert_bool_to_float(instruction, from, to); },
-        [&](const BooleanType &from, const IntegralType &to) { _convert_bool_to_int(instruction, from, to); },
-        [&](const BooleanType &, const BooleanType &) { throw std::runtime_error("Unsupported type conversion."); },
+        [&](const Floating &from, const Floating &to) { _convert_float_to_float(instruction, from, to); },
+        [&](const Floating &from, const Integral &to) { _convert_float_to_int(instruction, from, to); },
+        [&](const Floating &from, const Boolean &to) { _convert_float_to_bool(instruction, from, to); },
+        [&](const Integral &from, const Integral &to) { _convert_int_to_int(instruction, from, to); },
+        [&](const Integral &from, const Floating &to) { _convert_int_to_float(instruction, from, to); },
+        [&](const Integral &from, const Boolean &to) { _convert_int_to_bool(instruction, from, to); },
+        [&](const Boolean &from, const Floating &to) { _convert_bool_to_float(instruction, from, to); },
+        [&](const Boolean &from, const Integral &to) { _convert_bool_to_int(instruction, from, to); },
+        [&](const Boolean &, const Boolean &) { throw std::runtime_error("Unsupported type conversion."); },
     }, instruction.from(), instruction.to());
 
     _assembly.newline();
 }
 
-void GASGenerator::visit(CallInstruction &instruction) {
+void Generator::visit(Call &instruction) {
     _comment_instruction(instruction);
 
     _assembly.call(*instruction.symbol());
@@ -147,7 +147,7 @@ void GASGenerator::visit(CallInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::visit(ArgumentInstruction &instruction) {
+void Generator::visit(Argument &instruction) {
     _comment_instruction(instruction);
 
     if (instruction.result()) {
@@ -160,11 +160,11 @@ void GASGenerator::visit(ArgumentInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::visit(GotoInstruction &instruction) {
+void Generator::visit(Goto &instruction) {
     _assembly.jmp(instruction.label());
 }
 
-void GASGenerator::visit(IfNotInstruction &instruction) {
+void Generator::visit(IfNot &instruction) {
     _comment_instruction(instruction);
 
     auto src = std::visit(match{
@@ -178,7 +178,7 @@ void GASGenerator::visit(IfNotInstruction &instruction) {
     _assembly.je(instruction.label());
 }
 
-void GASGenerator::visit(StoreInstruction &instruction) {
+void Generator::visit(Store &instruction) {
     _comment_instruction(instruction);
 
     auto value = std::visit(match{
@@ -197,7 +197,7 @@ void GASGenerator::visit(StoreInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::visit(EndInstruction &instruction) {
+void Generator::visit(End &instruction) {
     _comment_instruction(instruction);
 
     _assembly.mov(RSP, RBP);
@@ -207,7 +207,7 @@ void GASGenerator::visit(EndInstruction &instruction) {
     _assembly.newline();
 }
 
-void GASGenerator::_preamble() {
+void Generator::_preamble() {
     _assembly.directive(".intel_syntax", {"noprefix"});
     _assembly.directive(".section", {".text"});
     _assembly.directive(".global", {"_start"});
@@ -222,7 +222,7 @@ void GASGenerator::_preamble() {
     _assembly.newline();
 }
 
-void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
+void Generator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
     _assembly.directive(".section", {".data"});
     for (const auto &[name, value]: data) {
         _assembly.label(TemporarySymbol(name), false);
@@ -235,13 +235,13 @@ void GASGenerator::_data_section(const std::unordered_map<std::string, Immediate
     }
 }
 
-void GASGenerator::_comment_instruction(Instruction &instruction) {
-    auto printer = ILPrinter::print(instruction);
+void Generator::_comment_instruction(Instruction &instruction) {
+    auto printer = Printer::print(instruction);
     _assembly.comment(printer.output().str());
 }
 
-void GASGenerator::_convert_int_to_int(const CastInstruction &instruction, const IntegralType &from,
-                                       const IntegralType &to) {
+void Generator::_convert_int_to_int(const Cast &instruction, const Integral &from,
+                                    const Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
@@ -270,8 +270,8 @@ void GASGenerator::_convert_int_to_int(const CastInstruction &instruction, const
     _assembly.mov(instruction.result(), temporary);
 }
 
-void GASGenerator::_convert_int_to_float(const CastInstruction &instruction, const IntegralType &from,
-                                         const FloatingType &to) {
+void Generator::_convert_int_to_float(const Cast &instruction, const Integral &from,
+                                      const Floating &to) {
     auto src = (from.size() >= Size::DWORD)
                ? instruction.expression()
                : _integer_promote(from, instruction.expression());
@@ -298,8 +298,8 @@ void GASGenerator::_convert_int_to_float(const CastInstruction &instruction, con
     }
 }
 
-void GASGenerator::_convert_int_to_bool(const CastInstruction &instruction, const IntegralType &from,
-                                        const BooleanType &to) {
+void Generator::_convert_int_to_bool(const Cast &instruction, const Integral &from,
+                                     const Boolean &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -313,8 +313,8 @@ void GASGenerator::_convert_int_to_bool(const CastInstruction &instruction, cons
     _assembly.mov(instruction.result(), temporary);
 }
 
-void GASGenerator::_convert_float_to_float(const CastInstruction &instruction, const FloatingType &from,
-                                           const FloatingType &to) {
+void Generator::_convert_float_to_float(const Cast &instruction, const Floating &from,
+                                        const Floating &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -339,8 +339,8 @@ void GASGenerator::_convert_float_to_float(const CastInstruction &instruction, c
     }
 }
 
-void GASGenerator::_convert_float_to_int(const CastInstruction &instruction, const FloatingType &from,
-                                         const IntegralType &to) {
+void Generator::_convert_float_to_int(const Cast &instruction, const Floating &from,
+                                      const Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -350,7 +350,7 @@ void GASGenerator::_convert_float_to_int(const CastInstruction &instruction, con
 
     auto bigger_to_temporary = _temp1_register(to);
     if (to.size() < Size::DWORD) {
-        auto temp_type = std::make_shared<IntegralType>(Size::DWORD, to.sign());
+        auto temp_type = std::make_shared<Integral>(Size::DWORD, to.sign());
         bigger_to_temporary = _temp1_register(*temp_type);
     }
 
@@ -370,8 +370,8 @@ void GASGenerator::_convert_float_to_int(const CastInstruction &instruction, con
     _assembly.mov(instruction.result(), to_temporary);
 }
 
-void GASGenerator::_convert_float_to_bool(const CastInstruction &instruction, const FloatingType &from,
-                                          const BooleanType &to) {
+void Generator::_convert_float_to_bool(const Cast &instruction, const Floating &from,
+                                       const Boolean &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -399,8 +399,8 @@ void GASGenerator::_convert_float_to_bool(const CastInstruction &instruction, co
     _mov(to, instruction.result(), temporary);
 }
 
-void GASGenerator::_convert_bool_to_int(const CastInstruction &instruction, const BooleanType &from,
-                                        const IntegralType &to) {
+void Generator::_convert_bool_to_int(const Cast &instruction, const Boolean &from,
+                                     const Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -413,8 +413,8 @@ void GASGenerator::_convert_bool_to_int(const CastInstruction &instruction, cons
     _assembly.mov(instruction.result(), to_temporary);
 }
 
-void GASGenerator::_convert_bool_to_float(const CastInstruction &instruction, const BooleanType &from,
-                                          const FloatingType &to) {
+void Generator::_convert_bool_to_float(const Cast &instruction, const Boolean &from,
+                                       const Floating &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
@@ -422,7 +422,7 @@ void GASGenerator::_convert_bool_to_float(const CastInstruction &instruction, co
         [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
-    auto to_int_temporary = _temp1_register(IntegralType(Size::DWORD, false));
+    auto to_int_temporary = _temp1_register(Integral(Size::DWORD, false));
     auto to_float_temporary = _temp1_register(to);
 
     _assembly.movzx(to_int_temporary, src);
@@ -443,10 +443,10 @@ void GASGenerator::_convert_bool_to_float(const CastInstruction &instruction, co
     }
 }
 
-Operand GASGenerator::_integer_promote(const IntegralType &type, const Operand &src) {
+Operand Generator::_integer_promote(const Integral &type, const Operand &src) {
     if (type.size() >= Size::DWORD) return src;
 
-    auto new_type = std::make_shared<IntegralType>(Size::DWORD, type.sign());
+    auto new_type = std::make_shared<Integral>(Size::DWORD, type.sign());
     auto temporary = _temp1_register(*new_type);
 
     _assembly.movsx(temporary, src);
@@ -454,11 +454,11 @@ Operand GASGenerator::_integer_promote(const IntegralType &type, const Operand &
     return temporary;
 }
 
-void GASGenerator::_mov(const Type &type, const Operand &destination, const Operand &src) {
+void Generator::_mov(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const IntegralType &) { _assembly.mov(destination, src); },
-        [&](const BooleanType &) { _assembly.mov(destination, src); },
-        [&](const FloatingType &type) {
+        [&](const Integral &) { _assembly.mov(destination, src); },
+        [&](const Boolean &) { _assembly.mov(destination, src); },
+        [&](const Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.movsd(destination, src);
@@ -474,11 +474,11 @@ void GASGenerator::_mov(const Type &type, const Operand &destination, const Oper
     }, type);
 }
 
-void GASGenerator::_add(const Type &type, const Operand &destination, const Operand &src) {
+void Generator::_add(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const IntegralType &) { _assembly.add(destination, src); },
-        [&](const BooleanType &) { _assembly.add(destination, src); },
-        [&](const FloatingType &type) {
+        [&](const Integral &) { _assembly.add(destination, src); },
+        [&](const Boolean &) { _assembly.add(destination, src); },
+        [&](const Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.addsd(destination, src);
@@ -494,11 +494,11 @@ void GASGenerator::_add(const Type &type, const Operand &destination, const Oper
     }, type);
 }
 
-void GASGenerator::_sub(const Type &type, const Operand &destination, const Operand &src) {
+void Generator::_sub(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const IntegralType &) { _assembly.sub(destination, src); },
-        [&](const BooleanType &) { _assembly.sub(destination, src); },
-        [&](const FloatingType &type) {
+        [&](const Integral &) { _assembly.sub(destination, src); },
+        [&](const Boolean &) { _assembly.sub(destination, src); },
+        [&](const Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.subsd(destination, src);
@@ -514,14 +514,14 @@ void GASGenerator::_sub(const Type &type, const Operand &destination, const Oper
     }, type);
 }
 
-void GASGenerator::_div(const Type &type, const Operand &destination, const Operand &src) {
+void Generator::_div(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const IntegralType &type) {
+        [&](const Integral &type) {
             if (type.sign()) _assembly.idiv(src);
             else _assembly.div(src);
         },
-        [&](const BooleanType &) { _assembly.div(src); },
-        [&](const FloatingType &type) {
+        [&](const Boolean &) { _assembly.div(src); },
+        [&](const Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.divsd(destination, src);
@@ -537,11 +537,11 @@ void GASGenerator::_div(const Type &type, const Operand &destination, const Oper
     }, type);
 }
 
-void GASGenerator::_mul(const Type &type, const Operand &destination, const Operand &src) {
+void Generator::_mul(const Type &type, const Operand &destination, const Operand &src) {
     std::visit(match{
-        [&](const IntegralType &) { _assembly.imul(destination, src); },
-        [&](const BooleanType &) { _assembly.imul(destination, src); },
-        [&](const FloatingType &type) {
+        [&](const Integral &) { _assembly.imul(destination, src); },
+        [&](const Boolean &) { _assembly.imul(destination, src); },
+        [&](const Floating &type) {
             switch (type.size()) {
                 case Size::QWORD: {
                     _assembly.mulsd(destination, src);
@@ -557,34 +557,34 @@ void GASGenerator::_mul(const Type &type, const Operand &destination, const Oper
     }, type);
 }
 
-Register GASGenerator::_move_to_temp1(const Type &type, const Operand &src) {
+Register Generator::_move_to_temp1(const Type &type, const Operand &src) {
     auto reg = _temp1_register(type);
     _mov(type, reg, src);
     return reg;
 }
 
-Register GASGenerator::_move_to_temp2(const Type &type, const Operand &src) {
+Register Generator::_move_to_temp2(const Type &type, const Operand &src) {
     auto reg = _temp2_register(type);
     _mov(type, reg, src);
     return reg;
 }
 
-Register GASGenerator::_select_register(const Type &type, Register::Base integer, Register::Base floating) {
+Register Generator::_select_register(const Type &type, Register::Base integer, Register::Base floating) {
     return std::visit(match{
-        [&](const FloatingType &type) -> Register { return {floating, type.size()}; },
-        [&](const IntegralType &type) -> Register { return {integer, type.size()}; },
-        [&](const BooleanType &type) -> Register { return {integer, type.size()}; },
+        [&](const Floating &type) -> Register { return {floating, type.size()}; },
+        [&](const Integral &type) -> Register { return {integer, type.size()}; },
+        [&](const Boolean &type) -> Register { return {integer, type.size()}; },
     }, type);
 }
 
-Register GASGenerator::_returning_register(const Type &type) {
+Register Generator::_returning_register(const Type &type) {
     return _select_register(type, Register::Base::A, Register::Base::XMM0);
 }
 
-Register GASGenerator::_temp1_register(const Type &type) {
+Register Generator::_temp1_register(const Type &type) {
     return _select_register(type, Register::Base::A, Register::Base::XMM11);
 }
 
-Register GASGenerator::_temp2_register(const Type &type) {
+Register Generator::_temp2_register(const Type &type) {
     return _select_register(type, Register::Base::R11, Register::Base::XMM12);
 }

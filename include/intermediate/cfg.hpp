@@ -27,7 +27,7 @@ public:
     [[nodiscard]] auto &next() const { return _next; }
 
 private:
-    std::vector<std::unique_ptr<intermediate::Instruction>> _instructions{};
+    std::vector<std::unique_ptr<Instruction>> _instructions{};
     std::shared_ptr<BasicBlock> _next{}, _branch{};
 };
 

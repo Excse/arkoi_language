@@ -24,27 +24,27 @@ void MemoryResolver::new_block(BasicBlock &block) {
     }
 }
 
-void MemoryResolver::visit(BeginInstruction &instruction) {
+void MemoryResolver::visit(Begin &instruction) {
     _current_begin = &instruction;
     _parameter_offset = 8;
 }
 
-void MemoryResolver::visit(ReturnInstruction &instruction) {
+void MemoryResolver::visit(Return &instruction) {
     instruction.set_value(_resolve_operand(instruction.value()));
 }
 
-void MemoryResolver::visit(BinaryInstruction &instruction) {
+void MemoryResolver::visit(Binary &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_left(_resolve_operand(instruction.left()));
     instruction.set_right(_resolve_operand(instruction.right()));
 }
 
-void MemoryResolver::visit(CastInstruction &instruction) {
+void MemoryResolver::visit(Cast &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-void MemoryResolver::visit(ArgumentInstruction &instruction) {
+void MemoryResolver::visit(Argument &instruction) {
     const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
 
     auto resolved = _resolve_parameter_register(parameter);
@@ -53,20 +53,20 @@ void MemoryResolver::visit(ArgumentInstruction &instruction) {
     instruction.set_expression(_resolve_operand(instruction.expression()));
 }
 
-void MemoryResolver::visit(CallInstruction &instruction) {
+void MemoryResolver::visit(Call &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
 }
 
-void MemoryResolver::visit(IfNotInstruction &instruction) {
+void MemoryResolver::visit(IfNot &instruction) {
     instruction.set_condition(_resolve_operand(instruction.condition()));
 }
 
-void MemoryResolver::visit(StoreInstruction &instruction) {
+void MemoryResolver::visit(Store &instruction) {
     instruction.set_result(_resolve_operand(instruction.result()));
     instruction.set_value(_resolve_operand(instruction.value()));
 }
 
-void MemoryResolver::visit(EndInstruction &) {
+void MemoryResolver::visit(End &) {
     // Align the stack to comfort the specifications
     auto local_size = _current_begin->local_size();
     local_size = (local_size + STACK_ALIGNMENT - 1) & ~(STACK_ALIGNMENT - 1);
@@ -127,17 +127,17 @@ Operand MemoryResolver::_resolve_parameter(const ParameterSymbol &symbol) {
 
 std::optional<Register> MemoryResolver::_resolve_parameter_register(const ParameterSymbol &symbol) {
     return std::visit(match{
-        [&](const IntegralType &type) -> std::optional<Register> {
+        [&](const Integral &type) -> std::optional<Register> {
             if (symbol.int_index() >= 6) return std::nullopt;
 
             return Register(INT_REG_ORDER[symbol.int_index()], type.size());
         },
-        [&](const BooleanType &) -> std::optional<Register> {
+        [&](const Boolean &) -> std::optional<Register> {
             if (symbol.int_index() >= 6) return std::nullopt;
 
-            return Register(INT_REG_ORDER[symbol.int_index()], BooleanType::size());
+            return Register(INT_REG_ORDER[symbol.int_index()], Boolean::size());
         },
-        [&](const FloatingType &type) -> std::optional<Register> {
+        [&](const Floating &type) -> std::optional<Register> {
             if (symbol.sse_index() >= 8) return std::nullopt;
 
             return Register(SSE_REG_ORDER[symbol.int_index()], type.size());
