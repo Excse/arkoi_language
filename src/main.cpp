@@ -3,15 +3,15 @@
 #include <sstream>
 #include <filesystem>
 
-#include "constant_folding.hpp"
-#include "memory_resolver.hpp"
-#include "name_resolver.hpp"
-#include "type_resolver.hpp"
-#include "gas_generator.hpp"
-#include "il_generator.hpp"
-#include "il_printer.hpp"
-#include "scanner.hpp"
-#include "parser.hpp"
+#include "optimization/constant_folding.hpp"
+#include "optimization/memory_resolver.hpp"
+#include "semantic/name_resolver.hpp"
+#include "semantic/type_resolver.hpp"
+#include "backend/x86_64/gas_generator.hpp"
+#include "intermediate/il_generator.hpp"
+#include "intermediate/il_printer.hpp"
+#include "frontend/scanner.hpp"
+#include "frontend/parser.hpp"
 
 int main() {
     std::ifstream file("../example/test.ark");

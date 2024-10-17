@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "scanner.hpp"
+#include "frontend/scanner.hpp"
 
 TEST(Scanner, Comment) {
     Scanner scanner("# This is a test");

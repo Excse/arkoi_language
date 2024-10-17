@@ -39,26 +39,26 @@ FetchContent_MakeAvailable(google_test)
 include_directories(include)
 
 add_library(${PROJECT_NAME}_lib
-        src/scanner.cpp
-        src/token.cpp
-        src/parser.cpp
-        src/symbol_table.tpp
-        src/name_resolver.tpp
-        src/name_resolver.cpp
-        src/instruction.cpp
-        src/il_generator.cpp
-        src/il_printer.cpp
-        src/gas_generator.cpp
-        src/memory_resolver.cpp
-        src/operand.cpp
-        src/symbol.cpp
-        src/type_resolver.cpp
-        src/type.cpp
-        src/gas_assembly.cpp
-        src/data.cpp
-        src/cfg.cpp
-        src/optimization.cpp
-        src/constant_folding.cpp)
+        src/frontend/scanner.cpp
+        src/frontend/token.cpp
+        src/frontend/parser.cpp
+        src/semantic/symbol_table.tpp
+        src/semantic/name_resolver.tpp
+        src/semantic/name_resolver.cpp
+        src/intermediate/instruction.cpp
+        src/intermediate/il_generator.cpp
+        src/intermediate/il_printer.cpp
+        src/backend/x86_64/gas_generator.cpp
+        src/optimization/memory_resolver.cpp
+        src/intermediate/operand.cpp
+        src/semantic/symbol.cpp
+        src/semantic/type_resolver.cpp
+        src/semantic/type.cpp
+        src/backend/x86_64/gas_assembly.cpp
+        src/utils/data.cpp
+        src/intermediate/cfg.cpp
+        src/optimization/optimization.cpp
+        src/optimization/constant_folding.cpp)
 
 target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 
