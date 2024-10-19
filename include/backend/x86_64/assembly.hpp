@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "intermediate/operand.hpp"
+#include "il/operand.hpp"
 
 namespace x86_64 {
 

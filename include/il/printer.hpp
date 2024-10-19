@@ -4,9 +4,9 @@
 
 #include "instruction.hpp"
 #include "utils/visitor.hpp"
-#include "intermediate/cfg.hpp"
+#include "il/cfg.hpp"
 
-namespace intermediate {
+namespace il {
 
 class Printer : Visitor {
 private:

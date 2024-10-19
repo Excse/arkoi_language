@@ -49,47 +49,46 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
 
 std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
     switch (type) {
-        using Type = Token::Type;
-        case Type::Indentation: return os << "Indentation";
-        case Type::Dedentation: return os << "Dedentation";
-        case Type::Newline: return os << "Newline";
+        case Token::Type::Indentation: return os << "Indentation";
+        case Token::Type::Dedentation: return os << "Dedentation";
+        case Token::Type::Newline: return os << "Newline";
 
-        case Type::Integer: return os << "Integer";
-        case Type::Floating: return os << "Floating";
-        case Type::Identifier: return os << "Identifier";
-        case Type::Comment: return os << "Comment";
+        case Token::Type::Integer: return os << "Integer";
+        case Token::Type::Floating: return os << "Floating";
+        case Token::Type::Identifier: return os << "Identifier";
+        case Token::Type::Comment: return os << "Comment";
 
-        case Type::If: return os << "if";
-        case Type::Else: return os << "else";
-        case Type::Fun: return os << "fun";
-        case Type::Return: return os << "return";
-        case Type::U8: return os << "u8";
-        case Type::S8: return os << "s8";
-        case Type::U16: return os << "u16";
-        case Type::S16: return os << "s16";
-        case Type::U32: return os << "u32";
-        case Type::S32: return os << "s32";
-        case Type::U64: return os << "u64";
-        case Type::S64: return os << "s64";
-        case Type::USize: return os << "usize";
-        case Type::SSize: return os << "ssize";
-        case Type::F32: return os << "f32";
-        case Type::F64: return os << "f64";
-        case Type::Bool: return os << "bool";
-        case Type::True: return os << "true";
-        case Type::False: return os << "false";
+        case Token::Type::If: return os << "if";
+        case Token::Type::Else: return os << "else";
+        case Token::Type::Fun: return os << "fun";
+        case Token::Type::Return: return os << "return";
+        case Token::Type::U8: return os << "u8";
+        case Token::Type::S8: return os << "s8";
+        case Token::Type::U16: return os << "u16";
+        case Token::Type::S16: return os << "s16";
+        case Token::Type::U32: return os << "u32";
+        case Token::Type::S32: return os << "s32";
+        case Token::Type::U64: return os << "u64";
+        case Token::Type::S64: return os << "s64";
+        case Token::Type::USize: return os << "usize";
+        case Token::Type::SSize: return os << "ssize";
+        case Token::Type::F32: return os << "f32";
+        case Token::Type::F64: return os << "f64";
+        case Token::Type::Bool: return os << "bool";
+        case Token::Type::True: return os << "true";
+        case Token::Type::False: return os << "false";
 
-        case Type::LParent: return os << "(";
-        case Type::RParent: return os << ")";
-        case Type::At: return os << "@";
-        case Type::Comma: return os << ",";
-        case Type::Plus: return os << "+";
-        case Type::Minus: return os << "-";
-        case Type::Slash: return os << "/";
-        case Type::Asterisk: return os << "*";
+        case Token::Type::LParent: return os << "(";
+        case Token::Type::RParent: return os << ")";
+        case Token::Type::At: return os << "@";
+        case Token::Type::Comma: return os << ",";
+        case Token::Type::Plus: return os << "+";
+        case Token::Type::Minus: return os << "-";
+        case Token::Type::Slash: return os << "/";
+        case Token::Type::Asterisk: return os << "*";
 
-        case Type::EndOfFile: return os << "UnexpectedEndOfLine";
-        case Type::Unknown: return os << "Unknown";
+        case Token::Type::EndOfFile: return os << "UnexpectedEndOfLine";
+        case Token::Type::Unknown: return os << "Unknown";
     }
 
     // As the -Wswitch flag is set, this will never be reached.

@@ -1,4 +1,4 @@
-#include "intermediate/cfg.hpp"
+#include "il/cfg.hpp"
 
 void BasicBlock::depth_first_search(const std::function<void(BasicBlock &)> &callback,
                                     std::unordered_set<BasicBlock *> &visited) {

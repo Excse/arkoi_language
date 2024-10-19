@@ -1,7 +1,7 @@
 #include "backend/x86_64/generator.hpp"
 
-#include "intermediate/instruction.hpp"
-#include "intermediate/printer.hpp"
+#include "il/instruction.hpp"
+#include "il/printer.hpp"
 #include "utils/utils.hpp"
 
 namespace x86_64 {
@@ -34,11 +34,11 @@ Generator Generator::generate(std::vector<CFG> &cfgs,
     return generator;
 }
 
-void Generator::visit(intermediate::Label &instruction) {
+void Generator::visit(il::Label &instruction) {
     _assembly.label(*instruction.symbol());
 }
 
-void Generator::visit(intermediate::Begin &instruction) {
+void Generator::visit(il::Begin &instruction) {
     _comment_instruction(instruction);
 
     _assembly.label(*instruction.label());
@@ -51,7 +51,7 @@ void Generator::visit(intermediate::Begin &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::Return &instruction) {
+void Generator::visit(il::Return &instruction) {
     _comment_instruction(instruction);
 
     auto destination = _returning_register(instruction.type());
@@ -60,7 +60,7 @@ void Generator::visit(intermediate::Return &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::Binary &instruction) {
+void Generator::visit(il::Binary &instruction) {
     _comment_instruction(instruction);
 
     auto left_reg = std::visit(match{
@@ -68,7 +68,7 @@ void Generator::visit(intermediate::Binary &instruction) {
         [&](const Memory &memory) -> Operand {
             if (std::holds_alternative<type::Integral>(instruction.type())
                 && !std::holds_alternative<Memory>(instruction.right())
-                && instruction.op() != intermediate::Binary::Operator::Div) {
+                && instruction.op() != il::Binary::Operator::Div) {
                 return memory;
             }
 
@@ -82,7 +82,7 @@ void Generator::visit(intermediate::Binary &instruction) {
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand {
-            if (instruction.op() == intermediate::Binary::Operator::Div) {
+            if (instruction.op() == il::Binary::Operator::Div) {
                 return _move_to_temp2(instruction.type(), immediate);
             }
 
@@ -92,19 +92,19 @@ void Generator::visit(intermediate::Binary &instruction) {
     }, instruction.right());
 
     switch (instruction.op()) {
-        case intermediate::Binary::Operator::Add: {
+        case il::Binary::Operator::Add: {
             _add(instruction.type(), left_reg, right_reg);
             break;
         }
-        case intermediate::Binary::Operator::Sub: {
+        case il::Binary::Operator::Sub: {
             _sub(instruction.type(), left_reg, right_reg);
             break;
         }
-        case intermediate::Binary::Operator::Div: {
+        case il::Binary::Operator::Div: {
             _div(instruction.type(), left_reg, right_reg);
             break;
         }
-        case intermediate::Binary::Operator::Mul: {
+        case il::Binary::Operator::Mul: {
             _mul(instruction.type(), left_reg, right_reg);
             break;
         }
@@ -114,7 +114,7 @@ void Generator::visit(intermediate::Binary &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::Cast &instruction) {
+void Generator::visit(il::Cast &instruction) {
     _comment_instruction(instruction);
 
     std::visit(match{
@@ -132,7 +132,7 @@ void Generator::visit(intermediate::Cast &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::Call &instruction) {
+void Generator::visit(il::Call &instruction) {
     _comment_instruction(instruction);
 
     _assembly.call(*instruction.symbol());
@@ -144,7 +144,7 @@ void Generator::visit(intermediate::Call &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::Argument &instruction) {
+void Generator::visit(il::Argument &instruction) {
     _comment_instruction(instruction);
 
     if (instruction.result()) {
@@ -157,11 +157,11 @@ void Generator::visit(intermediate::Argument &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::Goto &instruction) {
+void Generator::visit(il::Goto &instruction) {
     _assembly.jmp(instruction.label());
 }
 
-void Generator::visit(intermediate::IfNot &instruction) {
+void Generator::visit(il::IfNot &instruction) {
     _comment_instruction(instruction);
 
     auto src = std::visit(match{
@@ -175,7 +175,7 @@ void Generator::visit(intermediate::IfNot &instruction) {
     _assembly.je(instruction.label());
 }
 
-void Generator::visit(intermediate::Store &instruction) {
+void Generator::visit(il::Store &instruction) {
     _comment_instruction(instruction);
 
     auto value = std::visit(match{
@@ -194,7 +194,7 @@ void Generator::visit(intermediate::Store &instruction) {
     _assembly.newline();
 }
 
-void Generator::visit(intermediate::End &instruction) {
+void Generator::visit(il::End &instruction) {
     _comment_instruction(instruction);
 
     _assembly.mov(RSP, RBP);
@@ -233,11 +233,11 @@ void Generator::_data_section(const std::unordered_map<std::string, Immediate> &
 }
 
 void Generator::_comment_instruction(Instruction &instruction) {
-    auto printer = intermediate::Printer::print(instruction);
+    auto printer = il::Printer::print(instruction);
     _assembly.comment(printer.output().str());
 }
 
-void Generator::_convert_int_to_int(const intermediate::Cast &instruction, const type::Integral &from,
+void Generator::_convert_int_to_int(const il::Cast &instruction, const type::Integral &from,
                                     const type::Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
@@ -267,7 +267,7 @@ void Generator::_convert_int_to_int(const intermediate::Cast &instruction, const
     _assembly.mov(instruction.result(), temporary);
 }
 
-void Generator::_convert_int_to_float(const intermediate::Cast &instruction, const type::Integral &from,
+void Generator::_convert_int_to_float(const il::Cast &instruction, const type::Integral &from,
                                       const type::Floating &to) {
     auto src = (from.size() >= Size::DWORD)
                ? instruction.expression()
@@ -295,7 +295,7 @@ void Generator::_convert_int_to_float(const intermediate::Cast &instruction, con
     }
 }
 
-void Generator::_convert_int_to_bool(const intermediate::Cast &instruction, const type::Integral &from,
+void Generator::_convert_int_to_bool(const il::Cast &instruction, const type::Integral &from,
                                      const type::Boolean &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
@@ -310,7 +310,7 @@ void Generator::_convert_int_to_bool(const intermediate::Cast &instruction, cons
     _assembly.mov(instruction.result(), temporary);
 }
 
-void Generator::_convert_float_to_float(const intermediate::Cast &instruction, const type::Floating &from,
+void Generator::_convert_float_to_float(const il::Cast &instruction, const type::Floating &from,
                                         const type::Floating &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
@@ -336,7 +336,7 @@ void Generator::_convert_float_to_float(const intermediate::Cast &instruction, c
     }
 }
 
-void Generator::_convert_float_to_int(const intermediate::Cast &instruction, const type::Floating &from,
+void Generator::_convert_float_to_int(const il::Cast &instruction, const type::Floating &from,
                                       const type::Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
@@ -367,7 +367,7 @@ void Generator::_convert_float_to_int(const intermediate::Cast &instruction, con
     _assembly.mov(instruction.result(), to_temporary);
 }
 
-void Generator::_convert_float_to_bool(const intermediate::Cast &instruction, const type::Floating &from,
+void Generator::_convert_float_to_bool(const il::Cast &instruction, const type::Floating &from,
                                        const type::Boolean &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
@@ -396,7 +396,7 @@ void Generator::_convert_float_to_bool(const intermediate::Cast &instruction, co
     _mov(to, instruction.result(), temporary);
 }
 
-void Generator::_convert_bool_to_int(const intermediate::Cast &instruction, const type::Boolean &from,
+void Generator::_convert_bool_to_int(const il::Cast &instruction, const type::Boolean &from,
                                      const type::Integral &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
@@ -410,7 +410,7 @@ void Generator::_convert_bool_to_int(const intermediate::Cast &instruction, cons
     _assembly.mov(instruction.result(), to_temporary);
 }
 
-void Generator::_convert_bool_to_float(const intermediate::Cast &instruction, const type::Boolean &from,
+void Generator::_convert_bool_to_float(const il::Cast &instruction, const type::Boolean &from,
                                        const type::Floating &to) {
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },

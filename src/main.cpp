@@ -8,8 +8,8 @@
 #include "semantic/name_resolver.hpp"
 #include "semantic/type_resolver.hpp"
 #include "backend/x86_64/generator.hpp"
-#include "intermediate/generator.hpp"
-#include "intermediate/printer.hpp"
+#include "il/generator.hpp"
+#include "il/printer.hpp"
 #include "frontend/scanner.hpp"
 #include "frontend/parser.hpp"
 
@@ -40,8 +40,8 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    auto il_generator = intermediate::Generator::generate(program);
-    auto il_printer = intermediate::Printer::print(il_generator.cfgs());
+    auto il_generator = il::Generator::generate(program);
+    auto il_printer = il::Printer::print(il_generator.cfgs());
     std::cout << il_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
@@ -53,7 +53,7 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
-    auto optimized_printer = intermediate::Printer::print(il_generator.cfgs());
+    auto optimized_printer = il::Printer::print(il_generator.cfgs());
     std::cout << optimized_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;

@@ -1,4 +1,4 @@
-#include "intermediate/operand.hpp"
+#include "il/operand.hpp"
 
 #include "utils/utils.hpp"
 
@@ -32,9 +32,7 @@ Size Immediate::size() const {
 }
 
 std::ostream &operator<<(std::ostream &os, const Register &reg) {
-    using Base = Register::Base;
-
-    if (reg.base() >= Base::R8 && reg.base() <= Base::R15) {
+    if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
         switch (reg.size()) {
             case Size::BYTE: return os << reg.base() << "b";
             case Size::WORD: return os << reg.base() << "w";
@@ -43,7 +41,7 @@ std::ostream &operator<<(std::ostream &os, const Register &reg) {
         }
     }
 
-    if (reg.base() >= Base::SI && reg.base() <= Base::BP) {
+    if (reg.base() >= Register::Base::SI && reg.base() <= Register::Base::BP) {
         switch (reg.size()) {
             case Size::BYTE: return os << reg.base() << "l";
             case Size::WORD: return os << reg.base();
@@ -52,7 +50,7 @@ std::ostream &operator<<(std::ostream &os, const Register &reg) {
         }
     }
 
-    if (reg.base() >= Base::A && reg.base() <= Base::B) {
+    if (reg.base() >= Register::Base::A && reg.base() <= Register::Base::B) {
         switch (reg.size()) {
             case Size::BYTE: return os << reg.base() << "l";
             case Size::WORD: return os << reg.base() << "x";
@@ -61,7 +59,7 @@ std::ostream &operator<<(std::ostream &os, const Register &reg) {
         }
     }
 
-    if (reg.base() >= Base::XMM0 && reg.base() <= Base::XMM15) {
+    if (reg.base() >= Register::Base::XMM0 && reg.base() <= Register::Base::XMM15) {
         return os << reg.base();
     }
 
@@ -70,39 +68,38 @@ std::ostream &operator<<(std::ostream &os, const Register &reg) {
 
 std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
     switch (reg) {
-        using Base = Register::Base;
-        case Base::A: return os << "a";
-        case Base::C: return os << "c";
-        case Base::D: return os << "d";
-        case Base::B: return os << "b";
-        case Base::SI: return os << "si";
-        case Base::DI: return os << "di";
-        case Base::SP: return os << "sp";
-        case Base::BP: return os << "bp";
-        case Base::R8: return os << "r8";
-        case Base::R9: return os << "r9";
-        case Base::R10: return os << "r10";
-        case Base::R11: return os << "r11";
-        case Base::R12: return os << "r12";
-        case Base::R13: return os << "r13";
-        case Base::R14: return os << "r14";
-        case Base::R15: return os << "r15";
-        case Base::XMM0: return os << "xmm0";
-        case Base::XMM1: return os << "xmm1";
-        case Base::XMM2: return os << "xmm2";
-        case Base::XMM3: return os << "xmm3";
-        case Base::XMM4: return os << "xmm4";
-        case Base::XMM5: return os << "xmm5";
-        case Base::XMM6: return os << "xmm6";
-        case Base::XMM7: return os << "xmm7";
-        case Base::XMM8: return os << "xmm8";
-        case Base::XMM9: return os << "xmm9";
-        case Base::XMM10: return os << "xmm10";
-        case Base::XMM11: return os << "xmm11";
-        case Base::XMM12: return os << "xmm12";
-        case Base::XMM13: return os << "xmm13";
-        case Base::XMM14: return os << "xmm14";
-        case Base::XMM15: return os << "xmm15";
+        case Register::Base::A: return os << "a";
+        case Register::Base::C: return os << "c";
+        case Register::Base::D: return os << "d";
+        case Register::Base::B: return os << "b";
+        case Register::Base::SI: return os << "si";
+        case Register::Base::DI: return os << "di";
+        case Register::Base::SP: return os << "sp";
+        case Register::Base::BP: return os << "bp";
+        case Register::Base::R8: return os << "r8";
+        case Register::Base::R9: return os << "r9";
+        case Register::Base::R10: return os << "r10";
+        case Register::Base::R11: return os << "r11";
+        case Register::Base::R12: return os << "r12";
+        case Register::Base::R13: return os << "r13";
+        case Register::Base::R14: return os << "r14";
+        case Register::Base::R15: return os << "r15";
+        case Register::Base::XMM0: return os << "xmm0";
+        case Register::Base::XMM1: return os << "xmm1";
+        case Register::Base::XMM2: return os << "xmm2";
+        case Register::Base::XMM3: return os << "xmm3";
+        case Register::Base::XMM4: return os << "xmm4";
+        case Register::Base::XMM5: return os << "xmm5";
+        case Register::Base::XMM6: return os << "xmm6";
+        case Register::Base::XMM7: return os << "xmm7";
+        case Register::Base::XMM8: return os << "xmm8";
+        case Register::Base::XMM9: return os << "xmm9";
+        case Register::Base::XMM10: return os << "xmm10";
+        case Register::Base::XMM11: return os << "xmm11";
+        case Register::Base::XMM12: return os << "xmm12";
+        case Register::Base::XMM13: return os << "xmm13";
+        case Register::Base::XMM14: return os << "xmm14";
+        case Register::Base::XMM15: return os << "xmm15";
     }
 
     // As the -Wswitch flag is set, this will never be reached.

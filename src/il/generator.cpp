@@ -1,11 +1,11 @@
-#include "intermediate/generator.hpp"
+#include "il/generator.hpp"
 
 #include <limits>
 
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
-namespace intermediate {
+namespace il {
 
 Generator Generator::generate(node::Program &node) {
     Generator generator;

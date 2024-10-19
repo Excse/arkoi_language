@@ -8,9 +8,9 @@ bool ConstantFolding::new_block(BasicBlock &block) {
     for (auto &instruction: block.instructions()) {
         std::optional<std::unique_ptr<Instruction>> new_instruction;
 
-        if (auto binary = dynamic_cast<intermediate::Binary *>(instruction.get())) {
+        if (auto binary = dynamic_cast<il::Binary *>(instruction.get())) {
             new_instruction = _binary(*binary);
-        } else if (auto cast = dynamic_cast<intermediate::Cast *>(instruction.get())) {
+        } else if (auto cast = dynamic_cast<il::Cast *>(instruction.get())) {
             new_instruction = _cast(*cast);
         }
 
@@ -23,7 +23,7 @@ bool ConstantFolding::new_block(BasicBlock &block) {
     return changed;
 }
 
-std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const intermediate::Binary &instruction) {
+std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const il::Binary &instruction) {
     auto *right_immediate = std::get_if<Immediate>(&instruction.right());
     auto *left_immediate = std::get_if<Immediate>(&instruction.left());
 
@@ -31,10 +31,10 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const inter
 
     auto apply_operator = [&](auto left, auto right) -> Operand {
         switch (instruction.op()) {
-            case intermediate::Binary::Operator::Add: return left + right;
-            case intermediate::Binary::Operator::Sub: return left - right;
-            case intermediate::Binary::Operator::Mul: return left * right;
-            case intermediate::Binary::Operator::Div: return left / right;
+            case il::Binary::Operator::Add: return left + right;
+            case il::Binary::Operator::Sub: return left - right;
+            case il::Binary::Operator::Mul: return left * right;
+            case il::Binary::Operator::Div: return left / right;
         }
 
         // As the -Wswitch flag is set, this will never be reached.
@@ -52,10 +52,10 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const inter
         [](const auto &, const auto &) -> Operand { std::unreachable(); }
     }, *right_immediate, *left_immediate);
 
-    return std::make_unique<intermediate::Store>(instruction.result(), value, instruction.type());
+    return std::make_unique<il::Store>(instruction.result(), value, instruction.type());
 }
 
-std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const intermediate::Cast &instruction) {
+std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const il::Cast &instruction) {
     auto *expression = std::get_if<Immediate>(&instruction.expression());
 
     if (!expression) return std::nullopt;
@@ -86,5 +86,5 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const interme
         return apply_operator(value, instruction.to());
     }, *expression);
 
-    return std::make_unique<intermediate::Store>(instruction.result(), value, instruction.to());
+    return std::make_unique<il::Store>(instruction.result(), value, instruction.to());
 }

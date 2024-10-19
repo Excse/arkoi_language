@@ -61,7 +61,7 @@ public:
 
 }
 
-namespace intermediate {
+namespace il {
 
 class Argument;
 

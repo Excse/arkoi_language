@@ -4,14 +4,14 @@
 
 #include "backend/x86_64/assembly.hpp"
 #include "semantic/symbol_table.hpp"
-#include "intermediate/instruction.hpp"
-#include "intermediate/printer.hpp"
+#include "il/instruction.hpp"
+#include "il/printer.hpp"
 #include "utils/visitor.hpp"
-#include "intermediate/cfg.hpp"
+#include "il/cfg.hpp"
 
 namespace x86_64 {
 
-class Generator : intermediate::Visitor {
+class Generator : il::Visitor {
 private:
     Generator() = default;
 
@@ -19,27 +19,27 @@ public:
     [[nodiscard]] static Generator generate(std::vector<CFG> &cfgs,
                                             const std::unordered_map<std::string, Immediate> &data);
 
-    void visit(intermediate::Label &instruction) override;
+    void visit(il::Label &instruction) override;
 
-    void visit(intermediate::Begin &instruction) override;
+    void visit(il::Begin &instruction) override;
 
-    void visit(intermediate::Return &instruction) override;
+    void visit(il::Return &instruction) override;
 
-    void visit(intermediate::Binary &memory) override;
+    void visit(il::Binary &memory) override;
 
-    void visit(intermediate::Cast &instruction) override;
+    void visit(il::Cast &instruction) override;
 
-    void visit(intermediate::End &instruction) override;
+    void visit(il::End &instruction) override;
 
-    void visit(intermediate::Call &instruction) override;
+    void visit(il::Call &instruction) override;
 
-    void visit(intermediate::Argument &instruction) override;
+    void visit(il::Argument &instruction) override;
 
-    void visit(intermediate::Goto &instruction) override;
+    void visit(il::Goto &instruction) override;
 
-    void visit(intermediate::IfNot &instruction) override;
+    void visit(il::IfNot &instruction) override;
 
-    void visit(intermediate::Store &instruction) override;
+    void visit(il::Store &instruction) override;
 
     [[nodiscard]] auto &output() const { return _assembly.output(); }
 
@@ -50,28 +50,28 @@ private:
 
     void _comment_instruction(Instruction &instruction);
 
-    void _convert_int_to_int(const intermediate::Cast &instruction, const type::Integral &from,
+    void _convert_int_to_int(const il::Cast &instruction, const type::Integral &from,
                              const type::Integral &to);
 
-    void _convert_int_to_float(const intermediate::Cast &instruction, const type::Integral &from,
+    void _convert_int_to_float(const il::Cast &instruction, const type::Integral &from,
                                const type::Floating &to);
 
-    void _convert_int_to_bool(const intermediate::Cast &instruction, const type::Integral &from,
+    void _convert_int_to_bool(const il::Cast &instruction, const type::Integral &from,
                               const type::Boolean &to);
 
-    void _convert_float_to_float(const intermediate::Cast &instruction, const type::Floating &from,
+    void _convert_float_to_float(const il::Cast &instruction, const type::Floating &from,
                                  const type::Floating &to);
 
-    void _convert_float_to_int(const intermediate::Cast &instruction, const type::Floating &from,
+    void _convert_float_to_int(const il::Cast &instruction, const type::Floating &from,
                                const type::Integral &to);
 
-    void _convert_float_to_bool(const intermediate::Cast &instruction, const type::Floating &from,
+    void _convert_float_to_bool(const il::Cast &instruction, const type::Floating &from,
                                 const type::Boolean &to);
 
-    void _convert_bool_to_int(const intermediate::Cast &instruction, const type::Boolean &from,
+    void _convert_bool_to_int(const il::Cast &instruction, const type::Boolean &from,
                               const type::Integral &to);
 
-    void _convert_bool_to_float(const intermediate::Cast &instruction, const type::Boolean &from,
+    void _convert_bool_to_float(const il::Cast &instruction, const type::Boolean &from,
                                 const type::Floating &to);
 
     Operand _integer_promote(const type::Integral &type, const Operand &operand);

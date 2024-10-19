@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intermediate/cfg.hpp"
+#include "il/cfg.hpp"
 
 class IterativePass {
 public:

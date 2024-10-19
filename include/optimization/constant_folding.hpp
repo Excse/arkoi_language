@@ -9,7 +9,7 @@ public:
     bool new_block(BasicBlock &block) override;
 
 private:
-    [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _binary(const intermediate::Binary &instruction);
+    [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _binary(const il::Binary &instruction);
 
-    [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _cast(const intermediate::Cast &instruction);
+    [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _cast(const il::Cast &instruction);
 };

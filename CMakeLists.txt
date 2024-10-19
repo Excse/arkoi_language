@@ -45,20 +45,20 @@ add_library(${PROJECT_NAME}_lib
         src/semantic/symbol_table.tpp
         src/semantic/name_resolver.tpp
         src/semantic/name_resolver.cpp
-        src/intermediate/instruction.cpp
-        src/intermediate/generator.cpp
-        src/intermediate/printer.cpp
-        src/backend/x86_64/generator.cpp
-        src/optimization/memory_resolver.cpp
-        src/intermediate/operand.cpp
-        src/semantic/symbol.cpp
         src/semantic/type_resolver.cpp
+        src/semantic/symbol.cpp
         src/semantic/type.cpp
+        src/il/instruction.cpp
+        src/il/generator.cpp
+        src/il/printer.cpp
+        src/il/operand.cpp
+        src/il/cfg.cpp
+        src/backend/x86_64/generator.cpp
         src/backend/x86_64/assembly.cpp
-        src/utils/data.cpp
-        src/intermediate/cfg.cpp
+        src/optimization/constant_folding.cpp
+        src/optimization/memory_resolver.cpp
         src/optimization/optimization.cpp
-        src/optimization/constant_folding.cpp)
+        src/utils/data.cpp)
 
 target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
 

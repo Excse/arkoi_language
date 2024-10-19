@@ -1,12 +1,12 @@
-#include "intermediate/printer.hpp"
+#include "il/printer.hpp"
 
 #include <iostream>
 
 #include "semantic/symbol_table.hpp"
-#include "intermediate/instruction.hpp"
+#include "il/instruction.hpp"
 #include "utils/utils.hpp"
 
-namespace intermediate {
+namespace il {
 
 Printer Printer::print(std::vector<CFG> &cfgs) {
     Printer printer;

@@ -14,10 +14,10 @@ class Instruction {
 public:
     virtual ~Instruction() = default;
 
-    virtual void accept(intermediate::Visitor &visitor) = 0;
+    virtual void accept(il::Visitor &visitor) = 0;
 };
 
-namespace intermediate {
+namespace il {
 
 class Label : public Instruction {
 public:
@@ -232,4 +232,4 @@ private:
 
 }
 
-std::ostream &operator<<(std::ostream &os, const intermediate::Binary::Operator &op);
+std::ostream &operator<<(std::ostream &os, const il::Binary::Operator &op);

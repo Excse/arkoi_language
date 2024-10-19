@@ -1,6 +1,6 @@
-#include "intermediate/instruction.hpp"
+#include "il/instruction.hpp"
 
-namespace intermediate {
+namespace il {
 
 Binary::Operator Binary::node_to_instruction(node::Binary::Operator op) {
     switch (op) {
@@ -16,13 +16,12 @@ Binary::Operator Binary::node_to_instruction(node::Binary::Operator op) {
 
 }
 
-std::ostream &operator<<(std::ostream &os, const intermediate::Binary::Operator &op) {
+std::ostream &operator<<(std::ostream &os, const il::Binary::Operator &op) {
     switch (op) {
-        using Operator = intermediate::Binary::Operator;
-        case Operator::Add: return os << "add";
-        case Operator::Sub: return os << "sub";
-        case Operator::Mul: return os << "mul";
-        case Operator::Div: return os << "div";
+        case il::Binary::Operator::Add: return os << "add";
+        case il::Binary::Operator::Sub: return os << "sub";
+        case il::Binary::Operator::Mul: return os << "mul";
+        case il::Binary::Operator::Div: return os << "div";
     }
 
     // As the -Wswitch flag is set, this will never be reached.
