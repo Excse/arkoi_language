@@ -2,8 +2,8 @@
 
 #include <limits>
 
-#include "utils/utils.hpp"
 #include "frontend/ast.hpp"
+#include "utils/utils.hpp"
 
 namespace il {
 

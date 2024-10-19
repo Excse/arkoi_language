@@ -2,8 +2,8 @@
 
 #include <sstream>
 
-#include "instruction.hpp"
 #include "utils/visitor.hpp"
+#include "il/instruction.hpp"
 #include "il/cfg.hpp"
 
 namespace il {

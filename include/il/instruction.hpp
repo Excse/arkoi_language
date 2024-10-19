@@ -6,9 +6,9 @@
 #include <string>
 
 #include "semantic/symbol_table.hpp"
-#include "operand.hpp"
 #include "utils/visitor.hpp"
 #include "frontend/ast.hpp"
+#include "il/operand.hpp"
 
 class Instruction {
 public:

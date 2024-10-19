@@ -5,13 +5,13 @@
 
 #include "optimization/constant_folding.hpp"
 #include "optimization/memory_resolver.hpp"
+#include "backend/x86_64/generator.hpp"
 #include "semantic/name_resolver.hpp"
 #include "semantic/type_resolver.hpp"
-#include "backend/x86_64/generator.hpp"
-#include "il/generator.hpp"
-#include "il/printer.hpp"
 #include "frontend/scanner.hpp"
 #include "frontend/parser.hpp"
+#include "il/generator.hpp"
+#include "il/printer.hpp"
 
 int main() {
     std::ifstream file("../example/test.ark");

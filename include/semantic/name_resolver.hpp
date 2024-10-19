@@ -2,9 +2,9 @@
 
 #include <stack>
 
-#include "symbol_table.hpp"
-#include "utils/visitor.hpp"
+#include "semantic/symbol_table.hpp"
 #include "frontend/token.hpp"
+#include "utils/visitor.hpp"
 
 class NameResolver : node::Visitor {
 private:

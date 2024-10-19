@@ -2,8 +2,8 @@
 
 #include <limits>
 
-#include "utils/utils.hpp"
 #include "frontend/ast.hpp"
+#include "utils/utils.hpp"
 
 static type::Integral BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
 static type::Boolean BOOL_TYPE;

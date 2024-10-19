@@ -4,9 +4,9 @@
 
 #include "backend/x86_64/assembly.hpp"
 #include "semantic/symbol_table.hpp"
+#include "utils/visitor.hpp"
 #include "il/instruction.hpp"
 #include "il/printer.hpp"
-#include "utils/visitor.hpp"
 #include "il/cfg.hpp"
 
 namespace x86_64 {

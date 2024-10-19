@@ -1,9 +1,9 @@
 #pragma once
 
 #include "semantic/symbol_table.hpp"
+#include "semantic/type.hpp"
 #include "utils/visitor.hpp"
 #include "token.hpp"
-#include "semantic/type.hpp"
 
 class Node {
 public:

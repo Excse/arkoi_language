@@ -3,10 +3,10 @@
 #include <stack>
 
 #include "semantic/symbol_table.hpp"
-#include "utils/visitor.hpp"
-#include "frontend/token.hpp"
 #include "semantic/type.hpp"
+#include "frontend/token.hpp"
 #include "frontend/ast.hpp"
+#include "utils/visitor.hpp"
 
 class TypeResolver : node::Visitor {
 private:

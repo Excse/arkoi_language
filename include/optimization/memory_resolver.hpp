@@ -1,8 +1,8 @@
 #pragma once
 
 #include "optimization.hpp"
-#include "il/instruction.hpp"
 #include "utils/visitor.hpp"
+#include "il/instruction.hpp"
 #include "il/cfg.hpp"
 
 class MemoryResolver : public SinglePass, il::Visitor {
