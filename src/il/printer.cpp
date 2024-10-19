@@ -33,13 +33,11 @@ Printer Printer::print(Instruction &instruction) {
 }
 
 void Printer::visit(Label &instruction) {
-    _output << "LABEL " << *instruction.symbol() << ":\n";
+    _output << "LABEL " << instruction.symbol() << ":\n";
 }
 
 void Printer::visit(Begin &instruction) {
-    _output << "BEGIN " << *instruction.label();
-    if (instruction.local_size()) _output << " LOCALS " << " " << instruction.local_size();
-    _output << "\n";
+    _output << "BEGIN " << instruction.label() << "\n";
 }
 
 void Printer::visit(Return &instruction) {
@@ -61,7 +59,7 @@ void Printer::visit(End &) {
 }
 
 void Printer::visit(Call &instruction) {
-    _output << instruction.result() << " = CALL " << *instruction.symbol() << "\n";
+    _output << instruction.result() << " = CALL " << instruction.symbol() << "\n";
 }
 
 void Printer::visit(Argument &instruction) {
@@ -69,11 +67,11 @@ void Printer::visit(Argument &instruction) {
 }
 
 void Printer::visit(Goto &instruction) {
-    _output << "GOTO " << *instruction.label() << "\n";
+    _output << "GOTO " << instruction.label() << "\n";
 }
 
 void Printer::visit(IfNot &instruction) {
-    _output << "IF NOT " << instruction.condition() << " GOTO " << *instruction.label() << "\n";
+    _output << "IF NOT " << instruction.condition() << " GOTO " << instruction.label() << "\n";
 }
 
 void Printer::visit(Store &instruction) {

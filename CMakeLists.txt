@@ -53,10 +53,7 @@ add_library(${PROJECT_NAME}_lib
         src/il/printer.cpp
         src/il/operand.cpp
         src/il/cfg.cpp
-        src/backend/x86_64/generator.cpp
-        src/backend/x86_64/assembly.cpp
         src/optimization/constant_folding.cpp
-        src/optimization/memory_resolver.cpp
         src/optimization/optimization.cpp
         src/utils/data.cpp)
 

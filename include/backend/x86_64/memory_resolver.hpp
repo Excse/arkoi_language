@@ -1,6 +1,6 @@
 #pragma once
 
-#include "optimization.hpp"
+#include "optimization/optimization.hpp"
 #include "utils/visitor.hpp"
 #include "il/instruction.hpp"
 #include "il/cfg.hpp"
@@ -38,9 +38,9 @@ public:
 private:
     [[nodiscard]] Operand _resolve_operand(const Operand &operand);
 
-    [[nodiscard]] Operand _resolve_symbol(const std::shared_ptr<Symbol> &symbol);
+    [[nodiscard]] Operand _resolve_symbol(const Symbol &symbol);
 
-    [[nodiscard]] Operand _resolve_immediate(const Immediate &immediate);
+    [[nodiscard]] Operand _resolve_constant(const Constant &constant);
 
     [[nodiscard]] Operand _resolve_temporary(const TemporarySymbol &symbol);
 
@@ -49,8 +49,8 @@ private:
     [[nodiscard]] static std::optional<Register> _resolve_parameter_register(const ParameterSymbol &symbol);
 
 private:
-    std::unordered_map<std::shared_ptr<Symbol>, Operand> _resolved{};
-    std::unordered_map<std::string, Immediate> _constants{};
+    std::unordered_map<Symbol, Operand> _resolved{};
+    std::unordered_map<std::string, Constant> _constants{};
     il::Begin *_current_begin{};
     int64_t _parameter_offset{};
     size_t _constant_index{};

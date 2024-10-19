@@ -6,13 +6,15 @@
 
 #include "type.hpp"
 
-struct Symbol;
+struct SymbolType;
+
+using Symbol = std::shared_ptr<SymbolType>;
 
 class FunctionSymbol {
 public:
     explicit FunctionSymbol(std::string name) : _name(std::move(name)) {}
 
-    void set_parameters(std::vector<std::shared_ptr<Symbol>> &&symbols) { _parameter_symbols = std::move(symbols); }
+    void set_parameters(std::vector<Symbol> &&symbols) { _parameter_symbols = std::move(symbols); }
 
     [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
 
@@ -23,7 +25,7 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<std::shared_ptr<Symbol>> _parameter_symbols{};
+    std::vector<Symbol> _parameter_symbols{};
     std::optional<Type> _return_type{};
     std::string _name;
 };
@@ -67,7 +69,7 @@ private:
     std::string _name;
 };
 
-struct Symbol : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {
+struct SymbolType : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {
     using variant::variant;
 };
 

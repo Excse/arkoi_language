@@ -45,14 +45,14 @@ public:
 private:
     Operand _make_temporary(const Type &type);
 
-    std::shared_ptr<Symbol> _make_label_symbol();
+    Symbol _make_label_symbol();
 
 private:
     std::shared_ptr<BasicBlock> _function_end_block{};
-    std::shared_ptr<Symbol> _function_end_symbol{};
     std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
     Operand _current_operand{nullptr};
+    Symbol _function_end_symbol;
     std::vector<CFG> _cfgs{};
 };
 

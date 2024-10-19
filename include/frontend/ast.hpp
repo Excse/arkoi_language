@@ -52,7 +52,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
@@ -61,7 +61,7 @@ public:
     [[nodiscard]] auto &type() { return _type; }
 
 private:
-    std::shared_ptr<Symbol> _symbol{};
+    Symbol _symbol{};
     Type _type;
     Token _name;
 };
@@ -78,7 +78,7 @@ public:
 
     [[nodiscard]] auto &parameters() { return _parameters; }
 
-    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
@@ -93,7 +93,7 @@ public:
 private:
     std::vector<Parameter> _parameters;
     std::shared_ptr<SymbolTable> _table;
-    std::shared_ptr<Symbol> _symbol{};
+    Symbol _symbol{};
     std::unique_ptr<Block> _block;
     Token _name;
     Type _type;
@@ -150,7 +150,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &arguments() { return _arguments; }
 
@@ -160,7 +160,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<Node>> _arguments;
-    std::shared_ptr<Symbol> _symbol{};
+    Symbol _symbol{};
     Token _name;
 };
 
@@ -206,14 +206,14 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
+    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
     [[nodiscard]] auto &value() const { return _value; }
 
 private:
-    std::shared_ptr<Symbol> _symbol{};
+    Symbol _symbol{};
     Token _value;
 };
 

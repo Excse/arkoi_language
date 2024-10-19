@@ -24,10 +24,10 @@ bool ConstantFolding::new_block(BasicBlock &block) {
 }
 
 std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const il::Binary &instruction) {
-    auto *right_immediate = std::get_if<Immediate>(&instruction.right());
-    auto *left_immediate = std::get_if<Immediate>(&instruction.left());
+    auto *right_constant = std::get_if<Constant>(&instruction.right());
+    auto *left_constant = std::get_if<Constant>(&instruction.left());
 
-    if (!right_immediate || !left_immediate) return std::nullopt;
+    if (!right_constant || !left_constant) return std::nullopt;
 
     auto apply_operator = [&](auto left, auto right) -> Operand {
         switch (instruction.op()) {
@@ -50,13 +50,13 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const il::B
         [&](const uint64_t &left, const uint64_t &right) -> Operand { return apply_operator(left, right); },
         [&](const bool &left, const bool &right) -> Operand { return apply_operator(left, right); },
         [](const auto &, const auto &) -> Operand { std::unreachable(); }
-    }, *right_immediate, *left_immediate);
+    }, *right_constant, *left_constant);
 
     return std::make_unique<il::Store>(instruction.result(), value, instruction.type());
 }
 
 std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const il::Cast &instruction) {
-    auto *expression = std::get_if<Immediate>(&instruction.expression());
+    auto *expression = std::get_if<Constant>(&instruction.expression());
 
     if (!expression) return std::nullopt;
 

@@ -159,7 +159,7 @@ void Generator::visit(node::If &node) {
     _current_block->set_next(then_block);
 
     std::shared_ptr<BasicBlock> branch_block;
-    std::shared_ptr<Symbol> branch_label;
+    Symbol branch_label;
     if (node.branch()) {
         branch_label = _make_label_symbol();
         branch_block = std::make_shared<BasicBlock>();
@@ -197,12 +197,12 @@ void Generator::visit(node::If &node) {
 
 Operand Generator::_make_temporary(const Type &type) {
     auto name = "$tmp" + to_string(_temp_index++);
-    return std::make_shared<Symbol>(TemporarySymbol(name, type));
+    return std::make_shared<SymbolType>(TemporarySymbol(name, type));
 }
 
-std::shared_ptr<Symbol> Generator::_make_label_symbol() {
+Symbol Generator::_make_label_symbol() {
     auto name = "L" + to_string(_label_index++);
-    return std::make_shared<Symbol>(TemporarySymbol(name));
+    return std::make_shared<SymbolType>(TemporarySymbol(name));
 }
 
 }

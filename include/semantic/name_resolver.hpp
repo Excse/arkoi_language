@@ -45,10 +45,10 @@ private:
     void visit(node::If &node) override;
 
     template<typename SymbolType, typename... Args>
-    [[nodiscard]] std::shared_ptr<Symbol> _check_non_existence(const Token &token, Args &&... args);
+    [[nodiscard]] Symbol _check_non_existence(const Token &token, Args &&... args);
 
     template<typename... SymbolTypes>
-    [[nodiscard]] std::shared_ptr<Symbol> _check_existence(const Token &token);
+    [[nodiscard]] Symbol _check_existence(const Token &token);
 
 private:
     std::stack<std::shared_ptr<SymbolTable>> _scopes{};

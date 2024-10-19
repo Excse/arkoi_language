@@ -75,7 +75,7 @@ void Generator::visit(il::Binary &instruction) {
             return _move_to_temp1(instruction.type(), memory);
         },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(instruction.type(), immediate); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.left());
 
     auto right_reg = std::visit(match{
@@ -88,7 +88,7 @@ void Generator::visit(il::Binary &instruction) {
 
             return immediate;
         },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.right());
 
     switch (instruction.op()) {
@@ -168,7 +168,7 @@ void Generator::visit(il::IfNot &instruction) {
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(BOOL_TYPE, immediate); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.condition());
 
     _assembly.cmp(src, Immediate((uint32_t) 0));
@@ -186,7 +186,7 @@ void Generator::visit(il::Store &instruction) {
             return _move_to_temp1(instruction.type(), memory);
         },
         [&](const Immediate &immediate) -> Operand { return immediate; },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.value());
 
     _mov(instruction.type(), instruction.result(), value);
@@ -248,7 +248,7 @@ void Generator::_convert_int_to_int(const il::Cast &instruction, const type::Int
             }, instruction.result());
         },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     Operand temporary = _temp1_register(to);
@@ -276,7 +276,7 @@ void Generator::_convert_int_to_float(const il::Cast &instruction, const type::I
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &value) -> Operand { return _move_to_temp1(from, value); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, src);
 
     auto temporary = _temp1_register(to);
@@ -301,7 +301,7 @@ void Generator::_convert_int_to_bool(const il::Cast &instruction, const type::In
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     auto temporary = _temp1_register(to);
@@ -316,7 +316,7 @@ void Generator::_convert_float_to_float(const il::Cast &instruction, const type:
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [](const Immediate &) -> Operand { std::unreachable(); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     if (from.size() == Size::DWORD && to.size() == Size::DWORD) {
@@ -342,7 +342,7 @@ void Generator::_convert_float_to_int(const il::Cast &instruction, const type::F
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [](const Immediate &) -> Operand { std::unreachable(); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     auto bigger_to_temporary = _temp1_register(to);
@@ -373,7 +373,7 @@ void Generator::_convert_float_to_bool(const il::Cast &instruction, const type::
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [](const Immediate &) -> Operand { std::unreachable(); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     auto zero = _temp2_register(from);
@@ -402,7 +402,7 @@ void Generator::_convert_bool_to_int(const il::Cast &instruction, const type::Bo
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     auto to_temporary = _temp1_register(to);
@@ -416,7 +416,7 @@ void Generator::_convert_bool_to_float(const il::Cast &instruction, const type::
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const std::shared_ptr<Symbol> &) -> Operand { std::unreachable(); }
+        [](const Symbol &) -> Operand { std::unreachable(); }
     }, instruction.expression());
 
     auto to_int_temporary = _temp1_register(type::Integral(Size::DWORD, false));

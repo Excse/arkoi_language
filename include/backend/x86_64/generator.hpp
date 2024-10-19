@@ -17,7 +17,7 @@ private:
 
 public:
     [[nodiscard]] static Generator generate(std::vector<CFG> &cfgs,
-                                            const std::unordered_map<std::string, Immediate> &data);
+                                            const std::unordered_map<std::string, Constant> &data);
 
     void visit(il::Label &instruction) override;
 

@@ -21,62 +21,58 @@ namespace il {
 
 class Label : public Instruction {
 public:
-    explicit Label(std::shared_ptr<Symbol> symbol) : _symbol(std::move(symbol)) {}
+    explicit Label(Symbol symbol) : _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
-    std::shared_ptr<Symbol> _symbol;
+    Symbol _symbol;
 };
 
 class Goto : public Instruction {
 public:
-    explicit Goto(std::shared_ptr<Symbol> label) : _label(std::move(label)) {}
+    explicit Goto(Symbol label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
-    std::shared_ptr<Symbol> _label;
+    Symbol _label;
 };
 
 class IfNot : public Instruction {
 public:
-    IfNot(Operand condition, std::shared_ptr<Symbol> label)
-        : _label(std::move(label)), _condition(std::move(condition)) {}
+    IfNot(Operand condition, Symbol label)
+        : _condition(std::move(condition)), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    void set_condition(Operand condition) { _condition = std::move(condition); }
 
     [[nodiscard]] auto &condition() const { return _condition; }
 
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
-    std::shared_ptr<Symbol> _label;
     Operand _condition;
+    Symbol _label;
 };
 
 class Call : public Instruction {
 public:
-    explicit Call(Operand result, std::shared_ptr<Symbol> symbol)
-        : _symbol(std::move(symbol)), _result(std::move(result)) {}
+    explicit Call(Operand result, Symbol symbol)
+        : _result(std::move(result)), _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    void set_result(Operand operand) { _result = std::move(operand); };
 
     [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
-    std::shared_ptr<Symbol> _symbol;
     Operand _result;
+    Symbol _symbol;
 };
 
 class Return : public Instruction {
@@ -86,8 +82,6 @@ public:
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &type() const { return _type; };
-
-    void set_value(Operand operand) { _value = std::move(operand); };
 
     [[nodiscard]] auto &value() const { return _value; };
 
@@ -112,15 +106,9 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_result(Operand operand) { _result = std::move(operand); };
-
     [[nodiscard]] auto &result() const { return _result; };
 
-    void set_right(Operand operand) { _right = std::move(operand); };
-
     [[nodiscard]] auto &right() const { return _right; };
-
-    void set_left(Operand operand) { _left = std::move(operand); };
 
     [[nodiscard]] auto &left() const { return _left; };
 
@@ -138,22 +126,14 @@ private:
 
 class Begin : public Instruction {
 public:
-    explicit Begin(std::shared_ptr<Symbol> label, int64_t local_size = 0)
-        : _label(std::move(label)), _local_size(local_size) {}
+    explicit Begin(Symbol label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    void increase_local_size(int64_t amount) { _local_size += amount; }
-
-    void set_local_size(int64_t size) { _local_size = size; }
-
-    [[nodiscard]] auto local_size() const { return _local_size; }
 
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
-    std::shared_ptr<Symbol> _label;
-    int64_t _local_size;
+    Symbol _label;
 };
 
 class End : public Instruction {
@@ -168,11 +148,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_expression(Operand operand) { _expression = std::move(operand); };
-
     [[nodiscard]] auto &expression() const { return _expression; };
-
-    void set_result(Operand operand) { _result = std::move(operand); };
 
     [[nodiscard]] auto &result() const { return _result; };
 
@@ -187,16 +163,12 @@ private:
 
 class Argument : public Instruction {
 public:
-    explicit Argument(Operand expression, std::shared_ptr<Symbol> symbol)
-        : _symbol(std::move(symbol)), _expression(std::move(expression)) {}
+    explicit Argument(Operand expression, Symbol symbol)
+        : _expression(std::move(expression)), _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_expression(Operand operand) { _expression = std::move(operand); };
-
     [[nodiscard]] auto &expression() const { return _expression; };
-
-    void set_result(Register reg) { _result = reg; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
@@ -204,8 +176,8 @@ public:
 
 private:
     std::optional<Operand> _result{};
-    std::shared_ptr<Symbol> _symbol;
     Operand _expression;
+    Symbol _symbol;
 };
 
 class Store : public Instruction {
@@ -215,13 +187,9 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_value(Operand operand) { _value = std::move(operand); };
+    [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &value() const { return _value; };
-
-    void set_result(Operand result) { _result = std::move(result); };
-
-    [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &type() const { return _type; };
 

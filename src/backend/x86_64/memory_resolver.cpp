@@ -1,4 +1,4 @@
-#include "optimization/memory_resolver.hpp"
+#include "backend/x86_64/memory_resolver.hpp"
 
 #include "il/instruction.hpp"
 #include "utils/utils.hpp"
@@ -71,7 +71,7 @@ void MemoryResolver::visit(il::End &) {
 
 Operand MemoryResolver::_resolve_operand(const Operand &operand) {
     return std::visit(match{
-        [&](const std::shared_ptr<Symbol> &value) -> Operand { return _resolve_symbol(value); },
+        [&](const Symbol &value) -> Operand { return _resolve_symbol(value); },
         [&](const Immediate &value) -> Operand { return _resolve_immediate(value); },
         [](const auto &value) -> Operand { return value; }
     }, operand);
@@ -86,7 +86,7 @@ Operand MemoryResolver::_resolve_immediate(const Immediate &immediate) {
     return Memory(immediate.size(), Memory::Address(data_name));
 }
 
-Operand MemoryResolver::_resolve_symbol(const std::shared_ptr<Symbol> &symbol) {
+Operand MemoryResolver::_resolve_symbol(const Symbol &symbol) {
     auto result = _resolved.find(symbol);
     if (result != _resolved.end()) return result->second;
 
