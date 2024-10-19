@@ -10,8 +10,6 @@
 #include "utils/visitor.hpp"
 #include "frontend/ast.hpp"
 
-namespace arkoi {
-
 class Instruction {
 public:
     virtual ~Instruction() = default;
@@ -19,9 +17,7 @@ public:
     virtual void accept(intermediate::Visitor &visitor) = 0;
 };
 
-}
-
-namespace arkoi::intermediate {
+namespace intermediate {
 
 class Label : public Instruction {
 public:
@@ -236,4 +232,4 @@ private:
 
 }
 
-std::ostream &operator<<(std::ostream &os, const arkoi::intermediate::Binary::Operator &op);
+std::ostream &operator<<(std::ostream &os, const intermediate::Binary::Operator &op);

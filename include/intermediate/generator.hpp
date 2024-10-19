@@ -5,7 +5,7 @@
 #include "semantic/type.hpp"
 #include "intermediate/cfg.hpp"
 
-namespace arkoi::intermediate {
+namespace intermediate {
 
 class Generator : node::Visitor {
 private:

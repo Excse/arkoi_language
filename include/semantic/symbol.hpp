@@ -6,8 +6,6 @@
 
 #include "type.hpp"
 
-namespace arkoi {
-
 struct Symbol;
 
 class FunctionSymbol {
@@ -73,6 +71,4 @@ struct Symbol : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {
     using variant::variant;
 };
 
-}
-
-std::ostream &operator<<(std::ostream &os, const arkoi::Symbol &symbol);
+std::ostream &operator<<(std::ostream &os, const Symbol &symbol);

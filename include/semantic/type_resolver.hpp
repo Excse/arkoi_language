@@ -8,8 +8,6 @@
 #include "semantic/type.hpp"
 #include "frontend/ast.hpp"
 
-namespace arkoi {
-
 class TypeResolver : node::Visitor {
 private:
     TypeResolver() = default;
@@ -57,5 +55,3 @@ private:
     size_t _sse_index{}, _int_index{};
     bool _failed{};
 };
-
-}

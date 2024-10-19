@@ -5,8 +5,6 @@
 #include "token.hpp"
 #include "semantic/type.hpp"
 
-namespace arkoi {
-
 class Node {
 public:
     virtual ~Node() = default;
@@ -14,9 +12,7 @@ public:
     virtual void accept(node::Visitor &visitor) = 0;
 };
 
-}
-
-namespace arkoi::node {
+namespace node {
 
 class Program : public Node {
 public:

@@ -5,8 +5,6 @@
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
-using namespace arkoi;
-
 static type::Integral BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
 static type::Boolean BOOL_TYPE;
 
@@ -59,7 +57,7 @@ void TypeResolver::visit(node::Parameter &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
 
-    std::visit(match {
+    std::visit(match{
         [&](const type::Integral &) { parameter.set_int_index(_int_index++); },
         [&](const type::Boolean &) { parameter.set_int_index(_int_index++); },
         [&](const type::Floating &) { parameter.set_sse_index(_sse_index++); }

@@ -6,8 +6,6 @@
 
 #include "instruction.hpp"
 
-namespace arkoi {
-
 class BasicBlock {
 public:
     template<typename InstructionType, typename... Args>
@@ -47,5 +45,3 @@ private:
 };
 
 #include "../../src/intermediate/cfg.tpp"
-
-}

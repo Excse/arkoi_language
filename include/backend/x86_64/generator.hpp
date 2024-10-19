@@ -9,7 +9,7 @@
 #include "utils/visitor.hpp"
 #include "intermediate/cfg.hpp"
 
-namespace arkoi::x86_64 {
+namespace x86_64 {
 
 class Generator : intermediate::Visitor {
 private:

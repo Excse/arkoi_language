@@ -1,7 +1,5 @@
 #include "intermediate/cfg.hpp"
 
-using namespace arkoi;
-
 void BasicBlock::depth_first_search(const std::function<void(BasicBlock &)> &callback,
                                     std::unordered_set<BasicBlock *> &visited) {
     if (visited.contains(&*this)) return;

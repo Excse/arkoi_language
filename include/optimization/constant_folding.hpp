@@ -2,8 +2,6 @@
 
 #include "optimization.hpp"
 
-namespace arkoi {
-
 class ConstantFolding : public IterativePass {
 public:
     bool new_cfg(CFG &) override { return false; }
@@ -15,5 +13,3 @@ private:
 
     [[nodiscard]] static std::optional<std::unique_ptr<Instruction>> _cast(const intermediate::Cast &instruction);
 };
-
-}

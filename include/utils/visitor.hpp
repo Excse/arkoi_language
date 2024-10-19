@@ -1,6 +1,6 @@
 #pragma once
 
-namespace arkoi::node {
+namespace node {
 
 class Identifier;
 
@@ -61,7 +61,7 @@ public:
 
 }
 
-namespace arkoi::intermediate {
+namespace intermediate {
 
 class Argument;
 

@@ -2,7 +2,7 @@
 
 #include <iomanip>
 
-using namespace arkoi::x86_64;
+namespace x86_64 {
 
 void Assembly::cvttsd2si(const Operand &destination, const Operand &src) {
     _output << "\tcvttsd2si " << destination << ", " << src << "\n";
@@ -179,4 +179,6 @@ void Assembly::comment(const std::string &comment) {
 
 void Assembly::newline() {
     _output << "\n";
+}
+
 }

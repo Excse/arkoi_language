@@ -1,7 +1,5 @@
 #include "optimization/optimization.hpp"
 
-using namespace arkoi;
-
 void OptimizationManager::optimize(std::vector<CFG> &cfgs) {
     while (true) {
         auto changed = false;
@@ -18,7 +16,7 @@ void OptimizationManager::optimize(std::vector<CFG> &cfgs) {
 
         if (!changed) break;
     }
-    
+
     for (const auto &pass: _single_passes) {
         std::for_each(cfgs.begin(), cfgs.end(), [&](auto &cfg) {
             pass->new_cfg(cfg);

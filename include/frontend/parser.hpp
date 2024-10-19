@@ -8,8 +8,6 @@
 #include "frontend/ast.hpp"
 #include "utils/utils.hpp"
 
-namespace arkoi {
-
 class Parser {
 public:
     explicit Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
@@ -99,5 +97,3 @@ public:
     UnexpectedToken(const std::string &expected, const Token &got)
         : ParserError("Expected " + expected + " but got " + to_string(got.type())) {}
 };
-
-}

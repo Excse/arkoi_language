@@ -6,8 +6,6 @@
 #include <cstdint>
 #include <utility>
 
-namespace arkoi {
-
 class Token {
 public:
     enum class Type {
@@ -77,8 +75,6 @@ private:
     Type _type;
 };
 
-}
+std::ostream &operator<<(std::ostream &os, const Token &token);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::Token &token);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::Token::Type &type);
+std::ostream &operator<<(std::ostream &os, const Token::Type &type);

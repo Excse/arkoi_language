@@ -3,8 +3,6 @@
 #include "intermediate/instruction.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi;
-
 static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
                                                 Register::Base::C, Register::Base::R8, Register::Base::R9};
 static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,

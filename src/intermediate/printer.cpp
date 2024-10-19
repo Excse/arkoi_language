@@ -6,7 +6,7 @@
 #include "intermediate/instruction.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi::intermediate;
+namespace intermediate {
 
 Printer Printer::print(std::vector<CFG> &cfgs) {
     Printer printer;
@@ -78,4 +78,6 @@ void Printer::visit(IfNot &instruction) {
 
 void Printer::visit(Store &instruction) {
     _output << instruction.result() << " = " << instruction.value() << "\n";
+}
+
 }

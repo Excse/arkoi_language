@@ -5,7 +5,7 @@
 
 #include "utils/data.hpp"
 
-namespace arkoi::type {
+namespace type {
 
 class Integral {
 public:
@@ -51,20 +51,16 @@ public:
 
 }
 
-namespace arkoi {
-
 struct Type : std::variant<type::Integral, type::Floating, type::Boolean> {
     using variant::variant;
 
     [[nodiscard]] Size size() const;
 };
 
-}
+std::ostream &operator<<(std::ostream &os, const type::Integral &type);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Integral &type);
+std::ostream &operator<<(std::ostream &os, const type::Floating &type);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Floating &type);
+std::ostream &operator<<(std::ostream &os, const type::Boolean &type);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Boolean &type);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::Type &type);
+std::ostream &operator<<(std::ostream &os, const Type &type);

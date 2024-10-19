@@ -3,8 +3,6 @@
 #include "frontend/ast.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi;
-
 NameResolver NameResolver::resolve(node::Program &node) {
     NameResolver resolver;
 

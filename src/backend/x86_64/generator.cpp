@@ -4,8 +4,7 @@
 #include "intermediate/printer.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi::x86_64;
-using namespace arkoi;
+namespace x86_64 {
 
 inline Register RBP(Register::Base::BP, Size::QWORD);
 inline Register RSP(Register::Base::SP, Size::QWORD);
@@ -585,4 +584,6 @@ Register Generator::_temp1_register(const Type &type) {
 
 Register Generator::_temp2_register(const Type &type) {
     return _select_register(type, Register::Base::R11, Register::Base::XMM12);
+}
+
 }

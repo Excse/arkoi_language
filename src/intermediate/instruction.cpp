@@ -1,6 +1,6 @@
 #include "intermediate/instruction.hpp"
 
-using namespace arkoi::intermediate;
+namespace intermediate {
 
 Binary::Operator Binary::node_to_instruction(node::Binary::Operator op) {
     switch (op) {
@@ -14,12 +14,15 @@ Binary::Operator Binary::node_to_instruction(node::Binary::Operator op) {
     std::unreachable();
 }
 
-std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
+}
+
+std::ostream &operator<<(std::ostream &os, const intermediate::Binary::Operator &op) {
     switch (op) {
-        case Binary::Operator::Add: return os << "add";
-        case Binary::Operator::Sub: return os << "sub";
-        case Binary::Operator::Mul: return os << "mul";
-        case Binary::Operator::Div: return os << "div";
+        using Operator = intermediate::Binary::Operator;
+        case Operator::Add: return os << "add";
+        case Operator::Sub: return os << "sub";
+        case Operator::Mul: return os << "mul";
+        case Operator::Div: return os << "div";
     }
 
     // As the -Wswitch flag is set, this will never be reached.

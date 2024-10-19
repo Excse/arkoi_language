@@ -2,8 +2,6 @@
 
 #include "utils/utils.hpp"
 
-using namespace arkoi;
-
 bool ConstantFolding::new_block(BasicBlock &block) {
     auto changed = false;
 

@@ -6,7 +6,7 @@
 #include "utils/visitor.hpp"
 #include "intermediate/cfg.hpp"
 
-namespace arkoi::intermediate {
+namespace intermediate {
 
 class Printer : Visitor {
 private:

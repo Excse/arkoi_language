@@ -2,8 +2,6 @@
 
 #include "semantic/symbol_table.hpp"
 
-using namespace arkoi;
-
 node::Program Parser::parse_program() {
     std::vector<std::unique_ptr<Node>> statements;
     auto own_scope = _enter_scope();

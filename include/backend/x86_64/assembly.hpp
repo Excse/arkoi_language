@@ -4,7 +4,7 @@
 
 #include "intermediate/operand.hpp"
 
-namespace arkoi::x86_64 {
+namespace x86_64 {
 
 class Assembly {
 public:

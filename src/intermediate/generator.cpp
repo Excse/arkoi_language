@@ -5,8 +5,7 @@
 #include "utils/utils.hpp"
 #include "frontend/ast.hpp"
 
-using namespace arkoi::intermediate;
-using namespace arkoi;
+namespace intermediate {
 
 Generator Generator::generate(node::Program &node) {
     Generator generator;
@@ -204,4 +203,6 @@ Operand Generator::_make_temporary(const Type &type) {
 std::shared_ptr<Symbol> Generator::_make_label_symbol() {
     auto name = "L" + to_string(_label_index++);
     return std::make_shared<Symbol>(TemporarySymbol(name));
+}
+
 }

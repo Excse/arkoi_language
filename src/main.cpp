@@ -13,8 +13,6 @@
 #include "frontend/scanner.hpp"
 #include "frontend/parser.hpp"
 
-using namespace arkoi;
-
 int main() {
     std::ifstream file("../example/test.ark");
     std::stringstream buffer;

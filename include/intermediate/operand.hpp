@@ -9,8 +9,6 @@
 #include "semantic/symbol_table.hpp"
 #include "utils/data.hpp"
 
-namespace arkoi {
-
 class Register {
 public:
     enum class Base {
@@ -78,16 +76,14 @@ struct Operand : std::variant<Register, Memory, std::shared_ptr<Symbol>, Immedia
     using variant::variant;
 };
 
-}
+std::ostream &operator<<(std::ostream &os, const Register &reg);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::Register &reg);
+std::ostream &operator<<(std::ostream &os, const Register::Base &reg);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::Register::Base &reg);
+std::ostream &operator<<(std::ostream &os, const Operand &operand);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::Operand &operand);
+std::ostream &operator<<(std::ostream &os, const Memory &memory);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::Memory &memory);
+std::ostream &operator<<(std::ostream &os, const Memory::Address &memory);
 
-std::ostream &operator<<(std::ostream &os, const arkoi::Memory::Address &memory);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::Immediate &immediate);
+std::ostream &operator<<(std::ostream &os, const Immediate &immediate);

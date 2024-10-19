@@ -6,8 +6,6 @@
 #include "utils/visitor.hpp"
 #include "frontend/token.hpp"
 
-namespace arkoi {
-
 class NameResolver : node::Visitor {
 private:
     NameResolver() = default;
@@ -58,5 +56,3 @@ private:
 };
 
 #include "../../src/semantic/name_resolver.tpp"
-
-}

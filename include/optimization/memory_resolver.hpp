@@ -5,8 +5,6 @@
 #include "utils/visitor.hpp"
 #include "intermediate/cfg.hpp"
 
-namespace arkoi {
-
 class MemoryResolver : public SinglePass, intermediate::Visitor {
 public:
     void new_cfg(CFG &) override { }
@@ -57,5 +55,3 @@ private:
     int64_t _parameter_offset{};
     size_t _constant_index{};
 };
-
-}
