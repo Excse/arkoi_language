@@ -1,0 +1,4 @@
+Identifier(contents="hello", column=0, row=0)
+Identifier(contents="world", column=6, row=0)
+Newline(contents="", column=11, row=0)
+EndOfFile(contents="", column=0, row=0)
