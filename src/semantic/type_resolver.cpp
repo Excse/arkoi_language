@@ -29,10 +29,6 @@ void TypeResolver::visit(node::Program &node) {
 }
 
 void TypeResolver::visit_as_prototype(node::Function &node) {
-    // Reset the register counters for the parameters
-    _sse_index = 0;
-    _int_index = 0;
-
     for (auto &item: node.parameters()) {
         item.accept(*this);
     }
@@ -56,12 +52,6 @@ void TypeResolver::visit(node::Block &node) {
 void TypeResolver::visit(node::Parameter &node) {
     auto &parameter = std::get<ParameterSymbol>(*node.symbol());
     parameter.set_type(node.type());
-
-    std::visit(match{
-        [&](const type::Integral &) { parameter.set_int_index(_int_index++); },
-        [&](const type::Boolean &) { parameter.set_int_index(_int_index++); },
-        [&](const type::Floating &) { parameter.set_sse_index(_sse_index++); }
-    }, node.type());
 }
 
 void TypeResolver::visit(node::Integer &node) {

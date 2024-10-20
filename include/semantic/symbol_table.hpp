@@ -2,7 +2,6 @@
 
 #include <unordered_map>
 #include <functional>
-#include <optional>
 #include <utility>
 #include <memory>
 

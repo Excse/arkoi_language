@@ -3,7 +3,6 @@
 #include <optional>
 #include <utility>
 #include <memory>
-#include <string>
 
 #include "semantic/symbol_table.hpp"
 #include "utils/visitor.hpp"
@@ -163,8 +162,8 @@ private:
 
 class Argument : public Instruction {
 public:
-    explicit Argument(Operand expression, Symbol symbol)
-        : _expression(std::move(expression)), _symbol(std::move(symbol)) {}
+    Argument(Operand result, Operand expression, Type type)
+        : _expression(std::move(expression)), _result(std::move(result)), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -172,12 +171,11 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &type() const { return _type; }
 
 private:
-    std::optional<Operand> _result{};
-    Operand _expression;
-    Symbol _symbol;
+    Operand _expression, _result;
+    Type _type;
 };
 
 class Store : public Instruction {

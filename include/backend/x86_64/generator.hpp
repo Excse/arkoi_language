@@ -1,12 +1,11 @@
 #pragma once
 
-#include <sstream>
-
+#include "backend/x86_64/operand_resolver.hpp"
 #include "backend/x86_64/assembly.hpp"
+#include "backend/x86_64/operand.hpp"
 #include "semantic/symbol_table.hpp"
 #include "utils/visitor.hpp"
 #include "il/instruction.hpp"
-#include "il/printer.hpp"
 #include "il/cfg.hpp"
 
 namespace x86_64 {
@@ -16,8 +15,7 @@ private:
     Generator() = default;
 
 public:
-    [[nodiscard]] static Generator generate(std::vector<CFG> &cfgs,
-                                            const std::unordered_map<std::string, Constant> &data);
+    [[nodiscard]] static Generator generate(std::vector<CFG> &cfgs);
 
     void visit(il::Label &instruction) override;
 
@@ -39,21 +37,23 @@ public:
 
     void visit(il::IfNot &instruction) override;
 
-    void visit(il::Store &instruction) override;
+    void visit(il::Store &constant) override;
 
     [[nodiscard]] auto &output() const { return _assembly.output(); }
 
 private:
+    void _new_cfg(CFG &cfg);
+
     void _preamble();
 
-    void _data_section(const std::unordered_map<std::string, Immediate> &data);
+    void _data_section();
 
     void _comment_instruction(Instruction &instruction);
 
-    void _convert_int_to_int(const il::Cast &instruction, const type::Integral &from,
+    void _convert_int_to_int(const il::Cast &constant, const type::Integral &from,
                              const type::Integral &to);
 
-    void _convert_int_to_float(const il::Cast &instruction, const type::Integral &from,
+    void _convert_int_to_float(const il::Cast &constant, const type::Integral &from,
                                const type::Floating &to);
 
     void _convert_int_to_bool(const il::Cast &instruction, const type::Integral &from,
@@ -99,6 +99,8 @@ private:
     [[nodiscard]] static Register _temp2_register(const Type &type);
 
 private:
+    std::unordered_map<il::Constant, std::string> _constants{};
+    OperandResolver _resolver;
     Assembly _assembly{};
 };
 

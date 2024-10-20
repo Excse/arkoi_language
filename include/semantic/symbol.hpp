@@ -34,14 +34,6 @@ class ParameterSymbol {
 public:
     explicit ParameterSymbol(std::string name) : _name(std::move(name)) {}
 
-    void set_sse_index(size_t index) { _sse_index = index; }
-
-    [[nodiscard]] auto sse_index() const { return _sse_index; }
-
-    void set_int_index(size_t index) { _int_index = index; }
-
-    [[nodiscard]] auto int_index() const { return _int_index; }
-
     void set_type(Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type; }
@@ -49,7 +41,6 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    size_t _int_index{}, _sse_index{};
     std::optional<Type> _type{};
     std::string _name;
 };

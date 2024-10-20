@@ -21,3 +21,13 @@ void CFG::depth_first_search(const std::function<void(BasicBlock &)> &callback) 
 
     callback(*_end);
 }
+
+void CFG::linearize(const std::function<void(Instruction &)> &callback) {
+    auto visit_instructions = [&](BasicBlock &block) {
+        for (auto &instruction: block.instructions()) {
+            callback(*instruction);
+        }
+    };
+
+    depth_first_search(visit_instructions);
+}

@@ -36,6 +36,8 @@ public:
 
     void depth_first_search(const std::function<void(BasicBlock &)> &callback);
 
+    void linearize(const std::function<void(Instruction &)> &callback);
+
     [[nodiscard]] auto &start() const { return _start; }
 
     [[nodiscard]] auto &end() const { return _end; }

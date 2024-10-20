@@ -129,13 +129,14 @@ void Generator::visit(node::Call &node) {
     const auto &function = std::get<FunctionSymbol>(*node.symbol());
 
     for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
-        const auto &parameter = function.parameter_symbols()[index];
+        const auto &symbol = function.parameter_symbols()[index];
+        const auto &parameter = std::get<ParameterSymbol>(*symbol);
 
         const auto &argument = node.arguments()[index];
         argument->accept(*this);
         auto expression = _current_operand;
 
-        _current_block->emplace_back<Argument>(std::move(expression), parameter);
+        _current_block->emplace_back<Argument>(symbol, std::move(expression), parameter.type().value());
     }
 
     auto result = _make_temporary(function.return_type().value());

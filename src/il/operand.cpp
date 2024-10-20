@@ -2,6 +2,8 @@
 
 #include "utils/utils.hpp"
 
+namespace il {
+
 Size Constant::size() const {
     return std::visit(match{
         [](const double &) { return Size::QWORD; },
@@ -14,7 +16,25 @@ Size Constant::size() const {
     }, *this);
 }
 
-std::ostream &operator<<(std::ostream &os, const Constant &constant) {
+}
+
+namespace std {
+
+size_t hash<il::Constant>::operator()(const il::Constant &constant) const {
+    return std::visit([](const auto &value) -> size_t {
+        return std::hash<std::decay_t<decltype(value)>>{}(value);
+    }, constant);
+}
+
+size_t hash<il::Operand>::operator()(const il::Operand &operand) const {
+    return std::visit([](const auto &value) -> size_t {
+        return std::hash<std::decay_t<decltype(value)>>{}(value);
+    }, operand);
+}
+
+}
+
+std::ostream &operator<<(std::ostream &os, const il::Constant &constant) {
     std::visit(match{
         [&os](const bool &value) { os << (value ? "1" : "0"); },
         [&os](const auto &value) { os << value; },
@@ -22,7 +42,7 @@ std::ostream &operator<<(std::ostream &os, const Constant &constant) {
     return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const Operand &operand) {
+std::ostream &operator<<(std::ostream &os, const il::Operand &operand) {
     std::visit([&os](const auto &other) { os << other; }, operand);
     return os;
 }

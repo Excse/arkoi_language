@@ -2,9 +2,7 @@
 
 #include <stack>
 
-#include "semantic/symbol_table.hpp"
 #include "semantic/type.hpp"
-#include "frontend/token.hpp"
 #include "frontend/ast.hpp"
 #include "utils/visitor.hpp"
 
@@ -52,6 +50,5 @@ private:
 
 private:
     std::optional<Type> _current_type{}, _return_type{};
-    size_t _sse_index{}, _int_index{};
     bool _failed{};
 };

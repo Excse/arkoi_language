@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include "il/operand.hpp"
+#include "backend/x86_64/operand.hpp"
 
 namespace x86_64 {
 
@@ -32,11 +32,13 @@ public:
 
     void mov(const Operand &destination, const Operand &src);
 
-    void label(const Symbol &symbol, bool newline = true);
+    void label(const std::string &name, bool newline = true);
 
-    void jmp(const Operand &destination);
+    void label(const Symbol &symbol);
 
-    void je(const Operand &destination);
+    void jmp(const Symbol &destination);
+
+    void je(const Symbol &destination);
 
     void pop(const Operand &destination);
 
@@ -81,6 +83,8 @@ public:
     void mulss(const Operand &destination, const Operand &src);
 
     void directive(const std::string &name, const std::vector<std::string> &settings = {});
+
+    void call(const std::string &name);
 
     void call(const Symbol &symbol);
 

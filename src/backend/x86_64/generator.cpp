@@ -6,47 +6,44 @@
 
 namespace x86_64 {
 
-inline Register RBP(Register::Base::BP, Size::QWORD);
-inline Register RSP(Register::Base::SP, Size::QWORD);
-inline Register RDI(Register::Base::DI, Size::QWORD);
-inline Register RAX(Register::Base::A, Size::QWORD);
+static const Register RBP(Register::Base::BP, Size::QWORD);
+static const Register RSP(Register::Base::SP, Size::QWORD);
+static const Register RDI(Register::Base::DI, Size::QWORD);
+static const Register RAX(Register::Base::A, Size::QWORD);
 
-static type::Boolean BOOL_TYPE;
+static const type::Boolean BOOL_TYPE;
 
-Generator Generator::generate(std::vector<CFG> &cfgs,
-                              const std::unordered_map<std::string, Immediate> &data) {
+Generator Generator::generate(std::vector<CFG> &cfgs) {
     Generator generator;
 
     generator._preamble();
 
-    auto visit_instructions = [&](BasicBlock &block) {
-        for (auto &instruction: block.instructions()) {
-            instruction->accept(generator);
-        }
-    };
-
     for (auto &cfg: cfgs) {
-        cfg.depth_first_search(visit_instructions);
+        generator._new_cfg(cfg);
+
+        cfg.linearize([&](auto &instruction) {
+            instruction.accept(generator);
+        });
     }
 
-    generator._data_section(data);
+    generator._data_section();
 
     return generator;
 }
 
 void Generator::visit(il::Label &instruction) {
-    _assembly.label(*instruction.symbol());
+    _assembly.label(instruction.symbol());
 }
 
 void Generator::visit(il::Begin &instruction) {
     _comment_instruction(instruction);
 
-    _assembly.label(*instruction.label());
+    _assembly.label(instruction.label());
 
     _assembly.push(RBP);
     _assembly.mov(RBP, RSP);
 
-    if (instruction.local_size() != 0) _assembly.sub(RSP, Immediate(instruction.local_size()));
+    if (_resolver.local_size() != 0) _assembly.sub(RSP, Constant(_resolver.local_size()));
 
     _assembly.newline();
 }
@@ -54,8 +51,10 @@ void Generator::visit(il::Begin &instruction) {
 void Generator::visit(il::Return &instruction) {
     _comment_instruction(instruction);
 
+    const auto value = _resolver.resolve_operand(instruction.value());
+
     auto destination = _returning_register(instruction.type());
-    _mov(instruction.type(), destination, instruction.value());
+    _mov(instruction.type(), destination, value);
 
     _assembly.newline();
 }
@@ -63,54 +62,54 @@ void Generator::visit(il::Return &instruction) {
 void Generator::visit(il::Binary &instruction) {
     _comment_instruction(instruction);
 
-    auto left_reg = std::visit(match{
+    const auto result = _resolver.resolve_operand(instruction.result());
+
+    const auto right = std::visit(match{
+        [](const Register &reg) -> Operand { return reg; },
+        [](const Memory &memory) -> Operand { return memory; },
+        [&](const Constant &constant) -> Operand {
+            if (instruction.op() == il::Binary::Operator::Div) {
+                return _move_to_temp2(instruction.type(), constant);
+            }
+
+            return constant;
+        },
+    }, _resolver.resolve_operand(instruction.right()));
+
+    const auto left = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
             if (std::holds_alternative<type::Integral>(instruction.type())
-                && !std::holds_alternative<Memory>(instruction.right())
+                && !std::holds_alternative<Memory>(right)
                 && instruction.op() != il::Binary::Operator::Div) {
                 return memory;
             }
 
             return _move_to_temp1(instruction.type(), memory);
         },
-        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(instruction.type(), immediate); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.left());
-
-    auto right_reg = std::visit(match{
-        [](const Register &reg) -> Operand { return reg; },
-        [](const Memory &memory) -> Operand { return memory; },
-        [&](const Immediate &immediate) -> Operand {
-            if (instruction.op() == il::Binary::Operator::Div) {
-                return _move_to_temp2(instruction.type(), immediate);
-            }
-
-            return immediate;
-        },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.right());
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(instruction.type(), constant); },
+    }, _resolver.resolve_operand(instruction.left()));
 
     switch (instruction.op()) {
         case il::Binary::Operator::Add: {
-            _add(instruction.type(), left_reg, right_reg);
+            _add(instruction.type(), left, right);
             break;
         }
         case il::Binary::Operator::Sub: {
-            _sub(instruction.type(), left_reg, right_reg);
+            _sub(instruction.type(), left, right);
             break;
         }
         case il::Binary::Operator::Div: {
-            _div(instruction.type(), left_reg, right_reg);
+            _div(instruction.type(), left, right);
             break;
         }
         case il::Binary::Operator::Mul: {
-            _mul(instruction.type(), left_reg, right_reg);
+            _mul(instruction.type(), left, right);
             break;
         }
     }
 
-    _mov(instruction.type(), instruction.result(), left_reg);
+    _mov(instruction.type(), result, left);
     _assembly.newline();
 }
 
@@ -135,11 +134,13 @@ void Generator::visit(il::Cast &instruction) {
 void Generator::visit(il::Call &instruction) {
     _comment_instruction(instruction);
 
-    _assembly.call(*instruction.symbol());
+    const auto result = _resolver.resolve_operand(instruction.result());
+
+    _assembly.call(instruction.symbol());
 
     const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
     const auto return_reg = _returning_register(function.return_type().value());
-    _mov(function.return_type().value(), instruction.result(), return_reg);
+    _mov(function.return_type().value(), result, return_reg);
 
     _assembly.newline();
 }
@@ -147,11 +148,13 @@ void Generator::visit(il::Call &instruction) {
 void Generator::visit(il::Argument &instruction) {
     _comment_instruction(instruction);
 
-    if (instruction.result()) {
-        const auto &parameter = std::get<ParameterSymbol>(*instruction.symbol());
-        _mov(parameter.type().value(), *instruction.result(), instruction.expression());
+    const auto expression = _resolver.resolve_operand(instruction.expression());
+    const auto result = _resolver.resolve_operand(instruction.result());
+
+    if (std::holds_alternative<Register>(result)) {
+        _mov(instruction.type(), result, expression);
     } else {
-        _assembly.push(instruction.expression());
+        _assembly.push(expression);
     }
 
     _assembly.newline();
@@ -164,32 +167,32 @@ void Generator::visit(il::Goto &instruction) {
 void Generator::visit(il::IfNot &instruction) {
     _comment_instruction(instruction);
 
-    auto src = std::visit(match{
+    const auto condition = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(BOOL_TYPE, immediate); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.condition());
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(BOOL_TYPE, constant); },
+    }, _resolver.resolve_operand(instruction.condition()));
 
-    _assembly.cmp(src, Immediate((uint32_t) 0));
+    _assembly.cmp(condition, Constant((uint32_t) 0));
     _assembly.je(instruction.label());
 }
 
 void Generator::visit(il::Store &instruction) {
     _comment_instruction(instruction);
 
-    auto value = std::visit(match{
+    const auto result = _resolver.resolve_operand(instruction.result());
+
+    const auto value = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
-            if (!std::holds_alternative<Memory>(instruction.result())) return memory;
+            if (!std::holds_alternative<Memory>(result)) return memory;
 
             return _move_to_temp1(instruction.type(), memory);
         },
-        [&](const Immediate &immediate) -> Operand { return immediate; },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.value());
+        [&](const Constant &constant) -> Operand { return constant; },
+    }, _resolver.resolve_operand(instruction.value()));
 
-    _mov(instruction.type(), instruction.result(), value);
+    _mov(instruction.type(), result, value);
 
     _assembly.newline();
 }
@@ -204,25 +207,32 @@ void Generator::visit(il::End &instruction) {
     _assembly.newline();
 }
 
+void Generator::_new_cfg(CFG &cfg) {
+    _resolver = OperandResolver::resolve(cfg);
+    for (const auto &[constant, data]: _resolver.constants()) {
+        _constants.emplace(constant, data.name);
+    }
+}
+
 void Generator::_preamble() {
     _assembly.directive(".intel_syntax", {"noprefix"});
     _assembly.directive(".section", {".text"});
     _assembly.directive(".global", {"_start"});
 
     _assembly.newline();
-    _assembly.label(TemporarySymbol("_start"));
-    _assembly.call(TemporarySymbol("main"));
+    _assembly.label("_start");
+    _assembly.call("main");
     _assembly.mov(RDI, RAX);
-    _assembly.mov(RAX, Immediate(60));
+    _assembly.mov(RAX, Constant(60));
     _assembly.syscall();
 
     _assembly.newline();
 }
 
-void Generator::_data_section(const std::unordered_map<std::string, Immediate> &data) {
+void Generator::_data_section() {
     _assembly.directive(".section", {".data"});
-    for (const auto &[name, value]: data) {
-        _assembly.label(TemporarySymbol(name), false);
+    for (const auto &[value, name]: _constants) {
+        _assembly.label(name, false);
 
         std::visit(match{
             [&](const float &) { _assembly.directive(".float", {to_string(value)}); },
@@ -239,6 +249,8 @@ void Generator::_comment_instruction(Instruction &instruction) {
 
 void Generator::_convert_int_to_int(const il::Cast &instruction, const type::Integral &from,
                                     const type::Integral &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [&](const Memory &memory) -> Operand {
@@ -247,9 +259,8 @@ void Generator::_convert_int_to_int(const il::Cast &instruction, const type::Int
                 [&](const auto &) -> Operand { return memory; },
             }, instruction.result());
         },
-        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(from, constant); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     Operand temporary = _temp1_register(to);
     if (from.size() == Size::DWORD && to.size() == Size::QWORD) {
@@ -264,31 +275,31 @@ void Generator::_convert_int_to_int(const il::Cast &instruction, const type::Int
         throw std::runtime_error("This cast is not implemented.");
     }
 
-    _assembly.mov(instruction.result(), temporary);
+    _assembly.mov(result, temporary);
 }
 
 void Generator::_convert_int_to_float(const il::Cast &instruction, const type::Integral &from,
                                       const type::Floating &to) {
-    auto src = (from.size() >= Size::DWORD)
-               ? instruction.expression()
-               : _integer_promote(from, instruction.expression());
+    auto expression = _resolver.resolve_operand(instruction.expression());
+    auto result = _resolver.resolve_operand(instruction.result());
+
+    auto src = (from.size() >= Size::DWORD) ? expression : _integer_promote(from, expression);
     src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [&](const Immediate &value) -> Operand { return _move_to_temp1(from, value); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(from, constant); },
     }, src);
 
     auto temporary = _temp1_register(to);
     switch (to.size()) {
         case Size::DWORD: {
             _assembly.cvtsi2ss(temporary, src);
-            _assembly.movss(instruction.result(), temporary);
+            _assembly.movss(result, temporary);
             break;
         }
         case Size::QWORD: {
             _assembly.cvtsi2sd(temporary, src);
-            _assembly.movsd(instruction.result(), temporary);
+            _assembly.movsd(result, temporary);
             break;
         }
         default: throw std::runtime_error("This cast is not implemented.");
@@ -297,40 +308,42 @@ void Generator::_convert_int_to_float(const il::Cast &instruction, const type::I
 
 void Generator::_convert_int_to_bool(const il::Cast &instruction, const type::Integral &from,
                                      const type::Boolean &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(from, constant); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     auto temporary = _temp1_register(to);
-    _assembly.cmp(src, Immediate((uint32_t) 0));
+    _assembly.cmp(src, Constant((uint32_t) 0));
     _assembly.setne(temporary);
-    _assembly.mov(instruction.result(), temporary);
+    _assembly.mov(result, temporary);
 }
 
 void Generator::_convert_float_to_float(const il::Cast &instruction, const type::Floating &from,
                                         const type::Floating &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [](const Immediate &) -> Operand { std::unreachable(); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [](const Constant &) -> Operand { std::unreachable(); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     if (from.size() == Size::DWORD && to.size() == Size::DWORD) {
-        _assembly.movss(instruction.result(), src);
+        _assembly.movss(result, src);
     } else if (from.size() == Size::DWORD && to.size() == Size::QWORD) {
         auto temporary = _temp1_register(to);
         _assembly.cvtss2sd(temporary, src);
-        _assembly.movsd(instruction.result(), temporary);
+        _assembly.movsd(result, temporary);
     } else if (from.size() == Size::QWORD && to.size() == Size::DWORD) {
         auto temporary = _temp1_register(to);
         _assembly.cvtsd2ss(temporary, src);
-        _assembly.movss(instruction.result(), temporary);
+        _assembly.movss(result, temporary);
     } else if (from.size() == Size::QWORD && to.size() == Size::QWORD) {
-        _assembly.movsd(instruction.result(), src);
+        _assembly.movsd(result, src);
     } else {
         throw std::runtime_error("This cast is not implemented.");
     }
@@ -338,12 +351,13 @@ void Generator::_convert_float_to_float(const il::Cast &instruction, const type:
 
 void Generator::_convert_float_to_int(const il::Cast &instruction, const type::Floating &from,
                                       const type::Integral &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [](const Immediate &) -> Operand { std::unreachable(); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [](const Constant &) -> Operand { std::unreachable(); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     auto bigger_to_temporary = _temp1_register(to);
     if (to.size() < Size::DWORD) {
@@ -364,17 +378,18 @@ void Generator::_convert_float_to_int(const il::Cast &instruction, const type::F
     }
 
     auto to_temporary = _temp1_register(to);
-    _assembly.mov(instruction.result(), to_temporary);
+    _assembly.mov(result, to_temporary);
 }
 
 void Generator::_convert_float_to_bool(const il::Cast &instruction, const type::Floating &from,
                                        const type::Boolean &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [](const Immediate &) -> Operand { std::unreachable(); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [](const Constant &) -> Operand { std::unreachable(); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     auto zero = _temp2_register(from);
     _assembly.pxor(zero, zero);
@@ -393,31 +408,33 @@ void Generator::_convert_float_to_bool(const il::Cast &instruction, const type::
 
     auto temporary = _temp1_register(to);
     _assembly.setne(temporary);
-    _mov(to, instruction.result(), temporary);
+    _mov(to, result, temporary);
 }
 
 void Generator::_convert_bool_to_int(const il::Cast &instruction, const type::Boolean &from,
                                      const type::Integral &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(from, constant); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     auto to_temporary = _temp1_register(to);
     _assembly.movzx(to_temporary, src);
-    _assembly.mov(instruction.result(), to_temporary);
+    _assembly.mov(result, to_temporary);
 }
 
 void Generator::_convert_bool_to_float(const il::Cast &instruction, const type::Boolean &from,
                                        const type::Floating &to) {
+    auto result = _resolver.resolve_operand(instruction.result());
+
     auto src = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
-        [&](const Immediate &immediate) -> Operand { return _move_to_temp1(from, immediate); },
-        [](const Symbol &) -> Operand { std::unreachable(); }
-    }, instruction.expression());
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(from, constant); },
+    }, _resolver.resolve_operand(instruction.expression()));
 
     auto to_int_temporary = _temp1_register(type::Integral(Size::DWORD, false));
     auto to_float_temporary = _temp1_register(to);
@@ -428,12 +445,12 @@ void Generator::_convert_bool_to_float(const il::Cast &instruction, const type::
     switch (to.size()) {
         case Size::DWORD: {
             _assembly.cvtsi2ss(to_float_temporary, to_int_temporary);
-            _assembly.movss(instruction.result(), to_float_temporary);
+            _assembly.movss(result, to_float_temporary);
             break;
         }
         case Size::QWORD: {
             _assembly.cvtsi2sd(to_float_temporary, to_int_temporary);
-            _assembly.movsd(instruction.result(), to_float_temporary);
+            _assembly.movsd(result, to_float_temporary);
             break;
         }
         default: std::unreachable();

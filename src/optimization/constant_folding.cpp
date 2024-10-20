@@ -24,12 +24,12 @@ bool ConstantFolding::new_block(BasicBlock &block) {
 }
 
 std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const il::Binary &instruction) {
-    auto *right_constant = std::get_if<Constant>(&instruction.right());
-    auto *left_constant = std::get_if<Constant>(&instruction.left());
+    auto *right_constant = std::get_if<il::Constant>(&instruction.right());
+    auto *left_constant = std::get_if<il::Constant>(&instruction.left());
 
     if (!right_constant || !left_constant) return std::nullopt;
 
-    auto apply_operator = [&](auto left, auto right) -> Operand {
+    auto apply_operator = [&](auto left, auto right) -> il::Operand {
         switch (instruction.op()) {
             case il::Binary::Operator::Add: return left + right;
             case il::Binary::Operator::Sub: return left - right;
@@ -42,27 +42,27 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_binary(const il::B
     };
 
     auto value = std::visit(match{
-        [&](const double &left, const double &right) -> Operand { return apply_operator(left, right); },
-        [&](const float &left, const float &right) -> Operand { return apply_operator(left, right); },
-        [&](const int32_t &left, const int32_t &right) -> Operand { return apply_operator(left, right); },
-        [&](const uint32_t &left, const uint32_t &right) -> Operand { return apply_operator(left, right); },
-        [&](const int64_t &left, const int64_t &right) -> Operand { return apply_operator(left, right); },
-        [&](const uint64_t &left, const uint64_t &right) -> Operand { return apply_operator(left, right); },
-        [&](const bool &left, const bool &right) -> Operand { return apply_operator(left, right); },
-        [](const auto &, const auto &) -> Operand { std::unreachable(); }
+        [&](const double &left, const double &right) -> il::Operand { return apply_operator(left, right); },
+        [&](const float &left, const float &right) -> il::Operand { return apply_operator(left, right); },
+        [&](const int32_t &left, const int32_t &right) -> il::Operand { return apply_operator(left, right); },
+        [&](const uint32_t &left, const uint32_t &right) -> il::Operand { return apply_operator(left, right); },
+        [&](const int64_t &left, const int64_t &right) -> il::Operand { return apply_operator(left, right); },
+        [&](const uint64_t &left, const uint64_t &right) -> il::Operand { return apply_operator(left, right); },
+        [&](const bool &left, const bool &right) -> il::Operand { return apply_operator(left, right); },
+        [](const auto &, const auto &) -> il::Operand { std::unreachable(); }
     }, *right_constant, *left_constant);
 
     return std::make_unique<il::Store>(instruction.result(), value, instruction.type());
 }
 
 std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const il::Cast &instruction) {
-    auto *expression = std::get_if<Constant>(&instruction.expression());
+    auto *expression = std::get_if<il::Constant>(&instruction.expression());
 
     if (!expression) return std::nullopt;
 
-    auto apply_operator = [&](auto expression, const Type &to) -> Operand {
+    auto apply_operator = [&](auto expression, const Type &to) -> il::Operand {
         return std::visit(match{
-            [&](const type::Integral &type) -> Operand {
+            [&](const type::Integral &type) -> il::Operand {
                 switch (type.size()) {
                     case Size::BYTE: return type.sign() ? (int8_t) expression : (uint8_t) expression;
                     case Size::WORD: return type.sign() ? (int16_t) expression : (uint16_t) expression;
@@ -71,18 +71,18 @@ std::optional<std::unique_ptr<Instruction>> ConstantFolding::_cast(const il::Cas
                     default: std::unreachable();
                 }
             },
-            [&](const type::Floating &type) -> Operand {
+            [&](const type::Floating &type) -> il::Operand {
                 switch (type.size()) {
                     case Size::DWORD: return (float) expression;
                     case Size::QWORD: return (double) expression;
                     default: std::unreachable();
                 }
             },
-            [&](const type::Boolean &) -> Operand { return (bool) expression; }
+            [&](const type::Boolean &) -> il::Operand { return (bool) expression; }
         }, to);
     };
 
-    auto value = std::visit([&](const auto &value) -> Operand {
+    auto value = std::visit([&](const auto &value) -> il::Operand {
         return apply_operator(value, instruction.to());
     }, *expression);
 

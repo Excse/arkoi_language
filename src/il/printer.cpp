@@ -11,14 +11,10 @@ namespace il {
 Printer Printer::print(std::vector<CFG> &cfgs) {
     Printer printer;
 
-    auto visit_instructions = [&](BasicBlock &block) {
-        for (auto &instruction: block.instructions()) {
-            instruction->accept(printer);
-        }
-    };
-
     for (auto &cfg: cfgs) {
-        cfg.depth_first_search(visit_instructions);
+        cfg.linearize([&](auto &instruction) {
+            instruction.accept(printer);
+        });
     }
 
     return printer;

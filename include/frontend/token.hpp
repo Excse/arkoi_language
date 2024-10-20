@@ -1,9 +1,7 @@
 #pragma once
 
-#include <unordered_map>
 #include <iostream>
 #include <optional>
-#include <cstdint>
 #include <utility>
 
 class Token {

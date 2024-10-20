@@ -56,16 +56,20 @@ void Assembly::mov(const Operand &destination, const Operand &src) {
     _output << "\tmov " << destination << ", " << src << "\n";
 }
 
-void Assembly::label(const Symbol &symbol, bool newline) {
-    _output << symbol << ": ";
+void Assembly::label(const std::string &name, bool newline) {
+    _output << name << ": ";
     if (newline) _output << "\n";
 }
 
-void Assembly::jmp(const Operand &destination) {
+void Assembly::label(const Symbol &symbol) {
+    _output << symbol << ":\n";
+}
+
+void Assembly::jmp(const Symbol &destination) {
     _output << "\tjmp " << destination << "\n";
 }
 
-void Assembly::je(const Operand &destination) {
+void Assembly::je(const Symbol &destination) {
     _output << "\tje " << destination << "\n";
 }
 
@@ -163,6 +167,10 @@ void Assembly::directive(const std::string &name, const std::vector<std::string>
     }
 
     _output << "\n";
+}
+
+void Assembly::call(const std::string &name) {
+    _output << "\tcall " << name << "\n";
 }
 
 void Assembly::call(const Symbol &symbol) {
