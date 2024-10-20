@@ -1,0 +1,16 @@
+42.0
+-42.
+42.0e+2
+-42.0e-2
+42.0E+2
+-42.0E-2
+42.e+2
+-42.e-2
+42.E+2
+-42.E-2
+0xCaFeBaBe.E2
+-0xCaFeBaBe.
+0xCaFeBaBe.E2p+2
+-0xCaFeBaBe.E2p-2
+0xCaFeBaBe.P+2
+-0xCaFeBaBe.P-2

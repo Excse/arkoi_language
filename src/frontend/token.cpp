@@ -80,16 +80,16 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::True: return os << "true";
         case Token::Type::False: return os << "false";
 
-        case Token::Type::LParent: return os << "(";
-        case Token::Type::RParent: return os << ")";
-        case Token::Type::At: return os << "@";
-        case Token::Type::Comma: return os << ",";
-        case Token::Type::Plus: return os << "+";
-        case Token::Type::Minus: return os << "-";
-        case Token::Type::Slash: return os << "/";
-        case Token::Type::Asterisk: return os << "*";
+        case Token::Type::LParent: return os << "LParent";
+        case Token::Type::RParent: return os << "RParent";
+        case Token::Type::At: return os << "At";
+        case Token::Type::Comma: return os << "Comma";
+        case Token::Type::Plus: return os << "Plus";
+        case Token::Type::Minus: return os << "Minus";
+        case Token::Type::Slash: return os << "Slash";
+        case Token::Type::Asterisk: return os << "Asterisk";
 
-        case Token::Type::EndOfFile: return os << "UnexpectedEndOfLine";
+        case Token::Type::EndOfFile: return os << "EndOfFile";
         case Token::Type::Unknown: return os << "Unknown";
     }
 
@@ -99,8 +99,8 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
 
 std::ostream &operator<<(std::ostream &os, const Token &token) {
     os << to_string(token.type());
-    os << ", contents: " << token.contents();
-    os << ", column: " << token.column();
-    os << ", row: " << token.row();
+    os << "(contents=\"" << token.contents() << "\"";
+    os << ", column=" << token.column();
+    os << ", row=" << token.row() << ")";
     return os;
 }
