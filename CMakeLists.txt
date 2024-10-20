@@ -81,7 +81,7 @@ enable_testing()
 add_executable(${PROJECT_NAME}_tests
         test/snapshot/snapshot.cpp
         test/snapshot/test_snapshot.cpp
-        test/test_scanner.cpp)
+)
 
 target_link_libraries(${PROJECT_NAME}_tests gtest gtest_main ${PROJECT_NAME}_lib)
 target_compile_definitions(${PROJECT_NAME}_tests PRIVATE TEST_PATH="${CMAKE_SOURCE_DIR}/test")
