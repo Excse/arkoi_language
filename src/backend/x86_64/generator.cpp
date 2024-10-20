@@ -256,8 +256,9 @@ void Generator::_convert_int_to_int(const il::Cast &instruction, const type::Int
         [&](const Memory &memory) -> Operand {
             return std::visit(match{
                 [&](const Memory &) -> Operand { return _move_to_temp1(from, memory); },
-                [&](const auto &) -> Operand { return memory; },
-            }, instruction.result());
+                [&](const Constant &) -> Operand { return memory; },
+                [&](const Register &) -> Operand { return memory; },
+            }, result);
         },
         [&](const Constant &constant) -> Operand { return _move_to_temp1(from, constant); },
     }, _resolver.resolve_operand(instruction.expression()));

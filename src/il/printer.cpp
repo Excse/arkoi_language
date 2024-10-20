@@ -59,7 +59,7 @@ void Printer::visit(Call &instruction) {
 }
 
 void Printer::visit(Argument &instruction) {
-    _output << "ARG " << instruction.expression() << "\n";
+    _output << "ARG " << instruction.result() << " = " << instruction.expression() << "\n";
 }
 
 void Printer::visit(Goto &instruction) {

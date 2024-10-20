@@ -15,6 +15,8 @@ static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::
 
 static const Register RBP(Register::Base::BP, Size::QWORD);
 
+static const int64_t STACK_ALIGNMENT = 16;
+
 OperandResolver OperandResolver::resolve(CFG &cfg) {
     OperandResolver resolver;
 
@@ -28,10 +30,11 @@ OperandResolver OperandResolver::resolve(CFG &cfg) {
 void OperandResolver::visit(il::Begin &instruction) {
     const auto &function = std::get<FunctionSymbol>(*instruction.label());
 
-    // This is necessary for the correct argument passing using the Int/SSE Registers of the calling convention
+    // Every parameter symbol needs to be resolved before because of the x86_64 calling convention quirks.
+
+    size_t int_index = 0, sse_index = 0;
     for (auto &symbol: function.parameter_symbols()) {
-        const auto &parameter_symbol = std::get<ParameterSymbol>(*symbol);
-        std::ignore = _resolve_parameter(parameter_symbol);
+        std::ignore = _resolve_parameter(symbol, int_index, sse_index);
     }
 }
 
@@ -51,11 +54,19 @@ void OperandResolver::visit(il::Cast &instruction) {
 }
 
 void OperandResolver::visit(il::Argument &instruction) {
-    std::ignore = resolve_operand(instruction.result());
+    // Do not resolve the result operand yet. This will be done in the call instruction because of the
+    // x86_64 calling convention quirks.
     std::ignore = resolve_operand(instruction.expression());
 }
 
 void OperandResolver::visit(il::Call &instruction) {
+    const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
+
+    size_t int_index = 0, sse_index = 0;
+    for (auto &symbol: function.parameter_symbols()) {
+        std::ignore = _resolve_parameter(symbol, int_index, sse_index);
+    }
+
     std::ignore = resolve_operand(instruction.result());
 }
 
@@ -69,7 +80,6 @@ void OperandResolver::visit(il::Store &instruction) {
 }
 
 void OperandResolver::visit(il::End &) {
-    static int64_t STACK_ALIGNMENT = 16;
     // Align the stack to comfort the specifications
     _local_size = (_local_size + STACK_ALIGNMENT - 1) & ~(STACK_ALIGNMENT - 1);
 }
@@ -100,8 +110,8 @@ x86_64::Operand OperandResolver::_resolve_symbol(const Symbol &symbol) {
 
     x86_64::Operand resolved = std::visit(match{
         [&](const TemporarySymbol &symbol) -> x86_64::Operand { return _resolve_temporary(symbol); },
-        [&](const ParameterSymbol &symbol) -> x86_64::Operand { return _resolve_parameter(symbol); },
-        [](const FunctionSymbol &) -> x86_64::Operand { std::unreachable(); }
+        // ParameterSymbols get resolved directly in the call and begin instruction.
+        [](const auto &) -> x86_64::Operand { std::unreachable(); }
     }, *symbol);
 
     _resolved.emplace(symbol, resolved);
@@ -117,34 +127,47 @@ x86_64::Operand OperandResolver::_resolve_temporary(const TemporarySymbol &symbo
     return resolved;
 }
 
-x86_64::Operand OperandResolver::_resolve_parameter(const ParameterSymbol &symbol) {
-    auto resolved_register = _resolve_parameter_register(symbol);
-    if (resolved_register) return *resolved_register;
+x86_64::Operand OperandResolver::_resolve_parameter(const Symbol &symbol,
+                                                    size_t &int_index,
+                                                    size_t &sse_index) {
+    auto result = _resolved.find(symbol);
+    if (result != _resolved.end()) return result->second;
 
-    auto size = symbol.type().value().size();
+    const auto &parameter = std::get<ParameterSymbol>(*symbol);
+
+    auto resolved_register = _resolve_parameter_register(parameter, int_index, sse_index);
+    if (resolved_register) {
+        _resolved.emplace(symbol, *resolved_register);
+        return *resolved_register;
+    }
+
+    auto size = parameter.type().value().size();
 
     _parameter_offset += (int64_t) size_to_bytes(size);
     auto resolved = Memory(size, RBP, _parameter_offset);
 
+    _resolved.emplace(symbol, resolved);
     return resolved;
 }
 
-std::optional<Register> OperandResolver::_resolve_parameter_register(const ParameterSymbol &symbol) {
+std::optional<Register> OperandResolver::_resolve_parameter_register(const ParameterSymbol &symbol,
+                                                                     size_t &int_index,
+                                                                     size_t &sse_index) {
     return std::visit(match{
         [&](const type::Integral &type) -> std::optional<Register> {
-            if (_int_index >= 6) return std::nullopt;
+            if (int_index >= 6) return std::nullopt;
 
-            return Register(INT_REG_ORDER[_int_index++], type.size());
+            return Register(INT_REG_ORDER[int_index++], type.size());
         },
         [&](const type::Boolean &) -> std::optional<Register> {
-            if (_int_index >= 6) return std::nullopt;
+            if (int_index >= 6) return std::nullopt;
 
-            return Register(INT_REG_ORDER[_int_index], type::Boolean::size());
+            return Register(INT_REG_ORDER[int_index], type::Boolean::size());
         },
         [&](const type::Floating &type) -> std::optional<Register> {
-            if (_sse_index >= 8) return std::nullopt;
+            if (sse_index >= 8) return std::nullopt;
 
-            return Register(SSE_REG_ORDER[_sse_index++], type.size());
+            return Register(SSE_REG_ORDER[sse_index++], type.size());
         },
     }, symbol.type().value());
 }
