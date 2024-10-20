@@ -9,7 +9,7 @@
 
 class SymbolTable {
 public:
-    explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
+    SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
 
     template<typename SymbolType, typename... Args>
     Symbol &insert(const std::string &name, Args &&... args);
@@ -24,13 +24,13 @@ private:
 
 class IdentifierAlreadyTaken : public std::runtime_error {
 public:
-    explicit IdentifierAlreadyTaken(const std::string &name)
+    IdentifierAlreadyTaken(const std::string &name)
         : std::runtime_error("The identifier " + name + " is already taken.") {}
 };
 
 class IdentifierNotFound : public std::runtime_error {
 public:
-    explicit IdentifierNotFound(const std::string &name)
+    IdentifierNotFound(const std::string &name)
         : std::runtime_error("The identifier " + name + " was not found.") {}
 };
 

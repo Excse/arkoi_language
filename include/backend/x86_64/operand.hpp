@@ -36,13 +36,13 @@ public:
     };
 
 public:
-    explicit Memory(Size size, Register address, int64_t index, int64_t scale, int64_t displacement)
+    Memory(Size size, Register address, int64_t index, int64_t scale, int64_t displacement)
         : _index(index), _scale(scale), _displacement(displacement), _address(address), _size(size) {}
 
-    explicit Memory(Size size, Register address, int64_t displacement)
+    Memory(Size size, Register address, int64_t displacement)
         : _index(1), _scale(1), _displacement(displacement), _address(address), _size(size) {}
 
-    explicit Memory(Size size, Address address)
+    Memory(Size size, Address address)
         : _index(1), _scale(1), _displacement(0), _address(std::move(address)), _size(size) {}
 
     bool operator==(const Memory &other) const;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <utility>
 #include <memory>
 
@@ -20,7 +19,7 @@ namespace il {
 
 class Label : public Instruction {
 public:
-    explicit Label(Symbol symbol) : _symbol(std::move(symbol)) {}
+    Label(Symbol symbol) : _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -32,7 +31,7 @@ private:
 
 class Goto : public Instruction {
 public:
-    explicit Goto(Symbol label) : _label(std::move(label)) {}
+    Goto(Symbol label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -60,7 +59,7 @@ private:
 
 class Call : public Instruction {
 public:
-    explicit Call(Operand result, Symbol symbol)
+    Call(Operand result, Symbol symbol)
         : _result(std::move(result)), _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -76,7 +75,7 @@ private:
 
 class Return : public Instruction {
 public:
-    explicit Return(Operand value, Type type) : _value(std::move(value)), _type(type) {}
+    Return(Operand value, Type type) : _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -125,7 +124,7 @@ private:
 
 class Begin : public Instruction {
 public:
-    explicit Begin(Symbol label) : _label(std::move(label)) {}
+    Begin(Symbol label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -163,7 +162,7 @@ private:
 class Argument : public Instruction {
 public:
     Argument(Operand result, Operand expression, Type type)
-        : _expression(std::move(expression)), _result(std::move(result)), _type(std::move(type)) {}
+        : _expression(std::move(expression)), _result(std::move(result)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -180,7 +179,7 @@ private:
 
 class Store : public Instruction {
 public:
-    explicit Store(Operand result, Operand value, Type type)
+    Store(Operand result, Operand value, Type type)
         : _value(std::move(value)), _result(std::move(result)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }

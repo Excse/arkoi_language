@@ -14,7 +14,7 @@ private:
     };
 
 public:
-    explicit Scanner(std::string data) : _data(std::move(data)) {}
+    Scanner(std::string data) : _data(std::move(data)) {}
 
     [[nodiscard]] std::vector<Token> tokenize();
 
@@ -84,7 +84,7 @@ private:
 
 class ScannerError : public std::runtime_error {
 public:
-    explicit ScannerError(const std::string &error) : std::runtime_error(error) {}
+    ScannerError(const std::string &error) : std::runtime_error(error) {}
 };
 
 class UnexpectedEndOfLine : public ScannerError {
@@ -100,11 +100,11 @@ public:
 
 class UnknownChar : public ScannerError {
 public:
-    explicit UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
+    UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
 };
 
 class NumberOutOfRange : public ScannerError {
 public:
-    explicit NumberOutOfRange(const std::string &number) : ScannerError(
-        "The number " + number + " exceeds the 64bit limitations.") {}
+    NumberOutOfRange(const std::string &number)
+        : ScannerError("The number " + number + " exceeds the 64bit limitations.") {}
 };

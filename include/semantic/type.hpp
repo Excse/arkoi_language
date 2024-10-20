@@ -27,7 +27,7 @@ private:
 
 class Floating {
 public:
-    explicit Floating(const Size size) : _size(size) {}
+    Floating(const Size size) : _size(size) {}
 
     bool operator==(const Floating &other) const;
 
