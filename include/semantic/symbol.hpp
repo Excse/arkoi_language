@@ -12,7 +12,7 @@ using Symbol = std::shared_ptr<SymbolType>;
 
 class FunctionSymbol {
 public:
-    explicit FunctionSymbol(std::string name) : _name(std::move(name)) {}
+    FunctionSymbol(std::string name) : _name(std::move(name)) {}
 
     void set_parameters(std::vector<Symbol> &&symbols) { _parameter_symbols = std::move(symbols); }
 
@@ -32,7 +32,7 @@ private:
 
 class ParameterSymbol {
 public:
-    explicit ParameterSymbol(std::string name) : _name(std::move(name)) {}
+    ParameterSymbol(std::string name) : _name(std::move(name)) {}
 
     void set_type(Type type) { _type = type; }
 
@@ -49,7 +49,7 @@ class TemporarySymbol {
 public:
     TemporarySymbol(std::string name, Type type) : _type(type), _name(std::move(name)) {}
 
-    explicit TemporarySymbol(std::string name) : _type(), _name(std::move(name)) {}
+    TemporarySymbol(std::string name) : _type(), _name(std::move(name)) {}
 
     [[nodiscard]] auto &type() const { return _type; }
 

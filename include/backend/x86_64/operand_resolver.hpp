@@ -52,15 +52,19 @@ private:
 
     [[nodiscard]] x86_64::Operand _resolve_temporary(const TemporarySymbol &symbol);
 
-    [[nodiscard]] x86_64::Operand _resolve_parameter(const ParameterSymbol &symbol);
+    [[nodiscard]] x86_64::Operand _resolve_parameter(const Symbol &symbol,
+                                                     size_t &int_index,
+                                                     size_t &sse_index);
 
-    [[nodiscard]] std::optional<Register> _resolve_parameter_register(const ParameterSymbol &symbol);
+    [[nodiscard]] static std::optional<Register> _resolve_parameter_register(const ParameterSymbol &symbol,
+                                                                      size_t &int_index,
+                                                                      size_t &sse_index);
 
 private:
     std::unordered_map<il::Constant, ConstantData> _constants{};
     std::unordered_map<Symbol, x86_64::Operand> _resolved{};
-    size_t _constant_index{}, _sse_index{}, _int_index{};
     int64_t _parameter_offset;
+    size_t _constant_index{};
     int64_t _local_size{};
 };
 

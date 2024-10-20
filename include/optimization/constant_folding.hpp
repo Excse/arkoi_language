@@ -2,7 +2,7 @@
 
 #include "optimization.hpp"
 
-class ConstantFolding : public IterativePass {
+class ConstantFolding : public Pass {
 public:
     bool new_cfg(CFG &) override { return false; }
 

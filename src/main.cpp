@@ -46,7 +46,7 @@ int main() {
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
     OptimizationManager optimization_manager;
-    optimization_manager.emplace_iterative<ConstantFolding>();
+    optimization_manager.emplace<ConstantFolding>();
     optimization_manager.optimize(il_generator.cfgs());
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;

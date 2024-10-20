@@ -101,7 +101,7 @@ private:
 
 class Return : public Node {
 public:
-    explicit Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
+    Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -124,7 +124,7 @@ public:
     using Then = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
 
 public:
-    explicit If(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&branch)
+    If(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&branch)
         : _condition(std::move(condition)), _branch(std::move(branch)), _then(std::move(then)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -145,7 +145,7 @@ private:
 
 class Call : public Node {
 public:
-    explicit Call(Token name, std::vector<std::unique_ptr<Node>> &&arguments)
+    Call(Token name, std::vector<std::unique_ptr<Node>> &&arguments)
         : _arguments(std::move(arguments)), _name(std::move(name)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -166,7 +166,7 @@ private:
 
 class Integer : public Node {
 public:
-    explicit Integer(Token value) : _value(std::move(value)) {}
+    Integer(Token value) : _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -178,7 +178,7 @@ private:
 
 class Floating : public Node {
 public:
-    explicit Floating(Token value) : _value(std::move(value)) {}
+    Floating(Token value) : _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -190,7 +190,7 @@ private:
 
 class Boolean : public Node {
 public:
-    explicit Boolean(bool value) : _value(value) {}
+    Boolean(bool value) : _value(value) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -202,7 +202,7 @@ private:
 
 class Identifier : public Node {
 public:
-    explicit Identifier(Token value) : _value(std::move(value)) {}
+    Identifier(Token value) : _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 

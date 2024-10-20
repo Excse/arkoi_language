@@ -9,7 +9,7 @@
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
+    Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
 
     [[nodiscard]] node::Program parse_program();
 
@@ -83,7 +83,7 @@ private:
 
 class ParserError : public std::runtime_error {
 public:
-    explicit ParserError(const std::string &error) : std::runtime_error(error) {}
+    ParserError(const std::string &error) : std::runtime_error(error) {}
 };
 
 class UnexpectedEndOfTokens : public ParserError {
