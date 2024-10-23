@@ -38,7 +38,7 @@ public:
 
     void jmp(const Symbol &destination);
 
-    void je(const Symbol &destination);
+    void jne(const Symbol &destination);
 
     void pop(const Operand &destination);
 

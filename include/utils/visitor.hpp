@@ -71,7 +71,7 @@ class Label;
 
 class Begin;
 
-class IfNot;
+class If;
 
 class Store;
 
@@ -101,7 +101,7 @@ public:
 
     virtual void visit(Call &instruction) = 0;
 
-    virtual void visit(IfNot &instruction) = 0;
+    virtual void visit(If &instruction) = 0;
 
     virtual void visit(Goto &instruction) = 0;
 

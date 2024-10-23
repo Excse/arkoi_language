@@ -33,7 +33,7 @@ public:
 
     void visit(il::Goto &instruction) override;
 
-    void visit(il::IfNot &instruction) override;
+    void visit(il::If &instruction) override;
 
     void visit(il::Store &constant) override;
 

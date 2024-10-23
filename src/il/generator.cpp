@@ -156,7 +156,7 @@ void Generator::visit(node::If &node) {
         node.condition()->accept(*this);
         auto condition = _current_operand;
 
-        _current_block->emplace_back<IfNot>(condition, branch_label);
+        _current_block->emplace_back<If>(condition, then_label);
 
         _current_block->set_next(then_block);
         _current_block->set_branch(branch_block);

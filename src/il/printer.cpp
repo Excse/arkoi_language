@@ -91,9 +91,9 @@ void Printer::visit(Goto &instruction) {
     _output << "GOTO " << instruction.label() << "\n";
 }
 
-void Printer::visit(IfNot &instruction) {
+void Printer::visit(If &instruction) {
     _output << "  ";
-    _output << "IF NOT " << instruction.condition() << " GOTO " << instruction.label() << "\n";
+    _output << "IF " << instruction.condition() << " GOTO " << instruction.label() << "\n";
 }
 
 void Printer::visit(Store &instruction) {

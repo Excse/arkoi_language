@@ -41,9 +41,9 @@ private:
     Symbol _label;
 };
 
-class IfNot : public Instruction {
+class If : public Instruction {
 public:
-    IfNot(Operand condition, Symbol label)
+    If(Operand condition, Symbol label)
         : _condition(std::move(condition)), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }

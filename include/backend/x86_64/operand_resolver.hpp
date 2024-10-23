@@ -36,7 +36,7 @@ private:
 
     void visit(il::Call &instruction) override;
 
-    void visit(il::IfNot &instruction) override;
+    void visit(il::If &instruction) override;
 
     void visit(il::Store &instruction) override;
 

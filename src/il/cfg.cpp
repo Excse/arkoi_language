@@ -7,8 +7,8 @@ void BasicBlock::depth_first_search(const std::function<void(BasicBlock &)> &cal
 
     callback(*this);
 
-    if (_next) _next->depth_first_search(callback, visited);
     if (_branch) _branch->depth_first_search(callback, visited);
+    if (_next) _next->depth_first_search(callback, visited);
 }
 
 void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {

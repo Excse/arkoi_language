@@ -69,8 +69,8 @@ void Assembly::jmp(const Symbol &destination) {
     _output << "\tjmp " << destination << "\n";
 }
 
-void Assembly::je(const Symbol &destination) {
-    _output << "\tje " << destination << "\n";
+void Assembly::jne(const Symbol &destination) {
+    _output << "\tjne " << destination << "\n";
 }
 
 void Assembly::pop(const Operand &destination) {

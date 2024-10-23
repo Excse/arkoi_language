@@ -173,7 +173,7 @@ void Generator::visit(il::Goto &instruction) {
     _assembly.jmp(instruction.label());
 }
 
-void Generator::visit(il::IfNot &instruction) {
+void Generator::visit(il::If &instruction) {
     _comment_instruction(instruction);
 
     const auto condition = std::visit(match{
@@ -183,7 +183,7 @@ void Generator::visit(il::IfNot &instruction) {
     }, _resolver.resolve_operand(instruction.condition()));
 
     _assembly.cmp(condition, Constant((uint32_t) 0));
-    _assembly.je(instruction.label());
+    _assembly.jne(instruction.label());
 }
 
 void Generator::visit(il::Store &instruction) {

@@ -64,7 +64,7 @@ void OperandResolver::visit(il::Call &instruction) {
     std::ignore = resolve_operand(instruction.result());
 }
 
-void OperandResolver::visit(il::IfNot &instruction) {
+void OperandResolver::visit(il::If &instruction) {
     std::ignore = resolve_operand(instruction.condition());
 }
 

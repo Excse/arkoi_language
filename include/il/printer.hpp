@@ -33,7 +33,7 @@ public:
 
     void visit(Goto &instruction) override;
 
-    void visit(IfNot &instruction) override;
+    void visit(If &instruction) override;
 
     void visit(Store &instruction) override;
 
