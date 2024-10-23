@@ -15,7 +15,7 @@ private:
     Generator() = default;
 
 public:
-    [[nodiscard]] static Generator generate(std::vector<CFG> &cfgs);
+    [[nodiscard]] static Generator generate(std::vector<Function> &functions);
 
     void visit(il::Label &instruction) override;
 
@@ -31,8 +31,6 @@ public:
 
     void visit(il::Call &instruction) override;
 
-    void visit(il::Argument &instruction) override;
-
     void visit(il::Goto &instruction) override;
 
     void visit(il::IfNot &instruction) override;
@@ -42,7 +40,7 @@ public:
     [[nodiscard]] auto &output() const { return _assembly.output(); }
 
 private:
-    void _new_cfg(CFG &cfg);
+    void _new_function(Function &function);
 
     void _preamble();
 

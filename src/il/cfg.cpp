@@ -11,7 +11,7 @@ void BasicBlock::depth_first_search(const std::function<void(BasicBlock &)> &cal
     if (_branch) _branch->depth_first_search(callback, visited);
 }
 
-void CFG::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
+void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
     std::unordered_set<BasicBlock *> visited;
 
     // We manually callback the end basic block as it should always be the last one being invoked.
@@ -22,7 +22,7 @@ void CFG::depth_first_search(const std::function<void(BasicBlock &)> &callback) 
     callback(*_end);
 }
 
-void CFG::linearize(const std::function<void(Instruction &)> &callback) {
+void Function::linearize(const std::function<void(Instruction &)> &callback) {
     auto visit_instructions = [&](BasicBlock &block) {
         for (auto &instruction: block.instructions()) {
             callback(*instruction);

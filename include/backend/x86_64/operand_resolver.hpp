@@ -15,7 +15,7 @@ class OperandResolver : il::Visitor {
 public:
     OperandResolver() : _parameter_offset(8) {}
 
-    [[nodiscard]] static OperandResolver resolve(CFG &cfg);
+    [[nodiscard]] static OperandResolver resolve(Function &function);
 
     [[nodiscard]] x86_64::Operand resolve_operand(const il::Operand &operand);
 
@@ -35,8 +35,6 @@ private:
     void visit(il::Cast &instruction) override;
 
     void visit(il::Call &instruction) override;
-
-    void visit(il::Argument &instruction) override;
 
     void visit(il::IfNot &instruction) override;
 

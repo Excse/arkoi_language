@@ -40,23 +40,23 @@ int main() {
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
     auto il_generator = il::Generator::generate(program);
-    auto il_printer = il::Printer::print(il_generator.cfgs());
+    auto il_printer = il::Printer::print(il_generator.functions());
     std::cout << il_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
     OptimizationManager optimization_manager;
     optimization_manager.emplace<ConstantFolding>();
-    optimization_manager.optimize(il_generator.cfgs());
+    optimization_manager.optimize(il_generator.functions());
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
-    auto optimized_printer = il::Printer::print(il_generator.cfgs());
+    auto optimized_printer = il::Printer::print(il_generator.functions());
     std::cout << optimized_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    auto gas_generator = x86_64::Generator::generate(il_generator.cfgs());
+    auto gas_generator = x86_64::Generator::generate(il_generator.functions());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();

@@ -63,8 +63,6 @@ public:
 
 namespace il {
 
-class Argument;
-
 class Binary;
 
 class Return;
@@ -102,8 +100,6 @@ public:
     virtual void visit(Cast &instruction) = 0;
 
     virtual void visit(Call &instruction) = 0;
-
-    virtual void visit(Argument &instruction) = 0;
 
     virtual void visit(IfNot &instruction) = 0;
 

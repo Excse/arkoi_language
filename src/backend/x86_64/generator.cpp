@@ -1,5 +1,7 @@
 #include "backend/x86_64/generator.hpp"
 
+#include <list>
+
 #include "il/instruction.hpp"
 #include "il/printer.hpp"
 #include "utils/utils.hpp"
@@ -13,15 +15,15 @@ static const Register RAX(Register::Base::A, Size::QWORD);
 
 static const type::Boolean BOOL_TYPE;
 
-Generator Generator::generate(std::vector<CFG> &cfgs) {
+Generator Generator::generate(std::vector<Function> &functions) {
     Generator generator;
 
     generator._preamble();
 
-    for (auto &cfg: cfgs) {
-        generator._new_cfg(cfg);
+    for (auto &function: functions) {
+        generator._new_function(function);
 
-        cfg.linearize([&](auto &instruction) {
+        function.linearize([&](auto &instruction) {
             instruction.accept(generator);
         });
     }
@@ -38,7 +40,7 @@ void Generator::visit(il::Label &instruction) {
 void Generator::visit(il::Begin &instruction) {
     _comment_instruction(instruction);
 
-    _assembly.label(instruction.label());
+    _assembly.label(instruction.function());
 
     _assembly.push(RBP);
     _assembly.mov(RBP, RSP);
@@ -134,28 +136,35 @@ void Generator::visit(il::Cast &instruction) {
 void Generator::visit(il::Call &instruction) {
     _comment_instruction(instruction);
 
+    std::list<Operand> stack_push;
+
+    const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
+    for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
+        const auto &parameter_symbol = function.parameter_symbols()[index];
+        const auto &parameter = std::get<ParameterSymbol>(*parameter_symbol);
+
+        const auto &argument = instruction.arguments()[index];
+
+        const auto expression = _resolver.resolve_operand(argument);
+        auto result = _resolver.resolve_operand(parameter_symbol);
+
+        if (std::holds_alternative<Register>(result)) {
+            _mov(parameter.type().value(), result, expression);
+        } else {
+            stack_push.push_front(expression);
+        }
+    }
+
+    for (const auto &item: stack_push) {
+        _assembly.push(item);
+    }
+
     const auto result = _resolver.resolve_operand(instruction.result());
 
     _assembly.call(instruction.symbol());
 
-    const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
     const auto return_reg = _returning_register(function.return_type().value());
     _mov(function.return_type().value(), result, return_reg);
-
-    _assembly.newline();
-}
-
-void Generator::visit(il::Argument &instruction) {
-    _comment_instruction(instruction);
-
-    const auto expression = _resolver.resolve_operand(instruction.expression());
-    const auto result = _resolver.resolve_operand(instruction.result());
-
-    if (std::holds_alternative<Register>(result)) {
-        _mov(instruction.type(), result, expression);
-    } else {
-        _assembly.push(expression);
-    }
 
     _assembly.newline();
 }
@@ -207,8 +216,8 @@ void Generator::visit(il::End &instruction) {
     _assembly.newline();
 }
 
-void Generator::_new_cfg(CFG &cfg) {
-    _resolver = OperandResolver::resolve(cfg);
+void Generator::_new_function(Function &function) {
+    _resolver = OperandResolver::resolve(function);
     for (const auto &[constant, data]: _resolver.constants()) {
         _constants.emplace(constant, data.name);
     }

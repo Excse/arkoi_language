@@ -3,7 +3,12 @@ fun main() @u64
     return test((true * ok(true)) + true, 10.5) * 2.01 - '*'
 
 fun ok(foo1 @s32) @bool
-    if foo1 return 21 + 21
+    if foo1
+        if foo1
+            return 42
+        else
+            return 1337
+        return 21 + 21
     return 0.0
 
 fun test(foo2 @s32, bar @f64) @f32

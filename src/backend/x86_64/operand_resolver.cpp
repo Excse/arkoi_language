@@ -17,10 +17,10 @@ static const Register RBP(Register::Base::BP, Size::QWORD);
 
 static const int64_t STACK_ALIGNMENT = 16;
 
-OperandResolver OperandResolver::resolve(CFG &cfg) {
+OperandResolver OperandResolver::resolve(Function &function) {
     OperandResolver resolver;
 
-    cfg.linearize([&](auto &instruction) {
+    function.linearize([&](auto &instruction) {
         instruction.accept(resolver);
     });
 
@@ -28,7 +28,7 @@ OperandResolver OperandResolver::resolve(CFG &cfg) {
 }
 
 void OperandResolver::visit(il::Begin &instruction) {
-    const auto &function = std::get<FunctionSymbol>(*instruction.label());
+    const auto &function = std::get<FunctionSymbol>(*instruction.function());
 
     // Every parameter symbol needs to be resolved before because of the x86_64 calling convention quirks.
 
@@ -50,12 +50,6 @@ void OperandResolver::visit(il::Binary &instruction) {
 
 void OperandResolver::visit(il::Cast &instruction) {
     std::ignore = resolve_operand(instruction.result());
-    std::ignore = resolve_operand(instruction.expression());
-}
-
-void OperandResolver::visit(il::Argument &instruction) {
-    // Do not resolve the result operand yet. This will be done in the call instruction because of the
-    // x86_64 calling convention quirks.
     std::ignore = resolve_operand(instruction.expression());
 }
 

@@ -13,7 +13,7 @@ private:
     Printer() = default;
 
 public:
-    [[nodiscard]] static Printer print(std::vector<CFG> &cfgs);
+    [[nodiscard]] static Printer print(std::vector<Function> &functions);
 
     [[nodiscard]] static Printer print(Instruction &instruction);
 
@@ -30,8 +30,6 @@ public:
     void visit(End &node) override;
 
     void visit(Call &instruction) override;
-
-    void visit(Argument &instruction) override;
 
     void visit(Goto &instruction) override;
 

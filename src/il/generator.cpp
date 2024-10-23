@@ -28,7 +28,7 @@ void Generator::visit(node::Function &node) {
 
     // Creates a new basic block that will get populated with instructions
     _current_block = std::make_shared<BasicBlock>();
-    _cfgs.emplace_back(_current_block, _function_end_block);
+    _functions.emplace_back(_current_block, _function_end_block);
     _current_block->emplace_back<Begin>(node.symbol());
 
     node.block()->accept(*this);
@@ -128,72 +128,64 @@ void Generator::visit(node::Cast &node) {
 void Generator::visit(node::Call &node) {
     const auto &function = std::get<FunctionSymbol>(*node.symbol());
 
-    for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
-        const auto &symbol = function.parameter_symbols()[index];
-        const auto &parameter = std::get<ParameterSymbol>(*symbol);
-
-        const auto &argument = node.arguments()[index];
+    std::vector<Operand> arguments;
+    for (const auto &argument: node.arguments()) {
         argument->accept(*this);
         auto expression = _current_operand;
 
-        _current_block->emplace_back<Argument>(symbol, std::move(expression), parameter.type().value());
+        arguments.push_back(std::move(expression));
     }
 
     auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
-    _current_block->emplace_back<Call>(result, node.symbol());
+    _current_block->emplace_back<Call>(result, node.symbol(), std::move(arguments));
 }
 
 void Generator::visit(node::If &node) {
-    // At first the condition will be evaluated and then an "if not" instruction is inserted into the current basic block
-    node.condition()->accept(*this);
-    auto condition = _current_operand;
-
-    // The basic blocks and labels that are necessary for an if statement
-    auto after_label = _make_label_symbol();
-    auto after_block = std::make_shared<BasicBlock>();
-
-    auto then_label = _make_label_symbol();
     auto then_block = std::make_shared<BasicBlock>();
-    then_block->set_next(after_block);
-    _current_block->set_next(then_block);
+    auto then_label = _make_label_symbol();
 
-    std::shared_ptr<BasicBlock> branch_block;
-    Symbol branch_label;
-    if (node.branch()) {
-        branch_label = _make_label_symbol();
-        branch_block = std::make_shared<BasicBlock>();
+    auto branch_block = std::make_shared<BasicBlock>();
+    auto branch_label = _make_label_symbol();
 
+    auto after_block = std::make_shared<BasicBlock>();
+    auto after_label = _make_label_symbol();
+
+    { // Entrance block
+        node.condition()->accept(*this);
+        auto condition = _current_operand;
+
+        _current_block->emplace_back<IfNot>(condition, branch_label);
+
+        _current_block->set_next(then_block);
         _current_block->set_branch(branch_block);
-        branch_block->set_next(after_block);
-    } else {
-        branch_label = after_label;
-        branch_block = after_block;
-
-        _current_block->set_branch(after_block);
     }
 
-    _current_block->emplace_back<IfNot>(condition, branch_label);
+    { // Then block
+        _current_block = then_block;
+        then_block->emplace_back<Label>(then_label);
+        std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-    // Generate the instructions for the then basic block
-    _current_block = then_block;
-    then_block->emplace_back<Label>(then_label);
+        _current_block->emplace_back<Goto>(after_label);
+        _current_block->set_next(after_block);
+    }
 
-    std::visit([&](const auto &value) { value->accept(*this); }, node.then());
-
-    if (node.branch()) {
-        then_block->emplace_back<Goto>(after_label);
-
-        // Generate the instructions for the branch basic block
+    { // Branch block
         _current_block = branch_block;
         branch_block->emplace_back<Label>(branch_label);
+        if (node.branch()) {
+            std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
+        }
 
-        std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
+        _current_block->emplace_back<Goto>(after_label);
+        _current_block->set_next(after_block);
     }
 
-    _current_block = after_block;
-    after_block->emplace_back<Label>(after_label);
+    { // After block
+        _current_block = after_block;
+        after_block->emplace_back<Label>(after_label);
+    }
 }
 
 Operand Generator::_make_temporary(const Type &type) {

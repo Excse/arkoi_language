@@ -8,11 +8,11 @@
 
 namespace il {
 
-Printer Printer::print(std::vector<CFG> &cfgs) {
+Printer Printer::print(std::vector<Function> &functions) {
     Printer printer;
 
-    for (auto &cfg: cfgs) {
-        cfg.linearize([&](auto &instruction) {
+    for (auto &function: functions) {
+        function.linearize([&](auto &instruction) {
             instruction.accept(printer);
         });
     }
@@ -33,20 +33,36 @@ void Printer::visit(Label &instruction) {
 }
 
 void Printer::visit(Begin &instruction) {
-    _output << "BEGIN " << instruction.label() << "\n";
+    auto &function = std::get<FunctionSymbol>(*instruction.function());
+    _output << "BEGIN " << function.name() << "(";
+
+    for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
+        auto &parameter = std::get<ParameterSymbol>(*function.parameter_symbols()[index]);
+        _output << parameter.name() << " @" << parameter.type().value();
+
+        if (index != function.parameter_symbols().size() - 1) {
+            _output << ", ";
+        }
+    }
+
+    _output << ") @" << function.return_type().value() << "\n";
 }
 
 void Printer::visit(Return &instruction) {
+    _output << "  ";
     _output << "RETURN " << instruction.value() << "\n";
 }
 
 void Printer::visit(Binary &instruction) {
-    _output << instruction.result() << " = " << to_string(instruction.op()) << " " << instruction.left() << ", "
-            << instruction.right() << "\n";
+    _output << "  ";
+    _output << instruction.result() << " = " << to_string(instruction.op()) << " @"
+            << instruction.type() << " "
+            << instruction.left() << ", " << instruction.right() << "\n";
 }
 
 void Printer::visit(Cast &instruction) {
-    _output << instruction.result() << " = CAST " << instruction.expression() << " FROM @" << instruction.from()
+    _output << "  ";
+    _output << instruction.result() << " = CAST " << instruction.expression() << " @" << instruction.from()
             << " TO @" << instruction.to() << "\n";
 }
 
@@ -55,22 +71,33 @@ void Printer::visit(End &) {
 }
 
 void Printer::visit(Call &instruction) {
-    _output << instruction.result() << " = CALL " << instruction.symbol() << "\n";
-}
+    _output << "  ";
+    _output << instruction.result() << " = CALL " << instruction.symbol() << "(";
 
-void Printer::visit(Argument &instruction) {
-    _output << "ARG " << instruction.result() << " = " << instruction.expression() << "\n";
+    for (size_t index = 0; index < instruction.arguments().size(); index++) {
+        auto &argument = instruction.arguments()[index];
+        _output << argument;
+
+        if (index != instruction.arguments().size() - 1) {
+            _output << ", ";
+        }
+    }
+
+    _output << ")\n";
 }
 
 void Printer::visit(Goto &instruction) {
+    _output << "  ";
     _output << "GOTO " << instruction.label() << "\n";
 }
 
 void Printer::visit(IfNot &instruction) {
+    _output << "  ";
     _output << "IF NOT " << instruction.condition() << " GOTO " << instruction.label() << "\n";
 }
 
 void Printer::visit(Store &instruction) {
+    _output << "  ";
     _output << instruction.result() << " = " << instruction.value() << "\n";
 }
 

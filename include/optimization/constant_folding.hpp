@@ -4,7 +4,7 @@
 
 class ConstantFolding : public Pass {
 public:
-    bool new_cfg(CFG &) override { return false; }
+    bool new_function(Function &) override { return false; }
 
     bool new_block(BasicBlock &block) override;
 

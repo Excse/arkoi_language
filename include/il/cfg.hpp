@@ -29,9 +29,9 @@ private:
     std::shared_ptr<BasicBlock> _next{}, _branch{};
 };
 
-class CFG {
+class Function {
 public:
-    CFG(std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
+    Function(std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
         : _start(std::move(start)), _end(std::move(end)) {}
 
     void depth_first_search(const std::function<void(BasicBlock &)> &callback);

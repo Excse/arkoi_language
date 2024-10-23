@@ -59,16 +59,19 @@ private:
 
 class Call : public Instruction {
 public:
-    Call(Operand result, Symbol symbol)
-        : _result(std::move(result)), _symbol(std::move(symbol)) {}
+    Call(Operand result, Symbol symbol, std::vector<Operand> &&arguments)
+        : _arguments(std::move(arguments)), _result(std::move(result)), _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &arguments() const { return _arguments; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
+    std::vector<Operand> _arguments;
     Operand _result;
     Symbol _symbol;
 };
@@ -124,14 +127,14 @@ private:
 
 class Begin : public Instruction {
 public:
-    Begin(Symbol label) : _label(std::move(label)) {}
+    Begin(Symbol function) : _function(std::move(function)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &label() const { return _label; }
+    [[nodiscard]] auto &function() const { return _function; }
 
 private:
-    Symbol _label;
+    Symbol _function;
 };
 
 class End : public Instruction {
@@ -157,24 +160,6 @@ public:
 private:
     Operand _result, _expression;
     Type _from, _to;
-};
-
-class Argument : public Instruction {
-public:
-    Argument(Operand result, Operand expression, Type type)
-        : _expression(std::move(expression)), _result(std::move(result)), _type(type) {}
-
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &expression() const { return _expression; };
-
-    [[nodiscard]] auto &result() const { return _result; };
-
-    [[nodiscard]] auto &type() const { return _type; }
-
-private:
-    Operand _expression, _result;
-    Type _type;
 };
 
 class Store : public Instruction {
