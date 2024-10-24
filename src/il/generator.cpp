@@ -126,7 +126,7 @@ void Generator::visit(node::Cast &node) {
 }
 
 void Generator::visit(node::Call &node) {
-    const auto &function = std::get<FunctionSymbol>(*node.symbol());
+    const auto &function = std::get<symbol::Function>(*node.symbol());
 
     std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {
@@ -190,12 +190,12 @@ void Generator::visit(node::If &node) {
 
 Operand Generator::_make_temporary(const Type &type) {
     auto name = "$tmp" + to_string(_temp_index++);
-    return std::make_shared<SymbolType>(TemporarySymbol(name, type));
+    return std::make_shared<SymbolType>(symbol::Temporary(name, type));
 }
 
 Symbol Generator::_make_label_symbol() {
     auto name = "L" + to_string(_label_index++);
-    return std::make_shared<SymbolType>(TemporarySymbol(name));
+    return std::make_shared<SymbolType>(symbol::Temporary(name));
 }
 
 }

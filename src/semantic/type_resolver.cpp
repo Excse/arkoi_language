@@ -33,7 +33,7 @@ void TypeResolver::visit_as_prototype(node::Function &node) {
         item.accept(*this);
     }
 
-    auto &function = std::get<FunctionSymbol>(*node.symbol());
+    auto &function = std::get<symbol::Function>(*node.symbol());
     function.set_return_type(node.type());
 }
 
@@ -50,7 +50,7 @@ void TypeResolver::visit(node::Block &node) {
 }
 
 void TypeResolver::visit(node::Parameter &node) {
-    auto &parameter = std::get<ParameterSymbol>(*node.symbol());
+    auto &parameter = std::get<symbol::Parameter>(*node.symbol());
     parameter.set_type(node.type());
 }
 
@@ -99,7 +99,7 @@ void TypeResolver::visit(node::Return &node) {
 }
 
 void TypeResolver::visit(node::Identifier &node) {
-    const auto &parameter = std::get<ParameterSymbol>(*node.symbol());
+    const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
     _current_type = parameter.type();
 }
 
@@ -143,14 +143,14 @@ void TypeResolver::visit(node::Cast &node) {
 }
 
 void TypeResolver::visit(node::Call &node) {
-    auto function = std::get<FunctionSymbol>(*node.symbol());
+    auto function = std::get<symbol::Function>(*node.symbol());
 
     if (function.parameter_symbols().size() != node.arguments().size()) {
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");
     }
 
     for (size_t index = 0; index < node.arguments().size(); index++) {
-        const auto &parameter = std::get<ParameterSymbol>(*function.parameter_symbols()[index]);
+        const auto &parameter = std::get<symbol::Parameter>(*function.parameter_symbols()[index]);
 
         auto &argument = node.arguments()[index];
         argument->accept(*this);

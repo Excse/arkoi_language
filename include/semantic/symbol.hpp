@@ -10,9 +10,11 @@ struct SymbolType;
 
 using Symbol = std::shared_ptr<SymbolType>;
 
-class FunctionSymbol {
+namespace symbol {
+
+class Function {
 public:
-    FunctionSymbol(std::string name) : _name(std::move(name)) {}
+    Function(std::string name) : _name(std::move(name)) {}
 
     void set_parameters(std::vector<Symbol> &&symbols) { _parameter_symbols = std::move(symbols); }
 
@@ -30,9 +32,9 @@ private:
     std::string _name;
 };
 
-class ParameterSymbol {
+class Parameter {
 public:
-    ParameterSymbol(std::string name) : _name(std::move(name)) {}
+    Parameter(std::string name) : _name(std::move(name)) {}
 
     void set_type(Type type) { _type = type; }
 
@@ -45,11 +47,11 @@ private:
     std::string _name;
 };
 
-class TemporarySymbol {
+class Temporary {
 public:
-    TemporarySymbol(std::string name, Type type) : _type(type), _name(std::move(name)) {}
+    Temporary(std::string name, Type type) : _type(type), _name(std::move(name)) {}
 
-    TemporarySymbol(std::string name) : _type(), _name(std::move(name)) {}
+    Temporary(std::string name) : _type(), _name(std::move(name)) {}
 
     [[nodiscard]] auto &type() const { return _type; }
 
@@ -60,7 +62,9 @@ private:
     std::string _name;
 };
 
-struct SymbolType : std::variant<FunctionSymbol, ParameterSymbol, TemporarySymbol> {
+}
+
+struct SymbolType : std::variant<symbol::Function, symbol::Parameter, symbol::Temporary> {
     using variant::variant;
 };
 

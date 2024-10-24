@@ -33,11 +33,11 @@ void Printer::visit(Label &instruction) {
 }
 
 void Printer::visit(Begin &instruction) {
-    auto &function = std::get<FunctionSymbol>(*instruction.function());
+    auto &function = std::get<symbol::Function>(*instruction.function());
     _output << "BEGIN " << function.name() << "(";
 
     for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
-        auto &parameter = std::get<ParameterSymbol>(*function.parameter_symbols()[index]);
+        auto &parameter = std::get<symbol::Parameter>(*function.parameter_symbols()[index]);
         _output << parameter.name() << " @" << parameter.type().value();
 
         if (index != function.parameter_symbols().size() - 1) {

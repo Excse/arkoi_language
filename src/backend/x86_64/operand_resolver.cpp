@@ -17,6 +17,8 @@ static const Register RBP(Register::Base::BP, Size::QWORD);
 
 static const int64_t STACK_ALIGNMENT = 16;
 
+static size_t CONSTANT_INDEX = 0;
+
 OperandResolver OperandResolver::resolve(Function &function) {
     OperandResolver resolver;
 
@@ -28,9 +30,7 @@ OperandResolver OperandResolver::resolve(Function &function) {
 }
 
 void OperandResolver::visit(il::Begin &instruction) {
-    const auto &function = std::get<FunctionSymbol>(*instruction.function());
-
-    // Every parameter symbol needs to be resolved before because of the x86_64 calling convention quirks.
+    const auto &function = std::get<symbol::Function>(*instruction.function());
 
     size_t int_index = 0, sse_index = 0;
     for (auto &symbol: function.parameter_symbols()) {
@@ -54,7 +54,7 @@ void OperandResolver::visit(il::Cast &instruction) {
 }
 
 void OperandResolver::visit(il::Call &instruction) {
-    const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
+    const auto &function = std::get<symbol::Function>(*instruction.symbol());
 
     size_t int_index = 0, sse_index = 0;
     for (auto &symbol: function.parameter_symbols()) {
@@ -91,7 +91,7 @@ x86_64::Operand OperandResolver::_resolve_constant(const il::Constant &constant)
     auto result = _constants.find(constant);
     if (result != _constants.end()) return result->second.operand;
 
-    auto data_name = ".LC" + std::to_string(_constant_index++);
+    auto data_name = ".LC" + std::to_string(CONSTANT_INDEX++);
     auto resolved = Memory(constant.size(), Memory::Address(data_name));
 
     _constants.emplace(constant, ConstantData{resolved, data_name});
@@ -103,7 +103,7 @@ x86_64::Operand OperandResolver::_resolve_symbol(const Symbol &symbol) {
     if (result != _resolved.end()) return result->second;
 
     x86_64::Operand resolved = std::visit(match{
-        [&](const TemporarySymbol &symbol) -> x86_64::Operand { return _resolve_temporary(symbol); },
+        [&](const symbol::Temporary &symbol) -> x86_64::Operand { return _resolve_temporary(symbol); },
         // ParameterSymbols get resolved directly in the call and begin instruction.
         [](const auto &) -> x86_64::Operand { std::unreachable(); }
     }, *symbol);
@@ -112,7 +112,7 @@ x86_64::Operand OperandResolver::_resolve_symbol(const Symbol &symbol) {
     return resolved;
 }
 
-x86_64::Operand OperandResolver::_resolve_temporary(const TemporarySymbol &symbol) {
+x86_64::Operand OperandResolver::_resolve_temporary(const symbol::Temporary &symbol) {
     auto size = symbol.type().value().size();
 
     _local_size += (int64_t) size_to_bytes(size);
@@ -127,7 +127,7 @@ x86_64::Operand OperandResolver::_resolve_parameter(const Symbol &symbol,
     auto result = _resolved.find(symbol);
     if (result != _resolved.end()) return result->second;
 
-    const auto &parameter = std::get<ParameterSymbol>(*symbol);
+    const auto &parameter = std::get<symbol::Parameter>(*symbol);
 
     auto resolved_register = _resolve_parameter_register(parameter, int_index, sse_index);
     if (resolved_register) {
@@ -144,7 +144,7 @@ x86_64::Operand OperandResolver::_resolve_parameter(const Symbol &symbol,
     return resolved;
 }
 
-std::optional<Register> OperandResolver::_resolve_parameter_register(const ParameterSymbol &symbol,
+std::optional<Register> OperandResolver::_resolve_parameter_register(const symbol::Parameter &symbol,
                                                                      size_t &int_index,
                                                                      size_t &sse_index) {
     return std::visit(match{

@@ -5,9 +5,9 @@ fun main() @u64
 fun ok(foo1 @s32) @bool
     if foo1
         if foo1
-            return 42
+            return test(2, 21)
         else
-            return 1337
+            return test(7, 191)
         return 21 + 21
     return 0.0
 

@@ -28,7 +28,7 @@ void NameResolver::visit(node::Program &node) {
 }
 
 void NameResolver::visit_as_prototype(node::Function &node) {
-    auto symbol = _check_non_existence<FunctionSymbol>(node.name());
+    auto symbol = _check_non_existence<symbol::Function>(node.name());
     node.set_symbol(symbol);
 }
 
@@ -42,7 +42,7 @@ void NameResolver::visit(node::Function &node) {
         parameters.push_back(item.symbol());
     }
 
-    auto &function = std::get<FunctionSymbol>(*node.symbol());
+    auto &function = std::get<symbol::Function>(*node.symbol());
     function.set_parameters(std::move(parameters));
 
     node.block()->accept(*this);
@@ -50,7 +50,7 @@ void NameResolver::visit(node::Function &node) {
 }
 
 void NameResolver::visit(node::Parameter &node) {
-    auto parameter_symbol = _check_non_existence<ParameterSymbol>(node.name());
+    auto parameter_symbol = _check_non_existence<symbol::Parameter>(node.name());
     node.set_symbol(parameter_symbol);
 }
 
@@ -63,7 +63,7 @@ void NameResolver::visit(node::Block &node) {
 }
 
 void NameResolver::visit(node::Identifier &node) {
-    auto symbol = _check_existence<ParameterSymbol>(node.value());
+    auto symbol = _check_existence<symbol::Parameter>(node.value());
     node.set_symbol(symbol);
 }
 
@@ -89,7 +89,7 @@ void NameResolver::visit(node::If &node) {
 }
 
 void NameResolver::visit(node::Call &node) {
-    auto symbol = _check_existence<FunctionSymbol>(node.name());
+    auto symbol = _check_existence<symbol::Function>(node.name());
     node.set_symbol(symbol);
 
     for (const auto &item: node.arguments()) {

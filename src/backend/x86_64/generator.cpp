@@ -138,10 +138,10 @@ void Generator::visit(il::Call &instruction) {
 
     std::list<Operand> stack_push;
 
-    const auto &function = std::get<FunctionSymbol>(*instruction.symbol());
+    const auto &function = std::get<symbol::Function>(*instruction.symbol());
     for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
         const auto &parameter_symbol = function.parameter_symbols()[index];
-        const auto &parameter = std::get<ParameterSymbol>(*parameter_symbol);
+        const auto &parameter = std::get<symbol::Parameter>(*parameter_symbol);
 
         const auto &argument = instruction.arguments()[index];
 
