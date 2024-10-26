@@ -1,5 +1,10 @@
 #include "optimization/dce.hpp"
 
+bool DeadCodeElimination::new_function(Function &) {
+    _used.clear();
+    return false;
+}
+
 bool DeadCodeElimination::new_block(BasicBlock &block) {
     bool changed = false;
 
@@ -14,18 +19,18 @@ bool DeadCodeElimination::_eliminate_dead_stores(BasicBlock &block) {
     UsedVariables used;
     for (auto &instruction: block.instructions()) {
         if (auto *_binary = dynamic_cast<il::Binary *>(instruction.get())) {
-            _mark_as_used(used, _binary->left());
-            _mark_as_used(used, _binary->right());
+            _mark_as_used(_binary->left());
+            _mark_as_used(_binary->right());
         } else if (auto *_return = dynamic_cast<il::Return *>(instruction.get())) {
-            _mark_as_used(used, _return->value());
+            _mark_as_used(_return->value());
         } else if (auto *_cast = dynamic_cast<il::Cast *>(instruction.get())) {
-            _mark_as_used(used, _cast->expression());
+            _mark_as_used(_cast->expression());
         } else if (auto *_call = dynamic_cast<il::Call *>(instruction.get())) {
             for (const auto &argument: _call->arguments()) {
-                _mark_as_used(used, argument);
+                _mark_as_used(argument);
             }
         } else if (auto *_if = dynamic_cast<il::If *>(instruction.get())) {
-            _mark_as_used(used, _if->condition());
+            _mark_as_used(_if->condition());
         }
     }
 
@@ -35,7 +40,7 @@ bool DeadCodeElimination::_eliminate_dead_stores(BasicBlock &block) {
         auto *store = dynamic_cast<il::Store *>(instruction.get());
         if (store == nullptr) continue;
 
-        if (used.contains(&store->result())) continue;
+        if (_used.contains(&store->result())) continue;
 
         block.instructions().erase(iterator);
         iterator--;
@@ -46,8 +51,8 @@ bool DeadCodeElimination::_eliminate_dead_stores(BasicBlock &block) {
     return changed;
 }
 
-void DeadCodeElimination::_mark_as_used(UsedVariables &used, const il::Operand &operand) {
+void DeadCodeElimination::_mark_as_used(const il::Operand &operand) {
     const auto *variable = std::get_if<il::Variable>(&operand);
     if (variable == nullptr) return;
-    used.insert(variable);
+    _used.insert(variable);
 }
