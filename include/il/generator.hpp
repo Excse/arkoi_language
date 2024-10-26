@@ -43,7 +43,7 @@ public:
     [[nodiscard]] auto &functions() { return _functions; }
 
 private:
-    Symbol _make_temporary(const Type &type);
+    il::Variable _make_temporary(const Type &type);
 
     Symbol _make_label_symbol();
 
@@ -52,8 +52,8 @@ private:
     std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
     std::vector<Function> _functions{};
-    Operand _current_operand{nullptr};
     Symbol _function_end_symbol;
+    Operand _current_operand{};
 };
 
 }

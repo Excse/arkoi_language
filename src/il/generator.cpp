@@ -116,6 +116,7 @@ void Generator::visit(node::Binary &node) {
 }
 
 void Generator::visit(node::Cast &node) {
+    // This will set _current_operand
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
@@ -130,6 +131,7 @@ void Generator::visit(node::Call &node) {
 
     std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {
+        // This will set _current_operand
         argument->accept(*this);
         auto expression = _current_operand;
 
@@ -153,6 +155,7 @@ void Generator::visit(node::If &node) {
     auto after_label = _make_label_symbol();
 
     { // Entrance block
+        // This will set _current_operand
         node.condition()->accept(*this);
         auto condition = _current_operand;
 
@@ -188,9 +191,9 @@ void Generator::visit(node::If &node) {
     }
 }
 
-Symbol Generator::_make_temporary(const Type &type) {
-    auto name = "$tmp" + to_string(_temp_index++);
-    return std::make_shared<SymbolType>(symbol::Temporary(name, type));
+il::Variable Generator::_make_temporary(const Type &type) {
+    auto temporary = std::make_shared<SymbolType>(symbol::Temporary("$", type));
+    return { temporary, _temp_index++ };
 }
 
 Symbol Generator::_make_label_symbol() {

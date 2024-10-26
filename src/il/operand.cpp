@@ -4,6 +4,14 @@
 
 namespace il {
 
+bool Variable::operator==(const Variable &rhs) const {
+    return _symbol == rhs._symbol && _version == rhs._version;
+}
+
+bool Variable::operator!=(const Variable &rhs) const {
+    return !(rhs == *this);
+}
+
 Size Constant::size() const {
     return std::visit(match{
         [](const double &) { return Size::QWORD; },
@@ -19,6 +27,13 @@ Size Constant::size() const {
 }
 
 namespace std {
+
+size_t hash<il::Variable>::operator()(const il::Variable &variable) const {
+    size_t linkHash = std::hash<std::shared_ptr<SymbolType>>{}(variable.symbol());
+    size_t generationHash = std::hash<size_t>{}(variable.version());
+    return linkHash ^ (generationHash << 1);
+}
+
 
 size_t hash<il::Constant>::operator()(const il::Constant &constant) const {
     return std::visit([](const auto &value) -> size_t {
@@ -39,6 +54,11 @@ std::ostream &operator<<(std::ostream &os, const il::Constant &constant) {
         [&os](const bool &value) { os << (value ? "1" : "0"); },
         [&os](const auto &value) { os << value; },
     }, constant);
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const il::Variable &variable) {
+    os << variable.symbol() << variable.version();
     return os;
 }
 

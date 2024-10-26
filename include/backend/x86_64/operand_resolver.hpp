@@ -44,13 +44,13 @@ private:
 
     void visit(il::End &instruction) override;
 
-    [[nodiscard]] x86_64::Operand _resolve_symbol(const Symbol &symbol);
+    [[nodiscard]] x86_64::Operand _resolve_variable(const il::Variable &variable);
 
     [[nodiscard]] x86_64::Operand _resolve_constant(const il::Constant &constant);
 
     [[nodiscard]] x86_64::Operand _resolve_temporary(const symbol::Temporary &symbol);
 
-    [[nodiscard]] x86_64::Operand _resolve_parameter(const Symbol &symbol,
+    [[nodiscard]] x86_64::Operand _resolve_parameter(const il::Variable &variable,
                                                      size_t &int_index,
                                                      size_t &sse_index);
 
@@ -59,8 +59,8 @@ private:
                                                                              size_t &sse_index);
 
 private:
+    std::unordered_map<il::Variable, x86_64::Operand> _resolved{};
     std::unordered_map<il::Constant, ConstantData> _constants{};
-    std::unordered_map<Symbol, x86_64::Operand> _resolved{};
     int64_t _parameter_offset;
     int64_t _local_size{};
 };

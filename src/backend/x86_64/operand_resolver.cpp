@@ -80,7 +80,7 @@ void OperandResolver::visit(il::End &) {
 
 x86_64::Operand OperandResolver::resolve_operand(const il::Operand &operand) {
     return std::visit(match{
-        [&](const Symbol &value) -> x86_64::Operand { return _resolve_symbol(value); },
+        [&](const il::Variable &value) -> x86_64::Operand { return _resolve_variable(value); },
         [&](const Constant &value) -> x86_64::Operand { return _resolve_constant(value); },
     }, operand);
 }
@@ -98,17 +98,17 @@ x86_64::Operand OperandResolver::_resolve_constant(const il::Constant &constant)
     return resolved;
 }
 
-x86_64::Operand OperandResolver::_resolve_symbol(const Symbol &symbol) {
-    auto result = _resolved.find(symbol);
+x86_64::Operand OperandResolver::_resolve_variable(const il::Variable &variable) {
+    auto result = _resolved.find(variable);
     if (result != _resolved.end()) return result->second;
 
     x86_64::Operand resolved = std::visit(match{
         [&](const symbol::Temporary &symbol) -> x86_64::Operand { return _resolve_temporary(symbol); },
         // ParameterSymbols get resolved directly in the call and begin instruction.
         [](const auto &) -> x86_64::Operand { std::unreachable(); }
-    }, *symbol);
+    }, *variable.symbol());
 
-    _resolved.emplace(symbol, resolved);
+    _resolved.emplace(variable, resolved);
     return resolved;
 }
 
@@ -121,17 +121,17 @@ x86_64::Operand OperandResolver::_resolve_temporary(const symbol::Temporary &sym
     return resolved;
 }
 
-x86_64::Operand OperandResolver::_resolve_parameter(const Symbol &symbol,
+x86_64::Operand OperandResolver::_resolve_parameter(const il::Variable &variable,
                                                     size_t &int_index,
                                                     size_t &sse_index) {
-    auto result = _resolved.find(symbol);
+    auto result = _resolved.find(variable);
     if (result != _resolved.end()) return result->second;
 
-    const auto &parameter = std::get<symbol::Parameter>(*symbol);
+    const auto &parameter = std::get<symbol::Parameter>(*variable.symbol());
 
     auto resolved_register = _resolve_parameter_register(parameter, int_index, sse_index);
     if (resolved_register) {
-        _resolved.emplace(symbol, *resolved_register);
+        _resolved.emplace(variable, *resolved_register);
         return *resolved_register;
     }
 
@@ -140,7 +140,7 @@ x86_64::Operand OperandResolver::_resolve_parameter(const Symbol &symbol,
     _parameter_offset += (int64_t) size_to_bytes(size);
     auto resolved = Memory(size, RBP, _parameter_offset);
 
-    _resolved.emplace(symbol, resolved);
+    _resolved.emplace(variable, resolved);
     return resolved;
 }
 

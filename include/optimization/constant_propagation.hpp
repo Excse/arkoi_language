@@ -4,7 +4,7 @@
 
 class ConstantPropagation : public Pass {
 public:
-    using Constants = std::unordered_map<Symbol, il::Constant>;
+    using Constants = std::unordered_map<il::Variable, il::Constant>;
 
 public:
     bool new_function(Function &) override { return false; }

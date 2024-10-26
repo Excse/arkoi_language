@@ -3,7 +3,6 @@
 #include <utility>
 #include <memory>
 
-#include "semantic/symbol_table.hpp"
 #include "utils/visitor.hpp"
 #include "frontend/ast.hpp"
 #include "il/operand.hpp"
@@ -61,7 +60,7 @@ private:
 
 class Call : public Instruction {
 public:
-    Call(Symbol result, Symbol function, std::vector<Operand> &&arguments)
+    Call(il::Variable result, Symbol function, std::vector<Operand> &&arguments)
         : _arguments(std::move(arguments)), _result(std::move(result)), _function(std::move(function)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -74,7 +73,8 @@ public:
 
 private:
     std::vector<Operand> _arguments;
-    Symbol _result, _function;
+    il::Variable _result;
+    Symbol _function;
 };
 
 class Return : public Instruction {
@@ -104,7 +104,7 @@ public:
     };
 
 public:
-    Binary(Symbol result, Operand left, Operator op, Operand right, Type type)
+    Binary(il::Variable result, Operand left, Operator op, Operand right, Type type)
         : _left(std::move(left)), _right(std::move(right)), _result(std::move(result)), _op(op),
           _type(type) {}
 
@@ -128,7 +128,7 @@ public:
 
 private:
     Operand _left, _right;
-    Symbol _result;
+    il::Variable _result;
     Operator _op;
     Type _type;
 };
@@ -152,8 +152,8 @@ public:
 
 class Cast : public Instruction {
 public:
-    Cast(Symbol result, Operand expression, Type from, Type to)
-        : _expression(std::move(expression)), _from(from), _to(to), _result(std::move(result)) {}
+    Cast(il::Variable result, Operand expression, Type from, Type to)
+        : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -168,14 +168,14 @@ public:
     [[nodiscard]] auto &to() const { return _to; };
 
 private:
+    il::Variable _result;
     Operand _expression;
     Type _from, _to;
-    Symbol _result;
 };
 
 class Store : public Instruction {
 public:
-    Store(Symbol result, Operand value, Type type)
+    Store(il::Variable result, Operand value, Type type)
         : _result(std::move(result)), _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -187,7 +187,7 @@ public:
     [[nodiscard]] auto &type() const { return _type; };
 
 private:
-    Symbol _result;
+    il::Variable _result;
     Operand _value;
     Type _type;
 };
