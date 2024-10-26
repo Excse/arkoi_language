@@ -43,7 +43,7 @@ public:
     [[nodiscard]] auto &functions() { return _functions; }
 
 private:
-    Operand _make_temporary(const Type &type);
+    Symbol _make_temporary(const Type &type);
 
     Symbol _make_label_symbol();
 

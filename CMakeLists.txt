@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME}_lib
         src/il/printer.cpp
         src/il/operand.cpp
         src/il/cfg.cpp
+        src/optimization/constant_propagation.cpp
         src/optimization/constant_folding.cpp
         src/optimization/optimization.cpp
         src/backend/x86_64/operand_resolver.cpp

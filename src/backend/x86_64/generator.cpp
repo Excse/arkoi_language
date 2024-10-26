@@ -80,15 +80,7 @@ void Generator::visit(il::Binary &instruction) {
 
     const auto left = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
-        [&](const Memory &memory) -> Operand {
-            if (std::holds_alternative<type::Integral>(instruction.type())
-                && !std::holds_alternative<Memory>(right)
-                && instruction.op() != il::Binary::Operator::Div) {
-                return memory;
-            }
-
-            return _move_to_temp1(instruction.type(), memory);
-        },
+        [&](const Memory &memory) -> Operand { return _move_to_temp1(instruction.type(), memory); },
         [&](const Constant &constant) -> Operand { return _move_to_temp1(instruction.type(), constant); },
     }, _resolver.resolve_operand(instruction.left()));
 
@@ -138,7 +130,7 @@ void Generator::visit(il::Call &instruction) {
 
     std::list<Operand> stack_push;
 
-    const auto &function = std::get<symbol::Function>(*instruction.symbol());
+    const auto &function = std::get<symbol::Function>(*instruction.function());
     for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
         const auto &parameter_symbol = function.parameter_symbols()[index];
         const auto &parameter = std::get<symbol::Parameter>(*parameter_symbol);
@@ -161,7 +153,7 @@ void Generator::visit(il::Call &instruction) {
 
     const auto result = _resolver.resolve_operand(instruction.result());
 
-    _assembly.call(instruction.symbol());
+    _assembly.call(instruction.function());
 
     const auto return_reg = _returning_register(function.return_type().value());
     _mov(function.return_type().value(), result, return_reg);

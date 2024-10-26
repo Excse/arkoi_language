@@ -44,10 +44,10 @@ private:
 
     void visit(node::If &node) override;
 
-    template<typename SymbolType, typename... Args>
+    template<typename Type, typename... Args>
     [[nodiscard]] Symbol _check_non_existence(const Token &token, Args &&... args);
 
-    template<typename... SymbolTypes>
+    template<typename... Types>
     [[nodiscard]] Symbol _check_existence(const Token &token);
 
 private:

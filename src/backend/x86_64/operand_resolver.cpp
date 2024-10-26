@@ -54,7 +54,7 @@ void OperandResolver::visit(il::Cast &instruction) {
 }
 
 void OperandResolver::visit(il::Call &instruction) {
-    const auto &function = std::get<symbol::Function>(*instruction.symbol());
+    const auto &function = std::get<symbol::Function>(*instruction.function());
 
     size_t int_index = 0, sse_index = 0;
     for (auto &symbol: function.parameter_symbols()) {

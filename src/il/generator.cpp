@@ -188,7 +188,7 @@ void Generator::visit(node::If &node) {
     }
 }
 
-Operand Generator::_make_temporary(const Type &type) {
+Symbol Generator::_make_temporary(const Type &type) {
     auto name = "$tmp" + to_string(_temp_index++);
     return std::make_shared<SymbolType>(symbol::Temporary(name, type));
 }

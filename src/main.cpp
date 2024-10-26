@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "optimization/constant_propagation.hpp"
 #include "optimization/constant_folding.hpp"
 #include "backend/x86_64/generator.hpp"
 #include "semantic/name_resolver.hpp"
@@ -47,6 +48,7 @@ int main() {
 
     OptimizationManager optimization_manager;
     optimization_manager.emplace<ConstantFolding>();
+    optimization_manager.emplace<ConstantPropagation>();
     optimization_manager.optimize(il_generator.functions());
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;

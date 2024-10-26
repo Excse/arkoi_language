@@ -1,6 +1,7 @@
 #include "optimization/constant_folding.hpp"
 
 #include "utils/utils.hpp"
+#include "il/operand.hpp"
 
 bool ConstantFolding::new_block(BasicBlock &block) {
     auto changed = false;

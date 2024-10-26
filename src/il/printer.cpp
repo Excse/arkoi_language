@@ -72,7 +72,7 @@ void Printer::visit(End &) {
 
 void Printer::visit(Call &instruction) {
     _output << "  ";
-    _output << instruction.result() << " = CALL " << instruction.symbol() << "(";
+    _output << instruction.result() << " = CALL " << instruction.function() << "(";
 
     for (size_t index = 0; index < instruction.arguments().size(); index++) {
         auto &argument = instruction.arguments()[index];

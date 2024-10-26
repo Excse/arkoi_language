@@ -48,6 +48,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    void set_condition(Operand condition) { _condition = std::move(condition); }
+
     [[nodiscard]] auto &condition() const { return _condition; }
 
     [[nodiscard]] auto &label() const { return _label; }
@@ -59,21 +61,20 @@ private:
 
 class Call : public Instruction {
 public:
-    Call(Operand result, Symbol symbol, std::vector<Operand> &&arguments)
-        : _arguments(std::move(arguments)), _result(std::move(result)), _symbol(std::move(symbol)) {}
+    Call(Symbol result, Symbol function, std::vector<Operand> &&arguments)
+        : _arguments(std::move(arguments)), _result(std::move(result)), _function(std::move(function)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &arguments() const { return _arguments; };
+    [[nodiscard]] auto &function() const { return _function; }
+
+    [[nodiscard]] auto &arguments() { return _arguments; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
-
 private:
     std::vector<Operand> _arguments;
-    Operand _result;
-    Symbol _symbol;
+    Symbol _result, _function;
 };
 
 class Return : public Instruction {
@@ -82,9 +83,11 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &type() const { return _type; };
+    void set_value(Operand value) { _value = std::move(value); };
 
     [[nodiscard]] auto &value() const { return _value; };
+
+    [[nodiscard]] auto &type() const { return _type; };
 
 private:
     Operand _value;
@@ -101,15 +104,19 @@ public:
     };
 
 public:
-    Binary(Operand result, Operand left, Operator op, Operand right, Type type)
-        : _result(std::move(result)), _left(std::move(left)), _right(std::move(right)), _op(op),
+    Binary(Symbol result, Operand left, Operator op, Operand right, Type type)
+        : _left(std::move(left)), _right(std::move(right)), _result(std::move(result)), _op(op),
           _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &result() const { return _result; };
 
+    void set_right(Operand right) { _right = std::move(right); };
+
     [[nodiscard]] auto &right() const { return _right; };
+
+    void set_left(Operand left) { _left = std::move(left); };
 
     [[nodiscard]] auto &left() const { return _left; };
 
@@ -120,7 +127,8 @@ public:
     [[nodiscard]] static Operator node_to_instruction(node::Binary::Operator op);
 
 private:
-    Operand _result, _left, _right;
+    Operand _left, _right;
+    Symbol _result;
     Operator _op;
     Type _type;
 };
@@ -144,10 +152,12 @@ public:
 
 class Cast : public Instruction {
 public:
-    Cast(Operand result, Operand expression, Type from, Type to)
-        : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
+    Cast(Symbol result, Operand expression, Type from, Type to)
+        : _expression(std::move(expression)), _from(from), _to(to), _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    void set_expression(Operand expression) { _expression = std::move(expression); };
 
     [[nodiscard]] auto &expression() const { return _expression; };
 
@@ -158,14 +168,15 @@ public:
     [[nodiscard]] auto &to() const { return _to; };
 
 private:
-    Operand _result, _expression;
+    Operand _expression;
     Type _from, _to;
+    Symbol _result;
 };
 
 class Store : public Instruction {
 public:
-    Store(Operand result, Operand value, Type type)
-        : _value(std::move(value)), _result(std::move(result)), _type(type) {}
+    Store(Symbol result, Operand value, Type type)
+        : _result(std::move(result)), _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -176,7 +187,8 @@ public:
     [[nodiscard]] auto &type() const { return _type; };
 
 private:
-    Operand _value, _result;
+    Symbol _result;
+    Operand _value;
     Type _type;
 };
 
