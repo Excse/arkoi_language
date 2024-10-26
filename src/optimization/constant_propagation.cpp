@@ -16,10 +16,10 @@ bool ConstantPropagation::new_block(BasicBlock &block) {
 
     for (auto &instruction: block.instructions()) {
         if (auto *_binary = dynamic_cast<il::Binary *>(instruction.get())) _propagate_binary(*_binary, constants);
-        if (auto *_return = dynamic_cast<il::Return *>(instruction.get())) _propagate_return(*_return, constants);
-        if (auto *_cast = dynamic_cast<il::Cast *>(instruction.get())) _propagate_cast(*_cast, constants);
-        if (auto *_call = dynamic_cast<il::Call *>(instruction.get())) _propagate_call(*_call, constants);
-        if (auto *_if = dynamic_cast<il::If *>(instruction.get())) _propagate_if(*_if, constants);
+        else if (auto *_return = dynamic_cast<il::Return *>(instruction.get())) _propagate_return(*_return, constants);
+        else if (auto *_cast = dynamic_cast<il::Cast *>(instruction.get())) _propagate_cast(*_cast, constants);
+        else if (auto *_call = dynamic_cast<il::Call *>(instruction.get())) _propagate_call(*_call, constants);
+        else if (auto *_if = dynamic_cast<il::If *>(instruction.get())) _propagate_if(*_if, constants);
     }
 
     return changed;

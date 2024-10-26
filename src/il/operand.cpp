@@ -58,7 +58,8 @@ std::ostream &operator<<(std::ostream &os, const il::Constant &constant) {
 }
 
 std::ostream &operator<<(std::ostream &os, const il::Variable &variable) {
-    os << variable.symbol() << variable.version();
+    os << variable.symbol();
+    if(variable.version() != 0) os << variable.version();
     return os;
 }
 
