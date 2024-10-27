@@ -40,6 +40,8 @@ bool DeadCodeElimination::_eliminate_dead_stores(BasicBlock &block) {
         auto *store = dynamic_cast<il::Store *>(instruction.get());
         if (store == nullptr) continue;
 
+        if (store->has_side_effects()) continue;
+
         if (_used.contains(&store->result())) continue;
 
         block.instructions().erase(iterator);

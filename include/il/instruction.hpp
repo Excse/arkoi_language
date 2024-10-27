@@ -47,9 +47,9 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_condition(Operand condition) { _condition = std::move(condition); }
-
     [[nodiscard]] auto &condition() const { return _condition; }
+
+    [[nodiscard]] auto &condition() { return _condition; }
 
     [[nodiscard]] auto &label() const { return _label; }
 
@@ -83,11 +83,11 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_value(Operand value) { _value = std::move(value); };
+    [[nodiscard]] auto &type() const { return _type; };
 
     [[nodiscard]] auto &value() const { return _value; };
 
-    [[nodiscard]] auto &type() const { return _type; };
+    [[nodiscard]] auto &value() { return _value; };
 
 private:
     Operand _value;
@@ -112,13 +112,13 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    void set_right(Operand right) { _right = std::move(right); };
-
     [[nodiscard]] auto &right() const { return _right; };
 
-    void set_left(Operand left) { _left = std::move(left); };
+    [[nodiscard]] auto &right() { return _right; };
 
     [[nodiscard]] auto &left() const { return _left; };
+
+    [[nodiscard]] auto &left() { return _left; };
 
     [[nodiscard]] auto &type() const { return _type; };
 
@@ -157,9 +157,9 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_expression(Operand expression) { _expression = std::move(expression); };
-
     [[nodiscard]] auto &expression() const { return _expression; };
+
+    [[nodiscard]] auto &expression() { return _expression; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
@@ -179,6 +179,8 @@ public:
         : _result(std::move(result)), _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool has_side_effects() const;
 
     [[nodiscard]] auto &result() const { return _result; };
 

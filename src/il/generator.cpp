@@ -88,7 +88,7 @@ void Generator::visit(node::Return &node) {
     node.expression()->accept(*this);
 
     // Populate the current basic block with instructions
-    _current_block->emplace_back<Return>(std::move(_current_operand), node.type().value());
+    _current_block->emplace_back<Return>(std::move(_current_operand), node.type());
     _current_block->emplace_back<Goto>(_function_end_symbol);
 
     // Connect the current basic block with the function end basic block
@@ -109,10 +109,10 @@ void Generator::visit(node::Binary &node) {
     auto right = _current_operand;
 
     auto type = Binary::node_to_instruction(node.op());
-    auto result = _make_temporary(node.type().value());
+    auto result = _make_temporary(node.type());
     _current_operand = result;
 
-    _current_block->emplace_back<Binary>(result, left, type, right, node.type().value());
+    _current_block->emplace_back<Binary>(result, left, type, right, node.type());
 }
 
 void Generator::visit(node::Cast &node) {
@@ -123,7 +123,7 @@ void Generator::visit(node::Cast &node) {
     auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _current_block->emplace_back<Cast>(result, expression, node.from().value(), node.to());
+    _current_block->emplace_back<Cast>(result, expression, node.from(), node.to());
 }
 
 void Generator::visit(node::Call &node) {

@@ -48,22 +48,22 @@ private:
 
 class Parameter : public Node {
 public:
-    Parameter(Token name, Type type) : _type(type), _name(std::move(name)) {}
+    Parameter(Token name, Type type) : _name(std::move(name)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
     [[nodiscard]] auto &name() const { return _name; }
 
     [[nodiscard]] auto &type() { return _type; }
 
 private:
-    Symbol _symbol{};
-    Type _type;
+    std::optional<Symbol> _symbol{};
     Token _name;
+    Type _type;
 };
 
 class Function : public Node {
@@ -71,7 +71,7 @@ public:
     Function(Token name, std::vector<Parameter> &&parameters, Type type,
              std::unique_ptr<Block> &&block,
              std::shared_ptr<SymbolTable> table)
-        : _parameters(std::move(parameters)), _table(std::move(table)), _block(std::move(block)),
+        : _table(std::move(table)), _parameters(std::move(parameters)), _block(std::move(block)),
           _name(std::move(name)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -80,7 +80,7 @@ public:
 
     void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
     [[nodiscard]] auto &table() const { return _table; }
 
@@ -91,10 +91,10 @@ public:
     [[nodiscard]] auto &block() { return _block; }
 
 private:
-    std::vector<Parameter> _parameters;
     std::shared_ptr<SymbolTable> _table;
-    Symbol _symbol{};
+    std::vector<Parameter> _parameters;
     std::unique_ptr<Block> _block;
+    std::optional<Symbol> _symbol;
     Token _name;
     Type _type;
 };
@@ -111,7 +111,7 @@ public:
 
     void set_type(Type type) { _type = type; }
 
-    [[nodiscard]] auto &type() const { return _type; }
+    [[nodiscard]] auto &type() const { return _type.value(); }
 
 private:
     std::unique_ptr<Node> _expression;
@@ -152,15 +152,15 @@ public:
 
     void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
-    [[nodiscard]] auto &arguments() { return _arguments; }
+    [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &arguments() { return _arguments; }
 
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
     std::vector<std::unique_ptr<Node>> _arguments;
-    Symbol _symbol{};
+    std::optional<Symbol> _symbol{};
     Token _name;
 };
 
@@ -208,12 +208,12 @@ public:
 
     void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
     [[nodiscard]] auto &value() const { return _value; }
 
 private:
-    Symbol _symbol{};
+    std::optional<Symbol> _symbol{};
     Token _value;
 };
 
@@ -244,7 +244,7 @@ public:
 
     void set_type(Type type) { _type = type; }
 
-    [[nodiscard]] auto &type() const { return _type; }
+    [[nodiscard]] auto &type() const { return _type.value(); }
 
 private:
     std::unique_ptr<Node> _left, _right;
@@ -266,7 +266,7 @@ public:
 
     void set_from(Type type) { _from = type; }
 
-    [[nodiscard]] auto &from() { return _from; }
+    [[nodiscard]] auto &from() const { return _from.value(); }
 
     [[nodiscard]] auto &to() { return _to; }
 

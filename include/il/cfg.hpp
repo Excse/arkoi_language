@@ -11,9 +11,6 @@ public:
     template<typename InstructionType, typename... Args>
     void emplace_back(Args &&... args);
 
-    void depth_first_search(const std::function<void(BasicBlock &)> &callback,
-                            std::unordered_set<BasicBlock *> &visited);
-
     [[nodiscard]] auto &instructions() { return _instructions; }
 
     void set_branch(std::shared_ptr<BasicBlock> branch) { _branch = std::move(branch); }

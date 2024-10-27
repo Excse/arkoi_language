@@ -1,23 +1,29 @@
 #include "il/cfg.hpp"
 
-void BasicBlock::depth_first_search(const std::function<void(BasicBlock &)> &callback,
-                                    std::unordered_set<BasicBlock *> &visited) {
-    if (visited.contains(&*this)) return;
-    visited.insert(&*this);
-
-    callback(*this);
-
-    if (_branch) _branch->depth_first_search(callback, visited);
-    if (_next) _next->depth_first_search(callback, visited);
-}
+#include <stack>
 
 void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
     std::unordered_set<BasicBlock *> visited;
+    std::stack<BasicBlock *> queue;
 
     // We manually callback the end basic block as it should always be the last one being invoked.
     visited.insert(_end.get());
+    // Start with the entry basic block.
+    queue.push(_start.get());
 
-    _start->depth_first_search(callback, visited);
+    while (!queue.empty()) {
+        BasicBlock *current = queue.top();
+        queue.pop();
+
+        if (visited.contains(current)) continue;
+
+        visited.insert(current);
+
+        callback(*current);
+
+        if (current->next()) queue.push(current->next().get());
+        if (current->branch()) queue.push(current->branch().get());
+    }
 
     callback(*_end);
 }

@@ -15,8 +15,8 @@ class OptimizationManager {
 public:
     void optimize(std::vector<Function> &functions);
 
-    template<typename IterativeType, typename... Args>
-    IterativeType &emplace(Args &&... args);
+    template<typename Type, typename... Args>
+    Type &emplace(Args &&... args);
 
 private:
     std::vector<std::unique_ptr<Pass>> _passes;

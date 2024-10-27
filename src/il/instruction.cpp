@@ -14,6 +14,10 @@ Binary::Operator Binary::node_to_instruction(node::Binary::Operator op) {
     std::unreachable();
 }
 
+bool Store::has_side_effects() const {
+    return !std::holds_alternative<symbol::Temporary>(*_result.symbol());
+}
+
 }
 
 std::ostream &operator<<(std::ostream &os, const il::Binary::Operator &op) {
