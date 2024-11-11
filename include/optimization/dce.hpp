@@ -14,10 +14,14 @@ public:
     bool new_block(BasicBlock &block) override;
 
 private:
-    void _mark_as_used(const il::Operand &operand);
+    void _mark_instruction(const il::InstructionType &type);
+
+    void _mark_variable(const il::Operand &operand);
+
+    bool _is_dead_store(const il::InstructionType &type);
 
     bool _eliminate_dead_stores(BasicBlock &block);
 
 private:
-    UsedVariables _used{};
+    UsedVariables _used_variables{};
 };

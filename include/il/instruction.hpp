@@ -7,6 +7,8 @@
 #include "frontend/ast.hpp"
 #include "il/operand.hpp"
 
+namespace il {
+
 class Instruction {
 public:
     virtual ~Instruction() = default;
@@ -14,35 +16,33 @@ public:
     virtual void accept(il::Visitor &visitor) = 0;
 };
 
-namespace il {
-
 class Label : public Instruction {
 public:
-    Label(Symbol symbol) : _symbol(std::move(symbol)) {}
+    Label(SharedSymbol symbol) : _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
-    Symbol _symbol;
+    SharedSymbol _symbol;
 };
 
 class Goto : public Instruction {
 public:
-    Goto(Symbol label) : _label(std::move(label)) {}
+    Goto(SharedSymbol label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
-    Symbol _label;
+    SharedSymbol _label;
 };
 
 class If : public Instruction {
 public:
-    If(Operand condition, Symbol label)
+    If(Operand condition, SharedSymbol label)
         : _condition(std::move(condition)), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -55,12 +55,12 @@ public:
 
 private:
     Operand _condition;
-    Symbol _label;
+    SharedSymbol _label;
 };
 
 class Call : public Instruction {
 public:
-    Call(il::Variable result, Symbol function, std::vector<Operand> &&arguments)
+    Call(il::Variable result, SharedSymbol function, std::vector<Operand> &&arguments)
         : _arguments(std::move(arguments)), _result(std::move(result)), _function(std::move(function)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -74,7 +74,7 @@ public:
 private:
     std::vector<Operand> _arguments;
     il::Variable _result;
-    Symbol _function;
+    SharedSymbol _function;
 };
 
 class Return : public Instruction {
@@ -135,14 +135,14 @@ private:
 
 class Begin : public Instruction {
 public:
-    Begin(Symbol function) : _function(std::move(function)) {}
+    Begin(SharedSymbol function) : _function(std::move(function)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &function() const { return _function; }
 
 private:
-    Symbol _function;
+    SharedSymbol _function;
 };
 
 class End : public Instruction {
@@ -192,6 +192,23 @@ private:
     il::Variable _result;
     Operand _value;
     Type _type;
+};
+
+struct InstructionType : std::variant<
+    il::Label,
+    il::Goto,
+    il::If,
+    il::Cast,
+    il::Call,
+    il::Return,
+    il::Binary,
+    il::Begin,
+    il::End,
+    il::Store
+> {
+    using variant::variant;
+
+    void accept(il::Visitor &visitor);
 };
 
 }

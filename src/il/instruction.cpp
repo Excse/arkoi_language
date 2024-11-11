@@ -20,6 +20,10 @@ bool Store::has_side_effects() const {
 
 }
 
+void il::InstructionType::accept(il::Visitor &visitor) {
+    std::visit([&](auto &item) { item.accept(visitor); }, *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const il::Binary::Operator &op) {
     switch (op) {
         case il::Binary::Operator::Add: return os << "add";

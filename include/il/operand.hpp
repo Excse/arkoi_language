@@ -11,7 +11,7 @@ namespace il {
 
 class Variable {
 public:
-    Variable(Symbol symbol, size_t version = 0)
+    Variable(SharedSymbol symbol, size_t version = 0)
         : _version(version), _symbol(std::move(symbol)) {}
 
     bool operator==(const Variable &rhs) const;
@@ -24,7 +24,7 @@ public:
 
 private:
     size_t _version;
-    Symbol _symbol;
+    SharedSymbol _symbol;
 };
 
 struct Constant : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {

@@ -214,7 +214,7 @@ std::unique_ptr<node::Return> Parser::_parse_return(const Token &) {
 std::unique_ptr<node::If> Parser::_parse_if(const Token &) {
     auto expression = _parse_expression();
 
-    node::If::Then then;
+    node::If::ThenType then;
     if (_try_consume(Token::Type::Newline)) {
         then = _parse_block();
     } else {
@@ -229,7 +229,7 @@ std::unique_ptr<node::If> Parser::_parse_if(const Token &) {
         return std::make_unique<node::If>(std::move(expression), std::move(then), _parse_if(*token));
     }
 
-    node::If::Else _else;
+    node::If::ElseType _else;
     if (_try_consume(Token::Type::Newline)) {
         _else = _parse_block();
     } else {

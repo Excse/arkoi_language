@@ -34,11 +34,11 @@ public:
 
     void label(const std::string &name, bool newline = true);
 
-    void label(const Symbol &symbol);
+    void label(const SharedSymbol &symbol);
 
-    void jmp(const Symbol &destination);
+    void jmp(const SharedSymbol &destination);
 
-    void jne(const Symbol &destination);
+    void jne(const SharedSymbol &destination);
 
     void pop(const Operand &destination);
 
@@ -86,7 +86,7 @@ public:
 
     void call(const std::string &name);
 
-    void call(const Symbol &symbol);
+    void call(const SharedSymbol &symbol);
 
     void syscall();
 

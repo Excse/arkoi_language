@@ -33,6 +33,7 @@ private:
 class Memory {
 public:
     struct Address : std::variant<std::string, int64_t, Register> {
+        using variant::variant;
     };
 
 public:

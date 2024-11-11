@@ -35,7 +35,7 @@ void NameResolver::visit_as_prototype(node::Function &node) {
 void NameResolver::visit(node::Function &node) {
     _scopes.push(node.table());
 
-    std::vector<Symbol> parameters;
+    std::vector<SharedSymbol> parameters;
     for (auto &item: node.parameters()) {
         item.accept(*this);
 

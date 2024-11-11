@@ -12,7 +12,11 @@ public:
     bool new_block(BasicBlock &block) override;
 
 private:
-    void _propagate(il::Operand &operand);
+    void _add_constant(il::InstructionType &type);
+
+    bool _can_propagate(il::InstructionType &type);
+
+    bool _propagate(il::Operand &operand);
 
 private:
     Constants _constants{};

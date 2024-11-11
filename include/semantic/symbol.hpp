@@ -8,7 +8,7 @@
 
 struct SymbolType;
 
-using Symbol = std::shared_ptr<SymbolType>;
+using SharedSymbol = std::shared_ptr<SymbolType>;
 
 namespace symbol {
 
@@ -16,7 +16,7 @@ class Function {
 public:
     Function(std::string name) : _name(std::move(name)) {}
 
-    void set_parameters(std::vector<Symbol> &&symbols) { _parameter_symbols = std::move(symbols); }
+    void set_parameters(std::vector<SharedSymbol> &&symbols) { _parameter_symbols = std::move(symbols); }
 
     [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
 
@@ -27,7 +27,7 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<Symbol> _parameter_symbols{};
+    std::vector<SharedSymbol> _parameter_symbols{};
     std::optional<Type> _return_type{};
     std::string _name;
 };
@@ -68,4 +68,4 @@ struct SymbolType : std::variant<symbol::Function, symbol::Parameter, symbol::Te
     using variant::variant;
 };
 
-std::ostream &operator<<(std::ostream &os, const Symbol &symbol);
+std::ostream &operator<<(std::ostream &os, const SharedSymbol &symbol);

@@ -1,5 +1,6 @@
 #include "il/cfg.hpp"
 
+#include <unordered_set>
 #include <stack>
 
 void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
@@ -28,10 +29,10 @@ void Function::depth_first_search(const std::function<void(BasicBlock &)> &callb
     callback(*_end);
 }
 
-void Function::linearize(const std::function<void(Instruction &)> &callback) {
+void Function::linearize(const std::function<void(il::InstructionType &)> &callback) {
     auto visit_instructions = [&](BasicBlock &block) {
         for (auto &instruction: block.instructions()) {
-            callback(*instruction);
+            callback(instruction);
         }
     };
 

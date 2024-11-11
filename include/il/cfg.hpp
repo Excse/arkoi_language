@@ -1,6 +1,5 @@
 #pragma once
 
-#include <unordered_set>
 #include <vector>
 #include <memory>
 
@@ -8,8 +7,8 @@
 
 class BasicBlock {
 public:
-    template<typename InstructionType, typename... Args>
-    void emplace_back(Args &&... args);
+    template<typename Type, typename... Args>
+    il::InstructionType &emplace(Args &&... args);
 
     [[nodiscard]] auto &instructions() { return _instructions; }
 
@@ -22,8 +21,8 @@ public:
     [[nodiscard]] auto &next() const { return _next; }
 
 private:
-    std::vector<std::unique_ptr<Instruction>> _instructions{};
     std::shared_ptr<BasicBlock> _next{}, _branch{};
+    std::vector<il::InstructionType> _instructions{};
 };
 
 class Function {
@@ -33,7 +32,7 @@ public:
 
     void depth_first_search(const std::function<void(BasicBlock &)> &callback);
 
-    void linearize(const std::function<void(Instruction &)> &callback);
+    void linearize(const std::function<void(il::InstructionType &)> &callback);
 
     [[nodiscard]] auto &start() const { return _start; }
 

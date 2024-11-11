@@ -66,23 +66,23 @@ void Generator::visit(il::Binary &instruction) {
 
     const auto result = _resolver.resolve_operand(instruction.result());
 
+    const auto left = std::visit(match{
+        [](const Register &reg) -> Operand { return reg; },
+        [&](const Memory &memory) -> Operand { return _move_to_temp1(instruction.type(), memory); },
+        [&](const Constant &constant) -> Operand { return _move_to_temp1(instruction.type(), constant); },
+    }, _resolver.resolve_operand(instruction.left()));
+
     const auto right = std::visit(match{
         [](const Register &reg) -> Operand { return reg; },
         [](const Memory &memory) -> Operand { return memory; },
         [&](const Constant &constant) -> Operand {
             if (instruction.op() == il::Binary::Operator::Div) {
                 return _move_to_temp2(instruction.type(), constant);
+            } else {
+                return constant;
             }
-
-            return constant;
         },
     }, _resolver.resolve_operand(instruction.right()));
-
-    const auto left = std::visit(match{
-        [](const Register &reg) -> Operand { return reg; },
-        [&](const Memory &memory) -> Operand { return _move_to_temp1(instruction.type(), memory); },
-        [&](const Constant &constant) -> Operand { return _move_to_temp1(instruction.type(), constant); },
-    }, _resolver.resolve_operand(instruction.left()));
 
     switch (instruction.op()) {
         case il::Binary::Operator::Add: {
@@ -243,7 +243,7 @@ void Generator::_data_section() {
     }
 }
 
-void Generator::_comment_instruction(Instruction &instruction) {
+void Generator::_comment_instruction(il::Instruction &instruction) {
     auto printer = il::Printer::print(instruction);
     _assembly.comment(printer.output().str());
 }

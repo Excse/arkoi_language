@@ -29,7 +29,8 @@ void Generator::visit(node::Function &node) {
     // Creates a new basic block that will get populated with instructions
     _current_block = std::make_shared<BasicBlock>();
     _functions.emplace_back(_current_block, _function_end_block);
-    _current_block->emplace_back<Begin>(node.symbol());
+
+    _current_block->emplace<Begin>(node.symbol());
 
     node.block()->accept(*this);
 
@@ -37,8 +38,9 @@ void Generator::visit(node::Function &node) {
     _current_block->set_next(_function_end_block);
 
     _current_block = _function_end_block;
-    _function_end_block->emplace_back<Label>(_function_end_symbol);
-    _function_end_block->emplace_back<End>();
+
+    _function_end_block->emplace<Label>(_function_end_symbol);
+    _function_end_block->emplace<End>();
 }
 
 void Generator::visit(node::Block &node) {
@@ -88,8 +90,8 @@ void Generator::visit(node::Return &node) {
     node.expression()->accept(*this);
 
     // Populate the current basic block with instructions
-    _current_block->emplace_back<Return>(std::move(_current_operand), node.type());
-    _current_block->emplace_back<Goto>(_function_end_symbol);
+    _current_block->emplace<Return>(std::move(_current_operand), node.type());
+    _current_block->emplace<Goto>(_function_end_symbol);
 
     // Connect the current basic block with the function end basic block
     _current_block->set_next(_function_end_block);
@@ -112,7 +114,7 @@ void Generator::visit(node::Binary &node) {
     auto result = _make_temporary(node.type());
     _current_operand = result;
 
-    _current_block->emplace_back<Binary>(result, left, type, right, node.type());
+    _current_block->emplace<Binary>(result, left, type, right, node.type());
 }
 
 void Generator::visit(node::Cast &node) {
@@ -123,7 +125,7 @@ void Generator::visit(node::Cast &node) {
     auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _current_block->emplace_back<Cast>(result, expression, node.from(), node.to());
+    _current_block->emplace<Cast>(result, expression, node.from(), node.to());
 }
 
 void Generator::visit(node::Call &node) {
@@ -141,7 +143,7 @@ void Generator::visit(node::Call &node) {
     auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
-    _current_block->emplace_back<Call>(result, node.symbol(), std::move(arguments));
+    _current_block->emplace<Call>(result, node.symbol(), std::move(arguments));
 }
 
 void Generator::visit(node::If &node) {
@@ -159,44 +161,44 @@ void Generator::visit(node::If &node) {
         node.condition()->accept(*this);
         auto condition = _current_operand;
 
-        _current_block->emplace_back<If>(condition, then_label);
+        _current_block->emplace<If>(condition, then_label);
 
         _current_block->set_next(then_block);
         _current_block->set_branch(branch_block);
     }
 
-    { // Then block
+    { // ThenType block
         _current_block = then_block;
-        then_block->emplace_back<Label>(then_label);
+        then_block->emplace<Label>(then_label);
         std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-        _current_block->emplace_back<Goto>(after_label);
+        _current_block->emplace<Goto>(after_label);
         _current_block->set_next(after_block);
     }
 
     { // Branch block
         _current_block = branch_block;
-        branch_block->emplace_back<Label>(branch_label);
+        branch_block->emplace<Label>(branch_label);
         if (node.branch()) {
             std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
         }
 
-        _current_block->emplace_back<Goto>(after_label);
+        _current_block->emplace<Goto>(after_label);
         _current_block->set_next(after_block);
     }
 
     { // After block
         _current_block = after_block;
-        after_block->emplace_back<Label>(after_label);
+        after_block->emplace<Label>(after_label);
     }
 }
 
 il::Variable Generator::_make_temporary(const Type &type) {
     auto temporary = std::make_shared<SymbolType>(symbol::Temporary("$", type));
-    return { temporary, _temp_index++ };
+    return { temporary, ++_temp_index };
 }
 
-Symbol Generator::_make_label_symbol() {
+SharedSymbol Generator::_make_label_symbol() {
     auto name = "L" + to_string(_label_index++);
     return std::make_shared<SymbolType>(symbol::Temporary(name));
 }

@@ -1,5 +1,5 @@
 template<typename Type, typename... Args>
-Symbol NameResolver::_check_non_existence(const Token &token, Args &&... args) {
+SharedSymbol NameResolver::_check_non_existence(const Token &token, Args &&... args) {
     try {
         return _scopes.top()->insert<Type>(token.contents(), std::forward<Args>(args)...);
     } catch (const IdentifierAlreadyTaken &error) {
@@ -10,7 +10,7 @@ Symbol NameResolver::_check_non_existence(const Token &token, Args &&... args) {
 }
 
 template<typename... Types>
-Symbol NameResolver::_check_existence(const Token &token) {
+SharedSymbol NameResolver::_check_existence(const Token &token) {
     try {
         return _scopes.top()->lookup<Types...>(token.contents());
     } catch (const IdentifierNotFound &error) {

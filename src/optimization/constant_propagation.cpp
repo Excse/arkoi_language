@@ -1,51 +1,73 @@
 #include "optimization/constant_propagation.hpp"
 
+#include <ranges>
+
+#include "utils/utils.hpp"
+
 bool ConstantPropagation::new_function(Function &) {
     _constants.clear();
     return false;
 }
 
 bool ConstantPropagation::new_block(BasicBlock &block) {
-    auto changed = false;
+    auto has_changed = false;
 
     for (auto &instruction: block.instructions()) {
-        auto *store = dynamic_cast<il::Store *>(instruction.get());
-        if (store == nullptr) continue;
+        _add_constant(instruction);
 
-        if(store->has_side_effects()) continue;
-
-        auto *constant = std::get_if<il::Constant>(&store->value());
-        if (constant == nullptr) continue;
-
-        _constants[store->result()] = *constant;
+        has_changed |= _can_propagate(instruction);
     }
 
-    for (auto &instruction: block.instructions()) {
-        if (auto *_binary = dynamic_cast<il::Binary *>(instruction.get())) {
-            _propagate(_binary->left());
-            _propagate(_binary->right());
-        } else if (auto *_return = dynamic_cast<il::Return *>(instruction.get())) {
-            _propagate(_return->value());
-        } else if (auto *_cast = dynamic_cast<il::Cast *>(instruction.get())) {
-            _propagate(_cast->expression());
-        } else if (auto *_call = dynamic_cast<il::Call *>(instruction.get())) {
-            for (auto &argument: _call->arguments()) {
-                _propagate(argument);
-            }
-        } else if (auto *_if = dynamic_cast<il::If *>(instruction.get())) {
-            _propagate(_if->condition());
-        }
-    }
-
-    return changed;
+    return has_changed;
 }
 
-void ConstantPropagation::_propagate(il::Operand &operand) {
+bool ConstantPropagation::_propagate(il::Operand &operand) {
     auto condition_symbol = std::get_if<il::Variable>(&operand);
-    if (condition_symbol == nullptr) return;
+    if (condition_symbol == nullptr) return false;
 
     auto result = _constants.find(*condition_symbol);
-    if (result == _constants.end()) return;
+    if (result == _constants.end()) return false;
 
     operand = result->second;
+    return true;
+}
+
+void ConstantPropagation::_add_constant(il::InstructionType &type) {
+    if (!std::holds_alternative<il::Store>(type)) return;
+
+    auto &store = std::get<il::Store>(type);
+    if (store.has_side_effects()) return;
+
+    auto *constant = std::get_if<il::Constant>(&store.value());
+    if (constant == nullptr) return;
+
+    _constants[store.result()] = *constant;
+}
+
+bool ConstantPropagation::_can_propagate(il::InstructionType &type) {
+    auto propagated = false;
+
+    std::visit(match{
+        [&](il::Binary &instruction) {
+            propagated |= _propagate(instruction.left());
+            propagated |= _propagate(instruction.right());
+        },
+        [&](il::Return &instruction) {
+            propagated |= _propagate(instruction.value());
+        },
+        [&](il::Cast &instruction) {
+            propagated |= _propagate(instruction.expression());
+        },
+        [&](il::Call &instruction) {
+            for (auto &argument: instruction.arguments()) {
+                propagated |= _propagate(argument);
+            }
+        },
+        [&](il::If &instruction) {
+            propagated |= _propagate(instruction.condition());
+        },
+        [](const auto &) {}
+    }, type);
+
+    return propagated;
 }

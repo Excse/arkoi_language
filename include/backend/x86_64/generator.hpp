@@ -46,7 +46,7 @@ private:
 
     void _data_section();
 
-    void _comment_instruction(Instruction &instruction);
+    void _comment_instruction(il::Instruction &instruction);
 
     void _convert_int_to_int(const il::Cast &constant, const type::Integral &from,
                              const type::Integral &to);

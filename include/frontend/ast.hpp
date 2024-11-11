@@ -52,7 +52,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
+    void set_symbol(SharedSymbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
@@ -61,7 +61,7 @@ public:
     [[nodiscard]] auto &type() { return _type; }
 
 private:
-    std::optional<Symbol> _symbol{};
+    std::optional<SharedSymbol> _symbol{};
     Token _name;
     Type _type;
 };
@@ -78,7 +78,7 @@ public:
 
     [[nodiscard]] auto &parameters() { return _parameters; }
 
-    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
+    void set_symbol(SharedSymbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
@@ -94,7 +94,7 @@ private:
     std::shared_ptr<SymbolTable> _table;
     std::vector<Parameter> _parameters;
     std::unique_ptr<Block> _block;
-    std::optional<Symbol> _symbol;
+    std::optional<SharedSymbol> _symbol;
     Token _name;
     Type _type;
 };
@@ -120,11 +120,11 @@ private:
 
 class If : public Node {
 public:
-    using Else = std::variant<std::unique_ptr<Block>, std::unique_ptr<If>, std::unique_ptr<Node>>;
-    using Then = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
+    using ElseType = std::variant<std::unique_ptr<Block>, std::unique_ptr<If>, std::unique_ptr<Node>>;
+    using ThenType = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
 
 public:
-    If(std::unique_ptr<Node> &&condition, Then &&then, std::optional<Else> &&branch)
+    If(std::unique_ptr<Node> &&condition, ThenType &&then, std::optional<ElseType> &&branch)
         : _condition(std::move(condition)), _branch(std::move(branch)), _then(std::move(then)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -139,8 +139,8 @@ public:
 
 private:
     std::unique_ptr<Node> _condition;
-    std::optional<Else> _branch;
-    Then _then;
+    std::optional<ElseType> _branch;
+    ThenType _then;
 };
 
 class Call : public Node {
@@ -150,7 +150,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
+    void set_symbol(SharedSymbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
@@ -160,7 +160,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<Node>> _arguments;
-    std::optional<Symbol> _symbol{};
+    std::optional<SharedSymbol> _symbol{};
     Token _name;
 };
 
@@ -206,14 +206,14 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(Symbol symbol) { _symbol = std::move(symbol); }
+    void set_symbol(SharedSymbol symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
     [[nodiscard]] auto &value() const { return _value; }
 
 private:
-    std::optional<Symbol> _symbol{};
+    std::optional<SharedSymbol> _symbol{};
     Token _value;
 };
 

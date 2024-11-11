@@ -61,15 +61,15 @@ void Assembly::label(const std::string &name, bool newline) {
     if (newline) _output << "\n";
 }
 
-void Assembly::label(const Symbol &symbol) {
+void Assembly::label(const SharedSymbol &symbol) {
     _output << symbol << ":\n";
 }
 
-void Assembly::jmp(const Symbol &destination) {
+void Assembly::jmp(const SharedSymbol &destination) {
     _output << "\tjmp " << destination << "\n";
 }
 
-void Assembly::jne(const Symbol &destination) {
+void Assembly::jne(const SharedSymbol &destination) {
     _output << "\tjne " << destination << "\n";
 }
 
@@ -173,7 +173,7 @@ void Assembly::call(const std::string &name) {
     _output << "\tcall " << name << "\n";
 }
 
-void Assembly::call(const Symbol &symbol) {
+void Assembly::call(const SharedSymbol &symbol) {
     _output << "\tcall " << symbol << "\n";
 }
 

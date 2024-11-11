@@ -11,14 +11,14 @@ class SymbolTable {
 public:
     SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
 
-    template<typename SymbolType, typename... Args>
-    Symbol &insert(const std::string &name, Args &&... args);
+    template<typename Type, typename... Args>
+    SharedSymbol &insert(const std::string &name, Args &&... args);
 
-    template<typename... SymbolTypes>
-    [[nodiscard]] Symbol &lookup(const std::string &name);
+    template<typename... Types>
+    [[nodiscard]] SharedSymbol &lookup(const std::string &name);
 
 private:
-    std::unordered_map<std::string, Symbol> _symbols{};
+    std::unordered_map<std::string, SharedSymbol> _symbols{};
     std::shared_ptr<SymbolTable> _parent;
 };
 
