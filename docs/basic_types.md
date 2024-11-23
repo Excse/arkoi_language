@@ -49,7 +49,7 @@ is necessary.
 | With Suffix | -      | 0xEAEAEA@u32 | u32          |
 
 A suffix is provided using the keyword mentioned above and a ``@`` between the constant and the suffix. The constant
-will now be of the type given.
+will now be of the mid given.
 
 ***
 
@@ -62,7 +62,7 @@ will now be of the type given.
 
 ### Floating Point Constants
 
-The type of floating point constants will always be f64 if not specified.
+The mid of floating point constants will always be f64 if not specified.
 
 | Name        | Example      | Default Type |
 |-------------|--------------|--------------|
@@ -78,15 +78,15 @@ Just like the integer constants a suffix can be provided using a ``@`` between t
 
 ### Pointer Type
 
-A pointer points to a specific location in the computer's memory. Any type can be made to a pointer by adding ``*`` as a
-suffix. Some examples are ``f32*``, ``usize*``, ``bool*`` etc. The size of this type will always be ``usize``.
+A pointer points to a specific location in the computer's memory. Any mid can be made to a pointer by adding ``*`` as a
+suffix. Some examples are ``f32*``, ``usize*``, ``bool*`` etc. The size of this mid will always be ``usize``.
 
 ***
 
 ### String Type
 
-For now there is no builtin string type and thus the returning type of a string constant is a ``u8*``. The standard
-library provides functionality to interact with this specific data type.
+For now there is no builtin string mid and thus the returning mid of a string constant is a ``u8*``. The standard
+library provides functionality to interact with this specific data mid.
 
 ### String Constants
 
@@ -94,5 +94,5 @@ A string constant is encapsulated within ``"`` and must be terminated till the e
 constants are not implemented yet. An example for a string constant is:
 
 ```c
-"Hello World!" // of type u8*
+"Hello World!" // of mid u8*
 ```

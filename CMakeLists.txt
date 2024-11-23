@@ -39,28 +39,28 @@ FetchContent_MakeAvailable(google_test)
 include_directories(include)
 
 add_library(${PROJECT_NAME}_lib
-        src/frontend/scanner.cpp
-        src/frontend/token.cpp
-        src/frontend/parser.cpp
-        src/semantic/symbol_table.tpp
-        src/semantic/name_resolver.tpp
-        src/semantic/name_resolver.cpp
-        src/semantic/type_resolver.cpp
-        src/semantic/symbol.cpp
-        src/semantic/type.cpp
-        src/il/instruction.cpp
-        src/il/generator.cpp
-        src/il/printer.cpp
-        src/il/operand.cpp
-        src/il/cfg.cpp
-        src/optimization/constant_propagation.cpp
-        src/optimization/constant_folding.cpp
-        src/optimization/dce.cpp
-        src/optimization/optimization.cpp
-        src/backend/x86_64/operand_resolver.cpp
-        src/backend/x86_64/generator.cpp
-        src/backend/x86_64/assembly.cpp
-        src/backend/x86_64/operand.cpp
+        src/def/symbol.cpp
+        src/def/type.cpp
+        src/front/token.cpp
+        src/front/scanner.cpp
+        src/front/parser.cpp
+        src/mid/symbol_table.tpp
+        src/mid/name_resolver.tpp
+        src/mid/name_resolver.cpp
+        src/mid/type_resolver.cpp
+        src/mid/instruction.cpp
+        src/mid/generator.cpp
+        src/mid/printer.cpp
+        src/mid/operand.cpp
+        src/mid/cfg.cpp
+        src/opt/constant_propagation.cpp
+        src/opt/constant_folding.cpp
+        src/opt/dce.cpp
+        src/opt/optimization.cpp
+        src/back/x86_64/operand_resolver.cpp
+        src/back/x86_64/generator.cpp
+        src/back/x86_64/assembly.cpp
+        src/back/x86_64/operand.cpp
         src/utils/data.cpp
 )
 

@@ -3,16 +3,18 @@
 #include <fstream>
 #include <sstream>
 
-#include "optimization/constant_propagation.hpp"
-#include "optimization/constant_folding.hpp"
-#include "optimization/dce.hpp"
-#include "backend/x86_64/generator.hpp"
-#include "semantic/name_resolver.hpp"
-#include "semantic/type_resolver.hpp"
-#include "frontend/scanner.hpp"
-#include "frontend/parser.hpp"
-#include "il/generator.hpp"
-#include "il/printer.hpp"
+#include "opt/constant_propagation.hpp"
+#include "opt/constant_folding.hpp"
+#include "opt/dce.hpp"
+#include "back/x86_64/generator.hpp"
+#include "mid/name_resolver.hpp"
+#include "mid/type_resolver.hpp"
+#include "mid/generator.hpp"
+#include "mid/printer.hpp"
+#include "front/scanner.hpp"
+#include "front/parser.hpp"
+
+using namespace arkoi;
 
 int main() {
     std::ifstream file("../example/test.ark");
@@ -23,44 +25,44 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~         Lex & Scan           ~~~~~~~~~~~~ " << std::endl;
 
-    Scanner scanner(source);
-    Parser parser(scanner.tokenize());
+    front::Scanner scanner(source);
+    front::Parser parser(scanner.tokenize());
     auto program = parser.parse_program();
 
     if (scanner.has_failed() || parser.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~        Name Resolver         ~~~~~~~~~~~~" << std::endl;
 
-    auto name_resolver = NameResolver::resolve(program);
+    auto name_resolver = mid::NameResolver::resolve(program);
     if (name_resolver.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~        Type Resolver         ~~~~~~~~~~~~" << std::endl;
 
-    auto type_resolver = TypeResolver::resolve(program);
+    auto type_resolver = mid::TypeResolver::resolve(program);
     if (type_resolver.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    auto il_generator = il::Generator::generate(program);
-    auto il_printer = il::Printer::print(il_generator.functions());
+    auto il_generator = mid::Generator::generate(program);
+    auto il_printer = mid::Printer::print(il_generator.functions());
     std::cout << il_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
-    OptimizationManager optimization_manager;
-    optimization_manager.emplace<ConstantFolding>();
-    optimization_manager.emplace<ConstantPropagation>();
-    optimization_manager.emplace<DeadCodeElimination>();
+    opt::PassManager optimization_manager;
+    optimization_manager.emplace<opt::ConstantFolding>();
+    optimization_manager.emplace<opt::ConstantPropagation>();
+    optimization_manager.emplace<opt::DeadCodeElimination>();
     optimization_manager.optimize(il_generator.functions());
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
-    auto optimized_printer = il::Printer::print(il_generator.functions());
+    auto optimized_printer = mid::Printer::print(il_generator.functions());
     std::cout << optimized_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
 
-    auto gas_generator = x86_64::Generator::generate(il_generator.functions());
+    auto gas_generator = back::x86_64::Generator::generate(il_generator.functions());
     std::cout << gas_generator.output().str();
 
     auto temp_dir = std::filesystem::temp_directory_path();

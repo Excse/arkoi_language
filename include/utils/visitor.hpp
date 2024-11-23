@@ -1,6 +1,6 @@
 #pragma once
 
-namespace node {
+namespace arkoi::ast {
 
 class Identifier;
 
@@ -61,7 +61,7 @@ public:
 
 }
 
-namespace il {
+namespace arkoi::mid {
 
 class Binary;
 
