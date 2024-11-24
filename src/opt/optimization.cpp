@@ -2,7 +2,9 @@
 
 using namespace arkoi::opt;
 
-void PassManager::optimize(std::vector<mid::Function> &functions) {
+void PassManager::optimize(mid::Module &module) {
+    auto &functions = module.functions();
+
     while (true) {
         auto changed = false;
 

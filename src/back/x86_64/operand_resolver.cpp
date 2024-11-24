@@ -85,7 +85,7 @@ void OperandResolver::visit(mid::End &) {
 Operand OperandResolver::resolve_operand(const mid::Operand &operand) {
     return std::visit(match{
         [&](const mid::Variable &value) -> Operand { return _resolve_variable(value); },
-        [&](const Constant &value) -> Operand { return _resolve_constant(value); },
+        [&](const mid::Constant &value) -> Operand { return _resolve_constant(value); },
     }, operand);
 }
 

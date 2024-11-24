@@ -15,7 +15,7 @@ public:
 
 class PassManager {
 public:
-    void optimize(std::vector<mid::Function> &functions);
+    void optimize(mid::Module &module);
 
     template<typename Type, typename... Args>
     Type &emplace(Args &&... args);

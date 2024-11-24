@@ -133,23 +133,6 @@ private:
     Type _type;
 };
 
-class Begin : public Instruction {
-public:
-    Begin(SharedSymbol function) : _function(std::move(function)) {}
-
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &function() const { return _function; }
-
-private:
-    SharedSymbol _function;
-};
-
-class End : public Instruction {
-public:
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
-};
-
 class Cast : public Instruction {
 public:
     Cast(mid::Variable result, Operand expression, Type from, Type to)
@@ -202,8 +185,6 @@ struct InstructionType : std::variant<
     mid::Call,
     mid::Return,
     mid::Binary,
-    mid::Begin,
-    mid::End,
     mid::Store
 > {
     using variant::variant;

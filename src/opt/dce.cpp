@@ -35,7 +35,6 @@ bool DeadCodeElimination::_eliminate_dead_stores(mid::BasicBlock &block) {
 
         std::visit(match{
             [&](const mid::Label &) { is_unreachable = false; },
-            [&](const mid::Begin &) { is_unreachable = false; },
             [&](const mid::Return &) { is_unreachable = true; },
             [](const auto &) {}
         }, instruction);

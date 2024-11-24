@@ -40,7 +40,7 @@ public:
 
     void visit(ast::If &node) override;
 
-    [[nodiscard]] auto &functions() { return _functions; }
+    [[nodiscard]] auto &module() { return _module; }
 
 private:
     mid::Variable _make_temporary(const Type &type);
@@ -48,12 +48,11 @@ private:
     SharedSymbol _make_label_symbol();
 
 private:
-    std::shared_ptr<BasicBlock> _function_end_block{};
     std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
-    std::vector<Function> _functions{};
-    SharedSymbol _function_end_symbol;
+    Function *_current_function{};
     Operand _current_operand{};
+    Module _module{};
 };
 
 } // namespace arkoi::mid

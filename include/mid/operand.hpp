@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "mid/symbol_table.hpp"
-#include "utils/data.hpp"
+#include "def/size.hpp"
 
 namespace arkoi::mid {
 
@@ -27,7 +27,8 @@ private:
     SharedSymbol _symbol;
 };
 
-struct Constant : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+class Constant : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+public:
     using variant::variant;
 
     [[nodiscard]] Size size() const;
