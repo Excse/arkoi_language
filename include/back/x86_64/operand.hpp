@@ -72,7 +72,7 @@ struct Operand : std::variant<Register, Memory, Constant> {
     using variant::variant;
 };
 
-}
+} // namespace arkoi::back::x86_64
 
 std::ostream &operator<<(std::ostream &os, const arkoi::back::x86_64::Register &reg);
 

@@ -56,4 +56,4 @@ private:
     Operand _current_operand{};
 };
 
-}
+} // namespace arkoi::mid

@@ -62,7 +62,7 @@ private:
     std::string _name;
 };
 
-}
+} // namespace arkoi::symbol
 
 struct SymbolType : std::variant<arkoi::symbol::Function, arkoi::symbol::Parameter, arkoi::symbol::Temporary> {
     using variant::variant;

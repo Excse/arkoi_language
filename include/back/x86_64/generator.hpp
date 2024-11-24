@@ -102,4 +102,4 @@ private:
     Assembly _assembly{};
 };
 
-}
+} // namespace arkoi::back::x86_64

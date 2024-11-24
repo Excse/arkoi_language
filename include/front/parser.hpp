@@ -100,4 +100,4 @@ public:
         : ParserError("Expected " + expected + " but got " + to_string(got.type())) {}
 };
 
-}
+} // namespace arkoi::front

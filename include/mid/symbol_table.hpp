@@ -37,4 +37,4 @@ public:
 
 #include "../../src/mid/symbol_table.tpp"
 
-}
+} // namespace arkoi::mid

@@ -100,4 +100,4 @@ private:
     std::stringstream _output{};
 };
 
-}
+} // namespace arkoi::back::x86_64

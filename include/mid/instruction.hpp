@@ -61,7 +61,7 @@ private:
 class Call : public Instruction {
 public:
     Call(mid::Variable result, SharedSymbol function, std::vector<Operand> &&arguments)
-        : _arguments(std::move(arguments)), _result(std::move(result)), _function(std::move(function)) {}
+        : _arguments(std::move(arguments)), _function(std::move(function)), _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -73,8 +73,8 @@ public:
 
 private:
     std::vector<Operand> _arguments;
-    mid::Variable _result;
     SharedSymbol _function;
+    mid::Variable _result;
 };
 
 class Return : public Instruction {
@@ -211,6 +211,6 @@ struct InstructionType : std::variant<
     void accept(mid::Visitor &visitor);
 };
 
-}
+} // namespace arkoi::mid
 
 std::ostream &operator<<(std::ostream &os, const arkoi::mid::Binary::Operator &op);

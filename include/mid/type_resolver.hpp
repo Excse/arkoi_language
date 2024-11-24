@@ -55,4 +55,4 @@ private:
     bool _failed{};
 };
 
-}
+} // namespace arkoi::mid

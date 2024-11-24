@@ -75,7 +75,7 @@ private:
     Type _type;
 };
 
-}
+} // namespace arkoi::front
 
 std::ostream &operator<<(std::ostream &os, const arkoi::front::Token &token);
 

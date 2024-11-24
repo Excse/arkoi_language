@@ -3,29 +3,17 @@
 namespace arkoi::ast {
 
 class Identifier;
-
 class Parameter;
-
 class Floating;
-
 class Function;
-
 class Integer;
-
 class Program;
-
 class Boolean;
-
 class Return;
-
 class Binary;
-
 class Block;
-
 class Cast;
-
 class Call;
-
 class If;
 
 class Visitor {
@@ -59,29 +47,21 @@ public:
     virtual void visit(If &node) = 0;
 };
 
-}
+} // namespace arkoi::ast
 
 namespace arkoi::mid {
 
 class Binary;
-
 class Return;
-
 class Label;
-
 class Begin;
+class Store;
+class Cast;
+class Call;
+class Goto;
+class End;
 
 class If;
-
-class Store;
-
-class Cast;
-
-class Call;
-
-class Goto;
-
-class End;
 
 class Visitor {
 public:
@@ -108,4 +88,4 @@ public:
     virtual void visit(Store &instruction) = 0;
 };
 
-}
+} // namespace arkoi::mid

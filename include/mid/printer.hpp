@@ -43,4 +43,4 @@ private:
     std::stringstream _output{};
 };
 
-}
+} // namespace arkoi::mid

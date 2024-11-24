@@ -37,7 +37,7 @@ struct Operand : std::variant<Constant, Variable> {
     using variant::variant;
 };
 
-}
+} // namespace arkoi::mid
 
 namespace std {
 
@@ -56,7 +56,7 @@ struct hash<arkoi::mid::Operand> {
     size_t operator()(const arkoi::mid::Operand &operand) const;
 };
 
-}
+} // namespace std
 
 std::ostream &operator<<(std::ostream &os, const arkoi::mid::Constant &operand);
 

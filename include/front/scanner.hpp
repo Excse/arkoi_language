@@ -111,4 +111,4 @@ public:
         : ScannerError("The number " + number + " exceeds the 64bit limitations.") {}
 };
 
-}
+} // namespace arkoi::front

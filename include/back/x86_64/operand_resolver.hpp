@@ -65,4 +65,4 @@ private:
     int64_t _local_size{};
 };
 
-}
+} // namespace arkoi::back::x86_64

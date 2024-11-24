@@ -24,4 +24,4 @@ private:
     Constants _constants{};
 };
 
-}
+} // namespace arkoi::opt

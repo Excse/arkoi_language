@@ -26,4 +26,4 @@ private:
 
 #include "../../src/opt/optimization.tpp"
 
-}
+} // namespace arkoi::opt

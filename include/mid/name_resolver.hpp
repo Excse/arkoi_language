@@ -59,4 +59,4 @@ private:
 
 #include "../../src/mid/name_resolver.tpp"
 
-}
+} // namespace arkoi::mid

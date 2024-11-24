@@ -275,4 +275,4 @@ private:
     Type _to;
 };
 
-}
+}  // namespace arkoi::ast

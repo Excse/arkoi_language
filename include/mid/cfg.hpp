@@ -47,4 +47,4 @@ private:
 
 #include "../../src/mid/cfg.tpp"
 
-}
+} // namespace arkoi::mid

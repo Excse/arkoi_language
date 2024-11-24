@@ -28,4 +28,4 @@ private:
     UsedVariables _used_variables{};
 };
 
-}
+} // namespace arkoi::opt

@@ -20,4 +20,4 @@ private:
     [[nodiscard]] static mid::Operand _evaluate_unary(const Type &to, auto expression);
 };
 
-}
+} // namespace arkoi::opt
