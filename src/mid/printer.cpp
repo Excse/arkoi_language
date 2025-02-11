@@ -8,44 +8,48 @@
 
 using namespace arkoi::mid;
 
-Printer Printer::print(std::vector<Function> &functions) {
+Printer Printer::print(Module &module) {
     Printer printer;
+    printer.visit(module);
+    return printer;
+}
 
-    for (auto &function: functions) {
-        function.linearize([&](auto &instruction) {
-            instruction.accept(printer);
-        });
+void Printer::visit(Module &module) {
+    for (auto &function: module.functions()) {
+        function.accept(*this);
     }
-
-    return printer;
 }
 
-Printer Printer::print(Instruction &instruction) {
-    Printer printer;
+void Printer::visit(Function &function) {
+    auto &symbol = std::get<symbol::Function>(*function.symbol());
+    _output << "FUN " << symbol.name() << "(";
 
-    instruction.accept(printer);
-
-    return printer;
-}
-
-void Printer::visit(Label &instruction) {
-    _output << "LABEL " << instruction.symbol() << ":\n";
-}
-
-void Printer::visit(Begin &instruction) {
-    auto &function = std::get<symbol::Function>(*instruction.function());
-    _output << "BEGIN " << function.name() << "(";
-
-    for (size_t index = 0; index < function.parameter_symbols().size(); index++) {
-        auto &parameter = std::get<symbol::Parameter>(*function.parameter_symbols()[index]);
+    for (size_t index = 0; index < symbol.parameter_symbols().size(); index++) {
+        auto &parameter = std::get<symbol::Parameter>(*symbol.parameter_symbols()[index]);
         _output << parameter.name() << " @" << parameter.type().value();
 
-        if (index != function.parameter_symbols().size() - 1) {
+        if (index != symbol.parameter_symbols().size() - 1) {
             _output << ", ";
         }
     }
 
-    _output << ") @" << function.return_type().value() << "\n";
+    _output << ") @" << symbol.return_type().value() << "\n";
+
+    function.depth_first_search([&](BasicBlock &block) {
+        block.accept(*this);
+    });
+
+    _output << "\n";
+}
+
+void Printer::visit(BasicBlock &block) {
+    for (auto &instruction: block.instructions()) {
+        instruction.accept(*this);
+    }
+}
+
+void Printer::visit(Label &instruction) {
+    _output << "LABEL " << instruction.symbol() << ":\n";
 }
 
 void Printer::visit(Return &instruction) {
@@ -64,10 +68,6 @@ void Printer::visit(Cast &instruction) {
     _output << "  ";
     _output << instruction.result() << " = CAST " << instruction.expression() << " @" << instruction.from()
             << " TO @" << instruction.to() << "\n";
-}
-
-void Printer::visit(End &) {
-    _output << "END\n";
 }
 
 void Printer::visit(Call &instruction) {

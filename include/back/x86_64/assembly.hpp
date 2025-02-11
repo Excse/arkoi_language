@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "back/x86_64/operand.hpp"
+#include "def/symbol.hpp"
 
 namespace arkoi::back::x86_64 {
 

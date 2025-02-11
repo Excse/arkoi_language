@@ -24,10 +24,10 @@ void InstructionType::accept(mid::Visitor &visitor) {
 
 std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
     switch (op) {
-        case Binary::Operator::Add: return os << "add";
-        case Binary::Operator::Sub: return os << "sub";
-        case Binary::Operator::Mul: return os << "mul";
-        case Binary::Operator::Div: return os << "div";
+        case Binary::Operator::Add: return os << "ADD";
+        case Binary::Operator::Sub: return os << "SUB";
+        case Binary::Operator::Mul: return os << "MUL";
+        case Binary::Operator::Div: return os << "DIV";
     }
 
     // As the -Wswitch flag is set, this will never be reached.

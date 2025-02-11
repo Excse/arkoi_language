@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "utils/data.hpp"
+#include "size.hpp"
 
 namespace arkoi::type {
 

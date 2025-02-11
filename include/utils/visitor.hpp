@@ -51,15 +51,16 @@ public:
 
 namespace arkoi::mid {
 
+class BasicBlock;
+class Function;
+class Module;
 class Binary;
 class Return;
 class Label;
-class Begin;
 class Store;
 class Cast;
 class Call;
 class Goto;
-class End;
 
 class If;
 
@@ -67,15 +68,17 @@ class Visitor {
 public:
     virtual ~Visitor() = default;
 
-    virtual void visit(Label &instruction) = 0;
+    virtual void visit(Module &module) = 0;
 
-    virtual void visit(Begin &instruction) = 0;
+    virtual void visit(Function &function) = 0;
+
+    virtual void visit(BasicBlock &block) = 0;
+
+    virtual void visit(Label &instruction) = 0;
 
     virtual void visit(Return &instruction) = 0;
 
     virtual void visit(Binary &instruction) = 0;
-
-    virtual void visit(End &instruction) = 0;
 
     virtual void visit(Cast &instruction) = 0;
 

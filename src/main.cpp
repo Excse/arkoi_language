@@ -6,7 +6,7 @@
 #include "opt/constant_propagation.hpp"
 #include "opt/constant_folding.hpp"
 #include "opt/dce.hpp"
-#include "back/x86_64/generator.hpp"
+//#include "back/x86_64/generator.hpp"
 #include "mid/name_resolver.hpp"
 #include "mid/type_resolver.hpp"
 #include "mid/generator.hpp"
@@ -44,7 +44,7 @@ int main() {
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
     auto il_generator = mid::Generator::generate(program);
-    auto il_printer = mid::Printer::print(il_generator.functions());
+    auto il_printer = mid::Printer::print(il_generator.module());
     std::cout << il_printer.output().str();
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
@@ -53,43 +53,43 @@ int main() {
     optimization_manager.emplace<opt::ConstantFolding>();
     optimization_manager.emplace<opt::ConstantPropagation>();
     optimization_manager.emplace<opt::DeadCodeElimination>();
-    optimization_manager.optimize(il_generator.functions());
+    optimization_manager.optimize(il_generator.module());
 
     std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
-    auto optimized_printer = mid::Printer::print(il_generator.functions());
+    auto optimized_printer = mid::Printer::print(il_generator.module());
     std::cout << optimized_printer.output().str();
 
-    std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
-
-    auto gas_generator = back::x86_64::Generator::generate(il_generator.functions());
-    std::cout << gas_generator.output().str();
-
-    auto temp_dir = std::filesystem::temp_directory_path();
-    auto asm_file_path = temp_dir / "temp_asm.s";
-    auto obj_file_path = temp_dir / "temp_obj.o";
-    auto exe_file_path = temp_dir / "temp_executable";
-
-    std::ofstream asm_file(asm_file_path);
-    asm_file << gas_generator.output().str();
-    asm_file.close();
-
-    std::cout << "~~~~~~~~~~~~          Assemble            ~~~~~~~~~~~~" << std::endl;
-
-    std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
-    int assemble_result = std::system(assemble_command.c_str());
-    if (WEXITSTATUS(assemble_result) != 0) exit(1);
-
-    std::cout << "~~~~~~~~~~~~            Link              ~~~~~~~~~~~~" << std::endl;
-
-    std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
-    int link_result = std::system(link_command.c_str());
-    if (WEXITSTATUS(link_result) != 0) exit(1);
-
-    std::cout << "~~~~~~~~~~~~           Execute            ~~~~~~~~~~~~" << std::endl;
-
-    int exec_result = std::system(exe_file_path.string().c_str());
-    std::cout << "Execute Code: " << WEXITSTATUS(exec_result) << std::endl;
+//    std::cout << "~~~~~~~~~~~~       GNU Assembler          ~~~~~~~~~~~~" << std::endl;
+//
+//    auto gas_generator = back::x86_64::Generator::generate(il_generator.functions());
+//    std::cout << gas_generator.output().str();
+//
+//    auto temp_dir = std::filesystem::temp_directory_path();
+//    auto asm_file_path = temp_dir / "temp_asm.s";
+//    auto obj_file_path = temp_dir / "temp_obj.o";
+//    auto exe_file_path = temp_dir / "temp_executable";
+//
+//    std::ofstream asm_file(asm_file_path);
+//    asm_file << gas_generator.output().str();
+//    asm_file.close();
+//
+//    std::cout << "~~~~~~~~~~~~          Assemble            ~~~~~~~~~~~~" << std::endl;
+//
+//    std::string assemble_command = "as " + asm_file_path.string() + " -o " + obj_file_path.string();
+//    int assemble_result = std::system(assemble_command.c_str());
+//    if (WEXITSTATUS(assemble_result) != 0) exit(1);
+//
+//    std::cout << "~~~~~~~~~~~~            Link              ~~~~~~~~~~~~" << std::endl;
+//
+//    std::string link_command = "ld " + obj_file_path.string() + " -o " + exe_file_path.string();
+//    int link_result = std::system(link_command.c_str());
+//    if (WEXITSTATUS(link_result) != 0) exit(1);
+//
+//    std::cout << "~~~~~~~~~~~~           Execute            ~~~~~~~~~~~~" << std::endl;
+//
+//    int exec_result = std::system(exe_file_path.string().c_str());
+//    std::cout << "Execute Code: " << WEXITSTATUS(exec_result) << std::endl;
 
     return 0;
 }

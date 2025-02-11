@@ -1,6 +1,8 @@
 #include "mid/operand.hpp"
 
 #include "utils/utils.hpp"
+#include "back/mir/operand.hpp"
+
 
 using namespace arkoi::mid;
 

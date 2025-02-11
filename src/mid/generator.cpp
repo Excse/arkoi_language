@@ -23,25 +23,26 @@ void Generator::visit(ast::Program &node) {
 }
 
 void Generator::visit(ast::Function &node) {
-    // Create the function end symbol and basic block
-    _function_end_block = std::make_shared<BasicBlock>();
-    _function_end_symbol = _make_label_symbol();
+    // Resetting the temp index so it is not going to be too huge
+    _temp_index = 0;
 
     // Creates a new basic block that will get populated with instructions
-    _current_block = std::make_shared<BasicBlock>();
-    _functions.emplace_back(_current_block, _function_end_block);
+    auto start_block = std::make_shared<BasicBlock>(_make_label_symbol());
+    _current_block = start_block;
 
-    _current_block->emplace<Begin>(node.symbol());
+    // Creates the function end basic block
+    auto end_block = std::make_shared<BasicBlock>(_make_label_symbol());
+
+    auto &function = _module.functions().emplace_back(node.symbol(), start_block, end_block);
+    _current_function = &function;
 
     node.block()->accept(*this);
 
     // Connect the last current block of this function with the end basic block
-    _current_block->set_next(_function_end_block);
+    _current_block->set_next(_current_function->end());
 
-    _current_block = _function_end_block;
-
-    _function_end_block->emplace<Label>(_function_end_symbol);
-    _function_end_block->emplace<End>();
+    _current_block = _current_function->end();
+    _current_block->emplace<Label>(_current_function->end()->symbol());
 }
 
 void Generator::visit(ast::Block &node) {
@@ -92,10 +93,10 @@ void Generator::visit(ast::Return &node) {
 
     // Populate the current basic block with instructions
     _current_block->emplace<Return>(std::move(_current_operand), node.type());
-    _current_block->emplace<Goto>(_function_end_symbol);
+    _current_block->emplace<Goto>(_current_function->end()->symbol());
 
     // Connect the current basic block with the function end basic block
-    _current_block->set_next(_function_end_block);
+    _current_block->set_next(_current_function->end());
 }
 
 void Generator::visit(ast::Identifier &node) {
@@ -148,14 +149,14 @@ void Generator::visit(ast::Call &node) {
 }
 
 void Generator::visit(ast::If &node) {
-    auto then_block = std::make_shared<BasicBlock>();
     auto then_label = _make_label_symbol();
+    auto then_block = std::make_shared<BasicBlock>(then_label);
 
-    auto branch_block = std::make_shared<BasicBlock>();
     auto branch_label = _make_label_symbol();
+    auto branch_block = std::make_shared<BasicBlock>(branch_label);
 
-    auto after_block = std::make_shared<BasicBlock>();
     auto after_label = _make_label_symbol();
+    auto after_block = std::make_shared<BasicBlock>(after_label);
 
     { // Entrance block
         // This will set _current_operand
