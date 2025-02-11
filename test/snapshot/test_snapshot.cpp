@@ -3,12 +3,12 @@
 
 #include "gtest/gtest.h"
 
-#include "frontend/scanner.hpp"
+#include "front/scanner.hpp"
 #include "snapshot.hpp"
 
-TEST(Snapshot, Scanner) {
-    static const std::string FILES = TEST_PATH "/snapshot/scanner/";
+static const std::string FILES = TEST_PATH "/snapshot/scanner/";
 
+TEST(Snapshot, Scanner) {
     for (const auto &entry: std::filesystem::directory_iterator(FILES)) {
         if (!entry.is_regular_file()) continue;
         if (entry.path().extension() != ".ark") continue;
@@ -22,7 +22,7 @@ TEST(Snapshot, Scanner) {
         std::stringstream source;
         source << source_file.rdbuf();
 
-        auto scanner = Scanner(source.str());
+        auto scanner = arkoi::front::Scanner(source.str());
 
         std::stringstream output;
         for (const auto &token: scanner.tokenize()) {

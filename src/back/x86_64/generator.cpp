@@ -9,12 +9,12 @@
 using namespace arkoi::back::x86_64;
 using namespace arkoi;
 
-static const Register RBP(Register::Base::BP, Size::QWORD);
-static const Register RSP(Register::Base::SP, Size::QWORD);
-static const Register RDI(Register::Base::DI, Size::QWORD);
-static const Register RAX(Register::Base::A, Size::QWORD);
+static constinit Register RBP = {Register::Base::BP, Size::QWORD};
+static constinit Register RSP = {Register::Base::SP, Size::QWORD};
+static constinit Register RDI = {Register::Base::DI, Size::QWORD};
+static constinit Register RAX = {Register::Base::A, Size::QWORD};
 
-static const type::Boolean BOOL_TYPE;
+static constinit type::Boolean BOOL_TYPE = {};
 
 Generator Generator::generate(std::vector<mid::Function> &functions) {
     Generator generator;

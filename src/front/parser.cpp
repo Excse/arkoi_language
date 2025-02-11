@@ -144,7 +144,7 @@ Type Parser::_parse_type() {
         case Token::Type::F32: return type::Floating(Size::DWORD);
         case Token::Type::F64: return type::Floating(Size::QWORD);
         case Token::Type::Bool: return type::Boolean();
-        default: throw UnexpectedToken("bool, u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize, bool", token);
+        default: throw UnexpectedToken("u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize, bool", token);
     }
 }
 
@@ -290,7 +290,6 @@ std::unique_ptr<ast::Node> Parser::_parse_factor() {
 
     return expression;
 }
-
 
 std::unique_ptr<ast::Node> Parser::_parse_primary() {
     const auto &consumed = _consume_any();

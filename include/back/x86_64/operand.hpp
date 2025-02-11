@@ -15,7 +15,7 @@ public:
     };
 
 public:
-    Register(Base base, Size size) : _size(size), _base(base) {}
+    constexpr Register(Base base, Size size) : _size(size), _base(base) {}
 
     bool operator==(const Register &other) const;
 

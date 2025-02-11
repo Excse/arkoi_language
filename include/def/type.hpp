@@ -8,7 +8,7 @@ namespace arkoi::type {
 
 class Integral {
 public:
-    Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
+    constexpr Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
 
     bool operator==(const Integral &other) const;
 

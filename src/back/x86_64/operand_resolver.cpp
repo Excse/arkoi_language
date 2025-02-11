@@ -5,18 +5,15 @@
 
 using namespace arkoi::back::x86_64;
 
-static const Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
-                                                Register::Base::C, Register::Base::R8, Register::Base::R9};
+static constinit Register::Base INT_REG_ORDER[6] = {Register::Base::DI, Register::Base::SI, Register::Base::D,
+                                             Register::Base::C, Register::Base::R8, Register::Base::R9};
+static constinit Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
+                                             Register::Base::XMM2, Register::Base::XMM3,
+                                             Register::Base::XMM4, Register::Base::XMM5,
+                                             Register::Base::XMM6, Register::Base::XMM7};
+static constinit Register RBP = {Register::Base::BP, Size::QWORD};
 
-static const Register::Base SSE_REG_ORDER[8] = {Register::Base::XMM0, Register::Base::XMM1,
-                                                Register::Base::XMM2, Register::Base::XMM3,
-                                                Register::Base::XMM4, Register::Base::XMM5,
-                                                Register::Base::XMM6, Register::Base::XMM7};
-
-static const Register RBP(Register::Base::BP, Size::QWORD);
-
-static const int64_t STACK_ALIGNMENT = 16;
-
+static constexpr int64_t STACK_ALIGNMENT = 16;
 static size_t CONSTANT_INDEX = 0;
 
 OperandResolver OperandResolver::resolve(mid::Function &function) {

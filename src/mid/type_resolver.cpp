@@ -8,8 +8,8 @@
 using namespace arkoi::mid;
 using namespace arkoi;
 
-static type::Integral BOOL_PROMOTED_INT_TYPE(Size::DWORD, false);
-static type::Boolean BOOL_TYPE;
+static constinit type::Integral BOOL_PROMOTED_INT_TYPE = {Size::DWORD, false};
+static constinit type::Boolean BOOL_TYPE = {};
 
 TypeResolver TypeResolver::resolve(ast::Program &node) {
     TypeResolver resolver;
@@ -197,12 +197,12 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     auto floating_left = std::get_if<type::Floating>(&left_type);
     auto floating_right = std::get_if<type::Floating>(&right_type);
 
-    // Stage 4: If either operand is of floating-point mid, the following rules are applied:
+    // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
-        // If both operands have the same mid, no further conversion will be performed.
+        // If both operands have the same type, no further conversion will be performed.
         if (left_type == right_type) return left_type;
 
-        // Otherwise, if one of the operands is of a non-floating-point mid, that operand is converted to the mid of
+        // Otherwise, if one of the operands is of a non-floating-point type, that operand is converted to the mid of
         // the other operand.
         if (floating_left && !floating_right) return left_type;
         if (floating_right && !floating_left) return right_type;
