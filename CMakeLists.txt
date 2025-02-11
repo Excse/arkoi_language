@@ -57,11 +57,6 @@ add_library(${PROJECT_NAME}_lib
         src/opt/constant_folding.cpp
         src/opt/dce.cpp
         src/opt/optimization.cpp
-#        src/back/x86_64/operand_resolver.cpp
-#        src/back/x86_64/generator.cpp
-#        src/back/x86_64/assembly.cpp
-#        src/back/x86_64/operand.cpp
-        src/back/mir/operand.cpp
         src/def/size.cpp
 )
 
