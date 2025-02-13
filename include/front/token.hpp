@@ -50,6 +50,7 @@ public:
         GreaterThan,
         LessThan,
         Equal,
+        Colon,
 
         EndOfFile,
         Unknown,

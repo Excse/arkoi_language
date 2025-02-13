@@ -22,7 +22,7 @@ void Printer::visit(Module &module) {
 
 void Printer::visit(Function &function) {
     auto &symbol = std::get<symbol::Function>(*function.symbol());
-    _output << "FUN " << symbol.name() << "(";
+    _output << "fun " << symbol.name() << "(";
 
     for (size_t index = 0; index < symbol.parameter_symbols().size(); index++) {
         auto &parameter = std::get<symbol::Parameter>(*symbol.parameter_symbols()[index]);
@@ -33,7 +33,7 @@ void Printer::visit(Function &function) {
         }
     }
 
-    _output << ") @" << symbol.return_type().value() << "\n";
+    _output << ") @" << symbol.return_type().value() << ":\n";
 
     function.depth_first_search([&](BasicBlock &block) {
         block.accept(*this);
@@ -49,12 +49,12 @@ void Printer::visit(BasicBlock &block) {
 }
 
 void Printer::visit(Label &instruction) {
-    _output << "LABEL " << instruction.symbol() << ":\n";
+    _output << instruction.symbol() << ":\n";
 }
 
 void Printer::visit(Return &instruction) {
     _output << "  ";
-    _output << "RETURN " << instruction.value() << "\n";
+    _output << "ret " << instruction.value() << "\n";
 }
 
 void Printer::visit(Binary &instruction) {
@@ -66,13 +66,13 @@ void Printer::visit(Binary &instruction) {
 
 void Printer::visit(Cast &instruction) {
     _output << "  ";
-    _output << instruction.result() << " = CAST " << instruction.expression() << " @" << instruction.from()
-            << " TO @" << instruction.to() << "\n";
+    _output << instruction.result() << " = cast " << instruction.expression() << " @" << instruction.from()
+            << " to @" << instruction.to() << "\n";
 }
 
 void Printer::visit(Call &instruction) {
     _output << "  ";
-    _output << instruction.result() << " = CALL " << instruction.function() << "(";
+    _output << instruction.result() << " = call " << instruction.function() << "(";
 
     for (size_t index = 0; index < instruction.arguments().size(); index++) {
         auto &argument = instruction.arguments()[index];
@@ -88,28 +88,28 @@ void Printer::visit(Call &instruction) {
 
 void Printer::visit(Goto &instruction) {
     _output << "  ";
-    _output << "GOTO " << instruction.label() << "\n";
+    _output << "goto " << instruction.label() << "\n";
 }
 
 void Printer::visit(If &instruction) {
     _output << "  ";
-    _output << "IF " << instruction.condition() << " GOTO " << instruction.label() << "\n";
+    _output << "if " << instruction.condition() << " goto " << instruction.label() << "\n";
 }
 
 void Printer::visit(Alloca &instruction) {
     _output << "  ";
-    _output << instruction.result() << " = ALLOCA @" << instruction.type() << "\n";
+    _output << instruction.result() << " = alloca @" << instruction.type() << "\n";
 }
 
 void Printer::visit(Store &instruction) {
     _output << "  ";
-    _output << "STORE @" << instruction.type() << " " << instruction.value()
-            << " IN " << instruction.result() << "\n";
+    _output << "store @" << instruction.type() << " " << instruction.value()
+            << " " << instruction.result() << "\n";
 }
 
 void Printer::visit(Load &instruction) {
     _output << "  ";
-    _output << instruction.result() << " = LOAD @" << instruction.type()
+    _output << instruction.result() << " = load @" << instruction.type()
             << " " << instruction.target() << "\n";
 }
 

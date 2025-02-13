@@ -65,6 +65,8 @@ std::unique_ptr<ast::Function> Parser::_parse_function(const Token &) {
 
     auto return_type = _parse_type();
 
+    _consume(Token::Type::Colon);
+
     _consume(Token::Type::Newline);
 
     auto block = _parse_block();
@@ -222,6 +224,8 @@ std::unique_ptr<ast::Return> Parser::_parse_return(const Token &) {
 std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
     auto expression = _parse_expression();
 
+    _consume(Token::Type::Colon);
+
     ast::If::ThenType then;
     if (_try_consume(Token::Type::Newline)) {
         then = _parse_block();
@@ -236,6 +240,8 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
     if (auto token = _try_consume(Token::Type::If)) {
         return std::make_unique<ast::If>(std::move(expression), std::move(then), _parse_if(*token));
     }
+
+    _consume(Token::Type::Colon);
 
     ast::If::ElseType _else;
     if (_try_consume(Token::Type::Newline)) {

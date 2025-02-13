@@ -50,6 +50,7 @@ std::optional<Token::Type> Token::lookup_special(char value) {
         case '>': return Type::GreaterThan;
         case '<': return Type::LessThan;
         case '=': return Type::Equal;
+        case ':': return Type::Colon;
         default: return std::nullopt;
     }
 }
@@ -96,6 +97,7 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::GreaterThan: return os << "GreaterThan";
         case Token::Type::LessThan: return os << "LessThan";
         case Token::Type::Equal: return os << "Equal";
+        case Token::Type::Colon: return os << "Colon";
 
         case Token::Type::EndOfFile: return os << "EndOfFile";
         case Token::Type::Unknown: return os << "Unknown";
