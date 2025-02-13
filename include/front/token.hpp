@@ -39,7 +39,6 @@ public:
         True,
         False,
 
-        // Special 1
         LParent,
         RParent,
         At,
@@ -48,6 +47,9 @@ public:
         Minus,
         Slash,
         Asterisk,
+        GreaterThan,
+        LessThan,
+        Equal,
 
         EndOfFile,
         Unknown,
@@ -67,7 +69,7 @@ public:
 
     [[nodiscard]] static std::optional<Token::Type> lookup_keyword(const std::string_view &value);
 
-    [[nodiscard]] static std::optional<Token::Type> lookup_special_1(char value);
+    [[nodiscard]] static std::optional<Token::Type> lookup_special(char value);
 
 private:
     std::string _contents;

@@ -47,6 +47,8 @@ private:
 
     [[nodiscard]] std::unique_ptr<ast::Node> _parse_expression();
 
+    [[nodiscard]] std::unique_ptr<ast::Node> _parse_comparison();
+
     [[nodiscard]] std::unique_ptr<ast::Node> _parse_term();
 
     [[nodiscard]] std::unique_ptr<ast::Node> _parse_factor();
@@ -74,6 +76,8 @@ private:
     [[nodiscard]] static ast::Binary::Operator _to_binary_operator(const Token &token);
 
     [[nodiscard]] static bool _is_factor_operator(const Token &token);
+
+    [[nodiscard]] static bool _is_comparison_operator(const Token &token);
 
     [[nodiscard]] static bool _is_term_operator(const Token &token);
 

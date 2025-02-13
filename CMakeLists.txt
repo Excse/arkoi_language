@@ -53,10 +53,6 @@ add_library(${PROJECT_NAME}_lib
         src/mid/printer.cpp
         src/mid/operand.cpp
         src/mid/cfg.cpp
-        src/opt/constant_propagation.cpp
-        src/opt/constant_folding.cpp
-        src/opt/dce.cpp
-        src/opt/optimization.cpp
         src/def/size.cpp
 )
 

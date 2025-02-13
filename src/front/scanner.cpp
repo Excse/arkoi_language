@@ -184,7 +184,7 @@ Token Scanner::_lex_special() {
     Location start = _mark_start();
 
     auto current = _current_char();
-    if (auto special = Token::lookup_special_1(current)) {
+    if (auto special = Token::lookup_special(current)) {
         _next();
         return {*special, start.column, start.row, _current_view()};
     }

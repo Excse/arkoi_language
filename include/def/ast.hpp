@@ -223,6 +223,8 @@ public:
         Sub,
         Mul,
         Div,
+        GreaterThan,
+        LessThan,
     };
 
 public:

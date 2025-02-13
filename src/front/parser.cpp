@@ -264,7 +264,19 @@ std::unique_ptr<ast::Call> Parser::_parse_call(const Token &identifier) {
 }
 
 std::unique_ptr<ast::Node> Parser::_parse_expression() {
-    return _parse_term();
+    return _parse_comparison();
+}
+
+std::unique_ptr<ast::Node> Parser::_parse_comparison() {
+    auto expression = _parse_term();
+
+    while (auto op = _try_consume(_is_comparison_operator)) {
+        auto type = _to_binary_operator(op.value());
+
+        expression = std::make_unique<ast::Binary>(std::move(expression), type, _parse_term());
+    }
+
+    return expression;
 }
 
 std::unique_ptr<ast::Node> Parser::_parse_term() {
@@ -388,12 +400,18 @@ ast::Binary::Operator Parser::_to_binary_operator(const Token &token) {
         case Token::Type::Asterisk: return ast::Binary::Operator::Mul;
         case Token::Type::Plus: return ast::Binary::Operator::Add;
         case Token::Type::Minus: return ast::Binary::Operator::Sub;
+        case Token::Type::GreaterThan: return ast::Binary::Operator::GreaterThan;
+        case Token::Type::LessThan: return ast::Binary::Operator::LessThan;
         default: std::unreachable();
     }
 }
 
 bool Parser::_is_factor_operator(const Token &token) {
     return token.type() == Token::Type::Asterisk || token.type() == Token::Type::Slash;
+}
+
+bool Parser::_is_comparison_operator(const Token &token) {
+    return token.type() == Token::Type::GreaterThan || token.type() == Token::Type::LessThan;
 }
 
 bool Parser::_is_term_operator(const Token &token) {

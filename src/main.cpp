@@ -2,9 +2,6 @@
 #include <fstream>
 #include <sstream>
 
-#include "opt/constant_propagation.hpp"
-#include "opt/constant_folding.hpp"
-#include "opt/dce.hpp"
 #include "mid/name_resolver.hpp"
 #include "mid/type_resolver.hpp"
 #include "mid/generator.hpp"
@@ -44,16 +41,6 @@ int main() {
     auto il_generator = mid::Generator::generate(program);
     auto il_printer = mid::Printer::print(il_generator.module());
     std::cout << il_printer.output().str();
-
-    std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
-
-    opt::PassManager optimization_manager;
-    optimization_manager.emplace<opt::ConstantFolding>();
-    optimization_manager.emplace<opt::ConstantPropagation>();
-    optimization_manager.emplace<opt::DeadCodeElimination>();
-    optimization_manager.optimize(il_generator.module());
-
-    std::cout << "~~~~~~~~~~~~          Optimized           ~~~~~~~~~~~~" << std::endl;
 
     auto optimized_printer = mid::Printer::print(il_generator.module());
     std::cout << optimized_printer.output().str();

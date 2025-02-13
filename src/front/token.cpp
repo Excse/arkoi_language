@@ -37,7 +37,7 @@ std::optional<Token::Type> Token::lookup_keyword(const std::string_view &value) 
     return std::nullopt;
 }
 
-std::optional<Token::Type> Token::lookup_special_1(char value) {
+std::optional<Token::Type> Token::lookup_special(char value) {
     switch (value) {
         case '(': return Type::LParent;
         case ')': return Type::RParent;
@@ -47,6 +47,9 @@ std::optional<Token::Type> Token::lookup_special_1(char value) {
         case '-': return Type::Minus;
         case '/': return Type::Slash;
         case '*': return Type::Asterisk;
+        case '>': return Type::GreaterThan;
+        case '<': return Type::LessThan;
+        case '=': return Type::Equal;
         default: return std::nullopt;
     }
 }
@@ -90,6 +93,9 @@ std::ostream &operator<<(std::ostream &os, const Token::Type &type) {
         case Token::Type::Minus: return os << "Minus";
         case Token::Type::Slash: return os << "Slash";
         case Token::Type::Asterisk: return os << "Asterisk";
+        case Token::Type::GreaterThan: return os << "GreaterThan";
+        case Token::Type::LessThan: return os << "LessThan";
+        case Token::Type::Equal: return os << "Equal";
 
         case Token::Type::EndOfFile: return os << "EndOfFile";
         case Token::Type::Unknown: return os << "Unknown";
