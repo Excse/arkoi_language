@@ -103,6 +103,7 @@ void TypeResolver::visit(ast::Return &node) {
 
 void TypeResolver::visit(ast::Identifier &node) {
     const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
+    node.set_type(parameter.type().value());
     _current_type = parameter.type();
 }
 

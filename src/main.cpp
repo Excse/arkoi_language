@@ -42,9 +42,6 @@ int main() {
     auto il_printer = mid::Printer::print(il_generator.module());
     std::cout << il_printer.output().str();
 
-    auto optimized_printer = mid::Printer::print(il_generator.module());
-    std::cout << optimized_printer.output().str();
-
     return 0;
 }
 

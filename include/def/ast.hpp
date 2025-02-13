@@ -239,8 +239,13 @@ public:
 
     [[nodiscard]] auto &value() const { return _value; }
 
+    void set_type(Type type) { _type = type; }
+
+    [[nodiscard]] auto &type() const { return _type.value(); }
+
 private:
     std::optional<SharedSymbol> _symbol{};
+    std::optional<Type> _type{};
     front::Token _value;
 };
 

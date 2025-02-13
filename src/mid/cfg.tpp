@@ -1,6 +1,13 @@
 template<typename Type, typename... Args>
-mid::InstructionType &BasicBlock::emplace(Args &&... args) {
-    return _instructions.emplace_back(Type(std::forward<Args>(args)...));
+void BasicBlock::add(Args &&... args) {
+    if (!_instructions.empty()) {
+        // Prevent adding multiple GOTOs after each other
+        if constexpr (std::is_same_v<Type, Goto>) {
+            if (std::holds_alternative<Goto>(_instructions.back())) return;
+        }
+    }
+
+    _instructions.emplace_back(Type(std::forward<Args>(args)...));
 }
 
 //==============================================================================

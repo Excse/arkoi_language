@@ -160,6 +160,40 @@ private:
     Type _from, _to;
 };
 
+class Alloca : public Instruction {
+public:
+    Alloca(mid::Variable result, Type type)
+        : _result(std::move(result)), _type(type) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &type() const { return _type; };
+
+private:
+    mid::Variable _result;
+    Type _type;
+};
+
+class Load : public Instruction {
+public:
+    Load(mid::Variable result, mid::Variable target, Type type)
+        : _result(std::move(result)), _target(std::move(target)), _type(type) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &target() const { return _target; };
+
+    [[nodiscard]] auto &type() const { return _type; };
+
+private:
+    mid::Variable _result, _target;
+    Type _type;
+};
+
 class Store : public Instruction {
 public:
     Store(mid::Variable result, Operand value, Type type)
@@ -187,7 +221,9 @@ struct InstructionType : std::variant<
     mid::Call,
     mid::Return,
     mid::Binary,
-    mid::Store
+    mid::Alloca,
+    mid::Store,
+    mid::Load
 > {
     using variant::variant;
 

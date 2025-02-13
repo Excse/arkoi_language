@@ -50,8 +50,10 @@ private:
     SharedSymbol _make_label_symbol();
 
 private:
+    std::unordered_map<SharedSymbol, Variable> _allocas;
     std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
+    Variable _result_temp{nullptr};
     Function *_current_function{};
     Operand _current_operand{};
     Module _module{};

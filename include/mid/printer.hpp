@@ -35,7 +35,11 @@ public:
 
     void visit(If &instruction) override;
 
+    void visit(Alloca &instruction) override;
+
     void visit(Store &instruction) override;
+
+    void visit(Load &instruction) override;
 
     [[nodiscard]] auto &output() const { return _output; }
 

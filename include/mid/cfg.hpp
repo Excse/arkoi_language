@@ -16,7 +16,7 @@ public:
     void accept(mid::Visitor &visitor) { visitor.visit(*this); }
 
     template<typename Type, typename... Args>
-    mid::InstructionType &emplace(Args &&... args);
+    void add(Args &&... args);
 
     [[nodiscard]] auto &instructions() { return _instructions; }
 

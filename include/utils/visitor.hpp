@@ -59,8 +59,10 @@ class Function;
 class Module;
 class Binary;
 class Return;
+class Alloca;
 class Label;
 class Store;
+class Load;
 class Cast;
 class Call;
 class Goto;
@@ -91,7 +93,11 @@ public:
 
     virtual void visit(Goto &instruction) = 0;
 
+    virtual void visit(Alloca &instruction) = 0;
+
     virtual void visit(Store &instruction) = 0;
+
+    virtual void visit(Load &instruction) = 0;
 };
 
 } // namespace arkoi::mid

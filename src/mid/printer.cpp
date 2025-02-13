@@ -96,9 +96,21 @@ void Printer::visit(If &instruction) {
     _output << "IF " << instruction.condition() << " GOTO " << instruction.label() << "\n";
 }
 
+void Printer::visit(Alloca &instruction) {
+    _output << "  ";
+    _output << instruction.result() << " = ALLOCA @" << instruction.type() << "\n";
+}
+
 void Printer::visit(Store &instruction) {
     _output << "  ";
-    _output << instruction.result() << " = " << instruction.value() << "\n";
+    _output << "STORE @" << instruction.type() << " " << instruction.value()
+            << " IN " << instruction.result() << "\n";
+}
+
+void Printer::visit(Load &instruction) {
+    _output << "  ";
+    _output << instruction.result() << " = LOAD @" << instruction.type()
+            << " " << instruction.target() << "\n";
 }
 
 //==============================================================================

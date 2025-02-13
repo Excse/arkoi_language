@@ -23,8 +23,10 @@ void Generator::visit(ast::Program &node) {
 }
 
 void Generator::visit(ast::Function &node) {
-    // Resetting the temp index so it is not going to be too huge
+    // Resetting the variables for each function
     _temp_index = 0;
+    _allocas.clear();
+    _result_temp = {nullptr};
 
     // Creates a new basic block that will get populated with instructions
     auto start_block = std::make_shared<BasicBlock>(_make_label_symbol());
@@ -36,13 +38,28 @@ void Generator::visit(ast::Function &node) {
     auto &function = _module.functions().emplace_back(node.symbol(), start_block, end_block);
     _current_function = &function;
 
+    _result_temp = _make_temporary(node.type());
+    _current_block->add<Alloca>(_result_temp, node.type());
+
+    for (auto &parameter: node.parameters()) {
+        auto alloca_temp = _make_temporary(parameter.type());
+        _allocas.emplace(parameter.symbol(), alloca_temp);
+
+        _current_block->add<Alloca>(alloca_temp, parameter.type());
+        _current_block->add<Store>(alloca_temp, parameter.symbol(), parameter.type());
+    }
+
     node.block()->accept(*this);
 
     // Connect the last current block of this function with the end basic block
     _current_block->set_next(_current_function->end());
 
     _current_block = _current_function->end();
-    _current_block->emplace<Label>(_current_function->end()->symbol());
+
+    _current_block->add<Label>(_current_function->end()->symbol());
+    auto result_temp = _make_temporary(node.type());
+    _current_block->add<Load>(result_temp, _result_temp, node.type());
+    _current_block->add<Return>(result_temp, node.type());
 }
 
 void Generator::visit(ast::Block &node) {
@@ -90,17 +107,25 @@ void Generator::visit(ast::Boolean &node) {
 void Generator::visit(ast::Return &node) {
     // This will set _current_operand
     node.expression()->accept(*this);
+    auto expression = _current_operand;
 
     // Populate the current basic block with instructions
-    _current_block->emplace<Return>(std::move(_current_operand), node.type());
-    _current_block->emplace<Goto>(_current_function->end()->symbol());
+    _current_block->add<Store>(_result_temp, expression, node.type());
+    _current_block->add<Goto>(_current_function->end()->symbol());
 
     // Connect the current basic block with the function end basic block
     _current_block->set_next(_current_function->end());
 }
 
 void Generator::visit(ast::Identifier &node) {
-    _current_operand = node.symbol();
+    auto result = _allocas.find(node.symbol());
+    if (result != _allocas.end()) {
+        auto temp = _make_temporary(node.type());
+        _current_block->add<Load>(temp, result->second, node.type());
+        _current_operand = temp;
+    } else {
+        _current_operand = node.symbol();
+    }
 }
 
 void Generator::visit(ast::Binary &node) {
@@ -116,7 +141,7 @@ void Generator::visit(ast::Binary &node) {
     auto result = _make_temporary(node.result_type());
     _current_operand = result;
 
-    _current_block->emplace<Binary>(result, left, type, right, node.op_type(), node.result_type());
+    _current_block->add<Binary>(result, left, type, right, node.op_type(), node.result_type());
 }
 
 void Generator::visit(ast::Assign &node) {
@@ -124,7 +149,7 @@ void Generator::visit(ast::Assign &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    _current_block->emplace<Store>(node.symbol(), expression, node.type());
+    _current_block->add<Store>(node.symbol(), expression, node.type());
 }
 
 void Generator::visit(ast::Cast &node) {
@@ -135,7 +160,7 @@ void Generator::visit(ast::Cast &node) {
     auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _current_block->emplace<Cast>(result, expression, node.from(), node.to());
+    _current_block->add<Cast>(result, expression, node.from(), node.to());
 }
 
 void Generator::visit(ast::Call &node) {
@@ -153,7 +178,7 @@ void Generator::visit(ast::Call &node) {
     auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
-    _current_block->emplace<Call>(result, node.symbol(), std::move(arguments));
+    _current_block->add<Call>(result, node.symbol(), std::move(arguments));
 }
 
 void Generator::visit(ast::If &node) {
@@ -171,35 +196,35 @@ void Generator::visit(ast::If &node) {
         node.condition()->accept(*this);
         auto condition = _current_operand;
 
-        _current_block->emplace<If>(condition, then_label);
+        _current_block->add<If>(condition, then_label);
 
         _current_block->set_next(then_block);
         _current_block->set_branch(branch_block);
     }
 
-    { // ThenType block
+    { // Then block
         _current_block = then_block;
-        then_block->emplace<Label>(then_label);
+        then_block->add<Label>(then_label);
         std::visit([&](const auto &value) { value->accept(*this); }, node.then());
 
-        _current_block->emplace<Goto>(after_label);
+        _current_block->add<Goto>(after_label);
         _current_block->set_next(after_block);
     }
 
     { // Branch block
         _current_block = branch_block;
-        branch_block->emplace<Label>(branch_label);
+        branch_block->add<Label>(branch_label);
         if (node.branch()) {
             std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
         }
 
-        _current_block->emplace<Goto>(after_label);
+        _current_block->add<Goto>(after_label);
         _current_block->set_next(after_block);
     }
 
     { // After block
         _current_block = after_block;
-        after_block->emplace<Label>(after_label);
+        after_block->add<Label>(after_label);
     }
 }
 
