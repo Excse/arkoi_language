@@ -48,7 +48,7 @@ public:
     [[nodiscard]] static auto size() { return Size::BYTE; }
 };
 
-} // namespace arkoi::type
+} // namespace arkoi::result_type
 
 struct Type : std::variant<arkoi::type::Integral, arkoi::type::Floating, arkoi::type::Boolean> {
     using variant::variant;

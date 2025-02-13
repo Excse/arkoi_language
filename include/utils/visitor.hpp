@@ -9,6 +9,7 @@ class Function;
 class Integer;
 class Program;
 class Boolean;
+class Assign;
 class Return;
 class Binary;
 class Block;
@@ -41,6 +42,8 @@ public:
     virtual void visit(Binary &node) = 0;
 
     virtual void visit(Cast &node) = 0;
+
+    virtual void visit(Assign &node) = 0;
 
     virtual void visit(Call &node) = 0;
 

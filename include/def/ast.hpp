@@ -142,6 +142,34 @@ private:
     ThenType _then;
 };
 
+class Assign : public Node {
+public:
+    Assign(front::Token name, std::unique_ptr<Node> &&expression)
+        : _expression(std::move(expression)), _name(std::move(name)){}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    void set_symbol(SharedSymbol symbol) { _symbol = std::move(symbol); }
+
+    [[nodiscard]] auto &symbol() const { return _symbol.value(); }
+
+    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
+
+    [[nodiscard]] auto &expression() const { return _expression; }
+
+    [[nodiscard]] auto &name() const { return _name; }
+
+    void set_type(Type type) { _type = type; }
+
+    [[nodiscard]] auto &type() const { return _type.value(); }
+
+private:
+    std::optional<SharedSymbol> _symbol{};
+    std::unique_ptr<Node> _expression;
+    std::optional<Type> _type{};
+    front::Token _name;
+};
+
 class Call : public Node {
 public:
     Call(front::Token name, std::vector<std::unique_ptr<Node>> &&arguments)
@@ -243,13 +271,17 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; }
 
-    void set_type(Type type) { _type = type; }
+    void set_result_type(Type type) { _result_type = type; }
 
-    [[nodiscard]] auto &type() const { return _type.value(); }
+    [[nodiscard]] auto &result_type() const { return _result_type.value(); }
+    
+    void set_op_type(Type type) { _op_type = type; }
+    
+    [[nodiscard]] auto &op_type() const { return _op_type.value(); }
 
 private:
+    std::optional<Type> _result_type{}, _op_type{};
     std::unique_ptr<Node> _left, _right;
-    std::optional<Type> _type{};
     Operator _op;
 };
 

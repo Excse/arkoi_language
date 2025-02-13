@@ -106,9 +106,9 @@ public:
     };
 
 public:
-    Binary(mid::Variable result, Operand left, Operator op, Operand right, Type type)
-        : _left(std::move(left)), _right(std::move(right)), _result(std::move(result)), _op(op),
-          _type(type) {}
+    Binary(mid::Variable result, Operand left, Operator op, Operand right, Type op_type, Type result_type)
+        : _result_type(result_type), _op_type(op_type), _left(std::move(left)), _right(std::move(right)),
+          _result(std::move(result)), _op(op) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -122,17 +122,19 @@ public:
 
     [[nodiscard]] auto &left() { return _left; };
 
-    [[nodiscard]] auto &type() const { return _type; };
+    [[nodiscard]] auto &result_type() const { return _result_type; };
+
+    [[nodiscard]] auto &op_type() const { return _op_type; };
 
     [[nodiscard]] auto &op() const { return _op; };
 
     [[nodiscard]] static Operator node_to_instruction(ast::Binary::Operator op);
 
 private:
+    Type _result_type, _op_type;
     Operand _left, _right;
     mid::Variable _result;
     Operator _op;
-    Type _type;
 };
 
 class Cast : public Instruction {
@@ -164,8 +166,6 @@ public:
         : _result(std::move(result)), _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] bool has_side_effects() const;
 
     [[nodiscard]] auto &result() const { return _result; };
 

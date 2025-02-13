@@ -16,10 +16,6 @@ Binary::Operator Binary::node_to_instruction(ast::Binary::Operator op) {
     std::unreachable();
 }
 
-bool Store::has_side_effects() const {
-    return !std::holds_alternative<symbol::Temporary>(*_result.symbol());
-}
-
 void InstructionType::accept(mid::Visitor &visitor) {
     std::visit([&](auto &item) { item.accept(visitor); }, *this);
 }

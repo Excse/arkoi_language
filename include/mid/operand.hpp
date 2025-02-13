@@ -12,7 +12,7 @@ namespace arkoi::mid {
 class Variable {
 public:
     Variable(SharedSymbol symbol, size_t version = 0)
-        : _version(version), _symbol(std::move(symbol)) {}
+        : _symbol(std::move(symbol)), _version(version) {}
 
     bool operator==(const Variable &rhs) const;
 
@@ -23,8 +23,8 @@ public:
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
 private:
-    size_t _version;
     SharedSymbol _symbol;
+    size_t _version;
 };
 
 class Constant : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {

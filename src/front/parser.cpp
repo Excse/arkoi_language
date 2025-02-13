@@ -179,18 +179,23 @@ std::unique_ptr<ast::Block> Parser::_parse_block() {
 std::unique_ptr<ast::Node> Parser::_parse_block_statement() {
     std::unique_ptr<ast::Node> result;
 
-    const auto &current = _consume_any();
-    if (current.type() == Token::Type::Return) {
-        result = _parse_return(current);
+    const auto &consumed = _consume_any();
+    if (consumed.type() == Token::Type::Return) {
+        result = _parse_return(consumed);
         _consume(Token::Type::Newline);
-    } else if (current.type() == Token::Type::Identifier) {
-        result = _parse_call(current);
+    } else if (consumed.type() == Token::Type::Identifier) {
+        auto &current = _current();
+        if (current.type() == Token::Type::LParent) {
+            result = _parse_call(consumed);
+        } else if (current.type() == Token::Type::Equal) {
+            result = _parse_assign(consumed);
+        }
         _consume(Token::Type::Newline);
-    } else if (current.type() == Token::Type::If) {
-        result = _parse_if(current);
+    } else if (consumed.type() == Token::Type::If) {
+        result = _parse_if(consumed);
         // Don't need to consume a newline, as the then node already parsed it
     } else {
-        throw UnexpectedToken("return, if or call", current);
+        throw UnexpectedToken("return, if, assign or call", consumed);
     }
 
     return result;
@@ -240,6 +245,14 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
     }
 
     return std::make_unique<ast::If>(std::move(expression), std::move(then), std::move(_else));
+}
+
+std::unique_ptr<ast::Assign> Parser::_parse_assign(const Token &identifier) {
+    _consume(Token::Type::Equal);
+
+    auto expression = _parse_expression();
+
+    return std::make_unique<ast::Assign>(identifier, std::move(expression));
 }
 
 std::unique_ptr<ast::Call> Parser::_parse_call(const Token &identifier) {

@@ -60,7 +60,7 @@ void Printer::visit(Return &instruction) {
 void Printer::visit(Binary &instruction) {
     _output << "  ";
     _output << instruction.result() << " = " << to_string(instruction.op()) << " @"
-            << instruction.type() << " "
+            << instruction.op_type() << " "
             << instruction.left() << ", " << instruction.right() << "\n";
 }
 

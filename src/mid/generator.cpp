@@ -113,10 +113,18 @@ void Generator::visit(ast::Binary &node) {
     auto right = _current_operand;
 
     auto type = Binary::node_to_instruction(node.op());
-    auto result = _make_temporary(node.type());
+    auto result = _make_temporary(node.result_type());
     _current_operand = result;
 
-    _current_block->emplace<Binary>(result, left, type, right, node.type());
+    _current_block->emplace<Binary>(result, left, type, right, node.op_type(), node.result_type());
+}
+
+void Generator::visit(ast::Assign &node) {
+    // This will set _current_operand
+    node.expression()->accept(*this);
+    auto expression = _current_operand;
+
+    _current_block->emplace<Store>(node.symbol(), expression, node.type());
 }
 
 void Generator::visit(ast::Cast &node) {

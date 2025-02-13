@@ -42,6 +42,8 @@ private:
 
     void visit(ast::Cast &node) override;
 
+    void visit(ast::Assign &node) override;
+
     void visit(ast::Call &node) override;
 
     void visit(ast::If &node) override;

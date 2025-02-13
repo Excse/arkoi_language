@@ -90,6 +90,13 @@ void NameResolver::visit(ast::If &node) {
     if (node.branch()) std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
 }
 
+void NameResolver::visit(ast::Assign &node) {
+    auto symbol = _check_existence<symbol::Parameter>(node.name());
+    node.set_symbol(symbol);
+
+    node.expression()->accept(*this);
+}
+
 void NameResolver::visit(ast::Call &node) {
     auto symbol = _check_existence<symbol::Function>(node.name());
     node.set_symbol(symbol);
