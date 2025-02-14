@@ -1,53 +1,48 @@
-#pragma once
+#include "mid/cfg_printer.hpp"
 
-#include <sstream>
+using namespace arkoi::mid;
 
-#include "utils/visitor.hpp"
-#include "mid/instruction.hpp"
-#include "mid/cfg.hpp"
+std::stringstream CFGPrinter::print(Module &module) {
+    std::stringstream output;
+    CFGPrinter printer(output);
+    printer.visit(module);
+    return output;
+}
 
-namespace arkoi::mid {
+void CFGPrinter::visit(Module &module) {
+    _output << "digraph CFG {\n";
 
-class Printer : Visitor {
-private:
-    Printer() = default;
+    _output << "node [shape=box, labelloc=\"t\", labeljust=\"l\"]\n";
 
-public:
-    [[nodiscard]] static Printer print(Module &module);
+    for (auto &function: module.functions()) {
+        function.accept(*this);
+    }
 
-    void visit(Module &module) override;
+    _output << "}\n";
+}
 
-    void visit(Function &function) override;
+void CFGPrinter::visit(Function &function) {
+    function.depth_first_search([this](BasicBlock &block) { block.accept(*this); });
+}
 
-    void visit(BasicBlock &block) override;
+void CFGPrinter::visit(BasicBlock &block) {
+    _output << block.symbol() << " [label=\"";
 
-    void visit(Label &instruction) override;
+    for (auto &instruction: block.instructions()) {
+        instruction.accept(*this);
+        _output << "\\l";
+    }
 
-    void visit(Return &instruction) override;
+    _output << "\"]\n";
 
-    void visit(Binary &instruction) override;
+    if(block.next()) {
+        _output << block.symbol() << " -> " << block.next()->symbol() << "\n";
+    }
 
-    void visit(Cast &instruction) override;
-
-    void visit(Call &instruction) override;
-
-    void visit(Goto &instruction) override;
-
-    void visit(If &instruction) override;
-
-    void visit(Alloca &instruction) override;
-
-    void visit(Store &instruction) override;
-
-    void visit(Load &instruction) override;
-
-    [[nodiscard]] auto &output() const { return _output; }
-
-private:
-    std::stringstream _output{};
-};
-
-} // namespace arkoi::mid
+    if(block.branch()) {
+        _output << block.symbol() << " -> " << block.branch()->symbol() << "\n";
+    }
+}
 
 //==============================================================================
 // BSD 3-Clause License

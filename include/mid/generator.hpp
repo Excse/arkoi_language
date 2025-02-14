@@ -12,7 +12,7 @@ private:
     Generator() = default;
 
 public:
-    [[nodiscard]] static Generator generate(ast::Program &node);
+    [[nodiscard]] static Module generate(ast::Program &node);
 
     void visit(ast::Program &node) override;
 

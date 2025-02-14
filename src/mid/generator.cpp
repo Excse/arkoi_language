@@ -8,12 +8,10 @@
 using namespace arkoi::mid;
 using namespace arkoi;
 
-Generator Generator::generate(ast::Program &node) {
+Module Generator::generate(ast::Program &node) {
     Generator generator;
-
     node.accept(generator);
-
-    return generator;
+    return generator.module();
 }
 
 void Generator::visit(ast::Program &node) {

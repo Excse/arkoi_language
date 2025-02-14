@@ -3,14 +3,10 @@ fun main() @u64:
     return test((true * ok(5.0)) + true, 10.5) * 2.01 - '*'
 
 fun ok(foo1 @f64) @bool:
-    if foo1 > 5.0:
-        foo1 = 0.0
-    else:
-        foo1 = 21.0
+    if foo1 > 5.0: foo1 = 0.0
+    else:          foo1 = 21.0
     return test(2, foo1)
 
 fun test(foo2 @s32, bar @f64) @f32:
-    if foo2 < bar:
-        return bar * foo2
-    else:
-        return foo2 * bar
+    if foo2 < bar: return bar * foo2
+    else:          return foo2 * bar

@@ -50,7 +50,8 @@ add_library(${PROJECT_NAME}_lib
         src/mid/type_resolver.cpp
         src/mid/instruction.cpp
         src/mid/generator.cpp
-        src/mid/printer.cpp
+        src/mid/il_printer.cpp
+        src/mid/cfg_printer.cpp
         src/mid/operand.cpp
         src/mid/cfg.cpp
         src/def/size.cpp

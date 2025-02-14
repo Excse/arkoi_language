@@ -1,4 +1,4 @@
-#include "mid/printer.hpp"
+#include "mid/il_printer.hpp"
 
 #include <iostream>
 
@@ -8,19 +8,20 @@
 
 using namespace arkoi::mid;
 
-Printer Printer::print(Module &module) {
-    Printer printer;
+std::stringstream ILPrinter::print(Module &module) {
+    std::stringstream output;
+    ILPrinter printer(output);
     printer.visit(module);
-    return printer;
+    return output;
 }
 
-void Printer::visit(Module &module) {
+void ILPrinter::visit(Module &module) {
     for (auto &function: module.functions()) {
         function.accept(*this);
     }
 }
 
-void Printer::visit(Function &function) {
+void ILPrinter::visit(Function &function) {
     auto &symbol = std::get<symbol::Function>(*function.symbol());
     _output << "fun " << symbol.name() << "(";
 
@@ -42,36 +43,37 @@ void Printer::visit(Function &function) {
     _output << "\n";
 }
 
-void Printer::visit(BasicBlock &block) {
+void ILPrinter::visit(BasicBlock &block) {
     for (auto &instruction: block.instructions()) {
+        if (!std::holds_alternative<Label>(instruction)) {
+            _output << "  ";
+        }
+
         instruction.accept(*this);
+        _output << "\n";
     }
 }
 
-void Printer::visit(Label &instruction) {
-    _output << instruction.symbol() << ":\n";
+void ILPrinter::visit(Label &instruction) {
+    _output << instruction.symbol() << ":";
 }
 
-void Printer::visit(Return &instruction) {
-    _output << "  ";
-    _output << "ret " << instruction.value() << "\n";
+void ILPrinter::visit(Return &instruction) {
+    _output << "ret " << instruction.value();
 }
 
-void Printer::visit(Binary &instruction) {
-    _output << "  ";
+void ILPrinter::visit(Binary &instruction) {
     _output << instruction.result() << " = " << to_string(instruction.op()) << " @"
             << instruction.op_type() << " "
-            << instruction.left() << ", " << instruction.right() << "\n";
+        << instruction.left() << ", " << instruction.right();
 }
 
-void Printer::visit(Cast &instruction) {
-    _output << "  ";
+void ILPrinter::visit(Cast &instruction) {
     _output << instruction.result() << " = cast " << instruction.expression() << " @" << instruction.from()
-            << " to @" << instruction.to() << "\n";
+        << " to @" << instruction.to();
 }
 
-void Printer::visit(Call &instruction) {
-    _output << "  ";
+void ILPrinter::visit(Call &instruction) {
     _output << instruction.result() << " = call " << instruction.function() << "(";
 
     for (size_t index = 0; index < instruction.arguments().size(); index++) {
@@ -83,34 +85,29 @@ void Printer::visit(Call &instruction) {
         }
     }
 
-    _output << ")\n";
+    _output << ")";
 }
 
-void Printer::visit(Goto &instruction) {
-    _output << "  ";
-    _output << "goto " << instruction.label() << "\n";
+void ILPrinter::visit(Goto &instruction) {
+    _output << "goto " << instruction.label();
 }
 
-void Printer::visit(If &instruction) {
-    _output << "  ";
-    _output << "if " << instruction.condition() << " goto " << instruction.label() << "\n";
+void ILPrinter::visit(If &instruction) {
+    _output << "if " << instruction.condition() << " goto " << instruction.label();
 }
 
-void Printer::visit(Alloca &instruction) {
-    _output << "  ";
-    _output << instruction.result() << " = alloca @" << instruction.type() << "\n";
+void ILPrinter::visit(Alloca &instruction) {
+    _output << instruction.result() << " = alloca @" << instruction.type();
 }
 
-void Printer::visit(Store &instruction) {
-    _output << "  ";
+void ILPrinter::visit(Store &instruction) {
     _output << "store @" << instruction.type() << " " << instruction.value()
-            << " " << instruction.result() << "\n";
+        << " " << instruction.result();
 }
 
-void Printer::visit(Load &instruction) {
-    _output << "  ";
+void ILPrinter::visit(Load &instruction) {
     _output << instruction.result() << " = load @" << instruction.type()
-            << " " << instruction.target() << "\n";
+        << " " << instruction.target();
 }
 
 //==============================================================================

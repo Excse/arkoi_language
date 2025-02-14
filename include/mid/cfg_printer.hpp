@@ -1,55 +1,53 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#pragma once
 
-#include "mid/name_resolver.hpp"
-#include "mid/type_resolver.hpp"
-#include "mid/generator.hpp"
+#include "utils/visitor.hpp"
 #include "mid/il_printer.hpp"
-#include "mid/cfg_printer.hpp"
-#include "front/scanner.hpp"
-#include "front/parser.hpp"
+#include "mid/instruction.hpp"
+#include "mid/cfg.hpp"
 
-using namespace arkoi;
+namespace arkoi::mid {
 
-int main() {
-    std::ifstream file("../example/test.ark");
-    std::stringstream buffer;
-    buffer << file.rdbuf();
+class CFGPrinter : Visitor {
+public:
+    CFGPrinter(std::stringstream &output) : _output(output), _printer(output) {};
 
-    std::string source = buffer.str();
+public:
+    [[nodiscard]] static std::stringstream print(Module &module);
 
-    std::cout << "~~~~~~~~~~~~         Lex & Scan           ~~~~~~~~~~~~ " << std::endl;
+    void visit(Module &module) override;
 
-    front::Scanner scanner(source);
-    front::Parser parser(scanner.tokenize());
-    auto program = parser.parse_program();
+    void visit(Function &function) override;
 
-    if (scanner.has_failed() || parser.has_failed()) exit(1);
+    void visit(BasicBlock &block) override;
 
-    std::cout << "~~~~~~~~~~~~        Name Resolver         ~~~~~~~~~~~~" << std::endl;
+    void visit(Label &instruction) override { _printer.visit(instruction); }
 
-    auto name_resolver = mid::NameResolver::resolve(program);
-    if (name_resolver.has_failed()) exit(1);
+    void visit(Return &instruction) override { _printer.visit(instruction); }
 
-    std::cout << "~~~~~~~~~~~~        Type Resolver         ~~~~~~~~~~~~" << std::endl;
+    void visit(Binary &instruction) override { _printer.visit(instruction); }
 
-    auto type_resolver = mid::TypeResolver::resolve(program);
-    if (type_resolver.has_failed()) exit(1);
+    void visit(Cast &instruction) override { _printer.visit(instruction); }
 
-    std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
+    void visit(Call &instruction) override { _printer.visit(instruction); }
 
-    auto module = mid::Generator::generate(program);
-    auto il_output = mid::ILPrinter::print(module);
-    std::cout << il_output.str();
+    void visit(Goto &instruction) override { _printer.visit(instruction); }
 
-    std::cout << "~~~~~~~~~~~~      Control Flow Graph       ~~~~~~~~~~~~" << std::endl;
+    void visit(If &instruction) override { _printer.visit(instruction); }
 
-    auto cfg_output = mid::CFGPrinter::print(module);
-    std::cout << cfg_output.str();
+    void visit(Alloca &instruction) override { _printer.visit(instruction); }
 
-    return 0;
-}
+    void visit(Store &instruction) override { _printer.visit(instruction); }
+
+    void visit(Load &instruction) override { _printer.visit(instruction); }
+
+    [[nodiscard]] auto &output() const { return _output; }
+
+private:
+    std::stringstream &_output;
+    ILPrinter _printer;
+};
+
+} // namespace arkoi::mid
 
 //==============================================================================
 // BSD 3-Clause License
@@ -81,4 +79,3 @@ int main() {
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //==============================================================================
-
