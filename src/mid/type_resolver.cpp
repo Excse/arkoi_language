@@ -20,7 +20,6 @@ TypeResolver TypeResolver::resolve(ast::Program &node) {
 }
 
 void TypeResolver::visit(ast::Program &node) {
-    // At first all function prototypes are result_type resolved.
     for (const auto &item: node.statements()) {
         auto *function = dynamic_cast<ast::Function *>(item.get());
         if (function) visit_as_prototype(*function);
@@ -36,12 +35,13 @@ void TypeResolver::visit_as_prototype(ast::Function &node) {
         item.accept(*this);
     }
 
-    auto &function = std::get<symbol::Function>(*node.symbol());
+    auto &function = std::get<symbol::Function>(*node.name().symbol());
     function.set_return_type(node.type());
 }
 
 void TypeResolver::visit(ast::Function &node) {
-    _return_type = node.type();
+    auto &function = std::get<symbol::Function>(*node.name().symbol());
+    _return_type = function.return_type();
 
     node.block()->accept(*this);
 }
@@ -53,7 +53,7 @@ void TypeResolver::visit(ast::Block &node) {
 }
 
 void TypeResolver::visit(ast::Parameter &node) {
-    auto &parameter = std::get<symbol::Parameter>(*node.symbol());
+    auto &parameter = std::get<symbol::Parameter>(*node.name().symbol());
     parameter.set_type(node.type());
 }
 
@@ -102,9 +102,18 @@ void TypeResolver::visit(ast::Return &node) {
 }
 
 void TypeResolver::visit(ast::Identifier &node) {
-    const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
-    node.set_type(parameter.type().value());
-    _current_type = parameter.type();
+    if(node.kind() == ast::Identifier::Kind::Function) {
+        const auto &function = std::get<symbol::Function>(*node.symbol());
+        _current_type = function.return_type();
+    } else if(node.kind() == ast::Identifier::Kind::Variable) {
+        // TODO: In the future there will be local/global and parameter variables,
+        //       thus they need to be searched in such order: local, parameter, global.
+        //       For now only parameter variables exist.
+        const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
+        _current_type = parameter.type();
+    } else {
+        throw std::runtime_error("This kind of identifier is not yet implemented.");
+    }
 }
 
 void TypeResolver::visit(ast::Binary &node) {
@@ -163,23 +172,25 @@ void TypeResolver::visit(ast::Cast &node) {
 }
 
 void TypeResolver::visit(ast::Assign &node) {
-    auto parameter = std::get<symbol::Parameter>(*node.symbol());
+    node.name().accept(*this);
+    auto identifier_type = _current_type.value();
 
     node.expression()->accept(*this);
     auto type = _current_type.value();
-    node.set_type(type);
 
-    if (!_can_implicit_convert(type, parameter.type().value())) {
+    if (!_can_implicit_convert(type, identifier_type)) {
         throw std::runtime_error("Assign expression has a wrong result_type.");
     }
 
     // We assure to override the const casted node with a new node. Thus, this exception is legal.
     auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.expression());
-    node.set_expression(std::make_unique<ast::Cast>(std::move(expression), type, parameter.type().value()));
+    node.set_expression(std::make_unique<ast::Cast>(std::move(expression), type, identifier_type));
 }
 
 void TypeResolver::visit(ast::Call &node) {
-    auto function = std::get<symbol::Function>(*node.symbol());
+    node.name().accept(*this);
+
+    auto function = std::get<symbol::Function>(*node.name().symbol());
 
     if (function.parameter_symbols().size() != node.arguments().size()) {
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");

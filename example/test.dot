@@ -1,16 +1,16 @@
 digraph CFG {
-    node [shape=record, fontsize=12, labelloc="t", labeljust="l"]
+    node [shape=box, labelloc="t", labeljust="l"]
     L0 [label="$1 = alloca @u64\l$2 = cast 1 @bool to @u32\l$3 = cast 5 @f32 to @f64\l$4 = call ok($3)\l$5 = cast $4 @bool to @u32\l$6 = mul @u32 $2, $5\l$7 = cast 1 @bool to @u32\l$8 = add @u32 $6, $7\l$9 = cast $8 @u32 to @s32\l$10 = cast 10.5 @f32 to @f64\l$11 = call test($9, $10)\l$12 = mul @f32 $11, 2.01\l$13 = cast 42 @s32 to @f32\l$14 = sub @f32 $12, $13\l$15 = cast $14 @f32 to @u64\lstore @u64 $15 $1\lgoto L1\l"]
     L0 -> L1
     L1 [label="L1:\l$16 = load @u64 $1\lret $16\l"]
     L2 [label="$1 = alloca @bool\l$2 = alloca @f64\lstore @f64 foo1 $2\l$3 = load @f64 $2\l$4 = cast 5 @f32 to @f64\l$5 = gth @f64 $3, $4\lif $5 goto L4\l"]
     L2 -> L4
     L2 -> L5
-    L5 [label="L5:\l$7 = cast 21 @f32 to @f64\lstore @f32 $7 foo1\lgoto L6\l"]
+    L5 [label="L5:\l$7 = cast 21 @f32 to @f64\lstore @f64 $7 $2\lgoto L6\l"]
     L5 -> L6
     L6 [label="L6:\l$8 = load @f64 $2\l$9 = call test(2, $8)\l$10 = cast $9 @f32 to @bool\lstore @bool $10 $1\lgoto L3\l"]
     L6 -> L3
-    L4 [label="L4:\l$6 = cast 0 @f32 to @f64\lstore @f32 $6 foo1\lgoto L6\l"]
+    L4 [label="L4:\l$6 = cast 0 @f32 to @f64\lstore @f64 $6 $2\lgoto L6\l"]
     L4 -> L6
     L3 [label="L3:\l$11 = load @bool $1\lret $11\l"]
     L7 [label="$1 = alloca @f32\l$2 = alloca @s32\lstore @s32 foo2 $2\l$3 = alloca @f64\lstore @f64 bar $3\l$4 = load @s32 $2\l$5 = cast $4 @s32 to @f64\l$6 = load @f64 $3\l$7 = lth @f64 $5, $6\lif $7 goto L9\l"]

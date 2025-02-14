@@ -60,8 +60,8 @@ private:
 
 class Call : public Instruction {
 public:
-    Call(mid::Variable result, SharedSymbol function, std::vector<Operand> &&arguments)
-        : _arguments(std::move(arguments)), _function(std::move(function)), _result(std::move(result)) {}
+    Call(mid::Variable result, mid::Variable function, std::vector<Operand> &&arguments)
+        : _result(std::move(result)), _function(std::move(function)), _arguments(std::move(arguments)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -72,9 +72,8 @@ public:
     [[nodiscard]] auto &result() const { return _result; };
 
 private:
+    mid::Variable _result, _function;
     std::vector<Operand> _arguments;
-    SharedSymbol _function;
-    mid::Variable _result;
 };
 
 class Return : public Instruction {

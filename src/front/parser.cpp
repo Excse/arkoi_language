@@ -60,6 +60,7 @@ std::unique_ptr<ast::Function> Parser::_parse_function(const Token &) {
     auto own_scope = _enter_scope();
 
     const auto &name = _consume(Token::Type::Identifier);
+    auto identifier = ast::Identifier(name, ast::Identifier::Kind::Function);
 
     auto parameters = _parse_parameters();
 
@@ -73,7 +74,7 @@ std::unique_ptr<ast::Function> Parser::_parse_function(const Token &) {
 
     _exit_scope();
 
-    return std::make_unique<ast::Function>(name, std::move(parameters), return_type, std::move(block), own_scope);
+    return std::make_unique<ast::Function>(identifier, std::move(parameters), return_type, std::move(block), own_scope);
 }
 
 std::vector<ast::Parameter> Parser::_parse_parameters() {
@@ -122,10 +123,11 @@ void Parser::_recover_parameters() {
 
 ast::Parameter Parser::_parse_parameter() {
     const auto &name = _consume(Token::Type::Identifier);
+    auto identifier = ast::Identifier(name, ast::Identifier::Kind::Variable);
 
     auto type = _parse_type();
 
-    return {name, type};
+    return {identifier, type};
 }
 
 Type Parser::_parse_type() {
@@ -253,7 +255,9 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
     return std::make_unique<ast::If>(std::move(expression), std::move(then), std::move(_else));
 }
 
-std::unique_ptr<ast::Assign> Parser::_parse_assign(const Token &identifier) {
+std::unique_ptr<ast::Assign> Parser::_parse_assign(const Token &name) {
+    auto identifier = ast::Identifier(name, ast::Identifier::Kind::Variable);
+
     _consume(Token::Type::Equal);
 
     auto expression = _parse_expression();
@@ -261,7 +265,9 @@ std::unique_ptr<ast::Assign> Parser::_parse_assign(const Token &identifier) {
     return std::make_unique<ast::Assign>(identifier, std::move(expression));
 }
 
-std::unique_ptr<ast::Call> Parser::_parse_call(const Token &identifier) {
+std::unique_ptr<ast::Call> Parser::_parse_call(const Token &name) {
+    auto identifier = ast::Identifier(name, ast::Identifier::Kind::Function);
+
     _consume(Token::Type::LParent);
 
     std::vector<std::unique_ptr<ast::Node>> arguments;
@@ -335,10 +341,11 @@ std::unique_ptr<ast::Node> Parser::_parse_primary() {
 
         return std::make_unique<ast::Cast>(std::move(node), _parse_type());
     } else if (consumed.type() == Token::Type::Identifier) {
-        auto node = std::make_unique<ast::Identifier>(consumed);
-        if (_current().type() != Token::Type::LParent) return node;
-
-        return _parse_call(consumed);
+        if (_current().type() == Token::Type::LParent) {
+            return _parse_call(consumed);
+        } else {
+            return std::make_unique<ast::Identifier>(consumed, ast::Identifier::Kind::Variable);
+        }
     } else if (consumed.type() == Token::Type::True) {
         return std::make_unique<ast::Boolean>(true);
     } else if (consumed.type() == Token::Type::False) {

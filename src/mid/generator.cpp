@@ -33,7 +33,7 @@ void Generator::visit(ast::Function &node) {
     // Creates the function end basic block
     auto end_block = std::make_shared<BasicBlock>(_make_label_symbol());
 
-    auto &function = _module.functions().emplace_back(node.symbol(), start_block, end_block);
+    auto &function = _module.functions().emplace_back(node.name().symbol(), start_block, end_block);
     _current_function = &function;
 
     _result_temp = _make_temporary(node.type());
@@ -41,10 +41,10 @@ void Generator::visit(ast::Function &node) {
 
     for (auto &parameter: node.parameters()) {
         auto alloca_temp = _make_temporary(parameter.type());
-        _allocas.emplace(parameter.symbol(), alloca_temp);
+        _allocas.emplace(parameter.name().symbol(), alloca_temp);
 
         _current_block->add<Alloca>(alloca_temp, parameter.type());
-        _current_block->add<Store>(alloca_temp, parameter.symbol(), parameter.type());
+        _current_block->add<Store>(alloca_temp, parameter.name().symbol(), parameter.type());
     }
 
     node.block()->accept(*this);
@@ -116,13 +116,24 @@ void Generator::visit(ast::Return &node) {
 }
 
 void Generator::visit(ast::Identifier &node) {
-    auto result = _allocas.find(node.symbol());
-    if (result != _allocas.end()) {
-        auto temp = _make_temporary(node.type());
-        _current_block->add<Load>(temp, result->second, node.type());
-        _current_operand = temp;
-    } else {
+    if (node.kind() == ast::Identifier::Kind::Function) {
         _current_operand = node.symbol();
+    } else if (node.kind() == ast::Identifier::Kind::Variable) {
+        // TODO: In the future there will be local/global and parameter variables,
+        //       thus they need to be searched in such order: local, parameter, global.
+        //       For now only parameter variables exist.
+        const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
+
+        auto result = _allocas.find(node.symbol());
+        if (result != _allocas.end()) {
+            auto temp = _make_temporary(parameter.type().value());
+            _current_block->add<Load>(temp, result->second, parameter.type().value());
+            _current_operand = temp;
+        } else {
+            throw std::runtime_error("This should not have happened.");
+        }
+    } else {
+        throw std::runtime_error("This kind of identifier is not yet implemented.");
     }
 }
 
@@ -143,11 +154,21 @@ void Generator::visit(ast::Binary &node) {
 }
 
 void Generator::visit(ast::Assign &node) {
+    // TODO: In the future there will be local/global and parameter variables,
+    //       thus they need to be searched in such order: local, parameter, global.
+    //       For now only parameter variables exist.
+    const auto &parameter = std::get<symbol::Parameter>(*node.name().symbol());
+
+    auto result = _allocas.find(node.name().symbol());
+    if (result == _allocas.end()) {
+        throw std::runtime_error("This should not have happened.");
+    }
+
     // This will set _current_operand
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    _current_block->add<Store>(node.symbol(), expression, node.type());
+    _current_block->add<Store>(result->second, expression, parameter.type().value());
 }
 
 void Generator::visit(ast::Cast &node) {
@@ -162,7 +183,11 @@ void Generator::visit(ast::Cast &node) {
 }
 
 void Generator::visit(ast::Call &node) {
-    const auto &function = std::get<symbol::Function>(*node.symbol());
+    const auto &function = std::get<symbol::Function>(*node.name().symbol());
+
+    // This will set _current_operand
+    node.name().accept(*this);
+    auto identifier = std::get<Variable>(_current_operand);
 
     std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {
@@ -176,7 +201,7 @@ void Generator::visit(ast::Call &node) {
     auto result = _make_temporary(function.return_type().value());
     _current_operand = result;
 
-    _current_block->add<Call>(result, node.symbol(), std::move(arguments));
+    _current_block->add<Call>(result, identifier, std::move(arguments));
 }
 
 void Generator::visit(ast::If &node) {

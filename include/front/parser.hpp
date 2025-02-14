@@ -43,9 +43,9 @@ private:
 
     [[nodiscard]] std::unique_ptr<ast::If> _parse_if(const Token &keyword);
 
-    [[nodiscard]] std::unique_ptr<ast::Assign> _parse_assign(const Token &identifier);
+    [[nodiscard]] std::unique_ptr<ast::Assign> _parse_assign(const Token &name);
 
-    [[nodiscard]] std::unique_ptr<ast::Call> _parse_call(const Token &identifier);
+    [[nodiscard]] std::unique_ptr<ast::Call> _parse_call(const Token &name);
 
     [[nodiscard]] std::unique_ptr<ast::Node> _parse_expression();
 
