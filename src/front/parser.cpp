@@ -228,31 +228,31 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
 
     _consume(Token::Type::Colon);
 
-    ast::If::ThenType then;
+    ast::If::BranchType branch;
     if (_try_consume(Token::Type::Newline)) {
-        then = _parse_block();
+        branch = _parse_block();
     } else {
-        then = _parse_block_statement();
+        branch = _parse_block_statement();
     }
 
     if (!_try_consume(Token::Type::Else)) {
-        return std::make_unique<ast::If>(std::move(expression), std::move(then), std::nullopt);
+        return std::make_unique<ast::If>(std::move(expression), std::move(branch), std::nullopt);
     }
 
     if (auto token = _try_consume(Token::Type::If)) {
-        return std::make_unique<ast::If>(std::move(expression), std::move(then), _parse_if(*token));
+        return std::make_unique<ast::If>(std::move(expression), std::move(branch), _parse_if(*token));
     }
 
     _consume(Token::Type::Colon);
 
-    ast::If::ElseType _else;
+    ast::If::NextType _next;
     if (_try_consume(Token::Type::Newline)) {
-        _else = _parse_block();
+        _next = _parse_block();
     } else {
-        _else = _parse_block_statement();
+        _next = _parse_block_statement();
     }
 
-    return std::make_unique<ast::If>(std::move(expression), std::move(then), std::move(_else));
+    return std::make_unique<ast::If>(std::move(expression), std::move(branch), std::move(_next));
 }
 
 std::unique_ptr<ast::Assign> Parser::_parse_assign(const Token &name) {

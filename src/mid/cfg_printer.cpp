@@ -36,11 +36,11 @@ void CFGPrinter::visit(BasicBlock &block) {
     _output << "\"]\n";
 
     if(block.next()) {
-        _output << block.symbol() << " -> " << block.next()->symbol() << "\n";
+        _output << block.symbol() << " -> " << block.next()->symbol() << " [label=\"Next\"]\n";
     }
 
     if(block.branch()) {
-        _output << block.symbol() << " -> " << block.branch()->symbol() << "\n";
+        _output << block.symbol() << " -> " << block.branch()->symbol() << " [label=\"Branch\"]\n";
     }
 }
 

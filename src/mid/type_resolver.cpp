@@ -231,9 +231,9 @@ void TypeResolver::visit(ast::If &node) {
         node.set_condition(std::make_unique<ast::Cast>(std::move(expression), type, BOOL_TYPE));
     }
 
-    std::visit([&](const auto &value) { value->accept(*this); }, node.then());
+    std::visit([&](const auto &value) { value->accept(*this); }, node.branch());
 
-    if (node.branch()) std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
+    if (node.next()) std::visit([&](const auto &value) { value->accept(*this); }, *node.next());
 }
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions

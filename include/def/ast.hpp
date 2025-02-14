@@ -135,12 +135,12 @@ private:
 
 class If : public Node {
 public:
-    using ElseType = std::variant<std::unique_ptr<Block>, std::unique_ptr<If>, std::unique_ptr<Node>>;
-    using ThenType = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
+    using NextType = std::variant<std::unique_ptr<Block>, std::unique_ptr<If>, std::unique_ptr<Node>>;
+    using BranchType = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
 
 public:
-    If(std::unique_ptr<Node> &&condition, ThenType &&then, std::optional<ElseType> &&branch)
-        : _condition(std::move(condition)), _branch(std::move(branch)), _then(std::move(then)) {}
+    If(std::unique_ptr<Node> &&condition, BranchType &&branch, std::optional<NextType> &&next)
+        : _condition(std::move(condition)), _next(std::move(next)), _branch(std::move(branch)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -150,12 +150,12 @@ public:
 
     [[nodiscard]] auto &branch() const { return _branch; }
 
-    [[nodiscard]] auto &then() const { return _then; }
+    [[nodiscard]] auto &next() const { return _next; }
 
 private:
     std::unique_ptr<Node> _condition;
-    std::optional<ElseType> _branch;
-    ThenType _then;
+    std::optional<NextType> _next;
+    BranchType _branch;
 };
 
 class Assign : public Node {

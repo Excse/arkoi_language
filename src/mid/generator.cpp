@@ -205,11 +205,11 @@ void Generator::visit(ast::Call &node) {
 }
 
 void Generator::visit(ast::If &node) {
-    auto then_label = _make_label_symbol();
-    auto then_block = std::make_shared<BasicBlock>(then_label);
-
     auto branch_label = _make_label_symbol();
     auto branch_block = std::make_shared<BasicBlock>(branch_label);
+
+    auto next_label = _make_label_symbol();
+    auto next_block = std::make_shared<BasicBlock>(next_label);
 
     auto after_label = _make_label_symbol();
     auto after_block = std::make_shared<BasicBlock>(after_label);
@@ -219,26 +219,26 @@ void Generator::visit(ast::If &node) {
         node.condition()->accept(*this);
         auto condition = _current_operand;
 
-        _current_block->add<If>(condition, then_label);
+        _current_block->add<If>(condition, branch_label);
 
-        _current_block->set_next(then_block);
+        _current_block->set_next(next_block);
         _current_block->set_branch(branch_block);
-    }
-
-    { // Then block
-        _current_block = then_block;
-        then_block->add<Label>(then_label);
-        std::visit([&](const auto &value) { value->accept(*this); }, node.then());
-
-        _current_block->add<Goto>(after_label);
-        _current_block->set_next(after_block);
     }
 
     { // Branch block
         _current_block = branch_block;
         branch_block->add<Label>(branch_label);
-        if (node.branch()) {
-            std::visit([&](const auto &value) { value->accept(*this); }, *node.branch());
+        std::visit([&](const auto &value) { value->accept(*this); }, node.branch());
+
+        _current_block->add<Goto>(after_label);
+        _current_block->set_next(after_block);
+    }
+
+    { // Next block
+        _current_block = next_block;
+        next_block->add<Label>(next_label);
+        if (node.next()) {
+            std::visit([&](const auto &value) { value->accept(*this); }, *node.next());
         }
 
         _current_block->add<Goto>(after_label);
