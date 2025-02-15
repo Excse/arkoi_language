@@ -13,7 +13,16 @@
 using namespace arkoi;
 
 int main() {
-    std::ifstream file("../example/test.ark");
+    static const std::string INPUT_FILE = "../example/test.ark";
+
+    auto last_dot = INPUT_FILE.find_last_of('.');
+    if (last_dot == std::string::npos || INPUT_FILE.substr(last_dot) != ".ark") {
+        throw std::invalid_argument("This is not a valid file path with '.ark' extension.");
+    }
+
+    auto base_path = INPUT_FILE.substr(0, last_dot);
+
+    std::ifstream file(INPUT_FILE);
     std::stringstream buffer;
     buffer << file.rdbuf();
 
@@ -46,7 +55,17 @@ int main() {
     std::cout << "~~~~~~~~~~~~      Control Flow Graph       ~~~~~~~~~~~~" << std::endl;
 
     auto cfg_output = mid::CFGPrinter::print(module);
-    std::cout << cfg_output.str();
+
+    auto dot_path = base_path + ".dot";
+    auto png_path = base_path + ".png";
+
+    std::ofstream cfg_file(dot_path);
+    cfg_file << cfg_output.str();
+    cfg_file.close();
+
+    std::string assemble_command = "dot -Tpng " + dot_path + " -o " + png_path;
+    int assemble_result = std::system(assemble_command.c_str());
+    if (WEXITSTATUS(assemble_result) != 0) exit(1);
 
     return 0;
 }
