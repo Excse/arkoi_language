@@ -61,8 +61,12 @@ void Generator::visit(ast::Function &node) {
 }
 
 void Generator::visit(ast::Block &node) {
-    for (const auto &item: node.statements()) {
-        item->accept(*this);
+    for (const auto &statement: node.statements()) {
+        statement->accept(*this);
+
+        // Stop generating instructions for the block after a return statement.
+        auto *_return = dynamic_cast<ast::Return *>(statement.get());
+        if (_return) break;
     }
 }
 
@@ -225,15 +229,24 @@ void Generator::visit(ast::If &node) {
         _current_block->set_branch(branch_block);
     }
 
+    bool branch_already_connected = false;
     { // Branch block
         _current_block = branch_block;
         branch_block->add<Label>(branch_label);
         std::visit([&](const auto &value) { value->accept(*this); }, node.branch());
 
-        _current_block->add<Goto>(after_label);
-        _current_block->set_next(after_block);
+        if (!_current_block->instructions().empty()) {
+            auto &last_instruction = _current_block->instructions().back();
+            if (std::holds_alternative<Goto>(last_instruction)) branch_already_connected = true;
+        }
+
+        if (!branch_already_connected) {
+            _current_block->add<Goto>(after_label);
+            _current_block->set_next(after_block);
+        }
     }
 
+    bool next_already_connected = false;
     { // Next block
         _current_block = next_block;
         next_block->add<Label>(next_label);
@@ -241,11 +254,18 @@ void Generator::visit(ast::If &node) {
             std::visit([&](const auto &value) { value->accept(*this); }, *node.next());
         }
 
-        _current_block->add<Goto>(after_label);
-        _current_block->set_next(after_block);
+        if (!_current_block->instructions().empty()) {
+            auto &last_instruction = _current_block->instructions().back();
+            if (std::holds_alternative<Goto>(last_instruction)) next_already_connected = true;
+        }
+
+        if (!next_already_connected) {
+            _current_block->add<Goto>(after_label);
+            _current_block->set_next(after_block);
+        }
     }
 
-    { // After block
+    if (!next_already_connected || !branch_already_connected) { // After block
         _current_block = after_block;
         after_block->add<Label>(after_label);
     }
