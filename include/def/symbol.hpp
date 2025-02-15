@@ -22,7 +22,7 @@ public:
 
     void set_return_type(Type type) { _return_type = type; }
 
-    [[nodiscard]] auto &return_type() const { return _return_type; }
+    [[nodiscard]] auto &return_type() const { return _return_type.value(); }
 
     [[nodiscard]] auto &name() const { return _name; }
 
@@ -32,13 +32,16 @@ private:
     std::string _name;
 };
 
-class Parameter {
+class Variable {
 public:
-    Parameter(std::string name) : _name(std::move(name)) {}
+    Variable(std::string name, Type type)
+        : _type(type), _name(std::move(name)) {}
+
+    Variable(std::string name) : _name(std::move(name)) {}
 
     void set_type(Type type) { _type = type; }
 
-    [[nodiscard]] auto &type() const { return _type; }
+    [[nodiscard]] auto &type() const { return _type.value(); }
 
     [[nodiscard]] auto &name() const { return _name; }
 
@@ -47,24 +50,9 @@ private:
     std::string _name;
 };
 
-class Temporary {
-public:
-    Temporary(std::string name, Type type) : _type(type), _name(std::move(name)) {}
-
-    Temporary(std::string name) : _type(), _name(std::move(name)) {}
-
-    [[nodiscard]] auto &type() const { return _type; }
-
-    [[nodiscard]] auto &name() const { return _name; }
-
-private:
-    std::optional<Type> _type;
-    std::string _name;
-};
-
 } // namespace arkoi::symbol
 
-struct SymbolType : std::variant<arkoi::symbol::Function, arkoi::symbol::Parameter, arkoi::symbol::Temporary> {
+struct SymbolType : std::variant<arkoi::symbol::Function, arkoi::symbol::Variable> {
     using variant::variant;
 };
 

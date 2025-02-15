@@ -54,7 +54,7 @@ void NameResolver::visit(ast::Function &node) {
 
 void NameResolver::visit(ast::Parameter &node) {
     // Always check nonexistence beforehand
-    std::ignore = _check_non_existence<symbol::Parameter>(node.name().value());
+    std::ignore = _check_non_existence<symbol::Variable>(node.name().value());
     node.name().accept(*this);
 }
 
@@ -74,7 +74,7 @@ void NameResolver::visit(ast::Identifier &node) {
         // TODO: In the future there will be local/global and parameter variables,
         //       thus they need to be searched in such order: local, parameter, global.
         //       For now only parameter variables exist.
-        auto symbol = _check_existence<symbol::Parameter>(node.value());
+        auto symbol = _check_existence<symbol::Variable>(node.value());
         node.set_symbol(symbol);
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");

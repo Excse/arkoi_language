@@ -12,7 +12,7 @@ std::stringstream CFGPrinter::print(Module &module) {
 void CFGPrinter::visit(Module &module) {
     _output << "digraph CFG {\n";
 
-    _output << "node [shape=box, labelloc=\"t\", labeljust=\"l\"]\n";
+    _output << "\tnode [shape=box, labelloc=\"t\", labeljust=\"l\"]\n";
 
     for (auto &function: module.functions()) {
         function.accept(*this);
@@ -26,7 +26,7 @@ void CFGPrinter::visit(Function &function) {
 }
 
 void CFGPrinter::visit(BasicBlock &block) {
-    _output << block.symbol() << " [label=\"";
+    _output << "\t" << block.symbol() << " [label=\"";
 
     for (auto &instruction: block.instructions()) {
         instruction.accept(*this);
@@ -36,11 +36,11 @@ void CFGPrinter::visit(BasicBlock &block) {
     _output << "\"]\n";
 
     if(block.next()) {
-        _output << block.symbol() << " -> " << block.next()->symbol() << " [label=\"Next\"]\n";
+        _output << "\t" << block.symbol() << " -> " << block.next()->symbol() << " [label=\"Next\"]\n";
     }
 
     if(block.branch()) {
-        _output << block.symbol() << " -> " << block.branch()->symbol() << " [label=\"Branch\"]\n";
+        _output << "\t" << block.symbol() << " -> " << block.branch()->symbol() << " [label=\"Branch\"]\n";
     }
 }
 

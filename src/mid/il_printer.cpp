@@ -26,15 +26,15 @@ void ILPrinter::visit(Function &function) {
     _output << "fun " << symbol.name() << "(";
 
     for (size_t index = 0; index < symbol.parameter_symbols().size(); index++) {
-        auto &parameter = std::get<symbol::Parameter>(*symbol.parameter_symbols()[index]);
-        _output << parameter.name() << " @" << parameter.type().value();
+        auto &variable = std::get<symbol::Variable>(*symbol.parameter_symbols()[index]);
+        _output << variable.name() << " @" << variable.type();
 
         if (index != symbol.parameter_symbols().size() - 1) {
             _output << ", ";
         }
     }
 
-    _output << ") @" << symbol.return_type().value() << ":\n";
+    _output << ") @" << symbol.return_type() << ":\n";
 
     function.depth_first_search([&](BasicBlock &block) {
         block.accept(*this);

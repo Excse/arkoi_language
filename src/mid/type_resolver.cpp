@@ -53,8 +53,8 @@ void TypeResolver::visit(ast::Block &node) {
 }
 
 void TypeResolver::visit(ast::Parameter &node) {
-    auto &parameter = std::get<symbol::Parameter>(*node.name().symbol());
-    parameter.set_type(node.type());
+    auto &variable = std::get<symbol::Variable>(*node.name().symbol());
+    variable.set_type(node.type());
 }
 
 void TypeResolver::visit(ast::Integer &node) {
@@ -109,8 +109,8 @@ void TypeResolver::visit(ast::Identifier &node) {
         // TODO: In the future there will be local/global and parameter variables,
         //       thus they need to be searched in such order: local, parameter, global.
         //       For now only parameter variables exist.
-        const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
-        _current_type = parameter.type();
+        const auto &variable = std::get<symbol::Variable>(*node.symbol());
+        _current_type = variable.type();
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
     }
@@ -179,12 +179,14 @@ void TypeResolver::visit(ast::Assign &node) {
     auto type = _current_type.value();
 
     if (!_can_implicit_convert(type, identifier_type)) {
-        throw std::runtime_error("Assign expression has a wrong result_type.");
+        throw std::runtime_error("Assign expression has a wrong type.");
     }
 
-    // We assure to override the const casted node with a new node. Thus, this exception is legal.
-    auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.expression());
-    node.set_expression(std::make_unique<ast::Cast>(std::move(expression), type, identifier_type));
+    if (type != identifier_type) {
+        // We assure to override the const casted node with a new node. Thus, this exception is legal.
+        auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.expression());
+        node.set_expression(std::make_unique<ast::Cast>(std::move(expression), type, identifier_type));
+    }
 }
 
 void TypeResolver::visit(ast::Call &node) {
@@ -197,20 +199,20 @@ void TypeResolver::visit(ast::Call &node) {
     }
 
     for (size_t index = 0; index < node.arguments().size(); index++) {
-        const auto &parameter = std::get<symbol::Parameter>(*function.parameter_symbols()[index]);
+        const auto &variable = std::get<symbol::Variable>(*function.parameter_symbols()[index]);
 
         auto &argument = node.arguments()[index];
         argument->accept(*this);
         auto type = _current_type.value();
 
-        if (type == parameter.type()) continue;
+        if (type == variable.type()) continue;
 
-        if (!_can_implicit_convert(type, *parameter.type())) {
-            throw std::runtime_error("The arguments result_type doesn't match the parameters one.");
+        if (!_can_implicit_convert(type, variable.type())) {
+            throw std::runtime_error("The arguments type doesn't match the parameters one.");
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<ast::Cast>(std::move(argument), type, *parameter.type());
+        node.arguments()[index] = std::make_unique<ast::Cast>(std::move(argument), type, variable.type());
     }
 
     _current_type = function.return_type();
@@ -241,12 +243,12 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     auto floating_left = std::get_if<type::Floating>(&left_type);
     auto floating_right = std::get_if<type::Floating>(&right_type);
 
-    // Stage 4: If either operand is of floating-point result_type, the following rules are applied:
+    // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
-        // If both operands have the same result_type, no further conversion will be performed.
+        // If both operands have the same type, no further conversion will be performed.
         if (left_type == right_type) return left_type;
 
-        // Otherwise, if one of the operands is of a non-floating-point result_type, that operand is converted to the mid of
+        // Otherwise, if one of the operands is of a non-floating-point type, that operand is converted to the mid of
         // the other operand.
         if (floating_left && !floating_right) return left_type;
         if (floating_right && !floating_left) return right_type;
@@ -262,12 +264,12 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     auto t1 = std::visit(match{
         [](const type::Integral &type) -> type::Integral { return type; },
         [](const type::Boolean &) -> type::Integral { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> type::Integral { throw std::runtime_error("The left result_type must be of integral result_type."); }
+        [](const auto &) -> type::Integral { throw std::runtime_error("The left type must be of integral type."); }
     }, left_type);
     auto t2 = std::visit(match{
         [](const type::Integral &type) -> type::Integral { return type; },
         [](const type::Boolean &) -> type::Integral { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> type::Integral { throw std::runtime_error("The left result_type must be of integral result_type."); }
+        [](const auto &) -> type::Integral { throw std::runtime_error("The left type must be of integral type."); }
     }, right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
@@ -275,7 +277,7 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     if (t1.size() < Size::DWORD) t1 = type::Integral(Size::DWORD, t1.sign());
     if (t2.size() < Size::DWORD) t2 = type::Integral(Size::DWORD, t2.sign());
 
-    // 1. If T1 and T2 are the same result_type, C is that op.
+    // 1. If T1 and T2 are the same type, C is that op.
     if (t1 == t2) return t1;
 
     // 2. If T1 and T2 are both signed integer types or both unsigned integer types, C is the op of greater integer
@@ -285,7 +287,7 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
         else return t1;
     }
 
-    // 3. Otherwise, one mid between T1 and T2 is an signed integer mid S, the other result_type is an unsigned integer op U.
+    // 3. Otherwise, one mid between T1 and T2 is an signed integer mid S, the other type is an unsigned integer op U.
     //    Apply the following rules:
     const auto &_signed = t1.sign() ? t1 : t2;
     const auto &_unsigned = !t1.sign() ? t1 : t2;

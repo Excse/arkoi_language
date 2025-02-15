@@ -126,12 +126,12 @@ void Generator::visit(ast::Identifier &node) {
         // TODO: In the future there will be local/global and parameter variables,
         //       thus they need to be searched in such order: local, parameter, global.
         //       For now only parameter variables exist.
-        const auto &parameter = std::get<symbol::Parameter>(*node.symbol());
+        const auto &variable = std::get<symbol::Variable>(*node.symbol());
 
         auto result = _allocas.find(node.symbol());
         if (result != _allocas.end()) {
-            auto temp = _make_temporary(parameter.type().value());
-            _current_block->add<Load>(temp, result->second, parameter.type().value());
+            auto temp = _make_temporary(variable.type());
+            _current_block->add<Load>(temp, result->second, variable.type());
             _current_operand = temp;
         } else {
             throw std::runtime_error("This should not have happened.");
@@ -161,7 +161,7 @@ void Generator::visit(ast::Assign &node) {
     // TODO: In the future there will be local/global and parameter variables,
     //       thus they need to be searched in such order: local, parameter, global.
     //       For now only parameter variables exist.
-    const auto &parameter = std::get<symbol::Parameter>(*node.name().symbol());
+    const auto &variable = std::get<symbol::Variable>(*node.name().symbol());
 
     auto result = _allocas.find(node.name().symbol());
     if (result == _allocas.end()) {
@@ -172,7 +172,7 @@ void Generator::visit(ast::Assign &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    _current_block->add<Store>(result->second, expression, parameter.type().value());
+    _current_block->add<Store>(result->second, expression, variable.type());
 }
 
 void Generator::visit(ast::Cast &node) {
@@ -202,7 +202,7 @@ void Generator::visit(ast::Call &node) {
         arguments.push_back(std::move(expression));
     }
 
-    auto result = _make_temporary(function.return_type().value());
+    auto result = _make_temporary(function.return_type());
     _current_operand = result;
 
     _current_block->add<Call>(result, identifier, std::move(arguments));
@@ -272,13 +272,13 @@ void Generator::visit(ast::If &node) {
 }
 
 mid::Variable Generator::_make_temporary(const Type &type) {
-    auto temporary = std::make_shared<SymbolType>(symbol::Temporary("$", type));
+    auto temporary = std::make_shared<SymbolType>(symbol::Variable("$", type));
     return { temporary, ++_temp_index };
 }
 
 SharedSymbol Generator::_make_label_symbol() {
     auto name = "L" + to_string(_label_index++);
-    return std::make_shared<SymbolType>(symbol::Temporary(name));
+    return std::make_shared<SymbolType>(symbol::Variable(name));
 }
 
 //==============================================================================

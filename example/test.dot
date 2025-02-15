@@ -33,9 +33,9 @@ digraph CFG {
     L15 -> L17 [label="Branch"]
     L17 [label="L17:\l$8 = load @f64 $3\l$9 = load @s32 $2\l$10 = cast $9 @s32 to @f64\l$11 = mul @f64 $8, $10\l$12 = cast $11 @f64 to @f32\lstore @f32 $12 $1\lgoto L16\l"]
     L17 -> L16 [label="Next"]
-    L18 [label="L18:\l$13 = load @s32 $2\l$14 = cast $13 @s32 to @f64\l$15 = load @f64 $3\l$16 = mul @f64 $14, $15\l$17 = cast $16 @f64 to @f64\lstore @f64 $17 $3\lgoto L19\l"]
+    L18 [label="L18:\l$13 = load @s32 $2\l$14 = cast $13 @s32 to @f64\l$15 = load @f64 $3\l$16 = mul @f64 $14, $15\lstore @f64 $16 $3\lgoto L19\l"]
     L18 -> L19 [label="Next"]
-    L19 [label="L19:\l$18 = load @f64 $3\l$19 = cast $18 @f64 to @f32\lstore @f32 $19 $1\lgoto L16\l"]
+    L19 [label="L19:\l$17 = load @f64 $3\l$18 = cast $17 @f64 to @f32\lstore @f32 $18 $1\lgoto L16\l"]
     L19 -> L16 [label="Next"]
-    L16 [label="L16:\l$20 = load @f32 $1\lret $20\l"]
+    L16 [label="L16:\l$19 = load @f32 $1\lret $19\l"]
 }
