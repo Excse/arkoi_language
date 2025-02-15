@@ -29,7 +29,9 @@ FetchContent_Declare(
         URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
 )
 
+set(gmock_build_tests OFF CACHE BOOL "" FORCE)
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
 FetchContent_MakeAvailable(google_test)
 
 # =====================
@@ -54,6 +56,7 @@ add_library(${PROJECT_NAME}_lib
         src/mid/cfg_printer.cpp
         src/mid/operand.cpp
         src/mid/cfg.cpp
+        src/utils/dep_graph.cpp
         src/def/size.cpp
 )
 
@@ -76,9 +79,10 @@ enable_testing()
 add_executable(${PROJECT_NAME}_tests
         test/snapshot/snapshot.cpp
         test/snapshot/test_snapshot.cpp
+        test/test_dep_graph.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_tests gtest gtest_main ${PROJECT_NAME}_lib)
+target_link_libraries(${PROJECT_NAME}_tests gtest gtest_main gmock gmock_main ${PROJECT_NAME}_lib)
 target_compile_definitions(${PROJECT_NAME}_tests PRIVATE TEST_PATH="${CMAKE_SOURCE_DIR}/test")
 
 add_test(NAME test_${PROJECT_NAME} COMMAND test_${PROJECT_NAME})
