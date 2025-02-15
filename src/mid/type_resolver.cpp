@@ -20,19 +20,19 @@ TypeResolver TypeResolver::resolve(ast::Program &node) {
 }
 
 void TypeResolver::visit(ast::Program &node) {
-    for (const auto &item: node.statements()) {
-        auto *function = dynamic_cast<ast::Function *>(item.get());
+    for (const auto &statement: node.statements()) {
+        auto *function = dynamic_cast<ast::Function *>(statement.get());
         if (function) visit_as_prototype(*function);
     }
 
-    for (const auto &item: node.statements()) {
-        item->accept(*this);
+    for (const auto &statement: node.statements()) {
+        statement->accept(*this);
     }
 }
 
 void TypeResolver::visit_as_prototype(ast::Function &node) {
-    for (auto &item: node.parameters()) {
-        item.accept(*this);
+    for (auto &parameter: node.parameters()) {
+        parameter.accept(*this);
     }
 
     auto &function = std::get<symbol::Function>(*node.name().symbol());
@@ -47,8 +47,8 @@ void TypeResolver::visit(ast::Function &node) {
 }
 
 void TypeResolver::visit(ast::Block &node) {
-    for (const auto &item: node.statements()) {
-        item->accept(*this);
+    for (const auto &statement: node.statements()) {
+        statement->accept(*this);
     }
 }
 

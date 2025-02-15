@@ -36,6 +36,8 @@ public:
 
     void visit(ast::Cast &node) override;
 
+    [[nodiscard]] Operand _evaluate_cast(const auto &value, const Type &type);
+
     void visit(ast::Assign &node) override;
 
     void visit(ast::Call &node) override;

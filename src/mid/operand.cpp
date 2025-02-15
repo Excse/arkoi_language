@@ -24,6 +24,32 @@ Size Constant::size() const {
     }, *this);
 }
 
+Constant Constant::cast_to(const Type &type) const {
+    return std::visit([&](const auto &value) {
+        return std::visit(match{
+            [&](const type::Integral &type) -> Constant {
+                switch (type.size()) {
+                    case Size::BYTE: return type.sign() ? (int8_t) value : (uint8_t) value;
+                    case Size::WORD: return type.sign() ? (int16_t) value : (uint16_t) value;
+                    case Size::DWORD: return type.sign() ? (int32_t) value : (uint32_t) value;
+                    case Size::QWORD: return type.sign() ? (int64_t) value : (uint64_t) value;
+                    default: std::unreachable();
+                }
+            },
+            [&](const type::Floating &type) -> Constant {
+                switch (type.size()) {
+                    case Size::DWORD: return (float) value;
+                    case Size::QWORD: return (double) value;
+                    default: std::unreachable();
+                }
+            },
+            [&](const type::Boolean &) -> Constant {
+                return (bool) value;
+            }
+        }, type);
+    }, *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const Constant &constant) {
     std::visit(match{
         [&os](const bool &value) { os << (value ? "1" : "0"); },
@@ -50,7 +76,6 @@ size_t hash<arkoi::mid::Variable>::operator()(const arkoi::mid::Variable &variab
     size_t generationHash = std::hash<size_t>{}(variable.version());
     return linkHash ^ (generationHash << 1);
 }
-
 
 size_t hash<arkoi::mid::Constant>::operator()(const arkoi::mid::Constant &constant) const {
     return std::visit([](const auto &value) -> size_t {

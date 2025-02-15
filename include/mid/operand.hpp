@@ -32,9 +32,12 @@ public:
     using variant::variant;
 
     [[nodiscard]] Size size() const;
+
+    [[nodiscard]] Constant cast_to(const Type &type) const;
 };
 
 struct Operand : std::variant<Constant, Variable> {
+public:
     using variant::variant;
 };
 

@@ -24,8 +24,8 @@ void Function::depth_first_search(const std::function<void(BasicBlock &)> &callb
 
         callback(*current);
 
-        if (current->next()) queue.push(current->next().get());
         if (current->branch()) queue.push(current->branch().get());
+        if (current->next()) queue.push(current->next().get());
     }
 
     callback(*_end);

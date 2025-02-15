@@ -180,10 +180,15 @@ void Generator::visit(ast::Cast &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    auto result = _make_temporary(node.to());
-    _current_operand = result;
+    // Evaluate the cast if it is constant or else generate the IL for it.
+    if (const auto *constant = std::get_if<Constant>(&expression)) {
+        _current_operand = constant->cast_to(node.to());
+    } else {
+        auto result = _make_temporary(node.to());
+        _current_operand = result;
 
-    _current_block->add<Cast>(result, expression, node.from(), node.to());
+        _current_block->add<Cast>(result, expression, node.from(), node.to());
+    }
 }
 
 void Generator::visit(ast::Call &node) {
