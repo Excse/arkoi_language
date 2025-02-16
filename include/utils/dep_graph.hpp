@@ -3,10 +3,8 @@
 #include <unordered_map>
 #include <vector>
 
+template <typename ID>
 class DependencyGraph {
-public:
-    using ID = std::size_t;
-
 public:
     void add_node(ID node);
 
@@ -20,6 +18,8 @@ private:
 private:
     std::unordered_map<ID, std::vector<ID>> _graph;
 };
+
+#include "../../src/utils/dep_graph.tpp"
 
 //==============================================================================
 // BSD 3-Clause License

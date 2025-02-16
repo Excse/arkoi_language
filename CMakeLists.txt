@@ -56,7 +56,7 @@ add_library(${PROJECT_NAME}_lib
         src/mid/cfg_printer.cpp
         src/mid/operand.cpp
         src/mid/cfg.cpp
-        src/utils/dep_graph.cpp
+        src/utils/dep_graph.tpp
         src/def/size.cpp
 )
 

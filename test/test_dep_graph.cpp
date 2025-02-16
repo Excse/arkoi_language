@@ -6,7 +6,7 @@
 using testing::ElementsAre;
 
 TEST(DependencyGraph, NoDependencies) {
-    DependencyGraph graph;
+    DependencyGraph<size_t> graph;
 
     for (size_t index = 0; index < 10; index++) {
         graph.add_node(index);
@@ -18,7 +18,7 @@ TEST(DependencyGraph, NoDependencies) {
 }
 
 TEST(DependencyGraph, Dependencies) {
-    DependencyGraph graph;
+    DependencyGraph<size_t> graph;
 
     for (size_t index = 0; index < 10; index++) {
         graph.add_node(index);
@@ -34,7 +34,7 @@ TEST(DependencyGraph, Dependencies) {
 }
 
 TEST(DependencyGraph, Cycle) {
-    DependencyGraph graph;
+    DependencyGraph<size_t> graph;
 
     graph.add_dependency(1, 2);
     ASSERT_THROW(graph.add_dependency(2, 1), std::runtime_error);
@@ -52,8 +52,8 @@ TEST(DependencyGraph, Cycle) {
  *       v
  *       H
   */
-TEST(DependencyGraph, WorkingComplex) {
-    DependencyGraph graph;
+TEST(DependencyGraph, Complex) {
+    DependencyGraph<size_t> graph;
 
     graph.add_dependency('B', 'A');
     graph.add_dependency('C', 'B');
@@ -67,6 +67,39 @@ TEST(DependencyGraph, WorkingComplex) {
     auto order = graph.topological_sort();
     ASSERT_EQ(order.size(), 8);
     EXPECT_THAT(order, ElementsAre('A', 'D', 'G', 'B', 'C', 'F', 'E', 'H'));
+}
+
+/**
+ *       A
+ *       |
+ *       v
+ *       B ----> C <---- D
+ *       |       |
+ *       v       v
+ *       E <---- F <---- G
+ *       |
+ *       v
+ *       H
+  */
+TEST(DependencyGraph, ComplexEnum) {
+    enum Node : size_t {
+        A = 10, B = 1, C = 3, D = 5, E = 20, F = 2, G = 11, H = 12
+    };
+
+    DependencyGraph<Node> graph;
+
+    graph.add_dependency(B, A);
+    graph.add_dependency(C, B);
+    graph.add_dependency(C, D);
+    graph.add_dependency(E, B);
+    graph.add_dependency(E, F);
+    graph.add_dependency(F, G);
+    graph.add_dependency(F, C);
+    graph.add_dependency(H, E);
+
+    auto order = graph.topological_sort();
+    ASSERT_EQ(order.size(), 8);
+    EXPECT_THAT(order, ElementsAre(A, D, G, B, C, F, E, H));
 }
 
 //==============================================================================

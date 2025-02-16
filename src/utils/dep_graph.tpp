@@ -1,15 +1,15 @@
-#include "utils/dep_graph.hpp"
-
 #include <unordered_set>
 #include <stdexcept>
 #include <stack>
 #include <queue>
 
-void DependencyGraph::add_node(DependencyGraph::ID node) {
+template <typename ID>
+void DependencyGraph<ID>::add_node(ID node) {
     _graph.try_emplace(node);
 }
 
-void DependencyGraph::add_dependency(DependencyGraph::ID node, DependencyGraph::ID dependency) {
+template <typename ID>
+void DependencyGraph<ID>::add_dependency(ID node, ID dependency) {
     add_node(node);
     add_node(dependency);
 
@@ -20,7 +20,8 @@ void DependencyGraph::add_dependency(DependencyGraph::ID node, DependencyGraph::
     _graph[dependency].push_back(node);
 }
 
-std::vector<DependencyGraph::ID> DependencyGraph::topological_sort() const {
+template <typename ID>
+std::vector<ID> DependencyGraph<ID>::topological_sort() const {
     std::unordered_map<ID, size_t> in_degree;
     for (const auto &[node, neighbors]: _graph) {
         in_degree.try_emplace(node);
@@ -55,7 +56,8 @@ std::vector<DependencyGraph::ID> DependencyGraph::topological_sort() const {
     return ordered;
 }
 
-bool DependencyGraph::_has_path(ID start, ID target) {
+template <typename ID>
+bool DependencyGraph<ID>::_has_path(ID start, ID target) {
     std::unordered_set<ID> visited;
     std::stack<ID> queue;
 
