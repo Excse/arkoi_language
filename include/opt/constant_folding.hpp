@@ -1,55 +1,24 @@
 #pragma once
 
-#include <sstream>
+#include "opt/pass.hpp"
 
-#include "utils/visitor.hpp"
-#include "mid/instruction.hpp"
-#include "mid/cfg.hpp"
+namespace arkoi::opt {
 
-namespace arkoi::mid {
-
-class ILPrinter : Visitor {
+class ConstantFolding : public Pass {
 public:
-    ILPrinter(std::stringstream &output) : _output(output) {}
+    bool on_module(mid::Module &) override { return false; }
 
-public:
-    [[nodiscard]] static std::stringstream print(Module &module);
+    bool on_function(mid::Function &) override { return false; }
 
-    void visit(Module &module) override;
-
-    void visit(Function &function) override;
-
-    void visit(BasicBlock &block) override;
-
-    void visit(Label &instruction) override;
-
-    void visit(Return &instruction) override;
-
-    void visit(Binary &instruction) override;
-
-    void visit(Cast &instruction) override;
-
-    void visit(Call &instruction) override;
-
-    void visit(Goto &instruction) override;
-
-    void visit(If &instruction) override;
-
-    void visit(Alloca &instruction) override;
-
-    void visit(Store &instruction) override;
-
-    void visit(Load &instruction) override;
-
-    void visit(Constant &instruction) override;
-
-    [[nodiscard]] auto &output() const { return _output; }
+    bool on_block(mid::BasicBlock &block) override;
 
 private:
-    std::stringstream &_output;
+    [[nodiscard]] static mid::Immediate _cast(const mid::Cast &instruction);
+
+    [[nodiscard]] static mid::Immediate _evaluate_cast(const Type &to, auto expression);
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::opt
 
 //==============================================================================
 // BSD 3-Clause License

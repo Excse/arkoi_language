@@ -27,16 +27,14 @@ private:
     size_t _version;
 };
 
-class Constant : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+class Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
 public:
     using variant::variant;
 
     [[nodiscard]] Size size() const;
-
-    [[nodiscard]] Constant cast_to(const Type &type) const;
 };
 
-struct Operand : std::variant<Constant, Variable> {
+struct Operand : std::variant<Immediate, Variable> {
 public:
     using variant::variant;
 };
@@ -51,8 +49,8 @@ struct hash<arkoi::mid::Variable> {
 };
 
 template<>
-struct hash<arkoi::mid::Constant> {
-    size_t operator()(const arkoi::mid::Constant &constant) const;
+struct hash<arkoi::mid::Immediate> {
+    size_t operator()(const arkoi::mid::Immediate &immediate) const;
 };
 
 template<>
@@ -62,7 +60,7 @@ struct hash<arkoi::mid::Operand> {
 
 } // namespace std
 
-std::ostream &operator<<(std::ostream &os, const arkoi::mid::Constant &operand);
+std::ostream &operator<<(std::ostream &os, const arkoi::mid::Immediate &operand);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::mid::Variable &operand);
 

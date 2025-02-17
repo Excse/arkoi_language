@@ -62,6 +62,7 @@ class Return;
 class Alloca;
 class Label;
 class Store;
+class Constant;
 class Load;
 class Cast;
 class Call;
@@ -98,6 +99,8 @@ public:
     virtual void visit(Store &instruction) = 0;
 
     virtual void visit(Load &instruction) = 0;
+
+    virtual void visit(Constant &instruction) = 0;
 };
 
 } // namespace arkoi::mid

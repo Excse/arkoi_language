@@ -1,55 +1,7 @@
-#pragma once
-
-#include <sstream>
-
-#include "utils/visitor.hpp"
-#include "mid/instruction.hpp"
-#include "mid/cfg.hpp"
-
-namespace arkoi::mid {
-
-class ILPrinter : Visitor {
-public:
-    ILPrinter(std::stringstream &output) : _output(output) {}
-
-public:
-    [[nodiscard]] static std::stringstream print(Module &module);
-
-    void visit(Module &module) override;
-
-    void visit(Function &function) override;
-
-    void visit(BasicBlock &block) override;
-
-    void visit(Label &instruction) override;
-
-    void visit(Return &instruction) override;
-
-    void visit(Binary &instruction) override;
-
-    void visit(Cast &instruction) override;
-
-    void visit(Call &instruction) override;
-
-    void visit(Goto &instruction) override;
-
-    void visit(If &instruction) override;
-
-    void visit(Alloca &instruction) override;
-
-    void visit(Store &instruction) override;
-
-    void visit(Load &instruction) override;
-
-    void visit(Constant &instruction) override;
-
-    [[nodiscard]] auto &output() const { return _output; }
-
-private:
-    std::stringstream &_output;
-};
-
-} // namespace arkoi::mid
+template<typename Type, typename... Args>
+void PassManager::add(Args &&... args) {
+    _passes.push_back(std::make_unique<Type>(std::forward<Args>(args)...));
+}
 
 //==============================================================================
 // BSD 3-Clause License

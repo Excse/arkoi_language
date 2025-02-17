@@ -20,6 +20,10 @@ void InstructionType::accept(mid::Visitor &visitor) {
     std::visit([&](auto &item) { item.accept(visitor); }, *this);
 }
 
+bool InstructionType::is_constant() {
+    return std::visit([&](auto &item) { return item.is_constant(); }, *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
     switch (op) {
         case Binary::Operator::Add: return os << "add";

@@ -42,8 +42,11 @@ void Generator::visit(ast::Function &node) {
     for (auto &parameter: node.parameters()) {
         auto alloca_temp = _make_temporary(parameter.type());
         _allocas.emplace(parameter.name().symbol(), alloca_temp);
-
         _current_block->add<Alloca>(alloca_temp, parameter.type());
+    }
+
+    for (auto &parameter: node.parameters()) {
+        auto alloca_temp = _allocas.at(parameter.name().symbol());
         _current_block->add<Store>(alloca_temp, parameter.name().symbol(), parameter.type());
     }
 
@@ -128,14 +131,10 @@ void Generator::visit(ast::Identifier &node) {
         //       For now only parameter variables exist.
         const auto &variable = std::get<symbol::Variable>(*node.symbol());
 
-        auto result = _allocas.find(node.symbol());
-        if (result != _allocas.end()) {
-            auto temp = _make_temporary(variable.type());
-            _current_block->add<Load>(temp, result->second, variable.type());
-            _current_operand = temp;
-        } else {
-            throw std::runtime_error("This should not have happened.");
-        }
+        auto alloca_temp = _allocas.at(node.symbol());
+        auto temp = _make_temporary(variable.type());
+        _current_block->add<Load>(temp, alloca_temp, variable.type());
+        _current_operand = temp;
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
     }
@@ -163,16 +162,12 @@ void Generator::visit(ast::Assign &node) {
     //       For now only parameter variables exist.
     const auto &variable = std::get<symbol::Variable>(*node.name().symbol());
 
-    auto result = _allocas.find(node.name().symbol());
-    if (result == _allocas.end()) {
-        throw std::runtime_error("This should not have happened.");
-    }
-
     // This will set _current_operand
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    _current_block->add<Store>(result->second, expression, variable.type());
+    auto alloca_temp = _allocas.at(node.name().symbol());
+    _current_block->add<Store>(alloca_temp, expression, variable.type());
 }
 
 void Generator::visit(ast::Cast &node) {
@@ -180,15 +175,10 @@ void Generator::visit(ast::Cast &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    // Evaluate the cast if it is constant or else generate the IL for it.
-    if (const auto *constant = std::get_if<Constant>(&expression)) {
-        _current_operand = constant->cast_to(node.to());
-    } else {
-        auto result = _make_temporary(node.to());
-        _current_operand = result;
+    auto result = _make_temporary(node.to());
+    _current_operand = result;
 
-        _current_block->add<Cast>(result, expression, node.from(), node.to());
-    }
+    _current_block->add<Cast>(result, expression, node.from(), node.to());
 }
 
 void Generator::visit(ast::Call &node) {

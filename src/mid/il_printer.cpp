@@ -63,9 +63,8 @@ void ILPrinter::visit(Return &instruction) {
 }
 
 void ILPrinter::visit(Binary &instruction) {
-    _output << instruction.result() << " = " << to_string(instruction.op()) << " @"
-            << instruction.op_type() << " "
-            << instruction.left() << ", " << instruction.right();
+    _output << instruction.result() << " = " << to_string(instruction.op()) << " @" << instruction.op_type()
+            << " " << instruction.left() << ", " << instruction.right();
 }
 
 void ILPrinter::visit(Cast &instruction) {
@@ -101,13 +100,16 @@ void ILPrinter::visit(Alloca &instruction) {
 }
 
 void ILPrinter::visit(Store &instruction) {
-    _output << "store @" << instruction.type() << " " << instruction.value()
-            << " " << instruction.result();
+    _output << "store @" << instruction.type() << " " << instruction.value() << " " << instruction.result();
 }
 
 void ILPrinter::visit(Load &instruction) {
-    _output << instruction.result() << " = load @" << instruction.type()
-            << " " << instruction.target();
+    _output << instruction.result() << " = load @" << instruction.type() << " " << instruction.target();
+}
+
+void ILPrinter::visit(Constant &instruction) {
+    _output << instruction.result() << " = const " << instruction.value();
+
 }
 
 //==============================================================================

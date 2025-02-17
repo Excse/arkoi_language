@@ -1,55 +1,26 @@
-#pragma once
+#include "opt/pass.hpp"
 
-#include <sstream>
+using namespace arkoi::opt;
 
-#include "utils/visitor.hpp"
-#include "mid/instruction.hpp"
-#include "mid/cfg.hpp"
+void PassManager::run(mid::Module &module) {
+    while (true) {
+        bool changed = false;
 
-namespace arkoi::mid {
+        for (const auto &pass: _passes) {
+            changed |= pass->on_module(module);
 
-class ILPrinter : Visitor {
-public:
-    ILPrinter(std::stringstream &output) : _output(output) {}
+            for (auto &function: module.functions()) {
+                changed |= pass->on_function(function);
 
-public:
-    [[nodiscard]] static std::stringstream print(Module &module);
+                function.depth_first_search([&](mid::BasicBlock &block) {
+                    changed |= pass->on_block(block);
+                });
+            }
+        }
 
-    void visit(Module &module) override;
-
-    void visit(Function &function) override;
-
-    void visit(BasicBlock &block) override;
-
-    void visit(Label &instruction) override;
-
-    void visit(Return &instruction) override;
-
-    void visit(Binary &instruction) override;
-
-    void visit(Cast &instruction) override;
-
-    void visit(Call &instruction) override;
-
-    void visit(Goto &instruction) override;
-
-    void visit(If &instruction) override;
-
-    void visit(Alloca &instruction) override;
-
-    void visit(Store &instruction) override;
-
-    void visit(Load &instruction) override;
-
-    void visit(Constant &instruction) override;
-
-    [[nodiscard]] auto &output() const { return _output; }
-
-private:
-    std::stringstream &_output;
-};
-
-} // namespace arkoi::mid
+        if (!changed) break;
+    }
+}
 
 //==============================================================================
 // BSD 3-Clause License

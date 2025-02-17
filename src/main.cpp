@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 
+#include "opt/constant_folding.hpp"
+#include "opt/pass.hpp"
 #include "mid/name_resolver.hpp"
 #include "mid/type_resolver.hpp"
 #include "mid/generator.hpp"
@@ -11,6 +13,21 @@
 #include "front/parser.hpp"
 
 using namespace arkoi;
+
+void dump_cfg(const std::string &base_path, mid::Module &module) {
+    auto cfg_output = mid::CFGPrinter::print(module);
+
+    auto dot_path = base_path + ".dot";
+    auto png_path = base_path + ".png";
+
+    std::ofstream cfg_file(dot_path);
+    cfg_file << cfg_output.str();
+    cfg_file.close();
+
+    std::string assemble_command = "dot -Tpng " + dot_path + " -o " + png_path;
+    int assemble_result = std::system(assemble_command.c_str());
+    if (WEXITSTATUS(assemble_result) != 0) exit(1);
+}
 
 int main() {
     static const std::string INPUT_FILE = "../example/test.ark";
@@ -49,23 +66,19 @@ int main() {
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
     auto module = mid::Generator::generate(program);
+
     auto il_output = mid::ILPrinter::print(module);
     std::cout << il_output.str();
 
-    std::cout << "~~~~~~~~~~~~      Control Flow Graph       ~~~~~~~~~~~~" << std::endl;
+    dump_cfg(base_path + "_org", module);
 
-    auto cfg_output = mid::CFGPrinter::print(module);
+    std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
-    auto dot_path = base_path + ".dot";
-    auto png_path = base_path + ".png";
+    opt::PassManager manager;
+    manager.add<opt::ConstantFolding>();
+    manager.run(module);
 
-    std::ofstream cfg_file(dot_path);
-    cfg_file << cfg_output.str();
-    cfg_file.close();
-
-    std::string assemble_command = "dot -Tpng " + dot_path + " -o " + png_path;
-    int assemble_result = std::system(assemble_command.c_str());
-    if (WEXITSTATUS(assemble_result) != 0) exit(1);
+    dump_cfg(base_path + "_opt", module);
 
     return 0;
 }

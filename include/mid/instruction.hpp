@@ -14,6 +14,8 @@ public:
     virtual ~Instruction() = default;
 
     virtual void accept(mid::Visitor &visitor) = 0;
+
+    [[nodiscard]] virtual bool is_constant() = 0;
 };
 
 class Label : public Instruction {
@@ -21,6 +23,8 @@ public:
     Label(SharedSymbol symbol) : _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
@@ -34,6 +38,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] bool is_constant() override { return false; }
+
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
@@ -46,6 +52,8 @@ public:
         : _condition(std::move(condition)), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_condition); }
 
     [[nodiscard]] auto &condition() const { return _condition; }
 
@@ -65,6 +73,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] bool is_constant() override { return false; }
+
     [[nodiscard]] auto &function() const { return _function; }
 
     [[nodiscard]] auto &arguments() { return _arguments; };
@@ -81,6 +91,8 @@ public:
     Return(Operand value, Type type) : _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &type() const { return _type; };
 
@@ -110,6 +122,11 @@ public:
           _result(std::move(result)), _op(op) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool is_constant() override {
+        return std::holds_alternative<Immediate>(_left) &&
+               std::holds_alternative<Immediate>(_right);
+    }
 
     [[nodiscard]] auto &result() const { return _result; };
 
@@ -143,6 +160,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_expression); }
+
     [[nodiscard]] auto &expression() const { return _expression; };
 
     [[nodiscard]] auto &expression() { return _expression; };
@@ -166,6 +185,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] bool is_constant() override { return false; }
+
     [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &type() const { return _type; };
@@ -181,6 +202,8 @@ public:
         : _result(std::move(result)), _target(std::move(target)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &result() const { return _result; };
 
@@ -200,16 +223,36 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] bool is_constant() override { return false; }
+
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &value() const { return _value; };
-
     [[nodiscard]] auto &type() const { return _type; };
+
+    [[nodiscard]] auto &value() { return _value; };
 
 private:
     mid::Variable _result;
     Operand _value;
     Type _type;
+};
+
+class Constant : public Instruction {
+public:
+    Constant(mid::Variable result, Immediate value)
+        : _result(std::move(result)), _value(value) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] bool is_constant() override { return true; }
+
+    [[nodiscard]] auto &result() const { return _result; };
+
+    [[nodiscard]] auto &value() { return _value; };
+
+private:
+    mid::Variable _result;
+    Immediate _value;
 };
 
 struct InstructionType : std::variant<
@@ -222,11 +265,14 @@ struct InstructionType : std::variant<
     mid::Binary,
     mid::Alloca,
     mid::Store,
-    mid::Load
+    mid::Load,
+    mid::Constant
 > {
     using variant::variant;
 
     void accept(mid::Visitor &visitor);
+
+    [[nodiscard]] bool is_constant();
 };
 
 } // namespace arkoi::mid

@@ -40,6 +40,8 @@ public:
 
     void visit(Load &instruction) override { _printer.visit(instruction); }
 
+    void visit(Constant &instruction) override { _printer.visit(instruction); }
+
     [[nodiscard]] auto &output() const { return _output; }
 
 private:

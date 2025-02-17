@@ -1,55 +1,37 @@
 #pragma once
 
-#include <sstream>
+#include <memory>
+#include <vector>
 
-#include "utils/visitor.hpp"
-#include "mid/instruction.hpp"
 #include "mid/cfg.hpp"
 
-namespace arkoi::mid {
+namespace arkoi::opt {
 
-class ILPrinter : Visitor {
+class Pass {
 public:
-    ILPrinter(std::stringstream &output) : _output(output) {}
+    virtual ~Pass() = default;
 
-public:
-    [[nodiscard]] static std::stringstream print(Module &module);
+    virtual bool on_module(mid::Module &module) = 0;
 
-    void visit(Module &module) override;
+    virtual bool on_function(mid::Function &function) = 0;
 
-    void visit(Function &function) override;
-
-    void visit(BasicBlock &block) override;
-
-    void visit(Label &instruction) override;
-
-    void visit(Return &instruction) override;
-
-    void visit(Binary &instruction) override;
-
-    void visit(Cast &instruction) override;
-
-    void visit(Call &instruction) override;
-
-    void visit(Goto &instruction) override;
-
-    void visit(If &instruction) override;
-
-    void visit(Alloca &instruction) override;
-
-    void visit(Store &instruction) override;
-
-    void visit(Load &instruction) override;
-
-    void visit(Constant &instruction) override;
-
-    [[nodiscard]] auto &output() const { return _output; }
-
-private:
-    std::stringstream &_output;
+    virtual bool on_block(mid::BasicBlock &block) = 0;
 };
 
-} // namespace arkoi::mid
+class PassManager {
+public:
+    void run(mid::Module &module);
+
+    template<typename Type, typename... Args>
+    void add(Args &&... args);
+
+private:
+    std::vector<std::unique_ptr<Pass>> _passes;
+};
+
+#include "../../src/opt/pass.tpp"
+
+} // namespace arkoi::opt
 
 //==============================================================================
 // BSD 3-Clause License
