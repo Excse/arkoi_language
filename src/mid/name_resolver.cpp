@@ -97,9 +97,9 @@ void NameResolver::visit(ast::Cast &node) {
 void NameResolver::visit(ast::If &node) {
     node.condition()->accept(*this);
 
-    std::visit([&](const auto &value) { value->accept(*this); }, node.branch());
+    node.branch()->accept(*this);
 
-    if (node.next()) std::visit([&](const auto &value) { value->accept(*this); }, *node.next());
+    if (node.next()) node.next()->accept(*this);
 }
 
 void NameResolver::visit(ast::Assign &node) {

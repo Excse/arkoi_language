@@ -228,7 +228,7 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
 
     _consume(Token::Type::Colon);
 
-    ast::If::BranchType branch;
+    std::unique_ptr<ast::Node> branch;
     if (_try_consume(Token::Type::Newline)) {
         branch = _parse_block();
     } else {
@@ -236,7 +236,7 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
     }
 
     if (!_try_consume(Token::Type::Else)) {
-        return std::make_unique<ast::If>(std::move(expression), std::move(branch), std::nullopt);
+        return std::make_unique<ast::If>(std::move(expression), std::move(branch), nullptr);
     }
 
     if (auto token = _try_consume(Token::Type::If)) {
@@ -245,7 +245,7 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
 
     _consume(Token::Type::Colon);
 
-    ast::If::NextType _next;
+    std::unique_ptr<ast::Node> _next;
     if (_try_consume(Token::Type::Newline)) {
         _next = _parse_block();
     } else {

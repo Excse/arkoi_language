@@ -228,7 +228,8 @@ void Generator::visit(ast::If &node) {
     { // Branch block
         _current_block = branch_block;
         branch_block->add<Label>(branch_label);
-        std::visit([&](const auto &value) { value->accept(*this); }, node.branch());
+
+        node.branch()->accept(*this);
 
         if (!_current_block->instructions().empty()) {
             auto &last_instruction = _current_block->instructions().back();
@@ -245,9 +246,8 @@ void Generator::visit(ast::If &node) {
     { // Next block
         _current_block = next_block;
         next_block->add<Label>(next_label);
-        if (node.next()) {
-            std::visit([&](const auto &value) { value->accept(*this); }, *node.next());
-        }
+
+        if(node.next()) node.next()->accept(*this);
 
         if (!_current_block->instructions().empty()) {
             auto &last_instruction = _current_block->instructions().back();

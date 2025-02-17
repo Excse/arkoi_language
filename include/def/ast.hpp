@@ -135,12 +135,8 @@ private:
 
 class If : public Node {
 public:
-    using NextType = std::variant<std::unique_ptr<Block>, std::unique_ptr<If>, std::unique_ptr<Node>>;
-    using BranchType = std::variant<std::unique_ptr<Block>, std::unique_ptr<Node>>;
-
-public:
-    If(std::unique_ptr<Node> &&condition, BranchType &&branch, std::optional<NextType> &&next)
-        : _condition(std::move(condition)), _next(std::move(next)), _branch(std::move(branch)) {}
+    If(std::unique_ptr<Node> &&condition, std::unique_ptr<Node> &&branch, std::unique_ptr<Node> &&next)
+        : _next(std::move(next)), _branch(std::move(branch)), _condition(std::move(condition)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -153,9 +149,8 @@ public:
     [[nodiscard]] auto &next() const { return _next; }
 
 private:
+    std::unique_ptr<Node> _next, _branch;
     std::unique_ptr<Node> _condition;
-    std::optional<NextType> _next;
-    BranchType _branch;
 };
 
 class Assign : public Node {
