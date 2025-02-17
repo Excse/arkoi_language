@@ -1,7 +1,6 @@
 #pragma once
 
 #include <utility>
-#include <memory>
 
 #include "utils/visitor.hpp"
 #include "mid/operand.hpp"
@@ -18,23 +17,9 @@ public:
     [[nodiscard]] virtual bool is_constant() = 0;
 };
 
-class Label : public Instruction {
-public:
-    Label(SharedSymbol symbol) : _symbol(std::move(symbol)) {}
-
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] bool is_constant() override { return false; }
-
-    [[nodiscard]] auto &symbol() const { return _symbol; }
-
-private:
-    SharedSymbol _symbol;
-};
-
 class Goto : public Instruction {
 public:
-    Goto(SharedSymbol label) : _label(std::move(label)) {}
+    Goto(std::string label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -43,19 +28,17 @@ public:
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
-    SharedSymbol _label;
+    std::string _label;
 };
 
 class If : public Instruction {
 public:
-    If(Operand condition, SharedSymbol label)
+    If(Operand condition, std::string label)
         : _condition(std::move(condition)), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_condition); }
-
-    [[nodiscard]] auto &condition() const { return _condition; }
 
     [[nodiscard]] auto &condition() { return _condition; }
 
@@ -63,27 +46,31 @@ public:
 
 private:
     Operand _condition;
-    SharedSymbol _label;
+    std::string _label;
 };
 
 class Call : public Instruction {
 public:
-    Call(mid::Variable result, mid::Variable function, std::vector<Operand> &&arguments)
-        : _result(std::move(result)), _function(std::move(function)), _arguments(std::move(arguments)) {}
+    Call(mid::Variable result, std::string name, std::vector<Operand> &&arguments, Type type)
+        : _arguments(std::move(arguments)), _result(std::move(result)), _name(std::move(name)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &function() const { return _function; }
-
     [[nodiscard]] auto &arguments() { return _arguments; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
+    [[nodiscard]] auto &name() const { return _name; }
+
+    [[nodiscard]] auto &type() const { return _type; }
+
 private:
-    mid::Variable _result, _function;
     std::vector<Operand> _arguments;
+    mid::Variable _result;
+    std::string _name;
+    Type _type;
 };
 
 class Return : public Instruction {
@@ -95,8 +82,6 @@ public:
     [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &type() const { return _type; };
-
-    [[nodiscard]] auto &value() const { return _value; };
 
     [[nodiscard]] auto &value() { return _value; };
 
@@ -130,11 +115,7 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &right() const { return _right; };
-
     [[nodiscard]] auto &right() { return _right; };
-
-    [[nodiscard]] auto &left() const { return _left; };
 
     [[nodiscard]] auto &left() { return _left; };
 
@@ -161,8 +142,6 @@ public:
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_expression); }
-
-    [[nodiscard]] auto &expression() const { return _expression; };
 
     [[nodiscard]] auto &expression() { return _expression; };
 
@@ -239,8 +218,8 @@ private:
 
 class Constant : public Instruction {
 public:
-    Constant(mid::Variable result, Immediate value)
-        : _result(std::move(result)), _value(value) {}
+    Constant(mid::Variable result, Immediate value, Type type)
+        : _result(std::move(result)), _value(value), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -250,13 +229,15 @@ public:
 
     [[nodiscard]] auto &value() { return _value; };
 
+    [[nodiscard]] auto &type() { return _type; };
+
 private:
     mid::Variable _result;
     Immediate _value;
+    Type _type;
 };
 
 struct InstructionType : std::variant<
-    mid::Label,
     mid::Goto,
     mid::If,
     mid::Cast,

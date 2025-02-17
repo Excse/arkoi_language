@@ -20,8 +20,6 @@ public:
 
     void visit(BasicBlock &block) override;
 
-    void visit(Label &instruction) override { _printer.visit(instruction); }
-
     void visit(Return &instruction) override { _printer.visit(instruction); }
 
     void visit(Binary &instruction) override { _printer.visit(instruction); }

@@ -14,7 +14,7 @@ bool ConstantFolding::on_block(mid::BasicBlock &block) {
 
         if (auto cast = std::get_if<mid::Cast>(&instruction)) {
             auto value = _cast(*cast);
-            instruction = mid::Constant(cast->result(), value);
+            instruction = mid::Constant(cast->result(), value, cast->to());
             changed = true;
         }
     }
@@ -22,7 +22,7 @@ bool ConstantFolding::on_block(mid::BasicBlock &block) {
     return changed;
 }
 
-mid::Immediate ConstantFolding::_cast(const mid::Cast &instruction) {
+mid::Immediate ConstantFolding::_cast(mid::Cast &instruction) {
     auto expression = std::get<mid::Immediate>(instruction.expression());
 
     return std::visit([&](const auto &value) {

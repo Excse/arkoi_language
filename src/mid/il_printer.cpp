@@ -44,18 +44,13 @@ void ILPrinter::visit(Function &function) {
 }
 
 void ILPrinter::visit(BasicBlock &block) {
-    for (auto &instruction: block.instructions()) {
-        if (!std::holds_alternative<Label>(instruction)) {
-            _output << "  ";
-        }
+    _output << block.label() << ":\n";
 
+    for (auto &instruction: block.instructions()) {
+        _output << "  ";
         instruction.accept(*this);
         _output << "\n";
     }
-}
-
-void ILPrinter::visit(Label &instruction) {
-    _output << instruction.symbol() << ":";
 }
 
 void ILPrinter::visit(Return &instruction) {
@@ -63,17 +58,18 @@ void ILPrinter::visit(Return &instruction) {
 }
 
 void ILPrinter::visit(Binary &instruction) {
-    _output << instruction.result() << " = " << to_string(instruction.op()) << " @" << instruction.op_type()
+    _output << instruction.result() << " @" << instruction.result_type() << " = "
+            << to_string(instruction.op()) << " @" << instruction.op_type()
             << " " << instruction.left() << ", " << instruction.right();
 }
 
 void ILPrinter::visit(Cast &instruction) {
-    _output << instruction.result() << " = cast @" << instruction.from() << " " << instruction.expression()
-            << " to @" << instruction.to();
+    _output << instruction.result() << " @" << instruction.to() << " = cast @"
+            << instruction.from() << " " << instruction.expression();
 }
 
 void ILPrinter::visit(Call &instruction) {
-    _output << instruction.result() << " = call " << instruction.function() << "(";
+    _output << instruction.result() << " @" << instruction.type() << " = call " << instruction.name() << "(";
 
     for (size_t index = 0; index < instruction.arguments().size(); index++) {
         auto &argument = instruction.arguments()[index];
@@ -96,20 +92,19 @@ void ILPrinter::visit(If &instruction) {
 }
 
 void ILPrinter::visit(Alloca &instruction) {
-    _output << instruction.result() << " = alloca @" << instruction.type();
+    _output << instruction.result() << " @" << instruction.type() << " = alloca";
 }
 
 void ILPrinter::visit(Store &instruction) {
-    _output << "store @" << instruction.type() << " " << instruction.value() << " " << instruction.result();
+    _output << "store @" << instruction.type() << " " << instruction.value() << ", " << instruction.result();
 }
 
 void ILPrinter::visit(Load &instruction) {
-    _output << instruction.result() << " = load @" << instruction.type() << " " << instruction.target();
+    _output << instruction.result() << " @" << instruction.type() << " = load " << instruction.target();
 }
 
 void ILPrinter::visit(Constant &instruction) {
-    _output << instruction.result() << " = const " << instruction.value();
-
+    _output << instruction.result() << " @" << instruction.type() << " = const " << instruction.value();
 }
 
 //==============================================================================

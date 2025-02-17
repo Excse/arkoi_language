@@ -2,17 +2,15 @@
 
 #include <iostream>
 #include <variant>
-#include <memory>
 
-#include "mid/symbol_table.hpp"
 #include "def/size.hpp"
 
 namespace arkoi::mid {
 
 class Variable {
 public:
-    Variable(SharedSymbol symbol, size_t version = 0)
-        : _symbol(std::move(symbol)), _version(version) {}
+    Variable(std::string name, size_t version = 0)
+        : _name(std::move(name)), _version(version) {}
 
     bool operator==(const Variable &rhs) const;
 
@@ -20,10 +18,10 @@ public:
 
     [[nodiscard]] auto version() const { return _version; }
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &symbol() const { return _name; }
 
 private:
-    SharedSymbol _symbol;
+    std::string _name;
     size_t _version;
 };
 
@@ -40,25 +38,6 @@ public:
 };
 
 } // namespace arkoi::mid
-
-namespace std {
-
-template<>
-struct hash<arkoi::mid::Variable> {
-    size_t operator()(const arkoi::mid::Variable &variable) const;
-};
-
-template<>
-struct hash<arkoi::mid::Immediate> {
-    size_t operator()(const arkoi::mid::Immediate &immediate) const;
-};
-
-template<>
-struct hash<arkoi::mid::Operand> {
-    size_t operator()(const arkoi::mid::Operand &operand) const;
-};
-
-} // namespace std
 
 std::ostream &operator<<(std::ostream &os, const arkoi::mid::Immediate &operand);
 

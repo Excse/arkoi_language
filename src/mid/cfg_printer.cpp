@@ -12,7 +12,12 @@ std::stringstream CFGPrinter::print(Module &module) {
 void CFGPrinter::visit(Module &module) {
     _output << "digraph CFG {\n";
 
-    _output << "\tnode [shape=box, labelloc=\"t\", labeljust=\"l\"]\n";
+    _output << "\tgraph [fontname = \"Monospace\"];\n";
+    _output << "\tnode  [fontname = \"Monospace\", shape=box, style=filled, margin=0.1];\n";
+    _output << "\tedge  [fontname = \"Monospace\"];\n";
+
+    _output << "\tbgcolor = \"#f7f7f7\";\n";
+    _output << "\tsplines = false;\n\n";
 
     for (auto &function: module.functions()) {
         function.accept(*this);
@@ -26,21 +31,24 @@ void CFGPrinter::visit(Function &function) {
 }
 
 void CFGPrinter::visit(BasicBlock &block) {
-    _output << "\t" << block.symbol() << " [label=\"";
+    _output << "\t" << block.label() << " [label=\"";
+
+    _output << block.label() << ":\\l";
 
     for (auto &instruction: block.instructions()) {
+        _output << " ";
         instruction.accept(*this);
         _output << "\\l";
     }
 
-    _output << "\"]\n";
+    _output << "\"];\n";
 
     if(block.next()) {
-        _output << "\t" << block.symbol() << " -> " << block.next()->symbol() << " [label=\"Next\"]\n";
+        _output << "\t" << block.label() << " -> " << block.next()->label() << " [label=\"Next\"];\n";
     }
 
     if(block.branch()) {
-        _output << "\t" << block.symbol() << " -> " << block.branch()->symbol() << " [label=\"Branch\"]\n";
+        _output << "\t" << block.label() << " -> " << block.branch()->label() << " [label=\"Branch\"];\n";
     }
 }
 

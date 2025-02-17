@@ -36,8 +36,6 @@ public:
 
     void visit(ast::Cast &node) override;
 
-    [[nodiscard]] Operand _evaluate_cast(const auto &value, const Type &type);
-
     void visit(ast::Assign &node) override;
 
     void visit(ast::Call &node) override;
@@ -47,17 +45,17 @@ public:
     [[nodiscard]] auto &module() { return _module; }
 
 private:
-    mid::Variable _make_temporary(const Type &type);
+    mid::Variable _make_temporary();
 
-    SharedSymbol _make_label_symbol();
+    std::string _make_label_symbol();
 
 private:
     std::unordered_map<SharedSymbol, Variable> _allocas;
     std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
-    Variable _result_temp{nullptr};
     Function *_current_function{};
     Operand _current_operand{};
+    Variable _result_temp{""};
     Module _module{};
 };
 

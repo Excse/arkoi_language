@@ -13,7 +13,7 @@ public:
     bool on_block(mid::BasicBlock &block) override;
 
 private:
-    [[nodiscard]] static mid::Immediate _cast(const mid::Cast &instruction);
+    [[nodiscard]] static mid::Immediate _cast(mid::Cast &instruction);
 
     [[nodiscard]] static mid::Immediate _evaluate_cast(const Type &to, auto expression);
 };

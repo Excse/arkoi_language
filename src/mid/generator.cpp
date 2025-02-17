@@ -24,30 +24,29 @@ void Generator::visit(ast::Function &node) {
     // Resetting the variables for each function
     _temp_index = 0;
     _allocas.clear();
-    _result_temp = {nullptr};
 
     // Creates a new basic block that will get populated with instructions
-    auto start_block = std::make_shared<BasicBlock>(_make_label_symbol());
+    auto start_block = std::make_shared<BasicBlock>(node.name().value().contents() + "_entry");
     _current_block = start_block;
 
     // Creates the function end basic block
-    auto end_block = std::make_shared<BasicBlock>(_make_label_symbol());
+    auto end_block = std::make_shared<BasicBlock>(node.name().value().contents() + "_exit");
 
     auto &function = _module.functions().emplace_back(node.name().symbol(), start_block, end_block);
     _current_function = &function;
 
-    _result_temp = _make_temporary(node.type());
+    _result_temp = _make_temporary();
     _current_block->add<Alloca>(_result_temp, node.type());
 
     for (auto &parameter: node.parameters()) {
-        auto alloca_temp = _make_temporary(parameter.type());
+        auto alloca_temp = _make_temporary();
         _allocas.emplace(parameter.name().symbol(), alloca_temp);
         _current_block->add<Alloca>(alloca_temp, parameter.type());
     }
 
     for (auto &parameter: node.parameters()) {
         auto alloca_temp = _allocas.at(parameter.name().symbol());
-        _current_block->add<Store>(alloca_temp, parameter.name().symbol(), parameter.type());
+        _current_block->add<Store>(alloca_temp, parameter.name().value().contents(), parameter.type());
     }
 
     node.block()->accept(*this);
@@ -57,8 +56,7 @@ void Generator::visit(ast::Function &node) {
 
     _current_block = _current_function->end();
 
-    _current_block->add<Label>(_current_function->end()->symbol());
-    auto result_temp = _make_temporary(node.type());
+    auto result_temp = _make_temporary();
     _current_block->add<Load>(result_temp, _result_temp, node.type());
     _current_block->add<Return>(result_temp, node.type());
 }
@@ -116,28 +114,26 @@ void Generator::visit(ast::Return &node) {
 
     // Populate the current basic block with instructions
     _current_block->add<Store>(_result_temp, expression, node.type());
-    _current_block->add<Goto>(_current_function->end()->symbol());
+    _current_block->add<Goto>(_current_function->end()->label());
 
     // Connect the current basic block with the function end basic block
     _current_block->set_next(_current_function->end());
 }
 
 void Generator::visit(ast::Identifier &node) {
-    if (node.kind() == ast::Identifier::Kind::Function) {
-        _current_operand = node.symbol();
-    } else if (node.kind() == ast::Identifier::Kind::Variable) {
-        // TODO: In the future there will be local/global and parameter variables,
-        //       thus they need to be searched in such order: local, parameter, global.
-        //       For now only parameter variables exist.
-        const auto &variable = std::get<symbol::Variable>(*node.symbol());
-
-        auto alloca_temp = _allocas.at(node.symbol());
-        auto temp = _make_temporary(variable.type());
-        _current_block->add<Load>(temp, alloca_temp, variable.type());
-        _current_operand = temp;
-    } else {
+    if (node.kind() != ast::Identifier::Kind::Variable) {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
     }
+
+    // TODO: In the future there will be local/global and parameter variables,
+    //       thus they need to be searched in such order: local, parameter, global.
+    //       For now only parameter variables exist.
+    const auto &variable = std::get<symbol::Variable>(*node.symbol());
+
+    auto alloca_temp = _allocas.at(node.symbol());
+    auto temp = _make_temporary();
+    _current_block->add<Load>(temp, alloca_temp, variable.type());
+    _current_operand = temp;
 }
 
 void Generator::visit(ast::Binary &node) {
@@ -150,7 +146,7 @@ void Generator::visit(ast::Binary &node) {
     auto right = _current_operand;
 
     auto type = Binary::node_to_instruction(node.op());
-    auto result = _make_temporary(node.result_type());
+    auto result = _make_temporary();
     _current_operand = result;
 
     _current_block->add<Binary>(result, left, type, right, node.op_type(), node.result_type());
@@ -175,7 +171,7 @@ void Generator::visit(ast::Cast &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    auto result = _make_temporary(node.to());
+    auto result = _make_temporary();
     _current_operand = result;
 
     _current_block->add<Cast>(result, expression, node.from(), node.to());
@@ -183,10 +179,6 @@ void Generator::visit(ast::Cast &node) {
 
 void Generator::visit(ast::Call &node) {
     const auto &function = std::get<symbol::Function>(*node.name().symbol());
-
-    // This will set _current_operand
-    node.name().accept(*this);
-    auto identifier = std::get<Variable>(_current_operand);
 
     std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {
@@ -197,10 +189,10 @@ void Generator::visit(ast::Call &node) {
         arguments.push_back(std::move(expression));
     }
 
-    auto result = _make_temporary(function.return_type());
+    auto result = _make_temporary();
     _current_operand = result;
 
-    _current_block->add<Call>(result, identifier, std::move(arguments));
+    _current_block->add<Call>(result, function.name(), std::move(arguments), function.return_type());
 }
 
 void Generator::visit(ast::If &node) {
@@ -227,7 +219,6 @@ void Generator::visit(ast::If &node) {
     bool branch_already_connected = false;
     { // Branch block
         _current_block = branch_block;
-        branch_block->add<Label>(branch_label);
 
         node.branch()->accept(*this);
 
@@ -245,7 +236,6 @@ void Generator::visit(ast::If &node) {
     bool next_already_connected = false;
     { // Next block
         _current_block = next_block;
-        next_block->add<Label>(next_label);
 
         if(node.next()) node.next()->accept(*this);
 
@@ -262,18 +252,15 @@ void Generator::visit(ast::If &node) {
 
     if (!next_already_connected || !branch_already_connected) { // After block
         _current_block = after_block;
-        after_block->add<Label>(after_label);
     }
 }
 
-mid::Variable Generator::_make_temporary(const Type &type) {
-    auto temporary = std::make_shared<SymbolType>(symbol::Variable("$", type));
-    return { temporary, ++_temp_index };
+mid::Variable Generator::_make_temporary() {
+    return { "$", ++_temp_index };
 }
 
-SharedSymbol Generator::_make_label_symbol() {
-    auto name = "L" + to_string(_label_index++);
-    return std::make_shared<SymbolType>(symbol::Variable(name));
+std::string Generator::_make_label_symbol() {
+    return "L" + to_string(_label_index++);
 }
 
 //==============================================================================

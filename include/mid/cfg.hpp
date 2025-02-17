@@ -11,7 +11,7 @@ namespace arkoi::mid {
 
 class BasicBlock {
 public:
-    BasicBlock(SharedSymbol symbol) : _symbol(std::move(symbol)) {}
+    BasicBlock(std::string label) : _label(std::move(label)) {}
 
     void accept(mid::Visitor &visitor) { visitor.visit(*this); }
 
@@ -28,12 +28,12 @@ public:
 
     [[nodiscard]] auto &next() const { return _next; }
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &label() const { return _label; }
 
 private:
     std::vector<mid::InstructionType> _instructions{};
     std::shared_ptr<BasicBlock> _next{}, _branch{};
-    SharedSymbol _symbol;
+    std::string _label;
 };
 
 class Function {

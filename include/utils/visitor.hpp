@@ -56,13 +56,12 @@ namespace arkoi::mid {
 
 class BasicBlock;
 class Function;
+class Constant;
 class Module;
 class Binary;
 class Return;
 class Alloca;
-class Label;
 class Store;
-class Constant;
 class Load;
 class Cast;
 class Call;
@@ -79,8 +78,6 @@ public:
     virtual void visit(Function &function) = 0;
 
     virtual void visit(BasicBlock &block) = 0;
-
-    virtual void visit(Label &instruction) = 0;
 
     virtual void visit(Return &instruction) = 0;
 

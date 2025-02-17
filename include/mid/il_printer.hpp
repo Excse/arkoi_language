@@ -21,8 +21,6 @@ public:
 
     void visit(BasicBlock &block) override;
 
-    void visit(Label &instruction) override;
-
     void visit(Return &instruction) override;
 
     void visit(Binary &instruction) override;
