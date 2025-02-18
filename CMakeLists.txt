@@ -48,6 +48,7 @@ add_library(${PROJECT_NAME}_lib
         src/opt/pass.tpp
         src/opt/constant_folding.cpp
         src/opt/constant_propagation.cpp
+        src/opt/dead_code_elimination.cpp
         src/utils/dep_graph.tpp
         src/utils/size.cpp
 )

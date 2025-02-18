@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 
+#include "opt/dead_code_elimination.hpp"
 #include "opt/constant_propagation.hpp"
 #include "opt/constant_folding.hpp"
 #include "opt/pass.hpp"
@@ -78,6 +79,7 @@ int main() {
     opt::PassManager manager;
     manager.add<opt::ConstantFolding>();
     manager.add<opt::ConstantPropagation>();
+    manager.add<opt::DeadCodeElimination>();
     manager.run(module);
 
     dump_cfg(base_path + "_opt", module);
