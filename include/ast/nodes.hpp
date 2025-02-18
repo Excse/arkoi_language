@@ -58,7 +58,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(SharedSymbol symbol) { _symbol = std::move(symbol); }
+    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &symbol() const { return _symbol.value(); }
 
@@ -67,7 +67,7 @@ public:
     [[nodiscard]] auto &kind() const { return _kind; }
 
 private:
-    std::optional<SharedSymbol> _symbol{};
+    std::optional<std::shared_ptr<Symbol>> _symbol{};
     front::Token _value;
     Kind _kind;
 };

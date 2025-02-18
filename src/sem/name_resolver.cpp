@@ -38,7 +38,7 @@ void NameResolver::visit_as_prototype(ast::Function &node) {
 void NameResolver::visit(ast::Function &node) {
     _scopes.push(node.table());
 
-    std::vector<SharedSymbol> parameters;
+    std::vector<std::shared_ptr<Symbol>> parameters;
     for (auto &parameter: node.parameters()) {
         parameter.accept(*this);
 

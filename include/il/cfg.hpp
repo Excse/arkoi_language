@@ -38,7 +38,7 @@ private:
 
 class Function {
 public:
-    Function(SharedSymbol symbol, std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
+    Function(std::shared_ptr<Symbol> symbol, std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
         : _start(std::move(start)), _end(std::move(end)), _symbol(std::move(symbol)) {}
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
@@ -55,7 +55,7 @@ public:
 
 private:
     std::shared_ptr<BasicBlock> _start{}, _end{};
-    SharedSymbol _symbol;
+    std::shared_ptr<Symbol> _symbol;
 };
 
 class Module {

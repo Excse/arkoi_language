@@ -6,9 +6,7 @@
 
 #include "sem/type.hpp"
 
-struct SymbolType;
-
-using SharedSymbol = std::shared_ptr<SymbolType>;
+struct Symbol;
 
 namespace arkoi::sem {
 
@@ -16,7 +14,7 @@ class Function {
 public:
     Function(std::string name) : _name(std::move(name)) {}
 
-    void set_parameters(std::vector<SharedSymbol> &&symbols) { _parameter_symbols = std::move(symbols); }
+    void set_parameters(std::vector<std::shared_ptr<Symbol>> &&symbols) { _parameter_symbols = std::move(symbols); }
 
     [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
 
@@ -27,7 +25,7 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<SharedSymbol> _parameter_symbols{};
+    std::vector<std::shared_ptr<Symbol>> _parameter_symbols{};
     std::optional<Type> _return_type{};
     std::string _name;
 };
@@ -52,11 +50,11 @@ private:
 
 } // namespace arkoi::sym
 
-struct SymbolType : std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
+struct Symbol : std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
     using variant::variant;
 };
 
-std::ostream &operator<<(std::ostream &os, const SharedSymbol &symbol);
+std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Symbol> &symbol);
 
 //==============================================================================
 // BSD 3-Clause License

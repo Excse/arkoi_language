@@ -51,7 +51,7 @@ private:
     Variable _make_temporary();
 
 private:
-    std::unordered_map<SharedSymbol, Variable> _allocas;
+    std::unordered_map<std::shared_ptr<Symbol>, Variable> _allocas;
     std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
     Function *_current_function{};

@@ -6,17 +6,24 @@
 
 namespace arkoi::sem {
 
-class Integral {
+class TypeBase {
+public:
+    virtual ~TypeBase() = default;
+
+    [[nodiscard]] virtual Size size() const = 0;
+};
+
+class Integral : TypeBase {
 public:
     constexpr Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
+
+    [[nodiscard]] Size size() const override { return _size; }
 
     bool operator==(const Integral &other) const;
 
     bool operator!=(const Integral &other) const;
 
     [[nodiscard]] uint64_t max() const;
-
-    [[nodiscard]] auto size() const { return _size; }
 
     [[nodiscard]] auto sign() const { return _sign; }
 
@@ -25,27 +32,27 @@ private:
     bool _sign;
 };
 
-class Floating {
+class Floating : public TypeBase {
 public:
     Floating(const Size size) : _size(size) {}
+
+    [[nodiscard]] Size size() const override { return _size; }
 
     bool operator==(const Floating &other) const;
 
     bool operator!=(const Floating &other) const;
 
-    [[nodiscard]] auto size() const { return _size; }
-
 private:
     Size _size;
 };
 
-class Boolean {
+class Boolean : public TypeBase {
 public:
+    [[nodiscard]] Size size() const override { return Size::BYTE; }
+
     bool operator==(const Boolean &other) const;
 
     bool operator!=(const Boolean &other) const;
-
-    [[nodiscard]] static auto size() { return Size::BYTE; }
 };
 
 } // namespace arkoi::result_type

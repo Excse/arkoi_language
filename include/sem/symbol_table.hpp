@@ -13,13 +13,13 @@ public:
     SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
 
     template<typename Type, typename... Args>
-    SharedSymbol &insert(const std::string &name, Args &&... args);
+    std::shared_ptr<Symbol> &insert(const std::string &name, Args &&... args);
 
     template<typename... Types>
-    [[nodiscard]] SharedSymbol &lookup(const std::string &name);
+    [[nodiscard]] std::shared_ptr<Symbol> &lookup(const std::string &name);
 
 private:
-    std::unordered_map<std::string, SharedSymbol> _symbols{};
+    std::unordered_map<std::string, std::shared_ptr<Symbol>> _symbols{};
     std::shared_ptr<SymbolTable> _parent;
 };
 
