@@ -49,6 +49,29 @@ std::ostream &operator<<(std::ostream &os, const Variable &variable) {
     return os;
 }
 
+
+namespace std {
+
+size_t hash<arkoi::il::Variable>::operator()(const arkoi::il::Variable &variable) const {
+    size_t link_hash = std::hash<std::string>{}(variable.symbol());
+    size_t generation_hash = std::hash<size_t>{}(variable.version());
+    return link_hash ^ (generation_hash << 1);
+}
+
+size_t hash<arkoi::il::Immediate>::operator()(const arkoi::il::Immediate &immediate) const {
+    return std::visit([](const auto &value) -> size_t {
+        return std::hash<std::decay_t<decltype(value)>>{}(value);
+    }, immediate);
+}
+
+size_t hash<arkoi::il::Operand>::operator()(const arkoi::il::Operand &operand) const {
+    return std::visit([](const auto &value) -> size_t {
+        return std::hash<std::decay_t<decltype(value)>>{}(value);
+    }, operand);
+}
+
+}
+
 //==============================================================================
 // BSD 3-Clause License
 //

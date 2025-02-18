@@ -219,7 +219,7 @@ private:
 class Constant : public InstructionBase {
 public:
     Constant(Variable result, Immediate value, Type type)
-        : _result(std::move(result)), _value(value), _type(type) {}
+        : _result(std::move(result)), _value(value), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 

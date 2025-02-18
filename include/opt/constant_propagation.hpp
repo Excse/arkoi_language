@@ -1,68 +1,27 @@
 #pragma once
 
-#include <iostream>
-#include <variant>
+#include "opt/pass.hpp"
 
-#include "utils/size.hpp"
+namespace arkoi::opt {
 
-namespace arkoi::il {
-
-class Variable {
+class ConstantPropagation : public Pass {
 public:
-    Variable(std::string name, size_t version = 0)
-        : _name(std::move(name)), _version(version) {}
+    bool on_module(il::Module &) override { return false; }
 
-    bool operator==(const Variable &rhs) const;
+    bool on_function(il::Function &) override { return false; }
 
-    bool operator!=(const Variable &rhs) const;
-
-    [[nodiscard]] auto version() const { return _version; }
-
-    [[nodiscard]] auto &symbol() const { return _name; }
+    bool on_block(il::BasicBlock &block) override;
 
 private:
-    std::string _name;
-    size_t _version;
+    [[nodiscard]] bool _can_propagate(il::Instruction &instruction);
+
+    [[nodiscard]] bool _propagate(il::Operand &operand);
+
+private:
+    std::unordered_map<il::Operand, il::Immediate> _constants;
 };
 
-class Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
-public:
-    using variant::variant;
-
-    [[nodiscard]] Size size() const;
-};
-
-struct Operand : std::variant<Immediate, Variable> {
-public:
-    using variant::variant;
-};
-
-} // namespace arkoi::mid
-
-namespace std {
-
-template<>
-struct hash<arkoi::il::Variable> {
-    size_t operator()(const arkoi::il::Variable &variable) const;
-};
-
-template<>
-struct hash<arkoi::il::Immediate> {
-    size_t operator()(const arkoi::il::Immediate &immediate) const;
-};
-
-template<>
-struct hash<arkoi::il::Operand> {
-    size_t operator()(const arkoi::il::Operand &operand) const;
-};
-
-} // namespace std
-
-std::ostream &operator<<(std::ostream &os, const arkoi::il::Immediate &operand);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::il::Variable &operand);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::il::Operand &operand);
+} // namespace arkoi::opt
 
 //==============================================================================
 // BSD 3-Clause License
