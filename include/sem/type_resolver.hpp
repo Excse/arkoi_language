@@ -1,6 +1,5 @@
 #pragma once
 
-#include "il/visitor.hpp"
 #include "ast/nodes.hpp"
 #include "sem/type.hpp"
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "il/instruction.hpp"
-#include "il/visitor.hpp"
 #include "il/cfg.hpp"
 #include "sem/type.hpp"
 
