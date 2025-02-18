@@ -1,53 +1,42 @@
-#pragma once
+#include "il/instruction.hpp"
 
-#include <sstream>
+using namespace arkoi::il;
 
-#include "utils/visitor.hpp"
-#include "mid/instruction.hpp"
-#include "mid/cfg.hpp"
+Binary::Operator Binary::node_to_instruction(ast::Binary::Operator op) {
+    switch (op) {
+        case ast::Binary::Operator::Add: return Operator::Add;
+        case ast::Binary::Operator::Sub: return Operator::Sub;
+        case ast::Binary::Operator::Mul: return Operator::Mul;
+        case ast::Binary::Operator::Div: return Operator::Div;
+        case ast::Binary::Operator::GreaterThan: return Operator::GreaterThan;
+        case ast::Binary::Operator::LessThan: return Operator::LessThan;
+    }
 
-namespace arkoi::mid {
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
+}
 
-class ILPrinter : Visitor {
-public:
-    ILPrinter(std::stringstream &output) : _output(output) {}
+void InstructionType::accept(Visitor &visitor) {
+    std::visit([&](auto &item) { item.accept(visitor); }, *this);
+}
 
-public:
-    [[nodiscard]] static std::stringstream print(Module &module);
+bool InstructionType::is_constant() {
+    return std::visit([&](auto &item) { return item.is_constant(); }, *this);
+}
 
-    void visit(Module &module) override;
+std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
+    switch (op) {
+        case Binary::Operator::Add: return os << "add";
+        case Binary::Operator::Sub: return os << "sub";
+        case Binary::Operator::Mul: return os << "mul";
+        case Binary::Operator::Div: return os << "div";
+        case Binary::Operator::LessThan: return os << "lth";
+        case Binary::Operator::GreaterThan: return os << "gth";
+    }
 
-    void visit(Function &function) override;
-
-    void visit(BasicBlock &block) override;
-
-    void visit(Return &instruction) override;
-
-    void visit(Binary &instruction) override;
-
-    void visit(Cast &instruction) override;
-
-    void visit(Call &instruction) override;
-
-    void visit(Goto &instruction) override;
-
-    void visit(If &instruction) override;
-
-    void visit(Alloca &instruction) override;
-
-    void visit(Store &instruction) override;
-
-    void visit(Load &instruction) override;
-
-    void visit(Constant &instruction) override;
-
-    [[nodiscard]] auto &output() const { return _output; }
-
-private:
-    std::stringstream &_output;
-};
-
-} // namespace arkoi::mid
+    // As the -Wswitch flag is set, this will never be reached.
+    std::unreachable();
+}
 
 //==============================================================================
 // BSD 3-Clause License

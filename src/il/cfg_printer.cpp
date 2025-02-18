@@ -1,53 +1,56 @@
-#pragma once
+#include "il/cfg_printer.hpp"
 
-#include "utils/visitor.hpp"
-#include "mid/il_printer.hpp"
-#include "mid/instruction.hpp"
-#include "mid/cfg.hpp"
+using namespace arkoi::il;
 
-namespace arkoi::mid {
+std::stringstream CFGPrinter::print(Module &module) {
+    std::stringstream output;
+    CFGPrinter printer(output);
+    printer.visit(module);
+    return output;
+}
 
-class CFGPrinter : Visitor {
-public:
-    CFGPrinter(std::stringstream &output) : _output(output), _printer(output) {};
+void CFGPrinter::visit(Module &module) {
+    _output << "digraph CFG {\n";
 
-public:
-    [[nodiscard]] static std::stringstream print(Module &module);
+    _output << "\tgraph [fontname = \"Monospace\"];\n";
+    _output << "\tnode  [fontname = \"Monospace\", shape=box, style=filled, margin=0.1];\n";
+    _output << "\tedge  [fontname = \"Monospace\"];\n";
 
-    void visit(Module &module) override;
+    _output << "\tbgcolor = \"#f7f7f7\";\n";
+    _output << "\tsplines = false;\n\n";
 
-    void visit(Function &function) override;
+    for (auto &function: module.functions()) {
+        function.accept(*this);
+    }
 
-    void visit(BasicBlock &block) override;
+    _output << "}\n";
+}
 
-    void visit(Return &instruction) override { _printer.visit(instruction); }
+void CFGPrinter::visit(Function &function) {
+    function.depth_first_search([this](BasicBlock &block) { block.accept(*this); });
+}
 
-    void visit(Binary &instruction) override { _printer.visit(instruction); }
+void CFGPrinter::visit(BasicBlock &block) {
+    _output << "\t" << block.label() << " [label=\"";
 
-    void visit(Cast &instruction) override { _printer.visit(instruction); }
+    _output << block.label() << ":\\l";
 
-    void visit(Call &instruction) override { _printer.visit(instruction); }
+    for (auto &instruction: block.instructions()) {
+        _output << " ";
+        instruction.accept(*this);
+        _output << "\\l";
+    }
 
-    void visit(Goto &instruction) override { _printer.visit(instruction); }
+    _output << "\"];\n";
 
-    void visit(If &instruction) override { _printer.visit(instruction); }
+    if(block.next()) {
+        _output << "\t" << block.label() << " -> " << block.next()->label() << " [label=\"Next\"];\n";
+    }
 
-    void visit(Alloca &instruction) override { _printer.visit(instruction); }
-
-    void visit(Store &instruction) override { _printer.visit(instruction); }
-
-    void visit(Load &instruction) override { _printer.visit(instruction); }
-
-    void visit(Constant &instruction) override { _printer.visit(instruction); }
-
-    [[nodiscard]] auto &output() const { return _output; }
-
-private:
-    std::stringstream &_output;
-    ILPrinter _printer;
-};
-
-} // namespace arkoi::mid
+    if(block.branch()) {
+        _output << "\t" << block.label() << " -> " << block.branch()->label() << " [label=\"Branch\"];\n";
+    }
+}
 
 //==============================================================================
 // BSD 3-Clause License

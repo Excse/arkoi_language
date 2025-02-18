@@ -1,45 +1,67 @@
-#include "mid/cfg.hpp"
+#pragma once
 
-#include <unordered_set>
 #include <stack>
 
-using namespace arkoi::mid;
+#include "sem/symbol_table.hpp"
+#include "utils/visitor.hpp"
+#include "front/token.hpp"
 
-void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
-    std::unordered_set<BasicBlock *> visited;
-    std::stack<BasicBlock *> queue;
+namespace arkoi::sem {
 
-    // We manually callback the end basic block as it should always be the last one being invoked.
-    visited.insert(_end.get());
-    // Start with the entry basic block.
-    queue.push(_start.get());
+class NameResolver : ast::Visitor {
+private:
+    NameResolver() = default;
 
-    while (!queue.empty()) {
-        BasicBlock *current = queue.top();
-        queue.pop();
+public:
+    [[nodiscard]] static NameResolver resolve(ast::Program &node);
 
-        if (visited.contains(current)) continue;
+    [[nodiscard]] auto has_failed() const { return _failed; }
 
-        visited.insert(current);
+private:
+    void visit(ast::Program &node) override;
 
-        callback(*current);
+    void visit_as_prototype(ast::Function &node);
 
-        if (current->branch()) queue.push(current->branch().get());
-        if (current->next()) queue.push(current->next().get());
-    }
+    void visit(ast::Function &node) override;
 
-    callback(*_end);
-}
+    void visit(ast::Block &node) override;
 
-void Function::linearize(const std::function<void(mid::InstructionType &)> &callback) {
-    auto visit_instructions = [&](BasicBlock &block) {
-        for (auto &instruction: block.instructions()) {
-            callback(instruction);
-        }
-    };
+    void visit(ast::Parameter &) override;
 
-    depth_first_search(visit_instructions);
-}
+    void visit(ast::Identifier &node) override;
+
+    void visit(ast::Integer &) override {};
+
+    void visit(ast::Floating &) override {};
+
+    void visit(ast::Boolean &) override {};
+
+    void visit(ast::Return &node) override;
+
+    void visit(ast::Binary &node) override;
+
+    void visit(ast::Cast &node) override;
+
+    void visit(ast::Assign &node) override;
+
+    void visit(ast::Call &node) override;
+
+    void visit(ast::If &node) override;
+
+    template<typename Type, typename... Args>
+    [[nodiscard]] SharedSymbol _check_non_existence(const front::Token &token, Args &&... args);
+
+    template<typename... Types>
+    [[nodiscard]] SharedSymbol _check_existence(const front::Token &token);
+
+private:
+    std::stack<std::shared_ptr<SymbolTable>> _scopes{};
+    bool _failed{};
+};
+
+#include "../../src/sem/name_resolver.tpp"
+
+} // namespace arkoi::mid
 
 //==============================================================================
 // BSD 3-Clause License

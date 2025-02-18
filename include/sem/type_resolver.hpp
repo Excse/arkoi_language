@@ -1,26 +1,29 @@
 #pragma once
 
-#include "mid/instruction.hpp"
-#include "def/type.hpp"
-#include "mid/cfg.hpp"
+#include <stack>
+
 #include "utils/visitor.hpp"
+#include "def/type.hpp"
+#include "def/ast.hpp"
 
-namespace arkoi::mid {
+namespace arkoi::sem {
 
-class Generator : ast::Visitor {
+class TypeResolver : ast::Visitor {
 private:
-    Generator() = default;
+    TypeResolver() = default;
 
 public:
-    [[nodiscard]] static Module generate(ast::Program &node);
+    [[nodiscard]] static TypeResolver resolve(ast::Program &node);
 
     void visit(ast::Program &node) override;
+
+    void visit_as_prototype(ast::Function &node);
 
     void visit(ast::Function &node) override;
 
     void visit(ast::Block &node) override;
 
-    void visit(ast::Parameter &) override {};
+    void visit(ast::Parameter &node) override;
 
     void visit(ast::Integer &node) override;
 
@@ -42,21 +45,16 @@ public:
 
     void visit(ast::If &node) override;
 
-    [[nodiscard]] auto &module() { return _module; }
+    [[nodiscard]] auto has_failed() const { return _failed; }
 
 private:
-    mid::Variable _make_temporary();
+    static Type _arithmetic_conversion(const Type &left_type, const Type &right_type);
 
-    std::string _make_label_symbol();
+    static bool _can_implicit_convert(const Type &from, const Type &destination);
 
 private:
-    std::unordered_map<SharedSymbol, Variable> _allocas;
-    std::shared_ptr<BasicBlock> _current_block{};
-    size_t _temp_index{}, _label_index{};
-    Function *_current_function{};
-    Operand _current_operand{};
-    Variable _result_temp{""};
-    Module _module{};
+    std::optional<Type> _current_type{}, _return_type{};
+    bool _failed{};
 };
 
 } // namespace arkoi::mid

@@ -2,7 +2,7 @@
 
 using namespace arkoi::opt;
 
-void PassManager::run(mid::Module &module) {
+void PassManager::run(il::Module &module) {
     while (true) {
         bool changed = false;
 
@@ -12,7 +12,7 @@ void PassManager::run(mid::Module &module) {
             for (auto &function: module.functions()) {
                 changed |= pass->on_function(function);
 
-                function.depth_first_search([&](mid::BasicBlock &block) {
+                function.depth_first_search([&](il::BasicBlock &block) {
                     changed |= pass->on_block(block);
                 });
             }

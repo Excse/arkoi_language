@@ -4,18 +4,18 @@
 
 #include "opt/constant_folding.hpp"
 #include "opt/pass.hpp"
-#include "mid/name_resolver.hpp"
-#include "mid/type_resolver.hpp"
-#include "mid/generator.hpp"
-#include "mid/il_printer.hpp"
-#include "mid/cfg_printer.hpp"
+#include "sem/name_resolver.hpp"
+#include "sem/type_resolver.hpp"
+#include "il/cfg_printer.hpp"
+#include "il/il_printer.hpp"
+#include "il/generator.hpp"
 #include "front/scanner.hpp"
 #include "front/parser.hpp"
 
 using namespace arkoi;
 
-void dump_cfg(const std::string &base_path, mid::Module &module) {
-    auto cfg_output = mid::CFGPrinter::print(module);
+void dump_cfg(const std::string &base_path, il::Module &module) {
+    auto cfg_output = il::CFGPrinter::print(module);
 
     auto dot_path = base_path + ".dot";
     auto png_path = base_path + ".png";
@@ -55,19 +55,19 @@ int main() {
 
     std::cout << "~~~~~~~~~~~~        Name Resolver         ~~~~~~~~~~~~" << std::endl;
 
-    auto name_resolver = mid::NameResolver::resolve(program);
+    auto name_resolver = sem::NameResolver::resolve(program);
     if (name_resolver.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~        Type Resolver         ~~~~~~~~~~~~" << std::endl;
 
-    auto type_resolver = mid::TypeResolver::resolve(program);
+    auto type_resolver = sem::TypeResolver::resolve(program);
     if (type_resolver.has_failed()) exit(1);
 
     std::cout << "~~~~~~~~~~~~    Intermediate Language     ~~~~~~~~~~~~" << std::endl;
 
-    auto module = mid::Generator::generate(program);
+    auto module = il::Generator::generate(program);
 
-    auto il_output = mid::ILPrinter::print(module);
+    auto il_output = il::ILPrinter::print(module);
     std::cout << il_output.str();
 
     dump_cfg(base_path + "_org", module);

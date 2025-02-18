@@ -1,74 +1,63 @@
 #pragma once
 
-#include <functional>
-#include <utility>
-#include <vector>
-#include <memory>
+#include "il/instruction.hpp"
+#include "il/cfg.hpp"
+#include "utils/visitor.hpp"
+#include "def/type.hpp"
 
-#include "mid/instruction.hpp"
+namespace arkoi::il {
 
-namespace arkoi::mid {
+class Generator : ast::Visitor {
+private:
+    Generator() = default;
 
-class BasicBlock {
 public:
-    BasicBlock(std::string label) : _label(std::move(label)) {}
+    [[nodiscard]] static Module generate(ast::Program &node);
 
-    void accept(mid::Visitor &visitor) { visitor.visit(*this); }
+    void visit(ast::Program &node) override;
 
-    template<typename Type, typename... Args>
-    void add(Args &&... args);
+    void visit(ast::Function &node) override;
 
-    [[nodiscard]] auto &instructions() { return _instructions; }
+    void visit(ast::Block &node) override;
 
-    void set_branch(std::shared_ptr<BasicBlock> branch) { _branch = std::move(branch); }
+    void visit(ast::Parameter &) override {};
 
-    [[nodiscard]] auto &branch() const { return _branch; }
+    void visit(ast::Integer &node) override;
 
-    void set_next(std::shared_ptr<BasicBlock> next) { _next = std::move(next); }
+    void visit(ast::Floating &node) override;
 
-    [[nodiscard]] auto &next() const { return _next; }
+    void visit(ast::Boolean &node) override;
 
-    [[nodiscard]] auto &label() const { return _label; }
+    void visit(ast::Return &node) override;
+
+    void visit(ast::Identifier &node) override;
+
+    void visit(ast::Binary &node) override;
+
+    void visit(ast::Cast &node) override;
+
+    void visit(ast::Assign &node) override;
+
+    void visit(ast::Call &node) override;
+
+    void visit(ast::If &node) override;
+
+    [[nodiscard]] auto &module() { return _module; }
 
 private:
-    std::vector<mid::InstructionType> _instructions{};
-    std::shared_ptr<BasicBlock> _next{}, _branch{};
-    std::string _label;
-};
+    std::string _make_label_symbol();
 
-class Function {
-public:
-    Function(SharedSymbol symbol, std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
-        : _start(std::move(start)), _end(std::move(end)), _symbol(std::move(symbol)) {}
-
-    void accept(mid::Visitor &visitor) { visitor.visit(*this); }
-
-    void depth_first_search(const std::function<void(BasicBlock &)> &callback);
-
-    void linearize(const std::function<void(mid::InstructionType &)> &callback);
-
-    [[nodiscard]] auto &symbol() const { return _symbol; }
-
-    [[nodiscard]] auto &start() const { return _start; }
-
-    [[nodiscard]] auto &end() const { return _end; }
+    Variable _make_temporary();
 
 private:
-    std::shared_ptr<BasicBlock> _start{}, _end{};
-    SharedSymbol _symbol;
+    std::unordered_map<SharedSymbol, Variable> _allocas;
+    std::shared_ptr<BasicBlock> _current_block{};
+    size_t _temp_index{}, _label_index{};
+    Function *_current_function{};
+    Operand _current_operand{};
+    Variable _result_temp{""};
+    Module _module{};
 };
-
-class Module {
-public:
-    void accept(mid::Visitor &visitor) { visitor.visit(*this); }
-
-    [[nodiscard]] auto &functions() { return _functions; }
-
-private:
-    std::vector<Function> _functions{};
-};
-
-#include "../../src/mid/cfg.tpp"
 
 } // namespace arkoi::mid
 

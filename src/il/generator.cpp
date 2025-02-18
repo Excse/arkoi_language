@@ -1,11 +1,11 @@
-#include "mid/generator.hpp"
+#include "il/generator.hpp"
 
 #include <limits>
 
 #include "utils/utils.hpp"
 #include "def/ast.hpp"
 
-using namespace arkoi::mid;
+using namespace arkoi::il;
 using namespace arkoi;
 
 Module Generator::generate(ast::Program &node) {
@@ -255,12 +255,12 @@ void Generator::visit(ast::If &node) {
     }
 }
 
-mid::Variable Generator::_make_temporary() {
-    return { "$", ++_temp_index };
-}
-
 std::string Generator::_make_label_symbol() {
     return "L" + to_string(_label_index++);
+}
+
+Variable Generator::_make_temporary() {
+    return { "$", ++_temp_index };
 }
 
 //==============================================================================

@@ -52,7 +52,7 @@ public:
 
 } // namespace arkoi::ast
 
-namespace arkoi::mid {
+namespace arkoi::il {
 
 class BasicBlock;
 class Function;
@@ -66,7 +66,6 @@ class Load;
 class Cast;
 class Call;
 class Goto;
-
 class If;
 
 class Visitor {

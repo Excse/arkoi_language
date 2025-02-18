@@ -1,55 +1,52 @@
-#include "mid/cfg_printer.hpp"
+#include "il/operand.hpp"
 
-using namespace arkoi::mid;
+#include <iomanip>
 
-std::stringstream CFGPrinter::print(Module &module) {
-    std::stringstream output;
-    CFGPrinter printer(output);
-    printer.visit(module);
-    return output;
+#include "utils/utils.hpp"
+
+using namespace arkoi::il;
+
+bool Variable::operator==(const Variable &rhs) const {
+    return _name == rhs._name && _version == rhs._version;
 }
 
-void CFGPrinter::visit(Module &module) {
-    _output << "digraph CFG {\n";
-
-    _output << "\tgraph [fontname = \"Monospace\"];\n";
-    _output << "\tnode  [fontname = \"Monospace\", shape=box, style=filled, margin=0.1];\n";
-    _output << "\tedge  [fontname = \"Monospace\"];\n";
-
-    _output << "\tbgcolor = \"#f7f7f7\";\n";
-    _output << "\tsplines = false;\n\n";
-
-    for (auto &function: module.functions()) {
-        function.accept(*this);
-    }
-
-    _output << "}\n";
+bool Variable::operator!=(const Variable &rhs) const {
+    return !(rhs == *this);
 }
 
-void CFGPrinter::visit(Function &function) {
-    function.depth_first_search([this](BasicBlock &block) { block.accept(*this); });
+Size Immediate::size() const {
+    return std::visit(match{
+        [](const double &) { return Size::QWORD; },
+        [](const float &) { return Size::DWORD; },
+        [](const bool &) { return Size::BYTE; },
+        [](const uint32_t &) { return Size::DWORD; },
+        [](const int32_t &) { return Size::DWORD; },
+        [](const uint64_t &) { return Size::QWORD; },
+        [](const int64_t &) { return Size::QWORD; },
+    }, *this);
 }
 
-void CFGPrinter::visit(BasicBlock &block) {
-    _output << "\t" << block.label() << " [label=\"";
+std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
+    std::visit(match{
+        [&os](const bool &value) { os << (value ? "1" : "0"); },
+        [&os](const auto &value) { os << value; },
+    }, immediate);
+    return os;
+}
 
-    _output << block.label() << ":\\l";
+std::ostream &operator<<(std::ostream &os, const Operand &operand) {
+    std::visit([&os](const auto &other) { os << other; }, operand);
+    return os;
+}
 
-    for (auto &instruction: block.instructions()) {
-        _output << " ";
-        instruction.accept(*this);
-        _output << "\\l";
+std::ostream &operator<<(std::ostream &os, const Variable &variable) {
+    os << variable.symbol();
+
+    if (variable.version() != 0) {
+        os << std::setw(2) << std::setfill('0') << variable.version();
     }
 
-    _output << "\"];\n";
-
-    if(block.next()) {
-        _output << "\t" << block.label() << " -> " << block.next()->label() << " [label=\"Next\"];\n";
-    }
-
-    if(block.branch()) {
-        _output << "\t" << block.label() << " -> " << block.branch()->label() << " [label=\"Branch\"];\n";
-    }
+    return os;
 }
 
 //==============================================================================

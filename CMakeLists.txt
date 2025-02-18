@@ -34,16 +34,16 @@ add_library(${PROJECT_NAME}_lib
         src/front/token.cpp
         src/front/scanner.cpp
         src/front/parser.cpp
-        src/mid/symbol_table.tpp
-        src/mid/name_resolver.tpp
-        src/mid/name_resolver.cpp
-        src/mid/type_resolver.cpp
-        src/mid/instruction.cpp
-        src/mid/generator.cpp
-        src/mid/il_printer.cpp
-        src/mid/cfg_printer.cpp
-        src/mid/operand.cpp
-        src/mid/cfg.cpp
+        src/sem/symbol_table.tpp
+        src/sem/name_resolver.tpp
+        src/sem/name_resolver.cpp
+        src/sem/type_resolver.cpp
+        src/il/instruction.cpp
+        src/il/generator.cpp
+        src/il/il_printer.cpp
+        src/il/cfg_printer.cpp
+        src/il/operand.cpp
+        src/il/cfg.cpp
         src/opt/pass.cpp
         src/opt/pass.tpp
         src/opt/constant_folding.cpp

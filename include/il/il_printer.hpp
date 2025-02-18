@@ -1,41 +1,51 @@
 #pragma once
 
-#include <unordered_map>
-#include <utility>
-#include <memory>
+#include <sstream>
 
-#include "def/symbol.hpp"
+#include "utils/visitor.hpp"
+#include "il/instruction.hpp"
+#include "il/cfg.hpp"
 
-namespace arkoi::mid {
+namespace arkoi::il {
 
-class SymbolTable {
+class ILPrinter : Visitor {
 public:
-    SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
+    ILPrinter(std::stringstream &output) : _output(output) {}
 
-    template<typename Type, typename... Args>
-    SharedSymbol &insert(const std::string &name, Args &&... args);
+public:
+    [[nodiscard]] static std::stringstream print(Module &module);
 
-    template<typename... Types>
-    [[nodiscard]] SharedSymbol &lookup(const std::string &name);
+    void visit(Module &module) override;
+
+    void visit(Function &function) override;
+
+    void visit(BasicBlock &block) override;
+
+    void visit(Return &instruction) override;
+
+    void visit(Binary &instruction) override;
+
+    void visit(Cast &instruction) override;
+
+    void visit(Call &instruction) override;
+
+    void visit(Goto &instruction) override;
+
+    void visit(If &instruction) override;
+
+    void visit(Alloca &instruction) override;
+
+    void visit(Store &instruction) override;
+
+    void visit(Load &instruction) override;
+
+    void visit(Constant &instruction) override;
+
+    [[nodiscard]] auto &output() const { return _output; }
 
 private:
-    std::unordered_map<std::string, SharedSymbol> _symbols{};
-    std::shared_ptr<SymbolTable> _parent;
+    std::stringstream &_output;
 };
-
-class IdentifierAlreadyTaken : public std::runtime_error {
-public:
-    IdentifierAlreadyTaken(const std::string &name)
-        : std::runtime_error("The identifier " + name + " is already taken.") {}
-};
-
-class IdentifierNotFound : public std::runtime_error {
-public:
-    IdentifierNotFound(const std::string &name)
-        : std::runtime_error("The identifier " + name + " was not found.") {}
-};
-
-#include "../../src/mid/symbol_table.tpp"
 
 } // namespace arkoi::mid
 

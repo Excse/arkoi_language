@@ -6,16 +6,16 @@ namespace arkoi::opt {
 
 class ConstantFolding : public Pass {
 public:
-    bool on_module(mid::Module &) override { return false; }
+    bool on_module(il::Module &) override { return false; }
 
-    bool on_function(mid::Function &) override { return false; }
+    bool on_function(il::Function &) override { return false; }
 
-    bool on_block(mid::BasicBlock &block) override;
+    bool on_block(il::BasicBlock &block) override;
 
 private:
-    [[nodiscard]] static mid::Immediate _cast(mid::Cast &instruction);
+    [[nodiscard]] static il::Immediate _cast(il::Cast &instruction);
 
-    [[nodiscard]] static mid::Immediate _evaluate_cast(const Type &to, auto expression);
+    [[nodiscard]] static il::Immediate _evaluate_cast(const Type &to, auto expression);
 };
 
 } // namespace arkoi::opt

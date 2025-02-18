@@ -3,16 +3,16 @@
 #include <utility>
 
 #include "utils/visitor.hpp"
-#include "mid/operand.hpp"
+#include "il/operand.hpp"
 #include "def/ast.hpp"
 
-namespace arkoi::mid {
+namespace arkoi::il {
 
 class Instruction {
 public:
     virtual ~Instruction() = default;
 
-    virtual void accept(mid::Visitor &visitor) = 0;
+    virtual void accept(Visitor &visitor) = 0;
 
     [[nodiscard]] virtual bool is_constant() = 0;
 };
@@ -51,7 +51,7 @@ private:
 
 class Call : public Instruction {
 public:
-    Call(mid::Variable result, std::string name, std::vector<Operand> &&arguments, Type type)
+    Call(Variable result, std::string name, std::vector<Operand> &&arguments, Type type)
         : _arguments(std::move(arguments)), _result(std::move(result)), _name(std::move(name)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -68,7 +68,7 @@ public:
 
 private:
     std::vector<Operand> _arguments;
-    mid::Variable _result;
+    Variable _result;
     std::string _name;
     Type _type;
 };
@@ -102,7 +102,7 @@ public:
     };
 
 public:
-    Binary(mid::Variable result, Operand left, Operator op, Operand right, Type op_type, Type result_type)
+    Binary(Variable result, Operand left, Operator op, Operand right, Type op_type, Type result_type)
         : _result_type(result_type), _op_type(op_type), _left(std::move(left)), _right(std::move(right)),
           _result(std::move(result)), _op(op) {}
 
@@ -130,13 +130,13 @@ public:
 private:
     Type _result_type, _op_type;
     Operand _left, _right;
-    mid::Variable _result;
+    Variable _result;
     Operator _op;
 };
 
 class Cast : public Instruction {
 public:
-    Cast(mid::Variable result, Operand expression, Type from, Type to)
+    Cast(Variable result, Operand expression, Type from, Type to)
         : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -152,14 +152,14 @@ public:
     [[nodiscard]] auto &to() const { return _to; };
 
 private:
-    mid::Variable _result;
+    Variable _result;
     Operand _expression;
     Type _from, _to;
 };
 
 class Alloca : public Instruction {
 public:
-    Alloca(mid::Variable result, Type type)
+    Alloca(Variable result, Type type)
         : _result(std::move(result)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -171,13 +171,13 @@ public:
     [[nodiscard]] auto &type() const { return _type; };
 
 private:
-    mid::Variable _result;
+    Variable _result;
     Type _type;
 };
 
 class Load : public Instruction {
 public:
-    Load(mid::Variable result, mid::Variable target, Type type)
+    Load(Variable result, Variable target, Type type)
         : _result(std::move(result)), _target(std::move(target)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -191,13 +191,13 @@ public:
     [[nodiscard]] auto &type() const { return _type; };
 
 private:
-    mid::Variable _result, _target;
+    Variable _result, _target;
     Type _type;
 };
 
 class Store : public Instruction {
 public:
-    Store(mid::Variable result, Operand value, Type type)
+    Store(Variable result, Operand value, Type type)
         : _result(std::move(result)), _value(std::move(value)), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -211,14 +211,14 @@ public:
     [[nodiscard]] auto &value() { return _value; };
 
 private:
-    mid::Variable _result;
+    Variable _result;
     Operand _value;
     Type _type;
 };
 
 class Constant : public Instruction {
 public:
-    Constant(mid::Variable result, Immediate value, Type type)
+    Constant(Variable result, Immediate value, Type type)
         : _result(std::move(result)), _value(value), _type(type) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -232,33 +232,33 @@ public:
     [[nodiscard]] auto &type() { return _type; };
 
 private:
-    mid::Variable _result;
+    Variable _result;
     Immediate _value;
     Type _type;
 };
 
 struct InstructionType : std::variant<
-    mid::Goto,
-    mid::If,
-    mid::Cast,
-    mid::Call,
-    mid::Return,
-    mid::Binary,
-    mid::Alloca,
-    mid::Store,
-    mid::Load,
-    mid::Constant
+    il::Goto,
+    il::If,
+    il::Cast,
+    il::Call,
+    il::Return,
+    il::Binary,
+    il::Alloca,
+    il::Store,
+    il::Load,
+    il::Constant
 > {
     using variant::variant;
 
-    void accept(mid::Visitor &visitor);
+    void accept(il::Visitor &visitor);
 
     [[nodiscard]] bool is_constant();
 };
 
 } // namespace arkoi::mid
 
-std::ostream &operator<<(std::ostream &os, const arkoi::mid::Binary::Operator &op);
+std::ostream &operator<<(std::ostream &os, const arkoi::il::Binary::Operator &op);
 
 //==============================================================================
 // BSD 3-Clause License

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mid/symbol_table.hpp"
+#include "sem/symbol_table.hpp"
 #include "utils/visitor.hpp"
 #include "front/token.hpp"
 #include "def/type.hpp"
@@ -16,7 +16,7 @@ public:
 
 class Program : public Node {
 public:
-    Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<mid::SymbolTable> table)
+    Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<sem::SymbolTable> table)
         : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -27,12 +27,12 @@ public:
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
-    std::shared_ptr<mid::SymbolTable> _table;
+    std::shared_ptr<sem::SymbolTable> _table;
 };
 
 class Block : public Node {
 public:
-    Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<mid::SymbolTable> table)
+    Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<sem::SymbolTable> table)
         : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -43,7 +43,7 @@ public:
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
-    std::shared_ptr<mid::SymbolTable> _table;
+    std::shared_ptr<sem::SymbolTable> _table;
 };
 
 class Identifier : public Node {
@@ -90,7 +90,7 @@ private:
 class Function : public Node {
 public:
     Function(Identifier name, std::vector<Parameter> &&parameters, Type type,
-             std::unique_ptr<Block> &&block, std::shared_ptr<mid::SymbolTable> table)
+             std::unique_ptr<Block> &&block, std::shared_ptr<sem::SymbolTable> table)
         : _table(std::move(table)), _parameters(std::move(parameters)), _block(std::move(block)),
           _name(std::move(name)), _type(type) {}
 
@@ -107,7 +107,7 @@ public:
     [[nodiscard]] auto &name()  { return _name; }
 
 private:
-    std::shared_ptr<mid::SymbolTable> _table;
+    std::shared_ptr<sem::SymbolTable> _table;
     std::vector<Parameter> _parameters;
     std::unique_ptr<Block> _block;
     Identifier _name;

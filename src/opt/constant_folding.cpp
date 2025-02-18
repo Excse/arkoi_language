@@ -1,20 +1,20 @@
 #include "opt/constant_folding.hpp"
 
 #include "utils/utils.hpp"
-#include "mid/operand.hpp"
+#include "il/operand.hpp"
 
 using namespace arkoi::opt;
 using namespace arkoi;
 
-bool ConstantFolding::on_block(mid::BasicBlock &block) {
+bool ConstantFolding::on_block(il::BasicBlock &block) {
     bool changed = false;
 
     for (auto &instruction: block.instructions()) {
         if(!instruction.is_constant()) continue;
 
-        if (auto cast = std::get_if<mid::Cast>(&instruction)) {
+        if (auto cast = std::get_if<il::Cast>(&instruction)) {
             auto value = _cast(*cast);
-            instruction = mid::Constant(cast->result(), value, cast->to());
+            instruction = il::Constant(cast->result(), value, cast->to());
             changed = true;
         }
     }
@@ -22,17 +22,17 @@ bool ConstantFolding::on_block(mid::BasicBlock &block) {
     return changed;
 }
 
-mid::Immediate ConstantFolding::_cast(mid::Cast &instruction) {
-    auto expression = std::get<mid::Immediate>(instruction.expression());
+il::Immediate ConstantFolding::_cast(il::Cast &instruction) {
+    auto expression = std::get<il::Immediate>(instruction.expression());
 
     return std::visit([&](const auto &value) {
         return _evaluate_cast(instruction.to(), value);
     }, expression);
 }
 
-mid::Immediate ConstantFolding::_evaluate_cast(const Type &to, auto expression) {
+il::Immediate ConstantFolding::_evaluate_cast(const Type &to, auto expression) {
     return std::visit(match{
-        [&](const type::Integral &type) -> mid::Immediate {
+        [&](const type::Integral &type) -> il::Immediate {
             switch (type.size()) {
                 case Size::BYTE: return type.sign() ? (int8_t) expression : (uint8_t) expression;
                 case Size::WORD: return type.sign() ? (int16_t) expression : (uint16_t) expression;
@@ -41,14 +41,14 @@ mid::Immediate ConstantFolding::_evaluate_cast(const Type &to, auto expression) 
                 default: std::unreachable();
             }
         },
-        [&](const type::Floating &type) -> mid::Immediate {
+        [&](const type::Floating &type) -> il::Immediate {
             switch (type.size()) {
                 case Size::DWORD: return (float) expression;
                 case Size::QWORD: return (double) expression;
                 default: std::unreachable();
             }
         },
-        [&](const type::Boolean &) -> mid::Immediate {
+        [&](const type::Boolean &) -> il::Immediate {
             return (bool) expression;
         }
     }, to);

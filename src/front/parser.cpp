@@ -1,6 +1,6 @@
 #include "front/parser.hpp"
 
-#include "mid/symbol_table.hpp"
+#include "sem/symbol_table.hpp"
 
 using namespace arkoi::front;
 using namespace arkoi;
@@ -359,17 +359,17 @@ std::unique_ptr<ast::Node> Parser::_parse_primary() {
     throw UnexpectedToken("integer, float, identifier, function call, grouping, true or false", consumed);
 }
 
-std::shared_ptr<mid::SymbolTable> Parser::_current_scope() {
+std::shared_ptr<sem::SymbolTable> Parser::_current_scope() {
     return _scopes.top();
 }
 
-std::shared_ptr<mid::SymbolTable> Parser::_enter_scope() {
+std::shared_ptr<sem::SymbolTable> Parser::_enter_scope() {
     if (_scopes.empty()) {
-        return _scopes.emplace(std::make_shared<mid::SymbolTable>());
+        return _scopes.emplace(std::make_shared<sem::SymbolTable>());
     }
 
     auto parent = _current_scope();
-    return _scopes.emplace(std::make_shared<mid::SymbolTable>(parent));
+    return _scopes.emplace(std::make_shared<sem::SymbolTable>(parent));
 }
 
 void Parser::_exit_scope() {

@@ -1,65 +1,74 @@
 #pragma once
 
-#include <stack>
+#include <functional>
+#include <utility>
+#include <vector>
+#include <memory>
 
-#include "mid/symbol_table.hpp"
-#include "utils/visitor.hpp"
-#include "front/token.hpp"
+#include "il/instruction.hpp"
 
-namespace arkoi::mid {
+namespace arkoi::il {
 
-class NameResolver : ast::Visitor {
-private:
-    NameResolver() = default;
-
+class BasicBlock {
 public:
-    [[nodiscard]] static NameResolver resolve(ast::Program &node);
+    BasicBlock(std::string label) : _label(std::move(label)) {}
 
-    [[nodiscard]] auto has_failed() const { return _failed; }
-
-private:
-    void visit(ast::Program &node) override;
-
-    void visit_as_prototype(ast::Function &node);
-
-    void visit(ast::Function &node) override;
-
-    void visit(ast::Block &node) override;
-
-    void visit(ast::Parameter &) override;
-
-    void visit(ast::Identifier &node) override;
-
-    void visit(ast::Integer &) override {};
-
-    void visit(ast::Floating &) override {};
-
-    void visit(ast::Boolean &) override {};
-
-    void visit(ast::Return &node) override;
-
-    void visit(ast::Binary &node) override;
-
-    void visit(ast::Cast &node) override;
-
-    void visit(ast::Assign &node) override;
-
-    void visit(ast::Call &node) override;
-
-    void visit(ast::If &node) override;
+    void accept(Visitor &visitor) { visitor.visit(*this); }
 
     template<typename Type, typename... Args>
-    [[nodiscard]] SharedSymbol _check_non_existence(const front::Token &token, Args &&... args);
+    void add(Args &&... args);
 
-    template<typename... Types>
-    [[nodiscard]] SharedSymbol _check_existence(const front::Token &token);
+    [[nodiscard]] auto &instructions() { return _instructions; }
+
+    void set_branch(std::shared_ptr<BasicBlock> branch) { _branch = std::move(branch); }
+
+    [[nodiscard]] auto &branch() const { return _branch; }
+
+    void set_next(std::shared_ptr<BasicBlock> next) { _next = std::move(next); }
+
+    [[nodiscard]] auto &next() const { return _next; }
+
+    [[nodiscard]] auto &label() const { return _label; }
 
 private:
-    std::stack<std::shared_ptr<SymbolTable>> _scopes{};
-    bool _failed{};
+    std::shared_ptr<BasicBlock> _next{}, _branch{};
+    std::vector<InstructionType> _instructions{};
+    std::string _label;
 };
 
-#include "../../src/mid/name_resolver.tpp"
+class Function {
+public:
+    Function(SharedSymbol symbol, std::shared_ptr<BasicBlock> start, std::shared_ptr<BasicBlock> end)
+        : _start(std::move(start)), _end(std::move(end)), _symbol(std::move(symbol)) {}
+
+    void accept(Visitor &visitor) { visitor.visit(*this); }
+
+    void depth_first_search(const std::function<void(BasicBlock &)> &callback);
+
+    void linearize(const std::function<void(InstructionType &)> &callback);
+
+    [[nodiscard]] auto &symbol() const { return _symbol; }
+
+    [[nodiscard]] auto &start() const { return _start; }
+
+    [[nodiscard]] auto &end() const { return _end; }
+
+private:
+    std::shared_ptr<BasicBlock> _start{}, _end{};
+    SharedSymbol _symbol;
+};
+
+class Module {
+public:
+    void accept(Visitor &visitor) { visitor.visit(*this); }
+
+    [[nodiscard]] auto &functions() { return _functions; }
+
+private:
+    std::vector<Function> _functions{};
+};
+
+#include "../../src/il/cfg.tpp"
 
 } // namespace arkoi::mid
 

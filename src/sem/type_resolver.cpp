@@ -1,11 +1,11 @@
-#include "mid/type_resolver.hpp"
+#include "sem/type_resolver.hpp"
 
 #include <limits>
 
 #include "utils/utils.hpp"
 #include "def/ast.hpp"
 
-using namespace arkoi::mid;
+using namespace arkoi::sem;
 using namespace arkoi;
 
 static constinit type::Integral BOOL_PROMOTED_INT_TYPE = {Size::DWORD, false};

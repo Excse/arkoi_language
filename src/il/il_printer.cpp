@@ -1,12 +1,12 @@
-#include "mid/il_printer.hpp"
+#include "il/il_printer.hpp"
 
 #include <iostream>
 
-#include "mid/symbol_table.hpp"
-#include "mid/instruction.hpp"
+#include "sem/symbol_table.hpp"
+#include "il/instruction.hpp"
 #include "utils/utils.hpp"
 
-using namespace arkoi::mid;
+using namespace arkoi::il;
 
 std::stringstream ILPrinter::print(Module &module) {
     std::stringstream output;

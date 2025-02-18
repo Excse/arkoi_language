@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include "mid/cfg.hpp"
+#include "il/cfg.hpp"
 
 namespace arkoi::opt {
 
@@ -11,16 +11,16 @@ class Pass {
 public:
     virtual ~Pass() = default;
 
-    virtual bool on_module(mid::Module &module) = 0;
+    virtual bool on_module(il::Module &module) = 0;
 
-    virtual bool on_function(mid::Function &function) = 0;
+    virtual bool on_function(il::Function &function) = 0;
 
-    virtual bool on_block(mid::BasicBlock &block) = 0;
+    virtual bool on_block(il::BasicBlock &block) = 0;
 };
 
 class PassManager {
 public:
-    void run(mid::Module &module);
+    void run(il::Module &module);
 
     template<typename Type, typename... Args>
     void add(Args &&... args);

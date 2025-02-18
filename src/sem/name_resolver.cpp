@@ -1,9 +1,9 @@
-#include "mid/name_resolver.hpp"
+#include "sem/name_resolver.hpp"
 
 #include "utils/utils.hpp"
 #include "def/ast.hpp"
 
-using namespace arkoi::mid;
+using namespace arkoi::sem;
 
 NameResolver NameResolver::resolve(ast::Program &node) {
     NameResolver resolver;

@@ -1,60 +1,50 @@
 #pragma once
 
-#include <stack>
-
 #include "utils/visitor.hpp"
-#include "def/ast.hpp"
-#include "def/type.hpp"
+#include "il/il_printer.hpp"
+#include "il/instruction.hpp"
+#include "il/cfg.hpp"
 
-namespace arkoi::mid {
+namespace arkoi::il {
 
-class TypeResolver : ast::Visitor {
-private:
-    TypeResolver() = default;
+class CFGPrinter : Visitor {
+public:
+    CFGPrinter(std::stringstream &output) : _output(output), _printer(output) {};
 
 public:
-    [[nodiscard]] static TypeResolver resolve(ast::Program &node);
+    [[nodiscard]] static std::stringstream print(Module &module);
 
-    void visit(ast::Program &node) override;
+    void visit(Module &module) override;
 
-    void visit_as_prototype(ast::Function &node);
+    void visit(Function &function) override;
 
-    void visit(ast::Function &node) override;
+    void visit(BasicBlock &block) override;
 
-    void visit(ast::Block &node) override;
+    void visit(Return &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Parameter &node) override;
+    void visit(Binary &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Integer &node) override;
+    void visit(Cast &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Floating &node) override;
+    void visit(Call &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Boolean &node) override;
+    void visit(Goto &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Return &node) override;
+    void visit(If &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Identifier &node) override;
+    void visit(Alloca &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Binary &node) override;
+    void visit(Store &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Cast &node) override;
+    void visit(Load &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Assign &node) override;
+    void visit(Constant &instruction) override { _printer.visit(instruction); }
 
-    void visit(ast::Call &node) override;
-
-    void visit(ast::If &node) override;
-
-    [[nodiscard]] auto has_failed() const { return _failed; }
+    [[nodiscard]] auto &output() const { return _output; }
 
 private:
-    static Type _arithmetic_conversion(const Type &left_type, const Type &right_type);
-
-    static bool _can_implicit_convert(const Type &from, const Type &destination);
-
-private:
-    std::optional<Type> _current_type{}, _return_type{};
-    bool _failed{};
+    std::stringstream &_output;
+    ILPrinter _printer;
 };
 
 } // namespace arkoi::mid

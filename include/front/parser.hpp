@@ -57,9 +57,9 @@ private:
 
     [[nodiscard]] std::unique_ptr<ast::Node> _parse_primary();
 
-    [[nodiscard]] std::shared_ptr<mid::SymbolTable> _current_scope();
+    [[nodiscard]] std::shared_ptr<sem::SymbolTable> _current_scope();
 
-    std::shared_ptr<mid::SymbolTable> _enter_scope();
+    std::shared_ptr<sem::SymbolTable> _enter_scope();
 
     void _exit_scope();
 
@@ -84,7 +84,7 @@ private:
     [[nodiscard]] static bool _is_term_operator(const Token &token);
 
 private:
-    std::stack<std::shared_ptr<mid::SymbolTable>> _scopes{};
+    std::stack<std::shared_ptr<sem::SymbolTable>> _scopes{};
     std::vector<Token> _tokens;
     size_t _position{};
     bool _failed{};

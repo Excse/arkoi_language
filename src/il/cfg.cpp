@@ -1,41 +1,44 @@
-#include "mid/instruction.hpp"
+#include "il/cfg.hpp"
 
-using namespace arkoi::mid;
+#include <unordered_set>
+#include <stack>
 
-Binary::Operator Binary::node_to_instruction(ast::Binary::Operator op) {
-    switch (op) {
-        case ast::Binary::Operator::Add: return Operator::Add;
-        case ast::Binary::Operator::Sub: return Operator::Sub;
-        case ast::Binary::Operator::Mul: return Operator::Mul;
-        case ast::Binary::Operator::Div: return Operator::Div;
-        case ast::Binary::Operator::GreaterThan: return Operator::GreaterThan;
-        case ast::Binary::Operator::LessThan: return Operator::LessThan;
+using namespace arkoi::il;
+
+void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
+    std::unordered_set<BasicBlock *> visited;
+    std::stack<BasicBlock *> queue;
+
+    // We manually callback the end basic block as it should always be the last one being invoked.
+    visited.insert(_end.get());
+    // Start with the entry basic block.
+    queue.push(_start.get());
+
+    while (!queue.empty()) {
+        BasicBlock *current = queue.top();
+        queue.pop();
+
+        if (visited.contains(current)) continue;
+
+        visited.insert(current);
+
+        callback(*current);
+
+        if (current->branch()) queue.push(current->branch().get());
+        if (current->next()) queue.push(current->next().get());
     }
 
-    // As the -Wswitch flag is set, this will never be reached.
-    std::unreachable();
+    callback(*_end);
 }
 
-void InstructionType::accept(mid::Visitor &visitor) {
-    std::visit([&](auto &item) { item.accept(visitor); }, *this);
-}
+void Function::linearize(const std::function<void(InstructionType &)> &callback) {
+    auto visit_instructions = [&](BasicBlock &block) {
+        for (auto &instruction: block.instructions()) {
+            callback(instruction);
+        }
+    };
 
-bool InstructionType::is_constant() {
-    return std::visit([&](auto &item) { return item.is_constant(); }, *this);
-}
-
-std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
-    switch (op) {
-        case Binary::Operator::Add: return os << "add";
-        case Binary::Operator::Sub: return os << "sub";
-        case Binary::Operator::Mul: return os << "mul";
-        case Binary::Operator::Div: return os << "div";
-        case Binary::Operator::LessThan: return os << "lth";
-        case Binary::Operator::GreaterThan: return os << "gth";
-    }
-
-    // As the -Wswitch flag is set, this will never be reached.
-    std::unreachable();
+    depth_first_search(visit_instructions);
 }
 
 //==============================================================================

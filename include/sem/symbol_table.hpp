@@ -1,53 +1,43 @@
-#include "mid/operand.hpp"
+#pragma once
 
-#include <iomanip>
+#include <unordered_map>
+#include <utility>
+#include <memory>
 
-#include "utils/utils.hpp"
+#include "def/symbol.hpp"
 
-using namespace arkoi::mid;
+namespace arkoi::sem {
 
-bool Variable::operator==(const Variable &rhs) const {
-    return _name == rhs._name && _version == rhs._version;
-}
+class SymbolTable {
+public:
+    SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
 
-bool Variable::operator!=(const Variable &rhs) const {
-    return !(rhs == *this);
-}
+    template<typename Type, typename... Args>
+    SharedSymbol &insert(const std::string &name, Args &&... args);
 
-Size Immediate::size() const {
-    return std::visit(match{
-        [](const double &) { return Size::QWORD; },
-        [](const float &) { return Size::DWORD; },
-        [](const bool &) { return Size::BYTE; },
-        [](const uint32_t &) { return Size::DWORD; },
-        [](const int32_t &) { return Size::DWORD; },
-        [](const uint64_t &) { return Size::QWORD; },
-        [](const int64_t &) { return Size::QWORD; },
-    }, *this);
-}
+    template<typename... Types>
+    [[nodiscard]] SharedSymbol &lookup(const std::string &name);
 
-std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
-    std::visit(match{
-        [&os](const bool &value) { os << (value ? "1" : "0"); },
-        [&os](const auto &value) { os << value; },
-    }, immediate);
-    return os;
-}
+private:
+    std::unordered_map<std::string, SharedSymbol> _symbols{};
+    std::shared_ptr<SymbolTable> _parent;
+};
 
-std::ostream &operator<<(std::ostream &os, const Operand &operand) {
-    std::visit([&os](const auto &other) { os << other; }, operand);
-    return os;
-}
+class IdentifierAlreadyTaken : public std::runtime_error {
+public:
+    IdentifierAlreadyTaken(const std::string &name)
+        : std::runtime_error("The identifier " + name + " is already taken.") {}
+};
 
-std::ostream &operator<<(std::ostream &os, const Variable &variable) {
-    os << variable.symbol();
+class IdentifierNotFound : public std::runtime_error {
+public:
+    IdentifierNotFound(const std::string &name)
+        : std::runtime_error("The identifier " + name + " was not found.") {}
+};
 
-    if (variable.version() != 0) {
-        os << std::setw(2) << std::setfill('0') << variable.version();
-    }
+#include "../../src/sem/symbol_table.tpp"
 
-    return os;
-}
+} // namespace arkoi::mid
 
 //==============================================================================
 // BSD 3-Clause License
