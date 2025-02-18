@@ -32,7 +32,7 @@ public:
 
 private:
     std::shared_ptr<BasicBlock> _next{}, _branch{};
-    std::vector<InstructionType> _instructions{};
+    std::vector<Instruction> _instructions{};
     std::string _label;
 };
 
@@ -45,7 +45,7 @@ public:
 
     void depth_first_search(const std::function<void(BasicBlock &)> &callback);
 
-    void linearize(const std::function<void(InstructionType &)> &callback);
+    void linearize(const std::function<void(Instruction &)> &callback);
 
     [[nodiscard]] auto &symbol() const { return _symbol; }
 

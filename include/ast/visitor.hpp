@@ -52,55 +52,6 @@ public:
 
 } // namespace arkoi::ast
 
-namespace arkoi::il {
-
-class BasicBlock;
-class Function;
-class Constant;
-class Module;
-class Binary;
-class Return;
-class Alloca;
-class Store;
-class Load;
-class Cast;
-class Call;
-class Goto;
-class If;
-
-class Visitor {
-public:
-    virtual ~Visitor() = default;
-
-    virtual void visit(Module &module) = 0;
-
-    virtual void visit(Function &function) = 0;
-
-    virtual void visit(BasicBlock &block) = 0;
-
-    virtual void visit(Return &instruction) = 0;
-
-    virtual void visit(Binary &instruction) = 0;
-
-    virtual void visit(Cast &instruction) = 0;
-
-    virtual void visit(Call &instruction) = 0;
-
-    virtual void visit(If &instruction) = 0;
-
-    virtual void visit(Goto &instruction) = 0;
-
-    virtual void visit(Alloca &instruction) = 0;
-
-    virtual void visit(Store &instruction) = 0;
-
-    virtual void visit(Load &instruction) = 0;
-
-    virtual void visit(Constant &instruction) = 0;
-};
-
-} // namespace arkoi::mid
-
 //==============================================================================
 // BSD 3-Clause License
 //

@@ -1,7 +1,7 @@
 #include "sem/name_resolver.hpp"
 
 #include "utils/utils.hpp"
-#include "def/ast.hpp"
+#include "ast/nodes.hpp"
 
 using namespace arkoi::sem;
 

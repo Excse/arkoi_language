@@ -2,8 +2,8 @@
 
 #include <sstream>
 
-#include "utils/visitor.hpp"
 #include "il/instruction.hpp"
+#include "il/visitor.hpp"
 #include "il/cfg.hpp"
 
 namespace arkoi::il {

@@ -1,10 +1,8 @@
 #pragma once
 
-#include <stack>
-
-#include "utils/visitor.hpp"
+#include "il/visitor.hpp"
+#include "ast/nodes.hpp"
 #include "def/type.hpp"
-#include "def/ast.hpp"
 
 namespace arkoi::sem {
 

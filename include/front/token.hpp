@@ -80,9 +80,9 @@ private:
 
 } // namespace arkoi::front
 
-std::ostream &operator<<(std::ostream &os, const arkoi::front::Token &token);
-
 std::ostream &operator<<(std::ostream &os, const arkoi::front::Token::Type &type);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::front::Token &token);
 
 //==============================================================================
 // BSD 3-Clause License

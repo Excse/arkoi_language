@@ -2,22 +2,22 @@
 
 #include <utility>
 
-#include "utils/visitor.hpp"
+#include "il/visitor.hpp"
 #include "il/operand.hpp"
-#include "def/ast.hpp"
+#include "ast/nodes.hpp"
 
 namespace arkoi::il {
 
-class Instruction {
+class InstructionBase {
 public:
-    virtual ~Instruction() = default;
+    virtual ~InstructionBase() = default;
 
     virtual void accept(Visitor &visitor) = 0;
 
     [[nodiscard]] virtual bool is_constant() = 0;
 };
 
-class Goto : public Instruction {
+class Goto : public InstructionBase {
 public:
     Goto(std::string label) : _label(std::move(label)) {}
 
@@ -31,7 +31,7 @@ private:
     std::string _label;
 };
 
-class If : public Instruction {
+class If : public InstructionBase {
 public:
     If(Operand condition, std::string label)
         : _condition(std::move(condition)), _label(std::move(label)) {}
@@ -49,7 +49,7 @@ private:
     std::string _label;
 };
 
-class Call : public Instruction {
+class Call : public InstructionBase {
 public:
     Call(Variable result, std::string name, std::vector<Operand> &&arguments, Type type)
         : _arguments(std::move(arguments)), _result(std::move(result)), _name(std::move(name)), _type(type) {}
@@ -73,7 +73,7 @@ private:
     Type _type;
 };
 
-class Return : public Instruction {
+class Return : public InstructionBase {
 public:
     Return(Operand value, Type type) : _value(std::move(value)), _type(type) {}
 
@@ -90,7 +90,7 @@ private:
     Type _type;
 };
 
-class Binary : public Instruction {
+class Binary : public InstructionBase {
 public:
     enum class Operator {
         Add,
@@ -134,7 +134,7 @@ private:
     Operator _op;
 };
 
-class Cast : public Instruction {
+class Cast : public InstructionBase {
 public:
     Cast(Variable result, Operand expression, Type from, Type to)
         : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
@@ -157,7 +157,7 @@ private:
     Type _from, _to;
 };
 
-class Alloca : public Instruction {
+class Alloca : public InstructionBase {
 public:
     Alloca(Variable result, Type type)
         : _result(std::move(result)), _type(type) {}
@@ -175,7 +175,7 @@ private:
     Type _type;
 };
 
-class Load : public Instruction {
+class Load : public InstructionBase {
 public:
     Load(Variable result, Variable target, Type type)
         : _result(std::move(result)), _target(std::move(target)), _type(type) {}
@@ -195,7 +195,7 @@ private:
     Type _type;
 };
 
-class Store : public Instruction {
+class Store : public InstructionBase {
 public:
     Store(Variable result, Operand value, Type type)
         : _result(std::move(result)), _value(std::move(value)), _type(type) {}
@@ -216,7 +216,7 @@ private:
     Type _type;
 };
 
-class Constant : public Instruction {
+class Constant : public InstructionBase {
 public:
     Constant(Variable result, Immediate value, Type type)
         : _result(std::move(result)), _value(value), _type(type) {}
@@ -237,7 +237,7 @@ private:
     Type _type;
 };
 
-struct InstructionType : std::variant<
+struct Instruction : std::variant<
     il::Goto,
     il::If,
     il::Cast,

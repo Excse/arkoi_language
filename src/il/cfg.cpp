@@ -31,7 +31,7 @@ void Function::depth_first_search(const std::function<void(BasicBlock &)> &callb
     callback(*_end);
 }
 
-void Function::linearize(const std::function<void(InstructionType &)> &callback) {
+void Function::linearize(const std::function<void(Instruction &)> &callback) {
     auto visit_instructions = [&](BasicBlock &block) {
         for (auto &instruction: block.instructions()) {
             callback(instruction);

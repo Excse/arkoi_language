@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sem/symbol_table.hpp"
-#include "utils/visitor.hpp"
+#include "ast/visitor.hpp"
 #include "front/token.hpp"
 #include "def/type.hpp"
 

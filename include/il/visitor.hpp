@@ -1,42 +1,53 @@
-#include "il/instruction.hpp"
+#pragma once
 
-using namespace arkoi::il;
+namespace arkoi::il {
 
-Binary::Operator Binary::node_to_instruction(ast::Binary::Operator op) {
-    switch (op) {
-        case ast::Binary::Operator::Add: return Operator::Add;
-        case ast::Binary::Operator::Sub: return Operator::Sub;
-        case ast::Binary::Operator::Mul: return Operator::Mul;
-        case ast::Binary::Operator::Div: return Operator::Div;
-        case ast::Binary::Operator::GreaterThan: return Operator::GreaterThan;
-        case ast::Binary::Operator::LessThan: return Operator::LessThan;
-    }
+class BasicBlock;
+class Function;
+class Constant;
+class Module;
+class Binary;
+class Return;
+class Alloca;
+class Store;
+class Load;
+class Cast;
+class Call;
+class Goto;
+class If;
 
-    // As the -Wswitch flag is set, this will never be reached.
-    std::unreachable();
-}
+class Visitor {
+public:
+    virtual ~Visitor() = default;
 
-void Instruction::accept(Visitor &visitor) {
-    std::visit([&](auto &item) { item.accept(visitor); }, *this);
-}
+    virtual void visit(Module &module) = 0;
 
-bool Instruction::is_constant() {
-    return std::visit([&](auto &item) { return item.is_constant(); }, *this);
-}
+    virtual void visit(Function &function) = 0;
 
-std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
-    switch (op) {
-        case Binary::Operator::Add: return os << "add";
-        case Binary::Operator::Sub: return os << "sub";
-        case Binary::Operator::Mul: return os << "mul";
-        case Binary::Operator::Div: return os << "div";
-        case Binary::Operator::LessThan: return os << "lth";
-        case Binary::Operator::GreaterThan: return os << "gth";
-    }
+    virtual void visit(BasicBlock &block) = 0;
 
-    // As the -Wswitch flag is set, this will never be reached.
-    std::unreachable();
-}
+    virtual void visit(Return &instruction) = 0;
+
+    virtual void visit(Binary &instruction) = 0;
+
+    virtual void visit(Cast &instruction) = 0;
+
+    virtual void visit(Call &instruction) = 0;
+
+    virtual void visit(If &instruction) = 0;
+
+    virtual void visit(Goto &instruction) = 0;
+
+    virtual void visit(Alloca &instruction) = 0;
+
+    virtual void visit(Store &instruction) = 0;
+
+    virtual void visit(Load &instruction) = 0;
+
+    virtual void visit(Constant &instruction) = 0;
+};
+
+} // namespace arkoi::mid
 
 //==============================================================================
 // BSD 3-Clause License

@@ -3,8 +3,8 @@
 #include <stack>
 
 #include "sem/symbol_table.hpp"
-#include "utils/visitor.hpp"
 #include "front/token.hpp"
+#include "ast/visitor.hpp"
 
 namespace arkoi::sem {
 

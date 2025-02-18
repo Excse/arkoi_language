@@ -4,8 +4,8 @@
 #include <vector>
 #include <stack>
 
-#include "token.hpp"
-#include "def/ast.hpp"
+#include "front/token.hpp"
+#include "ast/nodes.hpp"
 #include "utils/utils.hpp"
 
 namespace arkoi::front {

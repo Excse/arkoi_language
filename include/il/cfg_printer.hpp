@@ -1,8 +1,8 @@
 #pragma once
 
-#include "utils/visitor.hpp"
-#include "il/il_printer.hpp"
 #include "il/instruction.hpp"
+#include "il/il_printer.hpp"
+#include "il/visitor.hpp"
 #include "il/cfg.hpp"
 
 namespace arkoi::il {
