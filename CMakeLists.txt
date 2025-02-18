@@ -9,18 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 include(FetchContent)
 
 # =====================
-# Pretty Diagnostics
-# =====================
-
-FetchContent_Declare(
-        pretty_diagnostics
-        GIT_REPOSITORY https://github.com/Excse/pretty_diagnostics.git
-        GIT_TAG        main
-)
-
-FetchContent_MakeAvailable(pretty_diagnostics)
-
-# =====================
 # Google Test
 # =====================
 
@@ -63,7 +51,7 @@ add_library(${PROJECT_NAME}_lib
         src/def/size.cpp
 )
 
-target_link_libraries(${PROJECT_NAME}_lib pretty_diagnostics)
+target_link_libraries(${PROJECT_NAME}_lib)
 
 # =====================
 # Executable
