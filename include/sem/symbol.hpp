@@ -1,68 +1,62 @@
 #pragma once
 
-#include <cstdint>
+#include <utility>
+#include <vector>
+#include <memory>
 
-#include "size.hpp"
+#include "sem/type.hpp"
 
-namespace arkoi::type {
+struct SymbolType;
 
-class Integral {
+using SharedSymbol = std::shared_ptr<SymbolType>;
+
+namespace arkoi::sem {
+
+class Function {
 public:
-    constexpr Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
+    Function(std::string name) : _name(std::move(name)) {}
 
-    bool operator==(const Integral &other) const;
+    void set_parameters(std::vector<SharedSymbol> &&symbols) { _parameter_symbols = std::move(symbols); }
 
-    bool operator!=(const Integral &other) const;
+    [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
 
-    [[nodiscard]] uint64_t max() const;
+    void set_return_type(Type type) { _return_type = type; }
 
-    [[nodiscard]] auto size() const { return _size; }
+    [[nodiscard]] auto &return_type() const { return _return_type.value(); }
 
-    [[nodiscard]] auto sign() const { return _sign; }
+    [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    Size _size;
-    bool _sign;
+    std::vector<SharedSymbol> _parameter_symbols{};
+    std::optional<Type> _return_type{};
+    std::string _name;
 };
 
-class Floating {
+class Variable {
 public:
-    Floating(const Size size) : _size(size) {}
+    Variable(std::string name, Type type)
+        : _type(type), _name(std::move(name)) {}
 
-    bool operator==(const Floating &other) const;
+    Variable(std::string name) : _name(std::move(name)) {}
 
-    bool operator!=(const Floating &other) const;
+    void set_type(Type type) { _type = type; }
 
-    [[nodiscard]] auto size() const { return _size; }
+    [[nodiscard]] auto &type() const { return _type.value(); }
+
+    [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    Size _size;
+    std::optional<Type> _type{};
+    std::string _name;
 };
 
-class Boolean {
-public:
-    bool operator==(const Boolean &other) const;
+} // namespace arkoi::sym
 
-    bool operator!=(const Boolean &other) const;
-
-    [[nodiscard]] static auto size() { return Size::BYTE; }
-};
-
-} // namespace arkoi::result_type
-
-struct Type : std::variant<arkoi::type::Integral, arkoi::type::Floating, arkoi::type::Boolean> {
+struct SymbolType : std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
     using variant::variant;
-
-    [[nodiscard]] Size size() const;
 };
 
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Integral &type);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Floating &type);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::type::Boolean &type);
-
-std::ostream &operator<<(std::ostream &os, const Type &type);
+std::ostream &operator<<(std::ostream &os, const SharedSymbol &symbol);
 
 //==============================================================================
 // BSD 3-Clause License

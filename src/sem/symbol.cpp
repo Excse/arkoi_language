@@ -1,62 +1,11 @@
-#pragma once
+#include "sem/symbol.hpp"
 
-#include <utility>
-#include <vector>
-#include <memory>
+using namespace arkoi::sem;
 
-#include "def/type.hpp"
-
-struct SymbolType;
-
-using SharedSymbol = std::shared_ptr<SymbolType>;
-
-namespace arkoi::symbol {
-
-class Function {
-public:
-    Function(std::string name) : _name(std::move(name)) {}
-
-    void set_parameters(std::vector<SharedSymbol> &&symbols) { _parameter_symbols = std::move(symbols); }
-
-    [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
-
-    void set_return_type(Type type) { _return_type = type; }
-
-    [[nodiscard]] auto &return_type() const { return _return_type.value(); }
-
-    [[nodiscard]] auto &name() const { return _name; }
-
-private:
-    std::vector<SharedSymbol> _parameter_symbols{};
-    std::optional<Type> _return_type{};
-    std::string _name;
-};
-
-class Variable {
-public:
-    Variable(std::string name, Type type)
-        : _type(type), _name(std::move(name)) {}
-
-    Variable(std::string name) : _name(std::move(name)) {}
-
-    void set_type(Type type) { _type = type; }
-
-    [[nodiscard]] auto &type() const { return _type.value(); }
-
-    [[nodiscard]] auto &name() const { return _name; }
-
-private:
-    std::optional<Type> _type{};
-    std::string _name;
-};
-
-} // namespace arkoi::symbol
-
-struct SymbolType : std::variant<arkoi::symbol::Function, arkoi::symbol::Variable> {
-    using variant::variant;
-};
-
-std::ostream &operator<<(std::ostream &os, const SharedSymbol &symbol);
+std::ostream &operator<<(std::ostream &os, const SharedSymbol &symbol) {
+    std::visit([&os](const auto &symbol) { os << symbol.name(); }, *symbol);
+    return os;
+}
 
 //==============================================================================
 // BSD 3-Clause License

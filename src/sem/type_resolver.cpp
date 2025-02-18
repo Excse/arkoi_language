@@ -8,8 +8,8 @@
 using namespace arkoi::sem;
 using namespace arkoi;
 
-static constinit type::Integral BOOL_PROMOTED_INT_TYPE = {Size::DWORD, false};
-static constinit type::Boolean BOOL_TYPE = {};
+static constinit Integral BOOL_PROMOTED_INT_TYPE = {Size::DWORD, false};
+static constinit Boolean BOOL_TYPE = {};
 
 TypeResolver TypeResolver::resolve(ast::Program &node) {
     TypeResolver resolver;
@@ -35,12 +35,12 @@ void TypeResolver::visit_as_prototype(ast::Function &node) {
         parameter.accept(*this);
     }
 
-    auto &function = std::get<symbol::Function>(*node.name().symbol());
+    auto &function = std::get<sem::Function>(*node.name().symbol());
     function.set_return_type(node.type());
 }
 
 void TypeResolver::visit(ast::Function &node) {
-    auto &function = std::get<symbol::Function>(*node.name().symbol());
+    auto &function = std::get<sem::Function>(*node.name().symbol());
     _return_type = function.return_type();
 
     node.block()->accept(*this);
@@ -53,11 +53,20 @@ void TypeResolver::visit(ast::Block &node) {
 }
 
 void TypeResolver::visit(ast::Parameter &node) {
-    auto &variable = std::get<symbol::Variable>(*node.name().symbol());
+    auto &variable = std::get<sem::Variable>(*node.name().symbol());
     variable.set_type(node.type());
 }
 
-void TypeResolver::visit(ast::Integer &node) {
+void TypeResolver::visit(ast::Immediate &node) {
+    switch (node.kind()) {
+        case ast::Immediate::Kind::Integer: return visit_integer(node);
+        case ast::Immediate::Kind::Floating: return visit_floating(node);
+        case ast::Immediate::Kind::Boolean: return visit_boolean(node);
+        default: throw std::runtime_error("This immediate type is not implemented yet.");
+    }
+}
+
+void TypeResolver::visit_integer(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
     auto sign = !number_string.starts_with('-');
 
@@ -68,18 +77,18 @@ void TypeResolver::visit(ast::Integer &node) {
         size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? Size::QWORD : Size::DWORD;
     }
 
-    _current_type = type::Integral(size, sign);
+    _current_type = Integral(size, sign);
 }
 
-void TypeResolver::visit(ast::Floating &node) {
+void TypeResolver::visit_floating(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
-    _current_type = type::Floating(size);
+    _current_type = Floating(size);
 }
 
-void TypeResolver::visit(ast::Boolean &) {
-    _current_type = type::Boolean();
+void TypeResolver::visit_boolean(ast::Immediate &) {
+    _current_type = Boolean();
 }
 
 void TypeResolver::visit(ast::Return &node) {
@@ -103,13 +112,13 @@ void TypeResolver::visit(ast::Return &node) {
 
 void TypeResolver::visit(ast::Identifier &node) {
     if(node.kind() == ast::Identifier::Kind::Function) {
-        const auto &function = std::get<symbol::Function>(*node.symbol());
+        const auto &function = std::get<sem::Function>(*node.symbol());
         _current_type = function.return_type();
     } else if(node.kind() == ast::Identifier::Kind::Variable) {
         // TODO: In the future there will be local/global and parameter variables,
         //       thus they need to be searched in such order: local, parameter, global.
         //       For now only parameter variables exist.
-        const auto &variable = std::get<symbol::Variable>(*node.symbol());
+        const auto &variable = std::get<sem::Variable>(*node.symbol());
         _current_type = variable.type();
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
@@ -192,14 +201,14 @@ void TypeResolver::visit(ast::Assign &node) {
 void TypeResolver::visit(ast::Call &node) {
     node.name().accept(*this);
 
-    auto function = std::get<symbol::Function>(*node.name().symbol());
+    auto function = std::get<sem::Function>(*node.name().symbol());
 
     if (function.parameter_symbols().size() != node.arguments().size()) {
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");
     }
 
     for (size_t index = 0; index < node.arguments().size(); index++) {
-        const auto &variable = std::get<symbol::Variable>(*function.parameter_symbols()[index]);
+        const auto &variable = std::get<sem::Variable>(*function.parameter_symbols()[index]);
 
         auto &argument = node.arguments()[index];
         argument->accept(*this);
@@ -227,7 +236,7 @@ void TypeResolver::visit(ast::If &node) {
         throw std::runtime_error("Return statement has a wrong return op.");
     }
 
-    if (!std::holds_alternative<type::Boolean>(type)) {
+    if (!std::holds_alternative<Boolean>(type)) {
         // We assure to override the const casted node with a new node. Thus, this exception is legal.
         auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.condition());
         node.set_condition(std::make_unique<ast::Cast>(std::move(expression), type, BOOL_TYPE));
@@ -240,8 +249,8 @@ void TypeResolver::visit(ast::If &node) {
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
 Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &right_type) {
-    auto floating_left = std::get_if<type::Floating>(&left_type);
-    auto floating_right = std::get_if<type::Floating>(&right_type);
+    auto floating_left = std::get_if<Floating>(&left_type);
+    auto floating_right = std::get_if<Floating>(&right_type);
 
     // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
@@ -262,20 +271,20 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
 
     // Stage 5: Both operands are converted to a common op C.
     auto t1 = std::visit(match{
-        [](const type::Integral &type) -> type::Integral { return type; },
-        [](const type::Boolean &) -> type::Integral { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> type::Integral { throw std::runtime_error("The left type must be of integral type."); }
+        [](const Integral &type) -> Integral { return type; },
+        [](const Boolean &) -> Integral { return BOOL_PROMOTED_INT_TYPE; },
+        [](const auto &) -> Integral { throw std::runtime_error("The left type must be of integral type."); }
     }, left_type);
     auto t2 = std::visit(match{
-        [](const type::Integral &type) -> type::Integral { return type; },
-        [](const type::Boolean &) -> type::Integral { return BOOL_PROMOTED_INT_TYPE; },
-        [](const auto &) -> type::Integral { throw std::runtime_error("The left type must be of integral type."); }
+        [](const Integral &type) -> Integral { return type; },
+        [](const Boolean &) -> Integral { return BOOL_PROMOTED_INT_TYPE; },
+        [](const auto &) -> Integral { throw std::runtime_error("The left type must be of integral type."); }
     }, right_type);
 
     // Given the types T1 and T2 as the promoted op (under the rules of integral promotions) of the operands, the
     // following rules are applied to determine C:
-    if (t1.size() < Size::DWORD) t1 = type::Integral(Size::DWORD, t1.sign());
-    if (t2.size() < Size::DWORD) t2 = type::Integral(Size::DWORD, t2.sign());
+    if (t1.size() < Size::DWORD) t1 = Integral(Size::DWORD, t1.sign());
+    if (t2.size() < Size::DWORD) t2 = Integral(Size::DWORD, t2.sign());
 
     // 1. If T1 and T2 are the same type, C is that op.
     if (t1 == t2) return t1;
@@ -299,7 +308,7 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     if (_signed.max() >= _unsigned.max()) return _signed;
 
     // 3.3. Otherwise, C is the unsigned integer op corresponding to S.
-    return type::Integral(_signed.size(), false);
+    return Integral(_signed.size(), false);
 }
 
 // https://en.cppreference.com/w/cpp/language/implicit_conversion
@@ -307,27 +316,27 @@ bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destinati
     return std::visit(match{
         // A prvalue of an integer mid or of an unscoped enumeration op can be converted to any other integer mid.
         // If the conversion is listed under integral promotions, it is a promotion and not a conversion.
-        [](const type::Integral &, const type::Integral &) { return true; },
+        [](const Integral &, const Integral &) { return true; },
         // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
         // converted to a prvalue of mid bool.
-        [](const type::Integral &, const type::Boolean &) { return true; },
+        [](const Integral &, const Boolean &) { return true; },
         // A prvalue of integer or unscoped enumeration mid can be converted to a prvalue of any floating-point mid.
         // The result is exact if possible.
-        [](const type::Integral &, const type::Floating &) { return true; },
+        [](const Integral &, const Floating &) { return true; },
         // A prvalue of a floating-point mid can be converted to a prvalue of any other floating-point mid. (until C++23)
-        [](const type::Floating &, const type::Floating &) { return true; },
+        [](const Floating &, const Floating &) { return true; },
         // A prvalue of floating-point mid can be converted to a prvalue of any integer mid. The fractional part is
         // truncated, that is, the fractional part is discarded.
-        [](const type::Floating &, const type::Integral &) { return true; },
+        [](const Floating &, const Integral &) { return true; },
         // A prvalue of integral, floating-point, unscoped enumeration, pointer, and pointer-to-member types can be
         // converted to a prvalue of mid bool.
-        [](const type::Floating &, const type::Boolean &) { return true; },
+        [](const Floating &, const Boolean &) { return true; },
         // If the source mid is bool, the value false is converted to zero and the value true is converted to the value
         // one of the destination mid (note that if the destination mid is int, this is an integer promotion, not an
         // integer conversion).
-        [](const type::Boolean &, const type::Integral &) { return true; },
+        [](const Boolean &, const Integral &) { return true; },
         // If the source mid is bool, the value false is converted to zero, and the value true is converted to one.
-        [](const type::Boolean &, const type::Floating &) { return true; },
+        [](const Boolean &, const Floating &) { return true; },
         [&](const auto &, const auto &) { return from == destination; },
     }, from, destination);
 }

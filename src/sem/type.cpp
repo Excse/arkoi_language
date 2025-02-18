@@ -1,8 +1,8 @@
-#include "def/type.hpp"
+#include "sem/type.hpp"
 
 #include <utility>
 
-using namespace arkoi::type;
+using namespace arkoi::sem;
 
 bool Integral::operator==(const Integral &other) const {
     return _size == other._size && _sign == other._sign;

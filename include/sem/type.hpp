@@ -1,11 +1,68 @@
-#include "def/symbol.hpp"
+#pragma once
 
-using namespace arkoi::symbol;
+#include <cstdint>
 
-std::ostream &operator<<(std::ostream &os, const SharedSymbol &symbol) {
-    std::visit([&os](const auto &symbol) { os << symbol.name(); }, *symbol);
-    return os;
-}
+#include "utils/size.hpp"
+
+namespace arkoi::sem {
+
+class Integral {
+public:
+    constexpr Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
+
+    bool operator==(const Integral &other) const;
+
+    bool operator!=(const Integral &other) const;
+
+    [[nodiscard]] uint64_t max() const;
+
+    [[nodiscard]] auto size() const { return _size; }
+
+    [[nodiscard]] auto sign() const { return _sign; }
+
+private:
+    Size _size;
+    bool _sign;
+};
+
+class Floating {
+public:
+    Floating(const Size size) : _size(size) {}
+
+    bool operator==(const Floating &other) const;
+
+    bool operator!=(const Floating &other) const;
+
+    [[nodiscard]] auto size() const { return _size; }
+
+private:
+    Size _size;
+};
+
+class Boolean {
+public:
+    bool operator==(const Boolean &other) const;
+
+    bool operator!=(const Boolean &other) const;
+
+    [[nodiscard]] static auto size() { return Size::BYTE; }
+};
+
+} // namespace arkoi::result_type
+
+struct Type : std::variant<arkoi::sem::Integral, arkoi::sem::Floating, arkoi::sem::Boolean> {
+    using variant::variant;
+
+    [[nodiscard]] Size size() const;
+};
+
+std::ostream &operator<<(std::ostream &os, const arkoi::sem::Integral &type);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::sem::Floating &type);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::sem::Boolean &type);
+
+std::ostream &operator<<(std::ostream &os, const Type &type);
 
 //==============================================================================
 // BSD 3-Clause License

@@ -71,7 +71,16 @@ void Generator::visit(ast::Block &node) {
     }
 }
 
-void Generator::visit(ast::Integer &node) {
+void Generator::visit(ast::Immediate &node) {
+    switch (node.kind()) {
+        case ast::Immediate::Kind::Integer: return visit_integer(node);
+        case ast::Immediate::Kind::Floating: return visit_floating(node);
+        case ast::Immediate::Kind::Boolean: return visit_boolean(node);
+        default: throw std::runtime_error("This immediate type is not implemented yet.");
+    }
+}
+
+void Generator::visit_integer(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     auto sign = !number_string.starts_with('-');
@@ -92,7 +101,7 @@ void Generator::visit(ast::Integer &node) {
     }
 }
 
-void Generator::visit(ast::Floating &node) {
+void Generator::visit_floating(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     auto value = std::stold(number_string);
@@ -103,8 +112,8 @@ void Generator::visit(ast::Floating &node) {
     }
 }
 
-void Generator::visit(ast::Boolean &node) {
-    _current_operand = (bool) node.value();
+void Generator::visit_boolean(ast::Immediate &node) {
+    _current_operand = (node.value().type() == front::Token::Type::True);
 }
 
 void Generator::visit(ast::Return &node) {
@@ -128,7 +137,7 @@ void Generator::visit(ast::Identifier &node) {
     // TODO: In the future there will be local/global and parameter variables,
     //       thus they need to be searched in such order: local, parameter, global.
     //       For now only parameter variables exist.
-    const auto &variable = std::get<symbol::Variable>(*node.symbol());
+    const auto &variable = std::get<sem::Variable>(*node.symbol());
 
     auto alloca_temp = _allocas.at(node.symbol());
     auto temp = _make_temporary();
@@ -156,7 +165,7 @@ void Generator::visit(ast::Assign &node) {
     // TODO: In the future there will be local/global and parameter variables,
     //       thus they need to be searched in such order: local, parameter, global.
     //       For now only parameter variables exist.
-    const auto &variable = std::get<symbol::Variable>(*node.name().symbol());
+    const auto &variable = std::get<sem::Variable>(*node.name().symbol());
 
     // This will set _current_operand
     node.expression()->accept(*this);
@@ -178,7 +187,7 @@ void Generator::visit(ast::Cast &node) {
 }
 
 void Generator::visit(ast::Call &node) {
-    const auto &function = std::get<symbol::Function>(*node.name().symbol());
+    const auto &function = std::get<sem::Function>(*node.name().symbol());
 
     std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {

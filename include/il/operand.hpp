@@ -34,7 +34,7 @@
 #include <iostream>
 #include <variant>
 
-#include "def/size.hpp"
+#include "utils/size.hpp"
 
 namespace arkoi::il {
 

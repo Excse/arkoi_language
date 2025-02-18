@@ -2,7 +2,7 @@
 
 #include "il/visitor.hpp"
 #include "ast/nodes.hpp"
-#include "def/type.hpp"
+#include "sem/type.hpp"
 
 namespace arkoi::sem {
 
@@ -23,11 +23,13 @@ public:
 
     void visit(ast::Parameter &node) override;
 
-    void visit(ast::Integer &node) override;
+    void visit(ast::Immediate &node) override;
 
-    void visit(ast::Floating &node) override;
+    void visit_integer(ast::Immediate &node);
 
-    void visit(ast::Boolean &node) override;
+    void visit_floating(ast::Immediate &node);
+
+    void visit_boolean(ast::Immediate &node);
 
     void visit(ast::Return &node) override;
 

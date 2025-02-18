@@ -31,7 +31,7 @@ void NameResolver::visit(ast::Program &node) {
 
 void NameResolver::visit_as_prototype(ast::Function &node) {
     // Always check nonexistence beforehand
-    std::ignore = _check_non_existence<symbol::Function>(node.name().value());
+    std::ignore = _check_non_existence<Function>(node.name().value());
     node.name().accept(*this);
 }
 
@@ -45,7 +45,7 @@ void NameResolver::visit(ast::Function &node) {
         parameters.push_back(parameter.name().symbol());
     }
 
-    auto &function = std::get<symbol::Function>(*node.name().symbol());
+    auto &function = std::get<Function>(*node.name().symbol());
     function.set_parameters(std::move(parameters));
 
     node.block()->accept(*this);
@@ -54,7 +54,7 @@ void NameResolver::visit(ast::Function &node) {
 
 void NameResolver::visit(ast::Parameter &node) {
     // Always check nonexistence beforehand
-    std::ignore = _check_non_existence<symbol::Variable>(node.name().value());
+    std::ignore = _check_non_existence<Variable>(node.name().value());
     node.name().accept(*this);
 }
 
@@ -68,13 +68,13 @@ void NameResolver::visit(ast::Block &node) {
 
 void NameResolver::visit(ast::Identifier &node) {
     if (node.kind() == ast::Identifier::Kind::Function) {
-        auto symbol = _check_existence<symbol::Function>(node.value());
+        auto symbol = _check_existence<Function>(node.value());
         node.set_symbol(symbol);
     } else if (node.kind() == ast::Identifier::Kind::Variable) {
         // TODO: In the future there will be local/global and parameter variables,
         //       thus they need to be searched in such order: local, parameter, global.
         //       For now only parameter variables exist.
-        auto symbol = _check_existence<symbol::Variable>(node.value());
+        auto symbol = _check_existence<Variable>(node.value());
         node.set_symbol(symbol);
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");

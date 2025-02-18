@@ -32,7 +32,7 @@ il::Immediate ConstantFolding::_cast(il::Cast &instruction) {
 
 il::Immediate ConstantFolding::_evaluate_cast(const Type &to, auto expression) {
     return std::visit(match{
-        [&](const type::Integral &type) -> il::Immediate {
+        [&](const sem::Integral &type) -> il::Immediate {
             switch (type.size()) {
                 case Size::BYTE: return type.sign() ? (int8_t) expression : (uint8_t) expression;
                 case Size::WORD: return type.sign() ? (int16_t) expression : (uint16_t) expression;
@@ -41,14 +41,14 @@ il::Immediate ConstantFolding::_evaluate_cast(const Type &to, auto expression) {
                 default: std::unreachable();
             }
         },
-        [&](const type::Floating &type) -> il::Immediate {
+        [&](const sem::Floating &type) -> il::Immediate {
             switch (type.size()) {
                 case Size::DWORD: return (float) expression;
                 case Size::QWORD: return (double) expression;
                 default: std::unreachable();
             }
         },
-        [&](const type::Boolean &) -> il::Immediate {
+        [&](const sem::Boolean &) -> il::Immediate {
             return (bool) expression;
         }
     }, to);

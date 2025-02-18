@@ -29,15 +29,15 @@ FetchContent_MakeAvailable(google_test)
 include_directories(include)
 
 add_library(${PROJECT_NAME}_lib
-        src/def/symbol.cpp
-        src/def/type.cpp
         src/front/token.cpp
         src/front/scanner.cpp
         src/front/parser.cpp
-        src/sem/symbol_table.tpp
         src/sem/name_resolver.tpp
         src/sem/name_resolver.cpp
+        src/sem/symbol_table.tpp
+        src/sem/symbol.cpp
         src/sem/type_resolver.cpp
+        src/sem/type.cpp
         src/il/instruction.cpp
         src/il/generator.cpp
         src/il/il_printer.cpp
@@ -48,7 +48,7 @@ add_library(${PROJECT_NAME}_lib
         src/opt/pass.tpp
         src/opt/constant_folding.cpp
         src/utils/dep_graph.tpp
-        src/def/size.cpp
+        src/utils/size.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_lib)

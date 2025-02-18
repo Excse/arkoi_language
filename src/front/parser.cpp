@@ -135,19 +135,19 @@ Type Parser::_parse_type() {
 
     auto token = _consume_any();
     switch (token.type()) {
-        case Token::Type::U8: return type::Integral(Size::BYTE, false);
-        case Token::Type::S8: return type::Integral(Size::BYTE, true);
-        case Token::Type::U16: return type::Integral(Size::WORD, false);
-        case Token::Type::S16: return type::Integral(Size::WORD, true);
-        case Token::Type::U32: return type::Integral(Size::DWORD, false);
-        case Token::Type::S32: return type::Integral(Size::DWORD, true);
-        case Token::Type::U64: return type::Integral(Size::QWORD, false);
-        case Token::Type::S64: return type::Integral(Size::QWORD, true);
-        case Token::Type::USize: return type::Integral(Size::QWORD, false);
-        case Token::Type::SSize: return type::Integral(Size::QWORD, true);
-        case Token::Type::F32: return type::Floating(Size::DWORD);
-        case Token::Type::F64: return type::Floating(Size::QWORD);
-        case Token::Type::Bool: return type::Boolean();
+        case Token::Type::U8: return sem::Integral(Size::BYTE, false);
+        case Token::Type::S8: return sem::Integral(Size::BYTE, true);
+        case Token::Type::U16: return sem::Integral(Size::WORD, false);
+        case Token::Type::S16: return sem::Integral(Size::WORD, true);
+        case Token::Type::U32: return sem::Integral(Size::DWORD, false);
+        case Token::Type::S32: return sem::Integral(Size::DWORD, true);
+        case Token::Type::U64: return sem::Integral(Size::QWORD, false);
+        case Token::Type::S64: return sem::Integral(Size::QWORD, true);
+        case Token::Type::USize: return sem::Integral(Size::QWORD, false);
+        case Token::Type::SSize: return sem::Integral(Size::QWORD, true);
+        case Token::Type::F32: return sem::Floating(Size::DWORD);
+        case Token::Type::F64: return sem::Floating(Size::QWORD);
+        case Token::Type::Bool: return sem::Boolean();
         default: throw UnexpectedToken("u8, s8, u16, s16, u32, s32, u64, s64, usize, ssize, bool", token);
     }
 }
@@ -331,12 +331,12 @@ std::unique_ptr<ast::Node> Parser::_parse_factor() {
 std::unique_ptr<ast::Node> Parser::_parse_primary() {
     const auto &consumed = _consume_any();
     if (consumed.type() == Token::Type::Integer) {
-        auto node = std::make_unique<ast::Integer>(consumed);
+        auto node = std::make_unique<ast::Immediate>(consumed, ast::Immediate::Kind::Integer);
         if (_current().type() != Token::Type::At) return node;
 
         return std::make_unique<ast::Cast>(std::move(node), _parse_type());
     } else if (consumed.type() == Token::Type::Floating) {
-        auto node = std::make_unique<ast::Floating>(consumed);
+        auto node = std::make_unique<ast::Immediate>(consumed, ast::Immediate::Kind::Floating);
         if (_current().type() != Token::Type::At) return node;
 
         return std::make_unique<ast::Cast>(std::move(node), _parse_type());
@@ -346,10 +346,9 @@ std::unique_ptr<ast::Node> Parser::_parse_primary() {
         } else {
             return std::make_unique<ast::Identifier>(consumed, ast::Identifier::Kind::Variable);
         }
-    } else if (consumed.type() == Token::Type::True) {
-        return std::make_unique<ast::Boolean>(true);
-    } else if (consumed.type() == Token::Type::False) {
-        return std::make_unique<ast::Boolean>(false);
+    } else if (consumed.type() == Token::Type::True ||
+               consumed.type() == Token::Type::False) {
+        return std::make_unique<ast::Immediate>(consumed, ast::Immediate::Kind::Boolean);
     } else if (consumed.type() == Token::Type::LParent) {
         auto expression = _parse_expression();
         _consume(Token::Type::RParent);

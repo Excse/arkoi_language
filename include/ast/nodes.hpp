@@ -1,9 +1,9 @@
 #pragma once
 
 #include "sem/symbol_table.hpp"
+#include "sem/type.hpp"
 #include "ast/visitor.hpp"
 #include "front/token.hpp"
-#include "def/type.hpp"
 
 namespace arkoi::ast {
 
@@ -187,40 +187,26 @@ private:
     Identifier _name;
 };
 
-class Integer : public Node {
+class Immediate : public Node {
 public:
-    Integer(front::Token value) : _value(std::move(value)) {}
+    enum class Kind {
+        Integer,
+        Floating,
+        Boolean
+    };
+
+public:
+    Immediate(front::Token value, Kind kind) : _value(std::move(value)), _kind(kind) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &value() const { return _value; }
+
+    [[nodiscard]] auto &kind() const { return _kind; }
 
 private:
     front::Token _value;
-};
-
-class Floating : public Node {
-public:
-    Floating(front::Token value) : _value(std::move(value)) {}
-
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &value() const { return _value; }
-
-private:
-    front::Token _value;
-};
-
-class Boolean : public Node {
-public:
-    Boolean(bool value) : _value(value) {}
-
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
-
-    [[nodiscard]] auto &value() const { return _value; }
-
-private:
-    bool _value;
+    Kind _kind;
 };
 
 class Binary : public Node {

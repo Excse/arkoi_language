@@ -30,11 +30,7 @@ private:
 
     void visit(ast::Identifier &node) override;
 
-    void visit(ast::Integer &) override {};
-
-    void visit(ast::Floating &) override {};
-
-    void visit(ast::Boolean &) override {};
+    void visit(ast::Immediate &) override {};
 
     void visit(ast::Return &node) override;
 

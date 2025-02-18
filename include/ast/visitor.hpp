@@ -4,11 +4,9 @@ namespace arkoi::ast {
 
 class Identifier;
 class Parameter;
-class Floating;
+class Immediate;
 class Function;
-class Integer;
 class Program;
-class Boolean;
 class Assign;
 class Return;
 class Binary;
@@ -29,11 +27,7 @@ public:
 
     virtual void visit(Parameter &node) = 0;
 
-    virtual void visit(Integer &node) = 0;
-
-    virtual void visit(Floating &node) = 0;
-
-    virtual void visit(Boolean &node) = 0;
+    virtual void visit(Immediate &node) = 0;
 
     virtual void visit(Return &node) = 0;
 

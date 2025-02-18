@@ -4,7 +4,7 @@
 #include <utility>
 #include <memory>
 
-#include "def/symbol.hpp"
+#include "sem/symbol.hpp"
 
 namespace arkoi::sem {
 
