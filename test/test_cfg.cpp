@@ -7,7 +7,7 @@ using testing::ElementsAre;
 using namespace arkoi;
 
 /**
- * main:
+ * main() @bool:
  *                  [   entry   ]
  *                 /            \
  *          [next_1]             [branch_1]
@@ -18,26 +18,23 @@ using namespace arkoi;
  *                  [   exit   ]
  */
 il::Function create_example_cfg() {
-    auto entry_block = std::make_shared<il::BasicBlock>("entry");
-    auto next_1_block = std::make_shared<il::BasicBlock>("next_1");
-    auto next_2_block = std::make_shared<il::BasicBlock>("next_2");
-    auto branch_2_block = std::make_shared<il::BasicBlock>("branch_2");
-    auto branch_1_block = std::make_shared<il::BasicBlock>("branch_1");
-    auto exit_block = std::make_shared<il::BasicBlock>("exit");
+    il::Function function("main", std::vector<il::Parameter>(), sem::Boolean());
 
-    auto function_symbol = std::make_shared<Symbol>(sem::Function("main"));
-    il::Function function(function_symbol, entry_block, exit_block);
+    auto next_1_block = function.emplace_back("next_1");
+    auto next_2_block = function.emplace_back("next_2");
+    auto branch_2_block = function.emplace_back("branch_2");
+    auto branch_1_block = function.emplace_back("branch_1");
 
-    entry_block->set_next(next_1_block);
-    entry_block->set_branch(branch_1_block);
+    function.entry()->set_next(next_1_block);
+    function.entry()->set_branch(branch_1_block);
 
     next_1_block->set_next(next_2_block);
     next_1_block->set_branch(branch_2_block);
 
-    branch_1_block->set_next(exit_block);
+    branch_1_block->set_next(function.exit());
 
-    next_2_block->set_next(exit_block);
-    branch_2_block->set_next(exit_block);
+    next_2_block->set_next(function.exit());
+    branch_2_block->set_next(function.exit());
 
     return function;
 }
@@ -53,7 +50,7 @@ TEST(ControlFlowGraph, IteratorRightOrder) {
                    });
 
     ASSERT_EQ(labels.size(), 6);
-    EXPECT_THAT(labels, ElementsAre("entry", "next_1", "next_2", "branch_2", "branch_1", "exit"));
+    EXPECT_THAT(labels, ElementsAre("main_entry", "next_1", "next_2", "branch_2", "branch_1", "main_exit"));
 }
 
 //==============================================================================
