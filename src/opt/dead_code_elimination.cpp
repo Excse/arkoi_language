@@ -10,36 +10,37 @@ using namespace arkoi;
 bool DeadCodeElimination::on_function(il::Function &function) {
     _used.clear();
 
-    function.linearize([&](auto &instruction) {
-        std::visit(match{
-            [&](il::Binary &instruction) {
-                _mark_variable(instruction.left());
-                _mark_variable(instruction.right());
-            },
-            [&](il::Return &instruction) {
-                _mark_variable(instruction.value());
-            },
-            [&](il::Cast &instruction) {
-                _mark_variable(instruction.expression());
-            },
-            [&](il::Call &instruction) {
-                for (auto &argument: instruction.arguments()) {
-                    _mark_variable(argument);
-                }
-            },
-            [&](il::If &instruction) {
-                _mark_variable(instruction.condition());
-            },
-            [&](il::Store &instruction) {
-                _mark_variable(instruction.value());
-            },
-            [&](il::Load &instruction) {
-                _mark_variable(instruction.target());
-            },
-            [&](auto &) {},
-        }, instruction);
-        return false;
-    });
+    for(auto &block : function) {
+        for(auto &instruction : block) {
+            std::visit(match{
+                [&](il::Binary &instruction) {
+                    _mark_variable(instruction.left());
+                    _mark_variable(instruction.right());
+                },
+                [&](il::Return &instruction) {
+                    _mark_variable(instruction.value());
+                },
+                [&](il::Cast &instruction) {
+                    _mark_variable(instruction.expression());
+                },
+                [&](il::Call &instruction) {
+                    for (auto &argument: instruction.arguments()) {
+                        _mark_variable(argument);
+                    }
+                },
+                [&](il::If &instruction) {
+                    _mark_variable(instruction.condition());
+                },
+                [&](il::Store &instruction) {
+                    _mark_variable(instruction.value());
+                },
+                [&](il::Load &instruction) {
+                    _mark_variable(instruction.target());
+                },
+                [&](auto &) {},
+            }, instruction);
+        }
+    }
 
     return false;
 }

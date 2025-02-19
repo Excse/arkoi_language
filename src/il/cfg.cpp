@@ -1,19 +1,8 @@
 #include "il/cfg.hpp"
 
-#include <unordered_set>
 #include <stack>
 
 using namespace arkoi::il;
-
-void Function::linearize(const std::function<bool(Instruction &)> &callback) {
-    auto visit_instructions = [&](BasicBlock &block) {
-        std::erase_if(block.instructions(), callback);
-    };
-
-    for(auto &block : *this) {
-        visit_instructions(block);
-    }
-}
 
 BlockIterator::BlockIterator(Function *function)
     : _visited(), _queue(), _function(function), _current(nullptr) {

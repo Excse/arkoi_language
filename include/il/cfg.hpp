@@ -15,12 +15,15 @@ class Function;
 
 class BasicBlock {
 public:
+    using Instructions = std::vector<Instruction>;
+
+public:
     BasicBlock(std::string label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
     template<typename Type, typename... Args>
-    void add(Args &&... args);
+    Instruction &emplace_back(Args &&... args);
 
     [[nodiscard]] auto &instructions() { return _instructions; }
 
@@ -34,9 +37,13 @@ public:
 
     [[nodiscard]] auto &label() const { return _label; }
 
+    Instructions::iterator begin() { return _instructions.begin(); }
+
+    Instructions::iterator end() { return _instructions.end(); }
+
 private:
     std::shared_ptr<BasicBlock> _next{}, _branch{};
-    std::vector<Instruction> _instructions{};
+    Instructions _instructions{};
     std::string _label;
 };
 
@@ -80,8 +87,6 @@ public:
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
-    void linearize(const std::function<bool(Instruction &)> &callback);
-
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
     [[nodiscard]] auto &entry() const { return _entry; }
@@ -104,7 +109,8 @@ public:
 public:
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
-    [[nodiscard]] auto &functions() { return _functions; }
+    template<typename... Args>
+    Function &emplace_back(Args &&... args);
 
     Functions::iterator begin() { return _functions.begin(); }
 

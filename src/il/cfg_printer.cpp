@@ -19,7 +19,7 @@ void CFGPrinter::visit(Module &module) {
     _output << "\tbgcolor = \"#f7f7f7\";\n";
     _output << "\tsplines = false;\n\n";
 
-    for (auto &function: module.functions()) {
+    for (auto &function: module) {
         function.accept(*this);
     }
 

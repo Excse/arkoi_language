@@ -16,7 +16,7 @@ std::stringstream ILPrinter::print(Module &module) {
 }
 
 void ILPrinter::visit(Module &module) {
-    for (auto &function: module.functions()) {
+    for (auto &function: module) {
         function.accept(*this);
     }
 }
