@@ -1,29 +1,59 @@
-#include "opt/pass.hpp"
+#include "opt/simplify_cfg.hpp"
 
 using namespace arkoi::opt;
+using namespace arkoi;
 
-void PassManager::run(il::Module &module) {
-    while (true) {
-        bool changed = false;
+bool SimplifyCFG::enter_function(il::Function &) {
+    _proxy_blocks.clear();
+    return false;
+}
 
-        for (const auto &pass: _passes) {
-            changed |= pass->enter_module(module);
+bool SimplifyCFG::on_block(il::BasicBlock &block) {
+    // TODO: Testzwecke
+    if(block.predecessors().empty()) return false;
 
-            for (auto &function: module) {
-                changed |= pass->enter_function(function);
-
-                for (auto &block: function) {
-                    changed |= pass->on_block(block);
-                }
-
-                changed |= pass->exit_function(function);
-            }
-
-            changed |= pass->exit_module(module);
-        }
-
-        if (!changed) break;
+    // TODO: Fix this!! Instead of storing raw pointers, the actual smartpointer should be stored. As it could
+    //       corrupt the memory, when deleting the link between BasicBlocks.
+    if (_is_proxy_block(block)) {
+        _proxy_blocks.insert(&block);
     }
+
+    return false;
+}
+
+bool SimplifyCFG::exit_function(il::Function &) {
+    bool changed = false;
+
+    for (auto &block: _proxy_blocks) changed |= _remove_proxy_block(*block);
+
+    return changed;
+}
+
+bool SimplifyCFG::_is_proxy_block(il::BasicBlock &block) {
+    if (block.instructions().size() != 1) return false;
+    return std::holds_alternative<il::Goto>(block.instructions().front());
+}
+
+bool SimplifyCFG::_remove_proxy_block(il::BasicBlock &block) {
+    auto target_goto = std::get<il::Goto>(block.instructions().front());
+    auto target_label = target_goto.label();
+    auto target_next = block.next();
+
+    for (auto *predecessor: block.predecessors()) {
+        if (predecessor->instructions().empty()) return false;
+
+        auto *goto_instruction = std::get_if<il::Goto>(&predecessor->instructions().back());
+        if (!goto_instruction) return false;
+
+        goto_instruction->set_label(target_label);
+//        predecessor->set_next(target_next);
+    }
+
+    block.predecessors().clear();
+
+//    block.remove_next();
+
+    return true;
 }
 
 //==============================================================================

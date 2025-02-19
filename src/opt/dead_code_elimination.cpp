@@ -7,26 +7,17 @@
 using namespace arkoi::opt;
 using namespace arkoi;
 
-bool DeadCodeElimination::on_function(il::Function &function) {
+bool DeadCodeElimination::enter_function(il::Function &function) {
     _used.clear();
 
     for(auto &block : function) {
         for(auto &instruction : block) {
             std::visit(match{
-                [&](il::Binary &instruction) {
-                    _mark_variable(instruction.left());
-                    _mark_variable(instruction.right());
-                },
-                [&](il::Return &instruction) {
-                    _mark_variable(instruction.value());
-                },
                 [&](il::Cast &instruction) {
                     _mark_variable(instruction.expression());
                 },
-                [&](il::Call &instruction) {
-                    for (auto &argument: instruction.arguments()) {
-                        _mark_variable(argument);
-                    }
+                [&](il::Return &instruction) {
+                    _mark_variable(instruction.value());
                 },
                 [&](il::If &instruction) {
                     _mark_variable(instruction.condition());
@@ -37,7 +28,18 @@ bool DeadCodeElimination::on_function(il::Function &function) {
                 [&](il::Load &instruction) {
                     _mark_variable(instruction.target());
                 },
-                [&](auto &) {},
+                [&](il::Binary &instruction) {
+                    _mark_variable(instruction.left());
+                    _mark_variable(instruction.right());
+                },
+                [&](il::Call &instruction) {
+                    for (auto &argument: instruction.arguments()) {
+                        _mark_variable(argument);
+                    }
+                },
+                [&](il::Constant &) {},
+                [&](il::Alloca &) {},
+                [&](il::Goto &) {},
             }, instruction);
         }
     }
@@ -63,7 +65,11 @@ bool DeadCodeElimination::on_block(il::BasicBlock &block) {
             [&](il::Alloca &instruction) {
                 return !_used.contains(instruction.result());
             },
-            [&](auto &) { return false; },
+            [&](il::Return &) { return false; },
+            [&](il::Store &) { return false; },
+            [&](il::Goto &) { return false; },
+            [&](il::Call &) { return false; },
+            [&](il::If &) { return false; },
         }, instruction);
     });
 }

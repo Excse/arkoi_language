@@ -1,30 +1,31 @@
+#pragma once
+
 #include "opt/pass.hpp"
 
-using namespace arkoi::opt;
+namespace arkoi::opt {
 
-void PassManager::run(il::Module &module) {
-    while (true) {
-        bool changed = false;
+class SimplifyCFG : public Pass {
+public:
+    bool enter_module(il::Module &) override { return false; }
 
-        for (const auto &pass: _passes) {
-            changed |= pass->enter_module(module);
+    bool exit_module(il::Module &) override { return false; }
 
-            for (auto &function: module) {
-                changed |= pass->enter_function(function);
+    bool enter_function(il::Function &function) override;
 
-                for (auto &block: function) {
-                    changed |= pass->on_block(block);
-                }
+    bool exit_function(il::Function &function) override;
 
-                changed |= pass->exit_function(function);
-            }
+    bool on_block(il::BasicBlock &block) override;
 
-            changed |= pass->exit_module(module);
-        }
+private:
+    [[nodiscard]] static bool _remove_proxy_block(il::BasicBlock &block);
 
-        if (!changed) break;
-    }
-}
+    [[nodiscard]] static bool _is_proxy_block(il::BasicBlock &block);
+
+private:
+    std::unordered_set<il::BasicBlock *> _proxy_blocks;
+};
+
+} // namespace arkoi::opt
 
 //==============================================================================
 // BSD 3-Clause License

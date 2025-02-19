@@ -22,20 +22,26 @@ public:
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
+    void set_branch(std::shared_ptr<BasicBlock> branch);
+
+    void remove_branch();
+
+    void set_next(std::shared_ptr<BasicBlock> next);
+
+    void remove_next();
+
     template<typename Type, typename... Args>
     Instruction &emplace_back(Args &&... args);
 
-    [[nodiscard]] auto &instructions() { return _instructions; }
+    [[nodiscard]] auto &predecessors() { return _predecessors; }
 
-    void set_branch(std::shared_ptr<BasicBlock> branch) { _branch = std::move(branch); }
+    [[nodiscard]] auto &instructions() { return _instructions; }
 
     [[nodiscard]] auto &branch() const { return _branch; }
 
-    void set_next(std::shared_ptr<BasicBlock> next) { _next = std::move(next); }
+    [[nodiscard]] auto &label() const { return _label; }
 
     [[nodiscard]] auto &next() const { return _next; }
-
-    [[nodiscard]] auto &label() const { return _label; }
 
     Instructions::iterator begin() { return _instructions.begin(); }
 
@@ -43,6 +49,7 @@ public:
 
 private:
     std::shared_ptr<BasicBlock> _next{}, _branch{};
+    std::unordered_set<BasicBlock *> _predecessors;
     Instructions _instructions{};
     std::string _label;
 };

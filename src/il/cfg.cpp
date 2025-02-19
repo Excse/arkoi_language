@@ -4,6 +4,30 @@
 
 using namespace arkoi::il;
 
+void BasicBlock::set_branch(std::shared_ptr<BasicBlock> branch) {
+    if (_branch) remove_branch();
+
+    branch->_predecessors.insert(this);
+    _branch = std::move(branch);
+}
+
+void BasicBlock::remove_branch() {
+    _branch->predecessors().erase(this);
+    _branch = nullptr;
+}
+
+void BasicBlock::set_next(std::shared_ptr<BasicBlock> next) {
+    if (_next) remove_next();
+
+    next->_predecessors.insert(this);
+    _next = std::move(next);
+}
+
+void BasicBlock::remove_next() {
+    _next->predecessors().erase(this);
+    _next = nullptr;
+}
+
 BlockIterator::BlockIterator(Function *function)
     : _visited(), _queue(), _function(function), _current(nullptr) {
     if (!function) return;

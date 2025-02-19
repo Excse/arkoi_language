@@ -11,9 +11,13 @@ class Pass {
 public:
     virtual ~Pass() = default;
 
-    virtual bool on_module(il::Module &module) = 0;
+    virtual bool enter_module(il::Module &module) = 0;
 
-    virtual bool on_function(il::Function &function) = 0;
+    virtual bool exit_module(il::Module &module) = 0;
+
+    virtual bool enter_function(il::Function &function) = 0;
+
+    virtual bool exit_function(il::Function &function) = 0;
 
     virtual bool on_block(il::BasicBlock &block) = 0;
 };

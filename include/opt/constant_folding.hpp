@@ -6,9 +6,13 @@ namespace arkoi::opt {
 
 class ConstantFolding : public Pass {
 public:
-    bool on_module(il::Module &) override { return false; }
+    bool enter_module(il::Module &) override { return false; }
 
-    bool on_function(il::Function &) override { return false; }
+    bool exit_module(il::Module &) override { return false; }
+
+    bool enter_function(il::Function &) override { return false; }
+
+    bool exit_function(il::Function &) override { return false; }
 
     bool on_block(il::BasicBlock &block) override;
 

@@ -5,6 +5,7 @@
 #include "opt/dead_code_elimination.hpp"
 #include "opt/constant_propagation.hpp"
 #include "opt/constant_folding.hpp"
+#include "opt/simplify_cfg.hpp"
 #include "opt/pass.hpp"
 #include "sem/name_resolver.hpp"
 #include "sem/type_resolver.hpp"
@@ -80,6 +81,7 @@ int main() {
     manager.add<opt::ConstantFolding>();
     manager.add<opt::ConstantPropagation>();
     manager.add<opt::DeadCodeElimination>();
+    manager.add<opt::SimplifyCFG>();
     manager.run(module);
 
     dump_cfg(base_path + "_opt", module);

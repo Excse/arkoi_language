@@ -25,6 +25,8 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
+    void set_label(std::string label) { _label = std::move(label); }
+
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
@@ -33,8 +35,8 @@ private:
 
 class If : public InstructionBase {
 public:
-    If(Operand condition, std::string label)
-        : _condition(std::move(condition)), _label(std::move(label)) {}
+    If(Operand condition, std::string next, std::string branch)
+        : _next(std::move(next)), _branch(std::move(branch)), _condition(std::move(condition)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -42,11 +44,13 @@ public:
 
     [[nodiscard]] auto &condition() { return _condition; }
 
-    [[nodiscard]] auto &label() const { return _label; }
+    [[nodiscard]] auto &branch() const { return _branch; }
+
+    [[nodiscard]] auto &next() const { return _next; }
 
 private:
+    std::string _next, _branch;
     Operand _condition;
-    std::string _label;
 };
 
 class Call : public InstructionBase {

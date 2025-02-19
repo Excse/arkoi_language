@@ -88,7 +88,7 @@ void ILPrinter::visit(Goto &instruction) {
 }
 
 void ILPrinter::visit(If &instruction) {
-    _output << "if " << instruction.condition() << " goto " << instruction.label();
+    _output << "if " << instruction.condition() << " then " << instruction.branch() << " else " << instruction.next();
 }
 
 void ILPrinter::visit(Alloca &instruction) {

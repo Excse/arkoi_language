@@ -219,7 +219,7 @@ void Generator::visit(ast::If &node) {
         node.condition()->accept(*this);
         auto condition = _current_operand;
 
-        _current_block->emplace_back<If>(condition, branch_label);
+        _current_block->emplace_back<If>(condition, next_label, branch_label);
 
         _current_block->set_next(next_block);
         _current_block->set_branch(branch_block);
