@@ -9,12 +9,12 @@ void PassManager::run(il::Module &module) {
         for (const auto &pass: _passes) {
             changed |= pass->on_module(module);
 
-            for (auto &function: module.functions()) {
+            for (auto &function: module) {
                 changed |= pass->on_function(function);
 
-                function.depth_first_search([&](il::BasicBlock &block) {
+                for (auto &block: function) {
                     changed |= pass->on_block(block);
-                });
+                }
             }
         }
 

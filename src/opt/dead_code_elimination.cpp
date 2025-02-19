@@ -38,6 +38,7 @@ bool DeadCodeElimination::on_function(il::Function &function) {
             },
             [&](auto &) {},
         }, instruction);
+        return false;
     });
 
     return false;

@@ -36,9 +36,9 @@ void ILPrinter::visit(Function &function) {
 
     _output << ") @" << symbol.return_type() << ":\n";
 
-    function.depth_first_search([&](BasicBlock &block) {
+    for(auto &block : function) {
         block.accept(*this);
-    });
+    }
 
     _output << "\n";
 }

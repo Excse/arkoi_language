@@ -73,6 +73,7 @@ add_executable(${PROJECT_NAME}_tests
         test/snapshot/snapshot.cpp
         test/snapshot/test_snapshot.cpp
         test/test_dep_graph.cpp
+        test/test_cfg.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_tests gtest gtest_main gmock gmock_main ${PROJECT_NAME}_lib)

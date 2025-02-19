@@ -27,7 +27,9 @@ void CFGPrinter::visit(Module &module) {
 }
 
 void CFGPrinter::visit(Function &function) {
-    function.depth_first_search([this](BasicBlock &block) { block.accept(*this); });
+    for(auto &block : function) {
+        block.accept(*this);
+    }
 }
 
 void CFGPrinter::visit(BasicBlock &block) {

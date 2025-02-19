@@ -52,9 +52,9 @@ void Generator::visit(ast::Function &node) {
     node.block()->accept(*this);
 
     // Connect the last current block of this function with the end basic block
-    _current_block->set_next(_current_function->end());
+    _current_block->set_next(_current_function->exit());
 
-    _current_block = _current_function->end();
+    _current_block = _current_function->exit();
 
     auto result_temp = _make_temporary();
     _current_block->add<Load>(result_temp, _result_temp, node.type());
@@ -123,10 +123,10 @@ void Generator::visit(ast::Return &node) {
 
     // Populate the current basic block with instructions
     _current_block->add<Store>(_result_temp, expression, node.type());
-    _current_block->add<Goto>(_current_function->end()->label());
+    _current_block->add<Goto>(_current_function->exit()->label());
 
     // Connect the current basic block with the function end basic block
-    _current_block->set_next(_current_function->end());
+    _current_block->set_next(_current_function->exit());
 }
 
 void Generator::visit(ast::Identifier &node) {

@@ -51,7 +51,7 @@ TEST(DependencyGraph, Cycle) {
  *       |
  *       v
  *       H
-  */
+ */
 TEST(DependencyGraph, Complex) {
     DependencyGraph<size_t> graph;
 

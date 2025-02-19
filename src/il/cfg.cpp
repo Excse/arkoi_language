@@ -5,40 +5,58 @@
 
 using namespace arkoi::il;
 
-void Function::depth_first_search(const std::function<void(BasicBlock &)> &callback) {
-    std::unordered_set<BasicBlock *> visited;
-    std::stack<BasicBlock *> queue;
-
-    // We manually callback the end basic block as it should always be the last one being invoked.
-    visited.insert(_end.get());
-    // Start with the entry basic block.
-    queue.push(_start.get());
-
-    while (!queue.empty()) {
-        BasicBlock *current = queue.top();
-        queue.pop();
-
-        if (visited.contains(current)) continue;
-
-        visited.insert(current);
-
-        callback(*current);
-
-        if (current->branch()) queue.push(current->branch().get());
-        if (current->next()) queue.push(current->next().get());
-    }
-
-    callback(*_end);
-}
-
-void Function::linearize(const std::function<void(Instruction &)> &callback) {
+void Function::linearize(const std::function<bool(Instruction &)> &callback) {
     auto visit_instructions = [&](BasicBlock &block) {
-        for (auto &instruction: block.instructions()) {
-            callback(instruction);
-        }
+        std::erase_if(block.instructions(), callback);
     };
 
-    depth_first_search(visit_instructions);
+    for(auto &block : *this) {
+        visit_instructions(block);
+    }
+}
+
+BlockIterator::BlockIterator(Function *function)
+    : _visited(), _queue(), _function(function), _current(nullptr) {
+    if (!function) return;
+
+    auto *start = function->entry().get();
+
+    _visited.insert(function->exit().get());
+    _queue.push(start);
+
+    ++(*this);
+}
+
+BlockIterator &BlockIterator::operator++() {
+    if(_current == _function->exit().get()) {
+        _current = nullptr;
+        return *this;
+    }
+
+    if (_queue.empty()) {
+        _current = _function->exit().get();
+        return *this;
+    }
+
+    _current = _queue.top();
+    _queue.pop();
+    _visited.insert(_current);
+
+    if (_current->branch() && !_visited.contains(_current->branch().get())) {
+        _queue.push(_current->branch().get());
+    }
+
+    if (_current->next() && !_visited.contains(_current->next().get())) {
+        _queue.push(_current->next().get());
+    }
+
+    return *this;
+}
+
+BlockIterator BlockIterator::operator++(int) {
+    BlockIterator temp = *this;
+    std::ignore = ++(*this);
+    return temp;
 }
 
 //==============================================================================
