@@ -17,11 +17,16 @@ public:
     bool on_block(il::BasicBlock &block) override;
 
 private:
-    [[nodiscard]] static bool _remove_proxy_block(il::BasicBlock &block);
+    static void _remove_proxy_block(il::Function &function, il::BasicBlock &block);
 
     [[nodiscard]] static bool _is_proxy_block(il::BasicBlock &block);
 
+    static void _merge_block(il::Function &function, il::BasicBlock &block);
+
+    [[nodiscard]] static bool _is_mergable_block(il::BasicBlock &block);
+
 private:
+    std::unordered_set<il::BasicBlock *> _mergable_blocks;
     std::unordered_set<il::BasicBlock *> _proxy_blocks;
 };
 

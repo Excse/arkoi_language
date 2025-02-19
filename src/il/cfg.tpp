@@ -8,6 +8,11 @@ Function& Module::emplace_back(Args &&... args) {
     return _functions.emplace_back(std::forward<Args>(args)...);
 }
 
+template<typename... Args>
+BasicBlock *Function::emplace_back(Args &&... args) {
+    return _block_pool.emplace_back(std::make_unique<BasicBlock>(std::forward<Args>(args)...)).get();
+}
+
 //==============================================================================
 // BSD 3-Clause License
 //

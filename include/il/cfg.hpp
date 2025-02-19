@@ -18,38 +18,35 @@ public:
     using Instructions = std::vector<Instruction>;
 
 public:
-    BasicBlock(std::string label) : _label(std::move(label)) {}
+    BasicBlock(std::string label) : _branch(), _next(), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
-    void set_branch(std::shared_ptr<BasicBlock> branch);
+    void set_branch(BasicBlock *branch);
 
-    void remove_branch();
-
-    void set_next(std::shared_ptr<BasicBlock> next);
-
-    void remove_next();
+    void set_next(BasicBlock *next);
 
     template<typename Type, typename... Args>
     Instruction &emplace_back(Args &&... args);
 
     [[nodiscard]] auto &predecessors() { return _predecessors; }
 
+    [[nodiscard]] auto *branch() const { return _branch; }
+
+    [[nodiscard]] auto *next() const { return _next; }
+
     [[nodiscard]] auto &instructions() { return _instructions; }
 
-    [[nodiscard]] auto &branch() const { return _branch; }
-
     [[nodiscard]] auto &label() const { return _label; }
-
-    [[nodiscard]] auto &next() const { return _next; }
 
     Instructions::iterator begin() { return _instructions.begin(); }
 
     Instructions::iterator end() { return _instructions.end(); }
 
 private:
-    std::shared_ptr<BasicBlock> _next{}, _branch{};
     std::unordered_set<BasicBlock *> _predecessors;
+    BasicBlock *_branch;
+    BasicBlock *_next;
     Instructions _instructions{};
     std::string _label;
 };
@@ -89,24 +86,32 @@ private:
 
 class Function {
 public:
-    Function(std::shared_ptr<Symbol> symbol, std::shared_ptr<BasicBlock> entry, std::shared_ptr<BasicBlock> exit)
-        : _entry(std::move(entry)), _exit(std::move(exit)), _symbol(std::move(symbol)) {}
+    Function(std::shared_ptr<Symbol> symbol, const std::string &name);
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
+    template<typename... Args>
+    BasicBlock *emplace_back(Args &&... args);
+
+    bool remove(BasicBlock *block);
+
     [[nodiscard]] auto &symbol() const { return _symbol; }
 
-    [[nodiscard]] auto &entry() const { return _entry; }
+    [[nodiscard]] auto *entry() const { return _entry; }
 
-    [[nodiscard]] auto &exit() const { return _exit; }
+    void set_exit(BasicBlock *exit) { _exit = exit; }
+
+    [[nodiscard]] auto *exit() const { return _exit; }
 
     BlockIterator begin() { return {this}; }
 
     BlockIterator end() { return {nullptr}; }
 
 private:
-    std::shared_ptr<BasicBlock> _entry{}, _exit{};
+    std::vector<std::shared_ptr<BasicBlock>> _block_pool;
     std::shared_ptr<Symbol> _symbol;
+    BasicBlock *_entry;
+    BasicBlock *_exit;
 };
 
 class Module {
@@ -114,6 +119,8 @@ public:
     using Functions = std::vector<Function>;
 
 public:
+    Module() : _functions() {}
+
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
     template<typename... Args>
@@ -124,7 +131,7 @@ public:
     Functions::iterator end() { return _functions.end(); }
 
 private:
-    Functions _functions{};
+    Functions _functions;
 };
 
 #include "../../src/il/cfg.tpp"

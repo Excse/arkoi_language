@@ -1,53 +1,40 @@
 #include "il/cfg.hpp"
 
+#include <cassert>
 #include <stack>
 
 using namespace arkoi::il;
 
-void BasicBlock::set_branch(std::shared_ptr<BasicBlock> branch) {
-    if (_branch) remove_branch();
-
-    branch->_predecessors.insert(this);
-    _branch = std::move(branch);
+void BasicBlock::set_branch(BasicBlock *branch) {
+    if(branch) branch->_predecessors.insert(this);
+    _branch = branch;
 }
 
-void BasicBlock::remove_branch() {
-    _branch->predecessors().erase(this);
-    _branch = nullptr;
-}
-
-void BasicBlock::set_next(std::shared_ptr<BasicBlock> next) {
-    if (_next) remove_next();
-
-    next->_predecessors.insert(this);
-    _next = std::move(next);
-}
-
-void BasicBlock::remove_next() {
-    _next->predecessors().erase(this);
-    _next = nullptr;
+void BasicBlock::set_next(BasicBlock *next) {
+    if(next) next->_predecessors.insert(this);
+    _next = next;
 }
 
 BlockIterator::BlockIterator(Function *function)
     : _visited(), _queue(), _function(function), _current(nullptr) {
     if (!function) return;
 
-    auto *start = function->entry().get();
+    auto *start = function->entry();
 
-    _visited.insert(function->exit().get());
+    _visited.insert(function->exit());
     _queue.push(start);
 
     ++(*this);
 }
 
 BlockIterator &BlockIterator::operator++() {
-    if(_current == _function->exit().get()) {
+    if (_current == _function->exit()) {
         _current = nullptr;
         return *this;
     }
 
     if (_queue.empty()) {
-        _current = _function->exit().get();
+        _current = _function->exit();
         return *this;
     }
 
@@ -55,12 +42,12 @@ BlockIterator &BlockIterator::operator++() {
     _queue.pop();
     _visited.insert(_current);
 
-    if (_current->branch() && !_visited.contains(_current->branch().get())) {
-        _queue.push(_current->branch().get());
+    if (_current->branch() && !_visited.contains(_current->branch())) {
+        _queue.push(_current->branch());
     }
 
-    if (_current->next() && !_visited.contains(_current->next().get())) {
-        _queue.push(_current->next().get());
+    if (_current->next() && !_visited.contains(_current->next())) {
+        _queue.push(_current->next());
     }
 
     return *this;
@@ -70,6 +57,23 @@ BlockIterator BlockIterator::operator++(int) {
     BlockIterator temp = *this;
     std::ignore = ++(*this);
     return temp;
+}
+
+Function::Function(std::shared_ptr<Symbol> symbol, const std::string &name)
+    : _block_pool(), _symbol(std::move(symbol)) {
+    _entry = emplace_back(name + "_entry");
+    _exit = emplace_back(name + "_exit");
+}
+
+bool Function::remove(BasicBlock *target) {
+    assert(target->predecessors().empty());
+
+    if (target->next()) target->next()->predecessors().erase(target);
+    if (target->branch()) target->branch()->predecessors().erase(target);
+
+    return std::erase_if(_block_pool, [&](const std::shared_ptr<BasicBlock> &block) {
+        return block.get() == target;
+    });
 }
 
 //==============================================================================

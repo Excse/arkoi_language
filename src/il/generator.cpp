@@ -25,15 +25,10 @@ void Generator::visit(ast::Function &node) {
     _temp_index = 0;
     _allocas.clear();
 
-    // Creates a new basic block that will get populated with instructions
-    auto start_block = std::make_shared<BasicBlock>(node.name().value().contents() + "_entry");
-    _current_block = start_block;
-
-    // Creates the function end basic block
-    auto end_block = std::make_shared<BasicBlock>(node.name().value().contents() + "_exit");
-
-    auto &function = _module.emplace_back(node.name().symbol(), start_block, end_block);
+    auto &function = _module.emplace_back(node.name().symbol(), node.name().value().contents());
     _current_function = &function;
+
+    _current_block = function.entry();
 
     _result_temp = _make_temporary();
     _current_block->emplace_back<Alloca>(_result_temp, node.type());
@@ -206,13 +201,13 @@ void Generator::visit(ast::Call &node) {
 
 void Generator::visit(ast::If &node) {
     auto branch_label = _make_label_symbol();
-    auto branch_block = std::make_shared<BasicBlock>(branch_label);
+    auto *branch_block = _current_function->emplace_back(branch_label);
 
     auto next_label = _make_label_symbol();
-    auto next_block = std::make_shared<BasicBlock>(next_label);
+    auto *next_block = _current_function->emplace_back(next_label);
 
     auto after_label = _make_label_symbol();
-    auto after_block = std::make_shared<BasicBlock>(after_label);
+    auto *after_block = _current_function->emplace_back(after_label);
 
     { // Entrance block
         // This will set _current_operand

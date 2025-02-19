@@ -52,12 +52,12 @@ private:
 
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Variable> _allocas;
-    std::shared_ptr<BasicBlock> _current_block{};
     size_t _temp_index{}, _label_index{};
     Function *_current_function{};
+    BasicBlock *_current_block{};
     Operand _current_operand{};
     Variable _result_temp{""};
-    Module _module{};
+    Module _module;
 };
 
 } // namespace arkoi::mid
