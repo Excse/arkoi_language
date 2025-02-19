@@ -22,19 +22,18 @@ void ILPrinter::visit(Module &module) {
 }
 
 void ILPrinter::visit(Function &function) {
-    auto &symbol = std::get<sem::Function>(*function.symbol());
-    _output << "fun " << symbol.name() << "(";
+    _output << "fun " << function.name() << "(";
 
-    for (size_t index = 0; index < symbol.parameter_symbols().size(); index++) {
-        auto &variable = std::get<sem::Variable>(*symbol.parameter_symbols()[index]);
-        _output << variable.name() << " @" << variable.type();
+    for (size_t index = 0; index < function.parameters().size(); index++) {
+        auto &parameter = function.parameters()[index];
+        _output << parameter.name() << " @" << parameter.type();
 
-        if (index != symbol.parameter_symbols().size() - 1) {
+        if (index != function.parameters().size() - 1) {
             _output << ", ";
         }
     }
 
-    _output << ") @" << symbol.return_type() << ":\n";
+    _output << ") @" << function.type() << ":\n";
 
     for(auto &block : function) {
         block.accept(*this);

@@ -203,25 +203,25 @@ void TypeResolver::visit(ast::Call &node) {
 
     auto function = std::get<sem::Function>(*node.name().symbol());
 
-    if (function.parameter_symbols().size() != node.arguments().size()) {
+    if (function.parameters().size() != node.arguments().size()) {
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");
     }
 
     for (size_t index = 0; index < node.arguments().size(); index++) {
-        const auto &variable = std::get<sem::Variable>(*function.parameter_symbols()[index]);
+        const auto &variable = function.parameters()[index];
 
         auto &argument = node.arguments()[index];
         argument->accept(*this);
         auto type = _current_type.value();
 
-        if (type == variable.type()) continue;
+        if (type == variable->type()) continue;
 
-        if (!_can_implicit_convert(type, variable.type())) {
+        if (!_can_implicit_convert(type, variable->type())) {
             throw std::runtime_error("The arguments type doesn't match the parameters one.");
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<ast::Cast>(std::move(argument), type, variable.type());
+        node.arguments()[index] = std::make_unique<ast::Cast>(std::move(argument), type, variable->type());
     }
 
     _current_type = function.return_type();

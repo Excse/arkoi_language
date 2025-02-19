@@ -20,6 +20,7 @@ void CFGPrinter::visit(Module &module) {
     _output << "\tsplines = false;\n\n";
 
     for (auto &function: module) {
+        _current_function = &function;
         function.accept(*this);
     }
 
@@ -35,7 +36,22 @@ void CFGPrinter::visit(Function &function) {
 void CFGPrinter::visit(BasicBlock &block) {
     _output << "\t" << block.label() << " [label=\"";
 
-    _output << block.label() << ":\\l";
+    if (_current_function->entry() == &block) {
+        _output << "fun " << _current_function->name() << "(";
+
+        for (size_t index = 0; index < _current_function->parameters().size(); index++) {
+            auto &parameter = _current_function->parameters()[index];
+            _output << parameter.name() << " @" << parameter.type();
+
+            if (index != _current_function->parameters().size() - 1) {
+                _output << ", ";
+            }
+        }
+
+        _output << ") @" << _current_function->type() << ":\\l";
+    } else {
+        _output << block.label() << ":\\l";
+    }
 
     for (auto &instruction: block.instructions()) {
         _output << " ";

@@ -43,6 +43,7 @@ public:
     [[nodiscard]] auto &output() const { return _output; }
 
 private:
+    Function *_current_function;
     std::stringstream &_output;
     ILPrinter _printer;
 };

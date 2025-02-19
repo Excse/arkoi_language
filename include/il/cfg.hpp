@@ -84,9 +84,22 @@ private:
     pointer _current;
 };
 
+class Parameter {
+public:
+    Parameter(std::string name, Type type) : _name(name), _type(type) {}
+
+    [[nodiscard]] auto &name() { return _name; }
+
+    [[nodiscard]] auto &type() { return _type; }
+
+private:
+    std::string _name;
+    Type _type;
+};
+
 class Function {
 public:
-    Function(std::shared_ptr<Symbol> symbol, const std::string &name);
+    Function(std::string name, std::vector<Parameter> parameters, Type type);
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -95,7 +108,11 @@ public:
 
     bool remove(BasicBlock *block);
 
-    [[nodiscard]] auto &symbol() const { return _symbol; }
+    [[nodiscard]] auto &parameters() { return _parameters; }
+
+    [[nodiscard]] auto &name() const { return _name; }
+
+    [[nodiscard]] auto &type() const { return _type; }
 
     [[nodiscard]] auto *entry() const { return _entry; }
 
@@ -109,9 +126,11 @@ public:
 
 private:
     std::vector<std::shared_ptr<BasicBlock>> _block_pool;
-    std::shared_ptr<Symbol> _symbol;
     BasicBlock *_entry;
     BasicBlock *_exit;
+    std::vector<Parameter> _parameters;
+    std::string _name;
+    Type _type;
 };
 
 class Module {

@@ -25,7 +25,14 @@ void Generator::visit(ast::Function &node) {
     _temp_index = 0;
     _allocas.clear();
 
-    auto &function = _module.emplace_back(node.name().symbol(), node.name().value().contents());
+    auto &function_symbol = std::get<sem::Function>(*node.name().symbol());
+
+    std::vector<il::Parameter> parameters;
+    for (auto &parameter: function_symbol.parameters()) {
+        parameters.emplace_back(parameter->name(), parameter->type());
+    }
+
+    auto &function = _module.emplace_back(function_symbol.name(), parameters, function_symbol.return_type());
     _current_function = &function;
 
     _current_block = function.entry();

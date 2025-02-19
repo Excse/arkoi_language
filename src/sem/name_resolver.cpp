@@ -38,11 +38,12 @@ void NameResolver::visit_as_prototype(ast::Function &node) {
 void NameResolver::visit(ast::Function &node) {
     _scopes.push(node.table());
 
-    std::vector<std::shared_ptr<Symbol>> parameters;
+    std::vector<std::shared_ptr<Variable>> parameters;
     for (auto &parameter: node.parameters()) {
         parameter.accept(*this);
 
-        parameters.push_back(parameter.name().symbol());
+        auto symbol = std::reinterpret_pointer_cast<sem::Variable>(parameter.name().symbol());
+        parameters.push_back(symbol);
     }
 
     auto &function = std::get<Function>(*node.name().symbol());

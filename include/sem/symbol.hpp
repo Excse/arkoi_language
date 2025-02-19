@@ -10,13 +10,15 @@ struct Symbol;
 
 namespace arkoi::sem {
 
+class Variable;
+
 class Function {
 public:
     Function(std::string name) : _name(std::move(name)) {}
 
-    void set_parameters(std::vector<std::shared_ptr<Symbol>> &&symbols) { _parameter_symbols = std::move(symbols); }
+    void set_parameters(std::vector<std::shared_ptr<Variable>> &&symbols) { _parameters = std::move(symbols); }
 
-    [[nodiscard]] auto &parameter_symbols() const { return _parameter_symbols; }
+    [[nodiscard]] auto &parameters() const { return _parameters; }
 
     void set_return_type(Type type) { _return_type = type; }
 
@@ -25,7 +27,7 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<std::shared_ptr<Symbol>> _parameter_symbols{};
+    std::vector<std::shared_ptr<Variable>> _parameters{};
     std::optional<Type> _return_type{};
     std::string _name;
 };

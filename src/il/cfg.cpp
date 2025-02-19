@@ -59,10 +59,10 @@ BlockIterator BlockIterator::operator++(int) {
     return temp;
 }
 
-Function::Function(std::shared_ptr<Symbol> symbol, const std::string &name)
-    : _block_pool(), _symbol(std::move(symbol)) {
-    _entry = emplace_back(name + "_entry");
-    _exit = emplace_back(name + "_exit");
+Function::Function(std::string name, std::vector<Parameter> parameters, Type type)
+    : _block_pool(), _parameters(std::move(parameters)), _name(std::move(name)), _type(std::move(type)) {
+    _entry = emplace_back(_name + "_entry");
+    _exit = emplace_back(_name + "_exit");
 }
 
 bool Function::remove(BasicBlock *target) {
