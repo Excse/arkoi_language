@@ -23,6 +23,11 @@ void MemoryMapper::visit(il::Function &function) {
     for (auto &block: function) {
         block.accept(*this);
     }
+
+    for (auto &variable: _stack_variables) {
+        _mappings[variable] = _stack_size;
+        _stack_size += size_to_bytes(variable.type().size());
+    }
 }
 
 void MemoryMapper::visit(il::BasicBlock &block) {
@@ -113,12 +118,12 @@ Mapping &MemoryMapper::operator[](const il::Variable &variable) {
 }
 
 void MemoryMapper::_add_register(const il::Variable &variable, Register reg) {
+    _stack_variables.erase(variable);
     _mappings[variable] = reg;
 }
 
 void MemoryMapper::_add_stack(const il::Variable &variable) {
-    _mappings[variable] = _stack_size;
-    _stack_size += size_to_bytes(variable.type().size());
+    _stack_variables.insert(variable);
 }
 
 //==============================================================================

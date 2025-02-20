@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <unordered_set>
 
 #include "x86_64/register.hpp"
 #include "il/instruction.hpp"
@@ -56,6 +57,7 @@ private:
 
 private:
     std::unordered_map<il::Variable, Mapping> _mappings;
+    std::unordered_set<il::Variable> _stack_variables;
     size_t _stack_size;
 };
 
