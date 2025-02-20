@@ -141,7 +141,7 @@ private:
 class Cast : public InstructionBase {
 public:
     Cast(Variable result, Operand expression, Type from, Type to)
-        : _result(std::move(result)), _expression(std::move(expression)), _from(from), _to(to) {}
+        : _result(std::move(result)), _expression(std::move(expression)), _from(std::move(from)), _to(std::move(to)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 

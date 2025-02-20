@@ -7,6 +7,7 @@
 #include "opt/constant_folding.hpp"
 #include "opt/simplify_cfg.hpp"
 #include "opt/pass.hpp"
+#include "x86_64/memory_mapping.hpp"
 #include "sem/name_resolver.hpp"
 #include "sem/type_resolver.hpp"
 #include "il/cfg_printer.hpp"
@@ -70,8 +71,8 @@ int main() {
 
     auto module = il::Generator::generate(program);
 
-    auto il_output = il::ILPrinter::print(module);
-    std::cout << il_output.str();
+    auto il_org_output = il::ILPrinter::print(module);
+    std::cout << il_org_output.str();
 
     dump_cfg(base_path + "_org", module);
 
@@ -84,7 +85,18 @@ int main() {
     manager.add<opt::SimplifyCFG>();
     manager.run(module);
 
+    auto il_opt_output = il::ILPrinter::print(module);
+    std::cout << il_opt_output.str();
+
     dump_cfg(base_path + "_opt", module);
+
+    std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
+
+    for (auto &function: module) {
+        std::cout << function.name() << ":" << std::endl;
+        auto mapper = x86_64::MemoryMapper::map(function);
+        std::cout << "- Stack Size: " << mapper.stack_size() << " Bytes" << std::endl;
+    }
 
     return 0;
 }
