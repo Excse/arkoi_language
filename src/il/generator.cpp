@@ -37,18 +37,20 @@ void Generator::visit(ast::Function &node) {
 
     _current_block = function.entry();
 
-    _result_temp = _make_temporary();
-    _current_block->emplace_back<Alloca>(_result_temp, node.type());
+    auto return_temp = _make_temporary(node.type());
+    _current_block->emplace_back<Alloca>(return_temp);
+    _return_temp = &return_temp;
 
     for (auto &parameter: node.parameters()) {
-        auto alloca_temp = _make_temporary();
+        auto alloca_temp = _make_temporary(parameter.type());
         _allocas.emplace(parameter.name().symbol(), alloca_temp);
-        _current_block->emplace_back<Alloca>(alloca_temp, parameter.type());
+        _current_block->emplace_back<Alloca>(alloca_temp);
     }
 
     for (auto &parameter: node.parameters()) {
-        auto alloca_temp = _allocas.at(parameter.name().symbol());
-        _current_block->emplace_back<Store>(alloca_temp, parameter.name().value().contents(), parameter.type());
+        auto destination = _allocas.at(parameter.name().symbol());
+        auto source = Variable(parameter.name().value().contents(), parameter.type());
+        _current_block->emplace_back<Store>(destination, source);
     }
 
     node.block()->accept(*this);
@@ -58,8 +60,8 @@ void Generator::visit(ast::Function &node) {
 
     _current_block = _current_function->exit();
 
-    auto result_temp = _make_temporary();
-    _current_block->emplace_back<Load>(result_temp, _result_temp, node.type());
+    auto result_temp = _make_temporary(node.type());
+    _current_block->emplace_back<Load>(result_temp, return_temp);
     _current_block->emplace_back<Return>(result_temp, node.type());
 }
 
@@ -86,36 +88,51 @@ void Generator::visit_integer(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     auto sign = !number_string.starts_with('-');
+
+    Immediate immediate;
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            _current_operand = (int64_t) value;
+            immediate = (int64_t) value;
         } else {
-            _current_operand = (int32_t) value;
+            immediate = (int32_t) value;
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            _current_operand = (uint64_t) value;
+            immediate = (uint64_t) value;
         } else {
-            _current_operand = (uint32_t) value;
+            immediate = (uint32_t) value;
         }
     }
+
+    auto temp = _make_temporary(node.type());
+    _current_block->emplace_back<Constant>(temp, immediate);
+    _current_operand = temp;
 }
 
 void Generator::visit_floating(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     auto value = std::stold(number_string);
+
+    Immediate immediate;
     if (value > std::numeric_limits<float>::max()) {
-        _current_operand = (double) value;
+        immediate = (double) value;
     } else {
-        _current_operand = (float) value;
+        immediate = (float) value;
     }
+
+    auto temp = _make_temporary(node.type());
+    _current_block->emplace_back<Constant>(temp, immediate);
+    _current_operand = temp;
 }
 
 void Generator::visit_boolean(ast::Immediate &node) {
-    _current_operand = (node.value().type() == front::Token::Type::True);
+    auto temp = _make_temporary(node.type());
+    auto immediate = (node.value().type() == front::Token::Type::True);
+    _current_block->emplace_back<Constant>(temp, immediate);
+    _current_operand = temp;
 }
 
 void Generator::visit(ast::Return &node) {
@@ -124,7 +141,7 @@ void Generator::visit(ast::Return &node) {
     auto expression = _current_operand;
 
     // Populate the current basic block with instructions
-    _current_block->emplace_back<Store>(_result_temp, expression, node.type());
+    _current_block->emplace_back<Store>(*_return_temp, expression);
     _current_block->emplace_back<Goto>(_current_function->exit()->label());
 
     // Connect the current basic block with the function end basic block
@@ -139,11 +156,11 @@ void Generator::visit(ast::Identifier &node) {
     // TODO: In the future there will be local/global and parameter variables,
     //       thus they need to be searched in such order: local, parameter, global.
     //       For now only parameter variables exist.
-    const auto &variable = std::get<sem::Variable>(*node.symbol());
+    auto &variable = std::get<sem::Variable>(*node.symbol());
 
     auto alloca_temp = _allocas.at(node.symbol());
-    auto temp = _make_temporary();
-    _current_block->emplace_back<Load>(temp, alloca_temp, variable.type());
+    auto temp = _make_temporary(variable.type());
+    _current_block->emplace_back<Load>(temp, alloca_temp);
     _current_operand = temp;
 }
 
@@ -157,24 +174,19 @@ void Generator::visit(ast::Binary &node) {
     auto right = _current_operand;
 
     auto type = Binary::node_to_instruction(node.op());
-    auto result = _make_temporary();
+    auto result = _make_temporary(node.result_type());
     _current_operand = result;
 
-    _current_block->emplace_back<Binary>(result, left, type, right, node.op_type(), node.result_type());
+    _current_block->emplace_back<Binary>(result, left, type, right, node.op_type());
 }
 
 void Generator::visit(ast::Assign &node) {
-    // TODO: In the future there will be local/global and parameter variables,
-    //       thus they need to be searched in such order: local, parameter, global.
-    //       For now only parameter variables exist.
-    const auto &variable = std::get<sem::Variable>(*node.name().symbol());
-
     // This will set _current_operand
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
     auto alloca_temp = _allocas.at(node.name().symbol());
-    _current_block->emplace_back<Store>(alloca_temp, expression, variable.type());
+    _current_block->emplace_back<Store>(alloca_temp, expression);
 }
 
 void Generator::visit(ast::Cast &node) {
@@ -182,28 +194,29 @@ void Generator::visit(ast::Cast &node) {
     node.expression()->accept(*this);
     auto expression = _current_operand;
 
-    auto result = _make_temporary();
+    auto result = _make_temporary(node.to());
     _current_operand = result;
 
-    _current_block->emplace_back<Cast>(result, expression, node.from(), node.to());
+    _current_block->emplace_back<Cast>(result, expression, node.from());
 }
 
 void Generator::visit(ast::Call &node) {
-    const auto &function = std::get<sem::Function>(*node.name().symbol());
+    auto &function = std::get<sem::Function>(*node.name().symbol());
 
-    std::vector<Operand> arguments;
+    std::vector<Variable> arguments;
     for (const auto &argument: node.arguments()) {
         // This will set _current_operand
         argument->accept(*this);
         auto expression = _current_operand;
 
-        arguments.push_back(std::move(expression));
+        auto variable = std::get<Variable>(expression);
+        arguments.push_back(std::move(variable));
     }
 
-    auto result = _make_temporary();
+    auto result = _make_temporary(function.return_type());
     _current_operand = result;
 
-    _current_block->emplace_back<Call>(result, function.name(), std::move(arguments), function.return_type());
+    _current_block->emplace_back<Call>(result, function.name(), std::move(arguments));
 }
 
 void Generator::visit(ast::If &node) {
@@ -270,8 +283,8 @@ std::string Generator::_make_label_symbol() {
     return "L" + to_string(_label_index++);
 }
 
-Variable Generator::_make_temporary() {
-    return { "$", ++_temp_index };
+Variable Generator::_make_temporary(Type &type) {
+    return {"$", type, ++_temp_index};
 }
 
 //==============================================================================

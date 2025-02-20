@@ -2,20 +2,22 @@
 
 #include <unordered_map>
 
+#include "x86_64/register.hpp"
 #include "il/instruction.hpp"
 
 namespace arkoi::x86_64 {
 
-class MemoryMapper : il::Visitor {
-public:
-    using StackLocation = size_t;
+using StackLocation = size_t;
 
+using Mapping = std::variant<StackLocation, Register>;
+
+class MemoryMapper : il::Visitor {
 public:
     MemoryMapper() : _mappings(), _stack_size() {}
 
     [[nodiscard]] static MemoryMapper map(il::Function &function);
 
-    [[nodiscard]] StackLocation &operator[](il::Variable variable);
+    [[nodiscard]] Mapping &operator[](const il::Variable& variable);
 
     [[nodiscard]] size_t stack_size() const { return _stack_size; }
 
@@ -32,6 +34,8 @@ private:
 
     void visit(il::Cast &instruction) override;
 
+    void _add_argument(size_t &int_index, size_t &sse_index, il::Variable &argument);
+
     void visit(il::Call &instruction) override;
 
     void visit(il::If &) override {}
@@ -46,10 +50,12 @@ private:
 
     void visit(il::Constant &instruction) override;
 
-    void _add_mapping(const il::Variable &variable, Size size);
+    void _add_register(const il::Variable &variable, Register reg);
+
+    void _add_stack(const il::Variable &variable);
 
 private:
-    std::unordered_map<il::Variable, StackLocation> _mappings;
+    std::unordered_map<il::Variable, Mapping> _mappings;
     size_t _stack_size;
 };
 

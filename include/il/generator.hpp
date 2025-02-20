@@ -48,15 +48,15 @@ public:
 private:
     std::string _make_label_symbol();
 
-    Variable _make_temporary();
+    Variable _make_temporary(Type &type);
 
 private:
-    std::unordered_map<std::shared_ptr<Symbol>, Variable> _allocas;
+    std::unordered_map<std::shared_ptr<Symbol>, Variable> _allocas{};
     size_t _temp_index{}, _label_index{};
     Function *_current_function{};
     BasicBlock *_current_block{};
     Operand _current_operand{};
-    Variable _result_temp{""};
+    Variable *_return_temp{};
     Module _module;
 };
 

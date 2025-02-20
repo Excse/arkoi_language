@@ -55,8 +55,8 @@ private:
 
 class Call : public InstructionBase {
 public:
-    Call(Variable result, std::string name, std::vector<Operand> &&arguments, Type type)
-        : _arguments(std::move(arguments)), _result(std::move(result)), _name(std::move(name)), _type(type) {}
+    Call(Variable result, std::string name, std::vector<Variable> &&arguments)
+        : _arguments(std::move(arguments)), _name(std::move(name)), _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -68,18 +68,15 @@ public:
 
     [[nodiscard]] auto &name() const { return _name; }
 
-    [[nodiscard]] auto &type() const { return _type; }
-
 private:
-    std::vector<Operand> _arguments;
-    Variable _result;
+    std::vector<Variable> _arguments;
     std::string _name;
-    Type _type;
+    Variable _result;
 };
 
 class Return : public InstructionBase {
 public:
-    Return(Operand value, Type type) : _value(std::move(value)), _type(type) {}
+    Return(Operand value, Type type) : _value(std::move(value)), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -106,9 +103,9 @@ public:
     };
 
 public:
-    Binary(Variable result, Operand left, Operator op, Operand right, Type op_type, Type result_type)
-        : _result_type(result_type), _op_type(op_type), _left(std::move(left)), _right(std::move(right)),
-          _result(std::move(result)), _op(op) {}
+    Binary(Variable result, Operand left, Operator op, Operand right, Type op_type)
+        : _left(std::move(left)), _right(std::move(right)), _result(std::move(result)),
+          _op_type(std::move(op_type)), _op(op) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -123,8 +120,6 @@ public:
 
     [[nodiscard]] auto &left() { return _left; };
 
-    [[nodiscard]] auto &result_type() const { return _result_type; };
-
     [[nodiscard]] auto &op_type() const { return _op_type; };
 
     [[nodiscard]] auto &op() const { return _op; };
@@ -132,16 +127,16 @@ public:
     [[nodiscard]] static Operator node_to_instruction(ast::Binary::Operator op);
 
 private:
-    Type _result_type, _op_type;
     Operand _left, _right;
     Variable _result;
+    Type _op_type;
     Operator _op;
 };
 
 class Cast : public InstructionBase {
 public:
-    Cast(Variable result, Operand expression, Type from, Type to)
-        : _result(std::move(result)), _expression(std::move(expression)), _from(std::move(from)), _to(std::move(to)) {}
+    Cast(Variable result, Operand expression, Type from)
+        : _expression(std::move(expression)), _result(std::move(result)), _from(std::move(from)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -153,18 +148,15 @@ public:
 
     [[nodiscard]] auto &from() const { return _from; };
 
-    [[nodiscard]] auto &to() const { return _to; };
-
 private:
-    Variable _result;
     Operand _expression;
-    Type _from, _to;
+    Variable _result;
+    Type _from;
 };
 
 class Alloca : public InstructionBase {
 public:
-    Alloca(Variable result, Type type)
-        : _result(std::move(result)), _type(type) {}
+    Alloca(Variable result) : _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -172,17 +164,14 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &type() const { return _type; };
-
 private:
     Variable _result;
-    Type _type;
 };
 
 class Load : public InstructionBase {
 public:
-    Load(Variable result, Variable target, Type type)
-        : _result(std::move(result)), _target(std::move(target)), _type(type) {}
+    Load(Variable result, Variable target)
+        : _result(std::move(result)), _target(std::move(target)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -192,17 +181,14 @@ public:
 
     [[nodiscard]] auto &target() const { return _target; };
 
-    [[nodiscard]] auto &type() const { return _type; };
-
 private:
     Variable _result, _target;
-    Type _type;
 };
 
 class Store : public InstructionBase {
 public:
-    Store(Variable result, Operand value, Type type)
-        : _result(std::move(result)), _value(std::move(value)), _type(type) {}
+    Store(Variable result, Operand value)
+        : _result(std::move(result)), _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -210,20 +196,17 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &type() const { return _type; };
-
     [[nodiscard]] auto &value() { return _value; };
 
 private:
     Variable _result;
     Operand _value;
-    Type _type;
 };
 
 class Constant : public InstructionBase {
 public:
-    Constant(Variable result, Immediate value, Type type)
-        : _result(std::move(result)), _value(value), _type(std::move(type)) {}
+    Constant(Variable result, Immediate value)
+        : _result(std::move(result)), _value(value) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -233,12 +216,9 @@ public:
 
     [[nodiscard]] auto &value() { return _value; };
 
-    [[nodiscard]] auto &type() { return _type; };
-
 private:
     Variable _result;
     Immediate _value;
-    Type _type;
 };
 
 struct Instruction : std::variant<

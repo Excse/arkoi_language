@@ -100,7 +100,7 @@ public:
 
     [[nodiscard]] auto &table() const { return _table; }
 
-    [[nodiscard]] auto &type() const { return _type; }
+    [[nodiscard]] auto &type() { return _type; }
 
     [[nodiscard]] auto &block() { return _block; }
 
@@ -200,11 +200,16 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    void set_type(Type type) { _type = std::move(type); }
+
+    [[nodiscard]] auto &type() { return *_type; }
+
     [[nodiscard]] auto &value() const { return _value; }
 
     [[nodiscard]] auto &kind() const { return _kind; }
 
 private:
+    std::optional<Type> _type;
     front::Token _value;
     Kind _kind;
 };
@@ -238,7 +243,7 @@ public:
 
     void set_result_type(Type type) { _result_type = type; }
 
-    [[nodiscard]] auto &result_type() const { return _result_type.value(); }
+    [[nodiscard]] auto &result_type() { return _result_type.value(); }
     
     void set_op_type(Type type) { _op_type = type; }
     

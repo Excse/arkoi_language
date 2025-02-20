@@ -40,7 +40,7 @@ std::ostream &operator<<(std::ostream &os, const Operand &operand) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Variable &variable) {
-    os << variable.symbol();
+    os << variable.name();
 
     if (variable.version() != 0) {
         os << std::setw(2) << std::setfill('0') << variable.version();
@@ -53,9 +53,9 @@ std::ostream &operator<<(std::ostream &os, const Variable &variable) {
 namespace std {
 
 size_t hash<arkoi::il::Variable>::operator()(const arkoi::il::Variable &variable) const {
-    size_t link_hash = std::hash<std::string>{}(variable.symbol());
+    size_t name_hash = std::hash<std::string>{}(variable.name());
     size_t generation_hash = std::hash<size_t>{}(variable.version());
-    return link_hash ^ (generation_hash << 1);
+    return name_hash ^ (generation_hash << 1);
 }
 
 size_t hash<arkoi::il::Immediate>::operator()(const arkoi::il::Immediate &immediate) const {

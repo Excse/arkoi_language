@@ -77,18 +77,22 @@ void TypeResolver::visit_integer(ast::Immediate &node) {
         size = std::stoull(number_string) > std::numeric_limits<uint32_t>::max() ? Size::QWORD : Size::DWORD;
     }
 
-    _current_type = Integral(size, sign);
+    node.set_type(Integral(size, sign));
+    _current_type = node.type();
 }
 
 void TypeResolver::visit_floating(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
-    _current_type = Floating(size);
+
+    node.set_type(Floating(size));
+    _current_type = node.type();
 }
 
-void TypeResolver::visit_boolean(ast::Immediate &) {
-    _current_type = Boolean();
+void TypeResolver::visit_boolean(ast::Immediate &node) {
+    node.set_type(Boolean());
+    _current_type = node.type();
 }
 
 void TypeResolver::visit(ast::Return &node) {
@@ -112,13 +116,13 @@ void TypeResolver::visit(ast::Return &node) {
 
 void TypeResolver::visit(ast::Identifier &node) {
     if(node.kind() == ast::Identifier::Kind::Function) {
-        const auto &function = std::get<sem::Function>(*node.symbol());
+        auto &function = std::get<sem::Function>(*node.symbol());
         _current_type = function.return_type();
     } else if(node.kind() == ast::Identifier::Kind::Variable) {
         // TODO: In the future there will be local/global and parameter variables,
         //       thus they need to be searched in such order: local, parameter, global.
         //       For now only parameter variables exist.
-        const auto &variable = std::get<sem::Variable>(*node.symbol());
+        auto &variable = std::get<sem::Variable>(*node.symbol());
         _current_type = variable.type();
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");

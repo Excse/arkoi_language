@@ -14,7 +14,7 @@ bool ConstantFolding::on_block(il::BasicBlock &block) {
 
         if (auto cast = std::get_if<il::Cast>(&instruction)) {
             auto value = _cast(*cast);
-            instruction = il::Constant(cast->result(), value, cast->to());
+            instruction = il::Constant(cast->result(), value);
             changed = true;
         }
     }
@@ -26,7 +26,7 @@ il::Immediate ConstantFolding::_cast(il::Cast &instruction) {
     auto expression = std::get<il::Immediate>(instruction.expression());
 
     return std::visit([&](const auto &value) {
-        return _evaluate_cast(instruction.to(), value);
+        return _evaluate_cast(instruction.result().type(), value);
     }, expression);
 }
 

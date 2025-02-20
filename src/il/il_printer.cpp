@@ -57,18 +57,19 @@ void ILPrinter::visit(Return &instruction) {
 }
 
 void ILPrinter::visit(Binary &instruction) {
-    _output << instruction.result() << " @" << instruction.result_type() << " = "
+    _output << instruction.result() << " @" << instruction.result().type() << " = "
             << to_string(instruction.op()) << " @" << instruction.op_type()
             << " " << instruction.left() << ", " << instruction.right();
 }
 
 void ILPrinter::visit(Cast &instruction) {
-    _output << instruction.result() << " @" << instruction.to() << " = cast @"
+    _output << instruction.result() << " @" << instruction.result().type() << " = cast @"
             << instruction.from() << " " << instruction.expression();
 }
 
 void ILPrinter::visit(Call &instruction) {
-    _output << instruction.result() << " @" << instruction.type() << " = call " << instruction.name() << "(";
+    _output << instruction.result() << " @" << instruction.result().type()
+            << " = call " << instruction.name() << "(";
 
     for (size_t index = 0; index < instruction.arguments().size(); index++) {
         auto &argument = instruction.arguments()[index];
@@ -91,19 +92,19 @@ void ILPrinter::visit(If &instruction) {
 }
 
 void ILPrinter::visit(Alloca &instruction) {
-    _output << instruction.result() << " @" << instruction.type() << " = alloca";
+    _output << instruction.result() << " @" << instruction.result().type() << " = alloca";
 }
 
 void ILPrinter::visit(Store &instruction) {
-    _output << "store @" << instruction.type() << " " << instruction.value() << ", " << instruction.result();
+    _output << "store @" << instruction.result().type() << " " << instruction.value() << ", " << instruction.result();
 }
 
 void ILPrinter::visit(Load &instruction) {
-    _output << instruction.result() << " @" << instruction.type() << " = load " << instruction.target();
+    _output << instruction.result() << " @" << instruction.result().type() << " = load " << instruction.target();
 }
 
 void ILPrinter::visit(Constant &instruction) {
-    _output << instruction.result() << " @" << instruction.type() << " = const " << instruction.value();
+    _output << instruction.result() << " @" << instruction.result().type() << " = const " << instruction.value();
 }
 
 //==============================================================================

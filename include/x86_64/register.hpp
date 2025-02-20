@@ -1,62 +1,33 @@
 #pragma once
 
-#include <utility>
-#include <vector>
-#include <memory>
+#include "utils/size.hpp"
 
-#include "sem/type.hpp"
+namespace arkoi::x86_64 {
 
-struct Symbol;
-
-namespace arkoi::sem {
-
-class Variable;
-
-class Function {
+class Register {
 public:
-    Function(std::string name) : _name(std::move(name)) {}
+    enum class Base {
+        A, C, D, B, SI, DI, SP, BP, R8, R9, R10, R11, R12, R13, R14, R15,
+        XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15,
+    };
 
-    void set_parameters(std::vector<std::shared_ptr<Variable>> &&symbols) { _parameters = std::move(symbols); }
+public:
+    constexpr Register(Base base, Size size) : _size(size), _base(base) {}
 
-    [[nodiscard]] auto &parameters() const { return _parameters; }
+    [[nodiscard]] auto size() const { return _size; }
 
-    void set_return_type(Type type) { _return_type = type; }
-
-    [[nodiscard]] auto &return_type() { return _return_type.value(); }
-
-    [[nodiscard]] auto &name() const { return _name; }
+    [[nodiscard]] auto base() const { return _base; }
 
 private:
-    std::vector<std::shared_ptr<Variable>> _parameters{};
-    std::optional<Type> _return_type{};
-    std::string _name;
+    Size _size;
+    Base _base;
 };
 
-class Variable {
-public:
-    Variable(std::string name, Type type)
-        : _type(type), _name(std::move(name)) {}
+} // namespace arkoi::x86_64
 
-    Variable(std::string name) : _name(std::move(name)) {}
+std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register &reg);
 
-    void set_type(Type type) { _type = type; }
-
-    [[nodiscard]] auto &type() { return _type.value(); }
-
-    [[nodiscard]] auto &name() { return _name; }
-
-private:
-    std::optional<Type> _type{};
-    std::string _name;
-};
-
-} // namespace arkoi::sym
-
-struct Symbol : std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
-    using variant::variant;
-};
-
-std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Symbol> &symbol);
+std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register::Base &reg);
 
 //==============================================================================
 // BSD 3-Clause License

@@ -4,13 +4,14 @@
 #include <variant>
 
 #include "utils/size.hpp"
+#include "sem/type.hpp"
 
 namespace arkoi::il {
 
 class Variable {
 public:
-    Variable(std::string name, size_t version = 0)
-        : _name(std::move(name)), _version(version) {}
+    Variable(std::string name, Type type, size_t version = 0)
+        : _name(std::move(name)), _version(version), _type(std::move(type)) {}
 
     bool operator==(const Variable &rhs) const;
 
@@ -18,11 +19,14 @@ public:
 
     [[nodiscard]] auto version() const { return _version; }
 
-    [[nodiscard]] auto &symbol() const { return _name; }
+    [[nodiscard]] auto &name() const { return _name; }
+
+    [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::string _name;
     size_t _version;
+    Type _type;
 };
 
 class Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {

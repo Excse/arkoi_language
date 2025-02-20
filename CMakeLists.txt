@@ -51,6 +51,7 @@ add_library(${PROJECT_NAME}_lib
         src/opt/dead_code_elimination.cpp
         src/opt/simplify_cfg.cpp
         src/x86_64/memory_mapping.cpp
+        src/x86_64/register.cpp
         src/utils/dep_graph.tpp
         src/utils/size.cpp
 )
