@@ -8,6 +8,9 @@
 namespace arkoi::x86_64 {
 
 class Generator : il::Visitor {
+public:
+    [[nodiscard]] static std::stringstream generate(il::Module &module);
+
 private:
     void visit(il::Module &module) override;
 

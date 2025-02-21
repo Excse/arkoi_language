@@ -6,7 +6,19 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-void Generator::visit(il::Module &) {
+std::stringstream Generator::generate(il::Module &module) {
+    std::stringstream output;
+
+    Generator generator;
+    generator.visit(module);
+
+    output << generator._text.rdbuf();
+    output << generator._data.rdbuf();
+
+    return output;
+}
+
+void Generator::visit(il::Module &module) {
     _text << ".intel_syntax noprefix\n";
     _text << ".section .text\n";
     _text << ".global _start\n";
@@ -18,6 +30,12 @@ void Generator::visit(il::Module &) {
     _text << "\tmov rax, 60\n";
     _text << "\tsyscall\n";
     _text << "\n";
+
+    _data << ".section .data\n";
+
+    for (auto &function: module) {
+        function.accept(*this);
+    }
 }
 
 void Generator::visit(il::Function &function) {
@@ -31,9 +49,9 @@ void Generator::visit(il::Function &function) {
         _text << "\tsub rsp, " << _mapper.stack_size() << "\n";
     }
 
-    for (auto &block: function) {
-        block.accept(*this);
-    }
+//    for (auto &block: function) {
+//        block.accept(*this);
+//    }
 
     _text << "\tmov rsp, rbp\n";
     _text << "\tpop rbp\n";

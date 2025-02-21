@@ -7,9 +7,9 @@
 #include "opt/constant_folding.hpp"
 #include "opt/simplify_cfg.hpp"
 #include "opt/pass.hpp"
-#include "x86_64/mapper.hpp"
 #include "sem/name_resolver.hpp"
 #include "sem/type_resolver.hpp"
+#include "x86_64/generator.hpp"
 #include "il/cfg_printer.hpp"
 #include "il/il_printer.hpp"
 #include "il/generator.hpp"
@@ -92,11 +92,12 @@ int main() {
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
 
-    for (auto &function: module) {
-        std::cout << function.name() << ":" << std::endl;
-        auto mapper = x86_64::Mapper::map(function);
-        std::cout << "- Stack Size: " << mapper.stack_size() << " Bytes" << std::endl;
-    }
+    auto assembly_output = x86_64::Generator::generate(module);
+    std::cout << assembly_output.str();
+
+    std::ofstream cfg_file(base_path + ".asm");
+    cfg_file << assembly_output.str();
+    cfg_file.close();
 
     return 0;
 }
