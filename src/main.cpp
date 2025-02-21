@@ -7,7 +7,7 @@
 #include "opt/constant_folding.hpp"
 #include "opt/simplify_cfg.hpp"
 #include "opt/pass.hpp"
-#include "x86_64/memory_mapping.hpp"
+#include "x86_64/mapper.hpp"
 #include "sem/name_resolver.hpp"
 #include "sem/type_resolver.hpp"
 #include "il/cfg_printer.hpp"
@@ -94,7 +94,7 @@ int main() {
 
     for (auto &function: module) {
         std::cout << function.name() << ":" << std::endl;
-        auto mapper = x86_64::MemoryMapper::map(function);
+        auto mapper = x86_64::Mapper::map(function);
         std::cout << "- Stack Size: " << mapper.stack_size() << " Bytes" << std::endl;
     }
 

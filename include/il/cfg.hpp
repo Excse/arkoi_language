@@ -84,22 +84,9 @@ private:
     pointer _current;
 };
 
-class Parameter {
-public:
-    Parameter(std::string name, Type type) : _name(name), _type(type) {}
-
-    [[nodiscard]] auto &name() { return _name; }
-
-    [[nodiscard]] auto &type() { return _type; }
-
-private:
-    std::string _name;
-    Type _type;
-};
-
 class Function {
 public:
-    Function(std::string name, std::vector<Parameter> parameters, Type type);
+    Function(std::string name, std::vector<Variable> parameters, Type type);
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -128,7 +115,7 @@ private:
     std::vector<std::shared_ptr<BasicBlock>> _block_pool;
     BasicBlock *_entry;
     BasicBlock *_exit;
-    std::vector<Parameter> _parameters;
+    std::vector<Variable> _parameters;
     std::string _name;
     Type _type;
 };

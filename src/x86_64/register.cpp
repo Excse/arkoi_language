@@ -4,6 +4,14 @@
 
 using namespace arkoi::x86_64;
 
+bool Register::operator==(const Register &other) const {
+    return _size == other._size && _base == other._base;
+}
+
+bool Register::operator!=(const Register &other) const {
+    return !(other == *this);
+}
+
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register &reg) {
     if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
         switch (reg.size()) {

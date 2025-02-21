@@ -27,7 +27,7 @@ void Generator::visit(ast::Function &node) {
 
     auto &function_symbol = std::get<sem::Function>(*node.name().symbol());
 
-    std::vector<il::Parameter> parameters;
+    std::vector<il::Variable> parameters;
     for (auto &parameter: function_symbol.parameters()) {
         parameters.emplace_back(parameter->name(), parameter->type());
     }

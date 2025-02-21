@@ -1,37 +1,47 @@
 #pragma once
 
-#include "utils/size.hpp"
+#include <sstream>
+
+#include "x86_64/mapper.hpp"
+#include "il/instruction.hpp"
 
 namespace arkoi::x86_64 {
 
-class Register {
-public:
-    enum class Base {
-        A, C, D, B, SI, DI, SP, BP, R8, R9, R10, R11, R12, R13, R14, R15,
-        XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15,
-    };
+class Generator : il::Visitor {
+private:
+    void visit(il::Module &module) override;
 
-public:
-    constexpr Register(Base base, Size size) : _size(size), _base(base) {}
+    void visit(il::Function &function) override;
 
-    bool operator==(const Register &other) const;
+    void visit(il::BasicBlock &block) override;
 
-    bool operator!=(const Register &other) const;
+    void visit(il::Return &instruction) override;
 
-    [[nodiscard]] auto size() const { return _size; }
+    void visit(il::Binary &instruction) override;
 
-    [[nodiscard]] auto base() const { return _base; }
+    void visit(il::Cast &instruction) override;
+
+    void visit(il::Call &instruction) override;
+
+    void visit(il::If &instruction) override;
+
+    void visit(il::Goto &instruction) override;
+
+    void visit(il::Alloca &) override {}
+
+    void visit(il::Store &instruction) override;
+
+    void visit(il::Load &instruction) override;
+
+    void visit(il::Constant &instruction) override;
 
 private:
-    Size _size;
-    Base _base;
+    std::stringstream _text{};
+    std::stringstream _data{};
+    Mapper _mapper{};
 };
 
 } // namespace arkoi::x86_64
-
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register &reg);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register::Base &reg);
 
 //==============================================================================
 // BSD 3-Clause License

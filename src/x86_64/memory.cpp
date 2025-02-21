@@ -1,37 +1,46 @@
-#pragma once
+#include "x86_64/memory.hpp"
 
-#include "utils/size.hpp"
+#include "utils/utils.hpp"
 
-namespace arkoi::x86_64 {
+using namespace arkoi::x86_64;
+using namespace arkoi;
 
-class Register {
-public:
-    enum class Base {
-        A, C, D, B, SI, DI, SP, BP, R8, R9, R10, R11, R12, R13, R14, R15,
-        XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15,
-    };
+bool Memory::operator==(const Memory &other) const {
+    return _index == other._index && _scale == other._scale && _displacement == other._displacement &&
+           _address == other._address && _size == other._size;
+}
 
-public:
-    constexpr Register(Base base, Size size) : _size(size), _base(base) {}
+bool Memory::operator!=(const Memory &other) const {
+    return !(other == *this);
+}
 
-    bool operator==(const Register &other) const;
+std::ostream &operator<<(std::ostream &os, const Memory::Address &memory) {
+    std::visit([&os](const auto &value) { os << value; }, memory);
+    return os;
+}
 
-    bool operator!=(const Register &other) const;
+std::ostream &operator<<(std::ostream &os, const Memory &memory) {
+    os << memory.size() << " PTR ";
 
-    [[nodiscard]] auto size() const { return _size; }
+    os << "[" << memory.address();
 
-    [[nodiscard]] auto base() const { return _base; }
+    if (memory.index() != 1) {
+        os << " + " << memory.index();
+    }
 
-private:
-    Size _size;
-    Base _base;
-};
+    if (memory.scale() != 1) {
+        os << " * " << memory.scale();
+    }
 
-} // namespace arkoi::x86_64
+    if (memory.displacement() < 0) {
+        os << " - " << std::abs(memory.displacement());
+    } else if (memory.displacement() > 0) {
+        os << " + " << std::abs(memory.displacement());
+    }
 
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register &reg);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register::Base &reg);
+    os << "]";
+    return os;
+}
 
 //==============================================================================
 // BSD 3-Clause License

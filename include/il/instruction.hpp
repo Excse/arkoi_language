@@ -76,19 +76,19 @@ private:
 
 class Return : public InstructionBase {
 public:
-    Return(Operand value, Type type) : _value(std::move(value)), _type(std::move(type)) {}
+    Return(Operand value, Type type) : _result({"$ret", type}), _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &type() const { return _type; };
+    [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &value() { return _value; };
 
 private:
+    Variable _result;
     Operand _value;
-    Type _type;
 };
 
 class Binary : public InstructionBase {
