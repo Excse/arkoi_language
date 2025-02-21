@@ -9,13 +9,15 @@
 
 namespace arkoi::x86_64 {
 
-using Mapping = std::variant<std::monostate, Memory, Register>;
+using Mapping = std::variant<std::monostate, Memory, Register, il::Immediate>;
 
 class Mapper : il::Visitor {
 public:
     [[nodiscard]] static Mapper map(il::Function &function);
 
     [[nodiscard]] Mapping &operator[](const il::Variable& variable);
+
+    [[nodiscard]] Mapping operator[](const il::Operand &operand);
 
     [[nodiscard]] size_t stack_size() const { return _stack_size; }
 
@@ -61,6 +63,8 @@ private:
 };
 
 } // namespace arkoi::x86_64
+
+std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Mapping &mapping);
 
 //==============================================================================
 // BSD 3-Clause License

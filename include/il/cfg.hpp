@@ -88,6 +88,9 @@ class Function {
 public:
     Function(std::string name, std::vector<Variable> parameters, Type type);
 
+    Function(std::string name, std::vector<Variable> parameters, Type type,
+             std::string entry_label, std::string exit_label);
+
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
     template<typename... Args>

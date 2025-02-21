@@ -1,5 +1,7 @@
 #include "x86_64/generator.hpp"
 
+#include "utils/utils.hpp"
+
 #include "x86_64/register.hpp"
 #include "il/cfg.hpp"
 
@@ -40,45 +42,73 @@ void Generator::visit(il::Module &module) {
 
 void Generator::visit(il::Function &function) {
     _mapper = Mapper::map(function);
+    _current_function = &function;
 
     _text << function.name() << ":\n";
 
-    _text << "\tpush rbp\n";
-    _text << "\tmov rbp, rsp\n";
-    if (_mapper.stack_size()) {
-        _text << "\tsub rsp, " << _mapper.stack_size() << "\n";
+    for (auto &block: function) {
+        block.accept(*this);
     }
-
-//    for (auto &block: function) {
-//        block.accept(*this);
-//    }
-
-    _text << "\tmov rsp, rbp\n";
-    _text << "\tpop rbp\n";
-    _text << "\tret\n";
-
-    _text << "\n";
 }
 
 void Generator::visit(il::BasicBlock &block) {
-    _text << block.label() << ":\n";
+    if (_current_function->entry() == &block) {
+        _text << "\tpush rbp\n";
+        _text << "\tmov rbp, rsp\n";
+        if (_mapper.stack_size()) {
+            _text << "\tsub rsp, " << _mapper.stack_size() << "\n";
+        }
+    } else {
+        _text << block.label() << ":\n";
+    }
 
     for (auto &instruction: block) {
         instruction.accept(*this);
     }
+
+    if (_current_function->exit() == &block) {
+        _text << "\tmov rsp, rbp\n";
+        _text << "\tpop rbp\n";
+        _text << "\tret\n";
+
+        _text << "\n";
+    }
 }
 
-void Generator::visit(il::Return &) {}
+void Generator::visit(il::Return &instruction) {
+    auto &destination = _mapper[instruction.result()];
+    auto source = _mapper[instruction.value()];
+
+    std::visit(match {
+        [&](const sem::Integral &) {
+            _text << "\tmov " << destination << ", " << source << "\n";
+        },
+        [&](const sem::Boolean &) {
+            _text << "\tmov " << destination << ", " << source << "\n";
+        },
+        [&](const sem::Floating &type) {
+            if(type.size() == Size::QWORD) {
+                _text << "\tmovsd " << destination << ", " << source << "\n";
+            } else if(type.size() == Size::DWORD) {
+                _text << "\tmovss " << destination << ", " << source << "\n";
+            }
+        },
+    }, instruction.result().type());
+}
 
 void Generator::visit(il::Binary &) {}
 
 void Generator::visit(il::Cast &) {}
 
-void Generator::visit(il::Call &) {}
+void Generator::visit(il::Call &instruction) {
+    _text << "\tcall " << instruction.name() << "\n";
+}
 
 void Generator::visit(il::If &) {}
 
-void Generator::visit(il::Goto &) {}
+void Generator::visit(il::Goto &instruction) {
+    _text << "\tjmp " << instruction.label() << "\n";
+}
 
 void Generator::visit(il::Store &) {}
 

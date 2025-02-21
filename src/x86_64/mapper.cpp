@@ -27,6 +27,17 @@ Mapping &Mapper::operator[](const il::Variable &variable) {
     return _mappings.at(variable);
 }
 
+Mapping Mapper::operator[](const il::Operand &operand) {
+    return std::visit(match{
+        [&](const il::Variable &variable) -> Mapping {
+            return (*this)[variable];
+        },
+        [&](const il::Immediate &immediate) -> Mapping {
+            return immediate;
+        }
+    }, operand);
+}
+
 void Mapper::visit(il::Function &function) {
     size_t int_index = 0, sse_index = 0;
     int64_t parameter_offset = 0;
@@ -141,6 +152,11 @@ void Mapper::_add_register(const il::Variable &variable, Register reg) {
 
 void Mapper::_add_stack(const il::Variable &variable) {
     _stack_variables.insert(variable);
+}
+
+std::ostream &operator<<(std::ostream &os, const Mapping &mapping) {
+    std::visit([&](const auto &value) { os << value; }, mapping);
+    return os;
 }
 
 //==============================================================================

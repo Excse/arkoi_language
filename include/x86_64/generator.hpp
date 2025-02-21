@@ -39,6 +39,7 @@ private:
     void visit(il::Constant &instruction) override;
 
 private:
+    il::Function *_current_function;
     std::stringstream _text{};
     std::stringstream _data{};
     Mapper _mapper{};
