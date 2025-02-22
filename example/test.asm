@@ -12,7 +12,9 @@ main:
 	push rbp
 	mov rbp, rsp
 	sub rsp, 44
+	movsd xmm0, QWORD PTR [float0]
 	call ok
+	movsd xmm0, QWORD PTR [float1]
 	call test1
 	mov rax, QWORD PTR [rbp]
 	mov rsp, rbp
@@ -31,6 +33,7 @@ L7:
 L4:
 	jmp L6
 L6:
+	mov edi, 2
 	call test2
 	mov al, BYTE PTR [rbp]
 	mov rsp, rbp
@@ -66,3 +69,5 @@ L16:
 	ret
 
 .section .data
+	float0: .double	5
+	float1: .double	10.5

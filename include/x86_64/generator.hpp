@@ -39,9 +39,13 @@ private:
     void visit(il::Constant &instruction) override;
 
 private:
+    void _mov(const Operand &source, const Operand &destination, const Type &type);
+
+private:
     il::Function *_current_function;
     std::stringstream _text{};
     std::stringstream _data{};
+    size_t _constants;
     Mapper _mapper{};
 };
 

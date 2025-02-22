@@ -78,22 +78,8 @@ void Generator::visit(il::BasicBlock &block) {
 void Generator::visit(il::Return &instruction) {
     auto &destination = _mapper[instruction.result()];
     auto source = _mapper[instruction.value()];
-
-    std::visit(match {
-        [&](const sem::Integral &) {
-            _text << "\tmov " << destination << ", " << source << "\n";
-        },
-        [&](const sem::Boolean &) {
-            _text << "\tmov " << destination << ", " << source << "\n";
-        },
-        [&](const sem::Floating &type) {
-            if(type.size() == Size::QWORD) {
-                _text << "\tmovsd " << destination << ", " << source << "\n";
-            } else if(type.size() == Size::DWORD) {
-                _text << "\tmovss " << destination << ", " << source << "\n";
-            }
-        },
-    }, instruction.result().type());
+    auto &type = instruction.result().type();
+    _mov(source, destination, type);
 }
 
 void Generator::visit(il::Binary &) {}
@@ -114,7 +100,40 @@ void Generator::visit(il::Store &) {}
 
 void Generator::visit(il::Load &) {}
 
-void Generator::visit(il::Constant &) {}
+void Generator::visit(il::Constant &instruction) {
+    auto &destination = _mapper[instruction.result()];
+    auto &type = instruction.result().type();
+
+    Operand source;
+    if (auto *floating = std::get_if<sem::Floating>(&instruction.result().type())) {
+        auto name = "float" + std::to_string(_constants++);
+        auto size = floating->size() == Size::QWORD ? "double" : "float";
+        _data << "\t" << name << ": ." << size << "\t" << instruction.value() << "\n";
+        source = Memory(instruction.result().type().size(), name);
+    } else {
+        source = instruction.value();
+    }
+
+    _mov(source, destination, type);
+}
+
+void Generator::_mov(const Operand &source, const Operand &destination, const Type &type) {
+    std::visit(match {
+        [&](const sem::Integral &) {
+            _text << "\tmov " << destination << ", " << source << "\n";
+        },
+        [&](const sem::Boolean &) {
+            _text << "\tmov " << destination << ", " << source << "\n";
+        },
+        [&](const sem::Floating &type) {
+            if(type.size() == Size::QWORD) {
+                _text << "\tmovsd " << destination << ", " << source << "\n";
+            } else if(type.size() == Size::DWORD) {
+                _text << "\tmovss " << destination << ", " << source << "\n";
+            }
+        },
+    }, type);
+}
 
 //==============================================================================
 // BSD 3-Clause License

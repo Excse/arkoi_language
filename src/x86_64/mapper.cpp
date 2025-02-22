@@ -23,16 +23,16 @@ Mapper Mapper::map(il::Function &function) {
     return mapper;
 }
 
-Mapping &Mapper::operator[](const il::Variable &variable) {
+Operand &Mapper::operator[](const il::Variable &variable) {
     return _mappings.at(variable);
 }
 
-Mapping Mapper::operator[](const il::Operand &operand) {
+Operand Mapper::operator[](const il::Operand &operand) {
     return std::visit(match{
-        [&](const il::Variable &variable) -> Mapping {
+        [&](const il::Variable &variable) -> Operand {
             return (*this)[variable];
         },
-        [&](const il::Immediate &immediate) -> Mapping {
+        [&](const il::Immediate &immediate) -> Operand {
             return immediate;
         }
     }, operand);
@@ -154,7 +154,7 @@ void Mapper::_add_stack(const il::Variable &variable) {
     _stack_variables.insert(variable);
 }
 
-std::ostream &operator<<(std::ostream &os, const Mapping &mapping) {
+std::ostream &operator<<(std::ostream &os, const Operand &mapping) {
     std::visit([&](const auto &value) { os << value; }, mapping);
     return os;
 }
