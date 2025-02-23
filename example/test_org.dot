@@ -43,4 +43,7 @@ digraph CFG {
 	L17 [label="L17:\l $08 @f64 = load $03\l $09 @s32 = load $02\l $10 @f64 = cast @s32 $09\l $11 @f64 = mul @f64 $08, $10\l $12 @f32 = cast @f64 $11\l store @f32 $12, $01\l goto L16\l"];
 	L17 -> L16 [label="Next"];
 	L16 [label="L16:\l $19 @f32 = load $01\l ret $19\l"];
+	L20 [label="fun calling_convention(a @u32, b @u32, c @u32, d @u32, e @u32, f @u32, g @u32, h @u32) @bool:\l $01 @bool = alloca\l $02 @u32 = alloca\l $03 @u32 = alloca\l $04 @u32 = alloca\l $05 @u32 = alloca\l $06 @u32 = alloca\l $07 @u32 = alloca\l $08 @u32 = alloca\l $09 @u32 = alloca\l store @u32 a, $02\l store @u32 b, $03\l store @u32 c, $04\l store @u32 d, $05\l store @u32 e, $06\l store @u32 f, $07\l store @u32 g, $08\l store @u32 h, $09\l $10 @bool = const 1\l store @bool $10, $01\l goto L21\l"];
+	L20 -> L21 [label="Next"];
+	L21 [label="L21:\l $11 @bool = load $01\l ret $11\l"];
 }

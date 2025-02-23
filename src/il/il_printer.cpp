@@ -100,7 +100,7 @@ void ILPrinter::visit(Store &instruction) {
 }
 
 void ILPrinter::visit(Load &instruction) {
-    _output << instruction.result() << " @" << instruction.result().type() << " = load " << instruction.target();
+    _output << instruction.result() << " @" << instruction.result().type() << " = load " << instruction.value();
 }
 
 void ILPrinter::visit(Constant &instruction) {

@@ -8,6 +8,9 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
+static const Register::Base TEMP_INT = Register::Base::R10;
+static const Register::Base TEMP_SSE = Register::Base::XMM10;
+
 std::stringstream Generator::generate(il::Module &module) {
     std::stringstream output;
 
@@ -53,22 +56,21 @@ void Generator::visit(il::Function &function) {
 
 void Generator::visit(il::BasicBlock &block) {
     if (_current_function->entry() == &block) {
-        _text << "\tpush rbp\n";
-        _text << "\tmov rbp, rsp\n";
-        if (_mapper.stack_size()) {
-            _text << "\tsub rsp, " << _mapper.stack_size() << "\n";
-        }
+        _text << "\tenter " << _mapper.stack_size() << ", 0\n";
     } else {
         _text << block.label() << ":\n";
     }
 
     for (auto &instruction: block) {
+        _text << "\t# ";
+        instruction.accept(_printer);
+        _text << "\n";
+
         instruction.accept(*this);
     }
 
     if (_current_function->exit() == &block) {
-        _text << "\tmov rsp, rbp\n";
-        _text << "\tpop rbp\n";
+        _text << "\tleave\n";
         _text << "\tret\n";
 
         _text << "\n";
@@ -76,8 +78,11 @@ void Generator::visit(il::BasicBlock &block) {
 }
 
 void Generator::visit(il::Return &instruction) {
-    auto &destination = _mapper[instruction.result()];
-    auto source = _mapper[instruction.value()];
+    // The destination is always either XMM0 or RAX, depending on the return type. Since the mapper already handles this
+    // assignment, this instruction is simply translated into a mov instruction.
+
+    auto destination = _map(instruction.result());
+    auto source = _map(instruction.value());
     auto &type = instruction.result().type();
     _mov(source, destination, type);
 }
@@ -87,6 +92,10 @@ void Generator::visit(il::Binary &) {}
 void Generator::visit(il::Cast &) {}
 
 void Generator::visit(il::Call &instruction) {
+    // instruction.result() is unnecessary because the mapper always assigns the destination to either the XMM0 register
+    // for floating-point values or the RDI register for integers.
+    // instruction.arguments() is also not needed, as the mapper maps each argument variable to the appropriate register.
+
     _text << "\tcall " << instruction.name() << "\n";
 }
 
@@ -96,43 +105,78 @@ void Generator::visit(il::Goto &instruction) {
     _text << "\tjmp " << instruction.label() << "\n";
 }
 
-void Generator::visit(il::Store &) {}
-
-void Generator::visit(il::Load &) {}
-
-void Generator::visit(il::Constant &instruction) {
-    auto &destination = _mapper[instruction.result()];
+void Generator::visit(il::Store &instruction) {
+    auto destination = _map(instruction.result());
+    auto source = _map(instruction.value());
     auto &type = instruction.result().type();
-
-    Operand source;
-    if (auto *floating = std::get_if<sem::Floating>(&instruction.result().type())) {
-        auto name = "float" + std::to_string(_constants++);
-        auto size = floating->size() == Size::QWORD ? "double" : "float";
-        _data << "\t" << name << ": ." << size << "\t" << instruction.value() << "\n";
-        source = Memory(instruction.result().type().size(), name);
-    } else {
-        source = instruction.value();
-    }
-
     _mov(source, destination, type);
 }
 
-void Generator::_mov(const Operand &source, const Operand &destination, const Type &type) {
-    std::visit(match {
-        [&](const sem::Integral &) {
-            _text << "\tmov " << destination << ", " << source << "\n";
-        },
-        [&](const sem::Boolean &) {
-            _text << "\tmov " << destination << ", " << source << "\n";
-        },
-        [&](const sem::Floating &type) {
-            if(type.size() == Size::QWORD) {
-                _text << "\tmovsd " << destination << ", " << source << "\n";
-            } else if(type.size() == Size::DWORD) {
-                _text << "\tmovss " << destination << ", " << source << "\n";
+void Generator::visit(il::Load &instruction) {
+    auto destination = _map(instruction.result());
+    auto source = _map(instruction.value());
+    auto &type = instruction.result().type();
+    _mov(source, destination, type);
+}
+
+void Generator::visit(il::Constant &instruction) {
+    // This instruction is generally unused if the optimizer runs. However, during a function call, it is retained since
+    // the call instruction only accepts IL variables as arguments. Thus, most of the constant variables will be mapped
+    // to a register or memory location according to the specific calling convention.
+
+    auto destination = _map(instruction.result());
+    auto source = _map(instruction.value());
+    auto &type = instruction.result().type();
+    _mov(source, destination, type);
+}
+
+void Generator::_mov(Operand source, const Operand &destination, const Type &type) {
+    // If the source and destination is the same, the mov instruction is not needed.
+    if (source == destination) return;
+
+    // Since mov instructions only accept operands in the forms (src:dest) reg:mem, mem:reg, imm:reg, or imm:mem,
+    // a mem:mem operation must be split into two mov instructions.
+    if (std::holds_alternative<Memory>(source) && std::holds_alternative<Memory>(destination)) {
+        if (std::holds_alternative<sem::Floating>(type)) {
+            auto target = Register(TEMP_SSE, type.size());
+            _mov(source, target, type);
+            source = target;
+        } else {
+            auto target = Register(TEMP_INT, type.size());
+            _mov(source, target, type);
+            source = target;
+        }
+    }
+
+    std::string menomic;
+    if (std::holds_alternative<sem::Floating>(type)) {
+        menomic = type.size() == Size::QWORD ? "movsd" : "movss";
+    } else {
+        menomic = "mov";
+    }
+
+    _text << "\t" << menomic << " " << destination << ", " << source << "\n";
+}
+
+Operand Generator::_map(const il::Operand &operand) {
+    return std::visit(match{
+        [&](const il::Immediate &immediate) -> Operand {
+            if (std::holds_alternative<double>(immediate)) {
+                auto name = "float" + std::to_string(_constants++);
+                _data << "\t" << name << ": .double\t" << immediate << "\n";
+                return Memory(Size::QWORD, name);
+            } else if (std::holds_alternative<float>(immediate)) {
+                auto name = "float" + std::to_string(_constants++);
+                _data << "\t" << name << ": .float\t" << immediate << "\n";
+                return Memory(Size::DWORD, name);
+            } else {
+                return immediate;
             }
         },
-    }, type);
+        [&](const il::Variable &variable) -> Operand {
+            return _mapper[variable];
+        },
+    }, operand);
 }
 
 //==============================================================================

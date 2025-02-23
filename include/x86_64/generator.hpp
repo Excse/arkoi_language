@@ -4,11 +4,14 @@
 
 #include "x86_64/mapper.hpp"
 #include "il/instruction.hpp"
+#include "il/il_printer.hpp"
 
 namespace arkoi::x86_64 {
 
 class Generator : il::Visitor {
 public:
+    Generator() : _text(), _printer(_text) {}
+
     [[nodiscard]] static std::stringstream generate(il::Module &module);
 
 private:
@@ -39,13 +42,16 @@ private:
     void visit(il::Constant &instruction) override;
 
 private:
-    void _mov(const Operand &source, const Operand &destination, const Type &type);
+    Operand _map(const il::Operand &operand);
+
+    void _mov(Operand source, const Operand &destination, const Type &type);
 
 private:
-    il::Function *_current_function;
-    std::stringstream _text{};
+    il::Function *_current_function{};
     std::stringstream _data{};
-    size_t _constants;
+    std::stringstream _text;
+    il::ILPrinter _printer;
+    size_t _constants{};
     Mapper _mapper{};
 };
 

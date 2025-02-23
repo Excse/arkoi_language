@@ -24,9 +24,10 @@ bool DeadCodeElimination::enter_function(il::Function &function) {
                 },
                 [&](il::Store &instruction) {
                     _mark_variable(instruction.value());
+                    _mark_variable(instruction.result());
                 },
                 [&](il::Load &instruction) {
-                    _mark_variable(instruction.target());
+                    _mark_variable(instruction.value());
                 },
                 [&](il::Binary &instruction) {
                     _mark_variable(instruction.left());

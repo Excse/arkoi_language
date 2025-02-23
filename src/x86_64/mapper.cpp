@@ -1,5 +1,6 @@
 #include "x86_64/mapper.hpp"
 
+#include <cassert>
 #include <array>
 
 #include "utils/utils.hpp"
@@ -16,6 +17,7 @@ static constinit std::array<Register::Base, 8> SSE_REG_ORDER{Register::Base::XMM
                                                              Register::Base::XMM6, Register::Base::XMM7};
 
 static const Register RBP(Register::Base::BP, Size::QWORD);
+static const Register RSP(Register::Base::SP, Size::QWORD);
 
 Mapper Mapper::map(il::Function &function) {
     Mapper mapper;
@@ -39,28 +41,39 @@ Operand Mapper::operator[](const il::Operand &operand) {
 }
 
 void Mapper::visit(il::Function &function) {
-    size_t int_index = 0, sse_index = 0;
-    int64_t parameter_offset = 0;
+    auto int_parameters = int_register_parameters(function.parameters());
+    for (size_t index = 0; index < int_parameters.size(); index++) {
+        auto &parameter = int_parameters.at(index);
+        auto size = parameter.type().size();
+        auto reg = Register(INT_REG_ORDER[index], size);
+        _add_register(parameter, reg);
+    }
 
-    for (auto &parameter: function.parameters()) {
-        auto result = _parameter_register(int_index, sse_index, parameter);
-        if (result) {
-            _add_register(parameter, *result);
-        } else {
-            auto size = parameter.type().size();
-            _mappings[parameter] = Memory(size, RBP, parameter_offset);
-            parameter_offset += (int64_t) size_to_bytes(size);
-        }
+    auto sse_parameters = sse_register_parameters(function.parameters());
+    for (size_t index = 0; index < sse_parameters.size(); index++) {
+        auto &parameter = sse_parameters.at(index);
+        auto size = parameter.type().size();
+        auto reg = Register(SSE_REG_ORDER[index], size);
+        _add_register(parameter, reg);
+    }
+
+    auto stack_parameters = stack_parameters(function.parameters());
+    size_t parameter_offset = 16 + (stack_parameters.size() * 8);
+    for (auto &parameter: stack_parameters) {
+        auto size = parameter.type().size();
+        _mappings[parameter] = Memory(size, RBP, (int64_t) parameter_offset);
+        parameter_offset -= 8;
     }
 
     for (auto &block: function) {
         block.accept(*this);
     }
 
-    for (auto &variable: _stack_variables) {
+    int64_t local_offset = -8;
+    for (auto &variable: _locals) {
         auto size = variable.type().size();
-        _mappings[variable] = Memory(size, RBP, -_stack_size);
-        _stack_size += (int64_t) size_to_bytes(size);
+        _mappings[variable] = Memory(size, RBP, local_offset);
+        local_offset -= (int64_t) size_to_bytes(size);
     }
 }
 
@@ -84,21 +97,33 @@ void Mapper::visit(il::Return &instruction) {
 }
 
 void Mapper::visit(il::Call &instruction) {
-    auto reg = _return_register(instruction.result().type());
+    auto result_reg = _return_register(instruction.result().type());
 
     // Set the result register to the right
-    _add_register(instruction.result(), reg);
+    _add_register(instruction.result(), result_reg);
 
-    size_t int_index = 0, sse_index = 0;
-    for (auto &argument: instruction.arguments()) {
-        auto result = _parameter_register(int_index, sse_index, argument);
-        if (result) {
-            _add_register(argument, *result);
-        } else {
-            auto size = argument.type().size();
-            _mappings[argument] = Memory(size, RBP, _stack_size);
-            _stack_size -= (int64_t) size_to_bytes(size);
-        }
+    auto int_parameters = int_register_parameters(instruction.arguments());
+    for (size_t index = 0; index < int_parameters.size(); index++) {
+        auto &parameter = int_parameters.at(index);
+        auto size = parameter.type().size();
+        auto reg = Register(INT_REG_ORDER[index], size);
+        _add_register(parameter, reg);
+    }
+
+    auto sse_parameters = sse_register_parameters(instruction.arguments());
+    for (size_t index = 0; index < sse_parameters.size(); index++) {
+        auto &parameter = sse_parameters.at(index);
+        auto size = parameter.type().size();
+        auto reg = Register(SSE_REG_ORDER[index], size);
+        _add_register(parameter, reg);
+    }
+
+    auto stack_parameters = stack_parameters(instruction.arguments());
+    size_t parameter_offset = 0;
+    for (auto &parameter: stack_parameters) {
+        auto size = parameter.type().size();
+        _mappings[parameter] = Memory(size, RSP, (int64_t) parameter_offset);
+        parameter_offset -= 8;
     }
 }
 
@@ -128,30 +153,77 @@ void Mapper::visit(il::Constant &instruction) {
     _add_stack(instruction.result());
 }
 
-std::optional<Register> Mapper::_parameter_register(size_t &int_index, size_t &sse_index, il::Variable &parameter) {
-    return std::visit(match{
-        [&](const sem::Integral &type) -> std::optional<Register> {
-            if (int_index >= INT_REG_ORDER.size()) return std::nullopt;
-            return Register(INT_REG_ORDER[int_index++], type.size());
-        },
-        [&](const sem::Floating &type) -> std::optional<Register> {
-            if (sse_index >= SSE_REG_ORDER.size()) return std::nullopt;
-            return Register(SSE_REG_ORDER[sse_index++], type.size());
-        },
-        [&](const sem::Boolean &type) -> std::optional<Register> {
-            if (int_index >= INT_REG_ORDER.size()) return std::nullopt;
-            return Register(INT_REG_ORDER[int_index++], type.size());
-        }
-    }, parameter.type());
-}
-
 void Mapper::_add_register(const il::Variable &variable, Register reg) {
-    _stack_variables.erase(variable);
+    _locals.erase(variable);
     _mappings[variable] = reg;
 }
 
 void Mapper::_add_stack(const il::Variable &variable) {
-    _stack_variables.insert(variable);
+    _locals.insert(variable);
+}
+
+size_t Mapper::stack_size() const {
+    size_t stack_size = 0;
+
+    for (const auto &local: _locals) {
+        auto size = size_to_bytes(local.type().size());
+        stack_size += size;
+    }
+
+    static const size_t STACK_ALIGNMENT = 16;
+    stack_size = (stack_size + (STACK_ALIGNMENT - 1)) & ~(STACK_ALIGNMENT - 1);
+
+    return stack_size;
+}
+
+std::vector<il::Variable> Mapper::int_register_parameters(const std::vector<il::Variable> &parameters) {
+    std::vector<il::Variable> result;
+
+    for (auto &parameter: parameters) {
+        if (std::holds_alternative<sem::Floating>(parameter.type())) continue;
+        if (result.size() >= INT_REG_ORDER.size()) break;
+        result.push_back(parameter);
+    }
+
+    return result;
+}
+
+std::vector<il::Variable> Mapper::sse_register_parameters(const std::vector<il::Variable> &parameters) {
+    std::vector<il::Variable> result;
+
+    for (auto &parameter: parameters) {
+        if (!std::holds_alternative<sem::Floating>(parameter.type())) continue;
+        if (result.size() >= SSE_REG_ORDER.size()) break;
+        result.push_back(parameter);
+    }
+
+    return result;
+}
+
+std::vector<il::Variable> Mapper::stack_parameters(const std::vector<il::Variable> &parameters) {
+    std::vector<il::Variable> result;
+
+    size_t int_parameters = 0, sse_parameters = 0;
+    for (auto &parameter: parameters) {
+        if (std::holds_alternative<sem::Floating>(parameter.type())) {
+            if (sse_parameters >= SSE_REG_ORDER.size()) {
+                result.push_back(parameter);
+            } else {
+                sse_parameters++;
+            }
+        } else {
+            if (int_parameters >= INT_REG_ORDER.size()) {
+                result.push_back(parameter);
+            } else {
+                int_parameters++;
+            }
+        }
+    }
+
+    // Reverse the parameters that will be passed on the stack
+    std::reverse(result.begin(), result.end());
+
+    return result;
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &mapping) {

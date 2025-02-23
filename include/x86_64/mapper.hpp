@@ -19,7 +19,13 @@ public:
 
     [[nodiscard]] Operand operator[](const il::Operand &operand);
 
-    [[nodiscard]] size_t stack_size() const { return _stack_size; }
+    [[nodiscard]] size_t stack_size() const;
+
+    [[nodiscard]] static std::vector<il::Variable> int_register_parameters(const std::vector<il::Variable> &parameters);
+
+    [[nodiscard]] static std::vector<il::Variable> sse_register_parameters(const std::vector<il::Variable> &parameters);
+
+    [[nodiscard]] static std::vector<il::Variable> stack_parameters(const std::vector<il::Variable> &parameters);
 
 private:
     void visit(il::Module &) override {}
@@ -50,16 +56,13 @@ private:
 
     void visit(il::Constant &instruction) override;
 
-    std::optional<Register> _parameter_register(size_t &int_index, size_t &sse_index, il::Variable &parameter);
-
     void _add_register(const il::Variable &variable, Register reg);
 
     void _add_stack(const il::Variable &variable);
 
 private:
     std::unordered_map<il::Variable, Operand> _mappings{};
-    std::unordered_set<il::Variable> _stack_variables{};
-    int64_t _stack_size{};
+    std::unordered_set<il::Variable> _locals{};
 };
 
 } // namespace arkoi::x86_64

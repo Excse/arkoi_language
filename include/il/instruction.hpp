@@ -170,8 +170,8 @@ private:
 
 class Load : public InstructionBase {
 public:
-    Load(Variable result, Variable target)
-        : _result(std::move(result)), _target(std::move(target)) {}
+    Load(Variable result, Variable value)
+        : _result(std::move(result)), _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -179,10 +179,10 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &target() const { return _target; };
+    [[nodiscard]] auto &value() const { return _value; };
 
 private:
-    Variable _result, _target;
+    Variable _result, _value;
 };
 
 class Store : public InstructionBase {

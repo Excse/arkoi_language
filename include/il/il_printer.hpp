@@ -8,7 +8,7 @@
 
 namespace arkoi::il {
 
-class ILPrinter : Visitor {
+class ILPrinter : public Visitor {
 public:
     ILPrinter(std::stringstream &output) : _output(output) {}
 
