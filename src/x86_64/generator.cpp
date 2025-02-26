@@ -94,9 +94,20 @@ void Generator::visit(il::Cast &) {}
 void Generator::visit(il::Call &instruction) {
     // instruction.result() is unnecessary because the mapper always assigns the destination to either the XMM0 register
     // for floating-point values or the RDI register for integers.
-    // instruction.arguments() is also not needed, as the mapper maps each argument variable to the appropriate register.
+
+    auto stack_arguments = Mapper::get_stack_parameters(instruction.arguments());
+    auto stack_adjust = 8 * stack_arguments.size();
+    stack_adjust = Mapper::align_size(stack_adjust);
+
+    if (stack_adjust) {
+        _text << "\tsub rsp, " << stack_adjust << "\n";
+    }
 
     _text << "\tcall " << instruction.name() << "\n";
+
+    if (stack_adjust) {
+        _text << "\tadd rsp, " << stack_adjust << "\n";
+    }
 }
 
 void Generator::visit(il::If &) {}

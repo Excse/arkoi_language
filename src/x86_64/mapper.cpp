@@ -1,6 +1,5 @@
 #include "x86_64/mapper.hpp"
 
-#include <cassert>
 #include <array>
 
 #include "utils/utils.hpp"
@@ -41,7 +40,7 @@ Operand Mapper::operator[](const il::Operand &operand) {
 }
 
 void Mapper::visit(il::Function &function) {
-    auto int_parameters = int_register_parameters(function.parameters());
+    auto int_parameters = get_int_parameters(function.parameters());
     for (size_t index = 0; index < int_parameters.size(); index++) {
         auto &parameter = int_parameters.at(index);
         auto size = parameter.type().size();
@@ -49,7 +48,7 @@ void Mapper::visit(il::Function &function) {
         _add_register(parameter, reg);
     }
 
-    auto sse_parameters = sse_register_parameters(function.parameters());
+    auto sse_parameters = get_see_parameters(function.parameters());
     for (size_t index = 0; index < sse_parameters.size(); index++) {
         auto &parameter = sse_parameters.at(index);
         auto size = parameter.type().size();
@@ -57,12 +56,13 @@ void Mapper::visit(il::Function &function) {
         _add_register(parameter, reg);
     }
 
-    auto stack_parameters = stack_parameters(function.parameters());
-    size_t parameter_offset = 16 + (stack_parameters.size() * 8);
+    size_t parameter_offset = 16;
+    auto stack_parameters = get_stack_parameters(function.parameters());
     for (auto &parameter: stack_parameters) {
         auto size = parameter.type().size();
-        _mappings[parameter] = Memory(size, RBP, (int64_t) parameter_offset);
-        parameter_offset -= 8;
+        auto memory = Memory(size, RBP, (int64_t) parameter_offset);
+        _add_memory(parameter, memory);
+        parameter_offset += 8;
     }
 
     for (auto &block: function) {
@@ -72,7 +72,7 @@ void Mapper::visit(il::Function &function) {
     int64_t local_offset = -8;
     for (auto &variable: _locals) {
         auto size = variable.type().size();
-        _mappings[variable] = Memory(size, RBP, local_offset);
+        _mappings.emplace(variable, Memory(size, RBP, local_offset));
         local_offset -= (int64_t) size_to_bytes(size);
     }
 }
@@ -102,27 +102,30 @@ void Mapper::visit(il::Call &instruction) {
     // Set the result register to the right
     _add_register(instruction.result(), result_reg);
 
-    auto int_parameters = int_register_parameters(instruction.arguments());
-    for (size_t index = 0; index < int_parameters.size(); index++) {
-        auto &parameter = int_parameters.at(index);
+    auto int_arguments = get_int_parameters(instruction.arguments());
+    for (size_t index = 0; index < int_arguments.size(); index++) {
+        auto &parameter = int_arguments.at(index);
         auto size = parameter.type().size();
         auto reg = Register(INT_REG_ORDER[index], size);
         _add_register(parameter, reg);
     }
 
-    auto sse_parameters = sse_register_parameters(instruction.arguments());
-    for (size_t index = 0; index < sse_parameters.size(); index++) {
-        auto &parameter = sse_parameters.at(index);
+    auto sse_arguments = get_see_parameters(instruction.arguments());
+    for (size_t index = 0; index < sse_arguments.size(); index++) {
+        auto &parameter = sse_arguments.at(index);
         auto size = parameter.type().size();
         auto reg = Register(SSE_REG_ORDER[index], size);
         _add_register(parameter, reg);
     }
 
-    auto stack_parameters = stack_parameters(instruction.arguments());
-    size_t parameter_offset = 0;
-    for (auto &parameter: stack_parameters) {
+    auto stack_arguments = get_stack_parameters(instruction.arguments());
+    std::reverse(stack_arguments.begin(), stack_arguments.end());
+
+    size_t parameter_offset = -8;
+    for (auto &parameter: stack_arguments) {
         auto size = parameter.type().size();
-        _mappings[parameter] = Memory(size, RSP, (int64_t) parameter_offset);
+        auto memory = Memory(size, RSP, (int64_t) parameter_offset);
+        _add_memory(parameter, memory);
         parameter_offset -= 8;
     }
 }
@@ -153,9 +156,14 @@ void Mapper::visit(il::Constant &instruction) {
     _add_stack(instruction.result());
 }
 
-void Mapper::_add_register(const il::Variable &variable, Register reg) {
+void Mapper::_add_register(const il::Variable &variable, const Register &reg) {
     _locals.erase(variable);
-    _mappings[variable] = reg;
+    _mappings.emplace(variable, reg);
+}
+
+void Mapper::_add_memory(const il::Variable &variable, const Memory &memory) {
+    _locals.erase(variable);
+    _mappings.emplace(variable, memory);
 }
 
 void Mapper::_add_stack(const il::Variable &variable) {
@@ -170,13 +178,10 @@ size_t Mapper::stack_size() const {
         stack_size += size;
     }
 
-    static const size_t STACK_ALIGNMENT = 16;
-    stack_size = (stack_size + (STACK_ALIGNMENT - 1)) & ~(STACK_ALIGNMENT - 1);
-
-    return stack_size;
+    return align_size(stack_size);
 }
 
-std::vector<il::Variable> Mapper::int_register_parameters(const std::vector<il::Variable> &parameters) {
+std::vector<il::Variable> Mapper::get_int_parameters(const std::vector<il::Variable> &parameters) {
     std::vector<il::Variable> result;
 
     for (auto &parameter: parameters) {
@@ -188,7 +193,7 @@ std::vector<il::Variable> Mapper::int_register_parameters(const std::vector<il::
     return result;
 }
 
-std::vector<il::Variable> Mapper::sse_register_parameters(const std::vector<il::Variable> &parameters) {
+std::vector<il::Variable> Mapper::get_see_parameters(const std::vector<il::Variable> &parameters) {
     std::vector<il::Variable> result;
 
     for (auto &parameter: parameters) {
@@ -200,7 +205,7 @@ std::vector<il::Variable> Mapper::sse_register_parameters(const std::vector<il::
     return result;
 }
 
-std::vector<il::Variable> Mapper::stack_parameters(const std::vector<il::Variable> &parameters) {
+std::vector<il::Variable> Mapper::get_stack_parameters(const std::vector<il::Variable> &parameters) {
     std::vector<il::Variable> result;
 
     size_t int_parameters = 0, sse_parameters = 0;
@@ -220,10 +225,12 @@ std::vector<il::Variable> Mapper::stack_parameters(const std::vector<il::Variabl
         }
     }
 
-    // Reverse the parameters that will be passed on the stack
-    std::reverse(result.begin(), result.end());
-
     return result;
+}
+
+size_t Mapper::align_size(size_t input) {
+    static const size_t STACK_ALIGNMENT = 16;
+    return (input + (STACK_ALIGNMENT - 1)) & ~(STACK_ALIGNMENT - 1);
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &mapping) {

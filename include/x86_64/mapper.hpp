@@ -9,7 +9,7 @@
 
 namespace arkoi::x86_64 {
 
-using Operand = std::variant<std::monostate, Memory, Register, il::Immediate>;
+using Operand = std::variant<Memory, Register, il::Immediate>;
 
 class Mapper : il::Visitor {
 public:
@@ -21,11 +21,13 @@ public:
 
     [[nodiscard]] size_t stack_size() const;
 
-    [[nodiscard]] static std::vector<il::Variable> int_register_parameters(const std::vector<il::Variable> &parameters);
+    [[nodiscard]] static std::vector<il::Variable> get_int_parameters(const std::vector<il::Variable> &parameters);
 
-    [[nodiscard]] static std::vector<il::Variable> sse_register_parameters(const std::vector<il::Variable> &parameters);
+    [[nodiscard]] static std::vector<il::Variable> get_see_parameters(const std::vector<il::Variable> &parameters);
 
-    [[nodiscard]] static std::vector<il::Variable> stack_parameters(const std::vector<il::Variable> &parameters);
+    [[nodiscard]] static std::vector<il::Variable> get_stack_parameters(const std::vector<il::Variable> &parameters);
+
+    [[nodiscard]] static size_t align_size(size_t input);
 
 private:
     void visit(il::Module &) override {}
@@ -56,7 +58,9 @@ private:
 
     void visit(il::Constant &instruction) override;
 
-    void _add_register(const il::Variable &variable, Register reg);
+    void _add_register(const il::Variable &variable, const Register &reg);
+
+    void _add_memory(const il::Variable &variable, const Memory &memory);
 
     void _add_stack(const il::Variable &variable);
 

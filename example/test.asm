@@ -11,28 +11,48 @@ _start:
 main:
 	enter 48, 0
 	# $01 @u64 = alloca
-	# $05 @f64 = const 5
+	# $03 @u32 = const 1
+	mov edi, 1
+	# $05 @u32 = const 2
+	mov esi, 2
+	# $07 @u32 = const 3
+	mov edx, 3
+	# $09 @u32 = const 4
+	mov ecx, 4
+	# $11 @u32 = const 5
+	mov r8d, 5
+	# $13 @u32 = const 6
+	mov r9d, 6
+	# $15 @u32 = const 7
+	mov DWORD PTR [rsp - 16], 7
+	# $17 @u32 = const 8
+	mov DWORD PTR [rsp - 8], 8
+	# $18 @bool = call calling_convention($03, $05, $07, $09, $11, $13, $15, $17)
+	sub rsp, 16
+	call calling_convention
+	add rsp, 16
+	# $22 @f64 = const 5
 	movsd xmm0, QWORD PTR [float0]
-	# $06 @bool = call ok($05)
+	# $23 @bool = call ok($22)
 	call ok
-	# $07 @u32 = cast @bool $06
-	# $08 @u32 = mul @u32 1, $07
-	# $11 @u32 = add @u32 $08, 1
-	# $12 @s32 = cast @u32 $11
-	# $14 @f64 = const 10.5
+	# $24 @u32 = cast @bool $23
+	# $25 @u32 = mul @u32 1, $24
+	# $28 @u32 = add @u32 $25, 1
+	# $29 @s32 = cast @u32 $28
+	# $31 @f64 = const 10.5
 	movsd xmm0, QWORD PTR [float1]
-	# $15 @f32 = call test1($12, $14)
+	# $32 @f32 = call test1($29, $31)
 	call test1
-	# $17 @f32 = mul @f32 $15, 2.01
-	# $20 @f32 = sub @f32 $17, 42
-	# $21 @u64 = cast @f32 $20
-	# store @u64 $21, $01
-	mov r10, QWORD PTR [rbp - 28]
+	# $34 @f32 = mul @f32 $32, 2.01
+	# $37 @f32 = sub @f32 $34, 42
+	# $38 @u64 = cast @f32 $37
+	# store @u64 $38, $01
+	mov r10, QWORD PTR [rbp - 16]
 	mov QWORD PTR [rbp - 44], r10
-	# $22 @u64 = load $01
+	# $39 @u64 = load $01
 	mov r10, QWORD PTR [rbp - 44]
 	mov QWORD PTR [rbp - 8], r10
-	# ret $22
+	# ret $39
 	mov rax, QWORD PTR [rbp - 8]
 	leave
 	ret
@@ -235,10 +255,10 @@ calling_convention:
 	# store @u32 f, $07
 	mov DWORD PTR [rbp - 17], r9d
 	# store @u32 g, $08
-	mov r10d, DWORD PTR [rbp + 24]
+	mov r10d, DWORD PTR [rbp + 16]
 	mov DWORD PTR [rbp - 13], r10d
 	# store @u32 h, $09
-	mov r10d, DWORD PTR [rbp + 32]
+	mov r10d, DWORD PTR [rbp + 24]
 	mov DWORD PTR [rbp - 9], r10d
 	# store @bool 1, $01
 	mov BYTE PTR [rbp - 41], 1
