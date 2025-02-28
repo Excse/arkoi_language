@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 
 #include "x86_64/register.hpp"
 #include "x86_64/memory.hpp"
@@ -62,11 +62,9 @@ private:
 
     void _add_memory(const il::Variable &variable, const Memory &memory);
 
-    void _add_stack(const il::Variable &variable);
-
 private:
     std::unordered_map<il::Variable, Operand> _mappings{};
-    std::unordered_set<il::Variable> _locals{};
+    std::set<il::Variable> _locals{};
 };
 
 } // namespace arkoi::x86_64

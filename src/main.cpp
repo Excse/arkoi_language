@@ -34,7 +34,7 @@ void dump_cfg(const std::string &base_path, il::Module &module) {
 }
 
 int main() {
-    static const std::string INPUT_FILE = "../example/test.ark";
+    static const std::string INPUT_FILE = "../example/cc/cc.ark";
 
     auto last_dot = INPUT_FILE.find_last_of('.');
     if (last_dot == std::string::npos || INPUT_FILE.substr(last_dot) != ".ark") {

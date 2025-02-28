@@ -5,7 +5,7 @@ digraph CFG {
 	bgcolor = "#f7f7f7";
 	splines = false;
 
-	L0 [label="fun main() @u64:\l $01 @u64 = alloca\l $03 @u32 = const 1\l $05 @u32 = const 2\l $07 @u32 = const 3\l $09 @u32 = const 4\l $11 @u32 = const 5\l $13 @u32 = const 6\l $15 @u32 = const 7\l $17 @u32 = const 8\l $18 @bool = call calling_convention($03, $05, $07, $09, $11, $13, $15, $17)\l $22 @f64 = const 5\l $23 @bool = call ok($22)\l $24 @u32 = cast @bool $23\l $25 @u32 = mul @u32 1, $24\l $28 @u32 = add @u32 $25, 1\l $29 @s32 = cast @u32 $28\l $31 @f64 = const 10.5\l $32 @f32 = call test1($29, $31)\l $34 @f32 = mul @f32 $32, 2.01\l $37 @f32 = sub @f32 $34, 42\l $38 @u64 = cast @f32 $37\l store @u64 $38, $01\l $39 @u64 = load $01\l ret $39\l"];
+	L0 [label="fun main() @u64:\l $01 @u64 = alloca\l $05 @f64 = const 5\l $06 @bool = call ok($05)\l $07 @u32 = cast @bool $06\l $08 @u32 = mul @u32 1, $07\l $11 @u32 = add @u32 $08, 1\l $12 @s32 = cast @u32 $11\l $14 @f64 = const 10.5\l $15 @f32 = call test1($12, $14)\l $17 @f32 = mul @f32 $15, 2.01\l $20 @f32 = sub @f32 $17, 42\l $21 @u64 = cast @f32 $20\l store @u64 $21, $01\l $22 @u64 = load $01\l ret $22\l"];
 	L2 [label="fun ok(foo1 @f64) @bool:\l $01 @bool = alloca\l $02 @f64 = alloca\l store @f64 foo1, $02\l $03 @f64 = load $02\l $06 @bool = gth @f64 $03, 5\l if $06 then L4 else L5\l"];
 	L2 -> L5 [label="Next"];
 	L2 -> L4 [label="Branch"];
@@ -35,5 +35,4 @@ digraph CFG {
 	L17 [label="L17:\l $08 @f64 = load $03\l $09 @s32 = load $02\l $10 @f64 = cast @s32 $09\l $11 @f64 = mul @f64 $08, $10\l $12 @f32 = cast @f64 $11\l store @f32 $12, $01\l goto L16\l"];
 	L17 -> L16 [label="Next"];
 	L16 [label="L16:\l $19 @f32 = load $01\l ret $19\l"];
-	L20 [label="fun calling_convention(a @u32, b @u32, c @u32, d @u32, e @u32, f @u32, g @u32, h @u32) @bool:\l $01 @bool = alloca\l $02 @u32 = alloca\l $03 @u32 = alloca\l $04 @u32 = alloca\l $05 @u32 = alloca\l $06 @u32 = alloca\l $07 @u32 = alloca\l $08 @u32 = alloca\l $09 @u32 = alloca\l store @u32 a, $02\l store @u32 b, $03\l store @u32 c, $04\l store @u32 d, $05\l store @u32 e, $06\l store @u32 f, $07\l store @u32 g, $08\l store @u32 h, $09\l store @bool 1, $01\l $11 @bool = load $01\l ret $11\l"];
 }

@@ -62,6 +62,8 @@ void Generator::visit(il::BasicBlock &block) {
     }
 
     for (auto &instruction: block) {
+        if (std::holds_alternative<il::Alloca>(instruction)) continue;
+
         _text << "\t# ";
         instruction.accept(_printer);
         _text << "\n";

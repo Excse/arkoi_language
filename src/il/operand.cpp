@@ -6,6 +6,11 @@
 
 using namespace arkoi::il;
 
+bool Variable::operator<(const Variable &rhs) const {
+    if (_name != rhs._name) return _name < rhs._name;
+    return _version < rhs._version;
+}
+
 bool Variable::operator==(const Variable &rhs) const {
     return _name == rhs._name && _version == rhs._version;
 }

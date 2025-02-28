@@ -13,6 +13,8 @@ public:
     Variable(std::string name, Type type, size_t version = 0)
         : _name(std::move(name)), _version(version), _type(std::move(type)) {}
 
+    bool operator<(const Variable& rhs) const;
+
     bool operator==(const Variable &rhs) const;
 
     bool operator!=(const Variable &rhs) const;
