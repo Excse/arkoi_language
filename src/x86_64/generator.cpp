@@ -83,10 +83,10 @@ void Generator::visit(il::Return &instruction) {
     // The destination is always either XMM0 or RAX, depending on the return type. Since the mapper already handles this
     // assignment, this instruction is simply translated into a mov instruction.
 
-    auto destination = _map(instruction.result());
-    auto source = _map(instruction.value());
+    auto destination = _load(instruction.result());
+    auto source = _load(instruction.value());
     auto &type = instruction.result().type();
-    _mov(source, destination, type);
+    _store(source, destination, type);
 }
 
 void Generator::visit(il::Binary &) {}
@@ -97,15 +97,11 @@ void Generator::visit(il::Call &instruction) {
     // instruction.result() is unnecessary because the mapper always assigns the destination to either the XMM0 register
     // for floating-point values or the RDI register for integers.
 
+    _text << "\tcall " << instruction.name() << "\n";
+
     auto stack_arguments = Mapper::get_stack_parameters(instruction.arguments());
     auto stack_adjust = 8 * stack_arguments.size();
     stack_adjust = Mapper::align_size(stack_adjust);
-
-    if (stack_adjust) {
-        _text << "\tsub rsp, " << stack_adjust << "\n";
-    }
-
-    _text << "\tcall " << instruction.name() << "\n";
 
     if (stack_adjust) {
         _text << "\tadd rsp, " << stack_adjust << "\n";
@@ -119,17 +115,17 @@ void Generator::visit(il::Goto &instruction) {
 }
 
 void Generator::visit(il::Store &instruction) {
-    auto destination = _map(instruction.result());
-    auto source = _map(instruction.value());
+    auto destination = _load(instruction.result());
+    auto source = _load(instruction.value());
     auto &type = instruction.result().type();
-    _mov(source, destination, type);
+    _store(source, destination, type);
 }
 
 void Generator::visit(il::Load &instruction) {
-    auto destination = _map(instruction.result());
-    auto source = _map(instruction.value());
+    auto destination = _load(instruction.result());
+    auto source = _load(instruction.value());
     auto &type = instruction.result().type();
-    _mov(source, destination, type);
+    _store(source, destination, type);
 }
 
 void Generator::visit(il::Constant &instruction) {
@@ -137,13 +133,19 @@ void Generator::visit(il::Constant &instruction) {
     // the call instruction only accepts IL variables as arguments. Thus, most of the constant variables will be mapped
     // to a register or memory location according to the specific calling convention.
 
-    auto destination = _map(instruction.result());
-    auto source = _map(instruction.value());
+    auto destination = _load(instruction.result());
+    auto source = _load(instruction.value());
     auto &type = instruction.result().type();
-    _mov(source, destination, type);
+    _store(source, destination, type);
 }
 
-void Generator::_mov(Operand source, const Operand &destination, const Type &type) {
+void Generator::_store(Operand source, const Operand &destination, const Type &type) {
+    // If the destination is the stack, then just push the operand.
+    if (std::holds_alternative<StackPush>(destination)) {
+        _text << "\tpush " << source << "\n";
+        return;
+    }
+
     // If the source and destination is the same, the mov instruction is not needed.
     if (source == destination) return;
 
@@ -152,11 +154,11 @@ void Generator::_mov(Operand source, const Operand &destination, const Type &typ
     if (std::holds_alternative<Memory>(source) && std::holds_alternative<Memory>(destination)) {
         if (std::holds_alternative<sem::Floating>(type)) {
             auto target = Register(TEMP_SSE, type.size());
-            _mov(source, target, type);
+            _store(source, target, type);
             source = target;
         } else {
             auto target = Register(TEMP_INT, type.size());
-            _mov(source, target, type);
+            _store(source, target, type);
             source = target;
         }
     }
@@ -171,7 +173,7 @@ void Generator::_mov(Operand source, const Operand &destination, const Type &typ
     _text << "\t" << menomic << " " << destination << ", " << source << "\n";
 }
 
-Operand Generator::_map(const il::Operand &operand) {
+Operand Generator::_load(const il::Operand &operand) {
     return std::visit(match{
         [&](const il::Immediate &immediate) -> Operand {
             if (std::holds_alternative<double>(immediate)) {

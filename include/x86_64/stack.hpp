@@ -1,61 +1,18 @@
 #pragma once
 
-#include <sstream>
-
-#include "x86_64/mapper.hpp"
-#include "il/instruction.hpp"
-#include "il/il_printer.hpp"
+#include "utils/size.hpp"
 
 namespace arkoi::x86_64 {
 
-class Generator : il::Visitor {
-public:
-    Generator() : _text(), _printer(_text) {}
+struct StackPush {
+    bool operator==(const StackPush &) const { return true; }
 
-    [[nodiscard]] static std::stringstream generate(il::Module &module);
-
-private:
-    void visit(il::Module &module) override;
-
-    void visit(il::Function &function) override;
-
-    void visit(il::BasicBlock &block) override;
-
-    void visit(il::Return &instruction) override;
-
-    void visit(il::Binary &instruction) override;
-
-    void visit(il::Cast &instruction) override;
-
-    void visit(il::Call &instruction) override;
-
-    void visit(il::If &instruction) override;
-
-    void visit(il::Goto &instruction) override;
-
-    void visit(il::Alloca &) override {}
-
-    void visit(il::Store &instruction) override;
-
-    void visit(il::Load &instruction) override;
-
-    void visit(il::Constant &instruction) override;
-
-private:
-    Operand _load(const il::Operand &operand);
-
-    void _store(Operand source, const Operand &destination, const Type &type);
-
-private:
-    il::Function *_current_function{};
-    std::stringstream _data{};
-    std::stringstream _text;
-    il::ILPrinter _printer;
-    size_t _constants{};
-    Mapper _mapper{};
+    bool operator!=(const StackPush &) const { return false; };
 };
 
 } // namespace arkoi::x86_64
+
+std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::StackPush &push);
 
 //==============================================================================
 // BSD 3-Clause License

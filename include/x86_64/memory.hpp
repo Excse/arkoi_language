@@ -32,7 +32,7 @@ public:
 
     [[nodiscard]] auto index() const { return _index; }
 
-    [[nodiscard]] auto &size() const { return _size; }
+    [[nodiscard]] auto size() const { return _size; }
 
 private:
     int64_t _index, _scale, _displacement;

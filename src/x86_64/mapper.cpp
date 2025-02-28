@@ -116,11 +116,8 @@ void Mapper::visit(il::Call &instruction) {
     auto stack_arguments = get_stack_parameters(instruction.arguments());
     std::reverse(stack_arguments.begin(), stack_arguments.end());
 
-    size_t parameter_offset = -8;
-    for (auto &parameter: stack_arguments) {
-        auto size = parameter.type().size();
-        _add_memory(parameter, {size, RSP, (int64_t) parameter_offset});
-        parameter_offset -= 8;
+    for (auto &argument: stack_arguments) {
+        _add_push(argument);
     }
 }
 
@@ -158,6 +155,11 @@ void Mapper::_add_register(const il::Variable &variable, const Register &reg) {
 void Mapper::_add_memory(const il::Variable &variable, const Memory &memory) {
     _locals.erase(variable);
     _mappings.emplace(variable, memory);
+}
+
+void Mapper::_add_push(const il::Variable &variable) {
+    _locals.erase(variable);
+    _mappings.emplace(variable, StackPush {});
 }
 
 size_t Mapper::stack_size() const {

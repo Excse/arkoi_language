@@ -5,10 +5,10 @@ digraph CFG {
 	bgcolor = "#f7f7f7";
 	splines = false;
 
-	L0 [label="fun main() @u64:\l $01 @u64 = alloca\l $02 @s32 = const 1\l $03 @u32 = cast @s32 $02\l $04 @s32 = const 2\l $05 @u32 = cast @s32 $04\l $06 @s32 = const 3\l $07 @u32 = cast @s32 $06\l $08 @s32 = const 4\l $09 @u32 = cast @s32 $08\l $10 @s32 = const 5\l $11 @u32 = cast @s32 $10\l $12 @s32 = const 6\l $13 @u32 = cast @s32 $12\l $14 @s32 = const 7\l $15 @u32 = cast @s32 $14\l $16 @s32 = const 8\l $17 @u32 = cast @s32 $16\l $18 @bool = call calling_convention($03, $05, $07, $09, $11, $13, $15, $17)\l $19 @u64 = cast @bool $18\l store @u64 $19, $01\l goto L1\l"];
+	L0 [label="fun main(a @u32) @u32:\l $01 @u32 = alloca\l $02 @u32 = alloca\l store @u32 a, $02\l $03 @s32 = const 1\l $04 @u32 = cast @s32 $03\l $05 @s32 = const 2\l $06 @u32 = cast @s32 $05\l $07 @s32 = const 3\l $08 @u32 = cast @s32 $07\l $09 @s32 = const 4\l $10 @u32 = cast @s32 $09\l $11 @s32 = const 5\l $12 @u32 = cast @s32 $11\l $13 @s32 = const 6\l $14 @u32 = cast @s32 $13\l $15 @s32 = const 7\l $16 @u32 = cast @s32 $15\l $17 @s32 = const 8\l $18 @u32 = cast @s32 $17\l $19 @u64 = call calling_convention($04, $06, $08, $10, $12, $14, $16, $18)\l $20 @u32 = cast @u64 $19\l store @u32 $20, $01\l goto L1\l"];
 	L0 -> L1 [label="Next"];
-	L1 [label="L1:\l $20 @u64 = load $01\l ret $20\l"];
-	L2 [label="fun calling_convention(a @u32, b @u32, c @u32, d @u32, e @u32, f @u32, g @u32, h @u32) @bool:\l $01 @bool = alloca\l $02 @u32 = alloca\l $03 @u32 = alloca\l $04 @u32 = alloca\l $05 @u32 = alloca\l $06 @u32 = alloca\l $07 @u32 = alloca\l $08 @u32 = alloca\l $09 @u32 = alloca\l store @u32 a, $02\l store @u32 b, $03\l store @u32 c, $04\l store @u32 d, $05\l store @u32 e, $06\l store @u32 f, $07\l store @u32 g, $08\l store @u32 h, $09\l $10 @bool = const 1\l store @bool $10, $01\l goto L3\l"];
+	L1 [label="L1:\l $21 @u32 = load $01\l ret $21\l"];
+	L2 [label="fun calling_convention(a @u32, b @u32, c @u32, d @u32, e @u32, f @u32, g @u32, h @u32) @u64:\l $01 @u64 = alloca\l $02 @u32 = alloca\l $03 @u32 = alloca\l $04 @u32 = alloca\l $05 @u32 = alloca\l $06 @u32 = alloca\l $07 @u32 = alloca\l $08 @u32 = alloca\l $09 @u32 = alloca\l store @u32 a, $02\l store @u32 b, $03\l store @u32 c, $04\l store @u32 d, $05\l store @u32 e, $06\l store @u32 f, $07\l store @u32 g, $08\l store @u32 h, $09\l $10 @bool = const 1\l $11 @u64 = cast @bool $10\l store @u64 $11, $01\l goto L3\l"];
 	L2 -> L3 [label="Next"];
-	L3 [label="L3:\l $11 @bool = load $01\l ret $11\l"];
+	L3 [label="L3:\l $12 @u64 = load $01\l ret $12\l"];
 }

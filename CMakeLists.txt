@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME}_lib
         src/x86_64/mapper.cpp
         src/x86_64/register.cpp
         src/x86_64/memory.cpp
+        src/x86_64/stack.cpp
         src/x86_64/generator.cpp
         src/utils/dep_graph.tpp
         src/utils/size.cpp

@@ -5,11 +5,12 @@
 
 #include "x86_64/register.hpp"
 #include "x86_64/memory.hpp"
+#include "x86_64/stack.hpp"
 #include "il/instruction.hpp"
 
 namespace arkoi::x86_64 {
 
-using Operand = std::variant<Memory, Register, il::Immediate>;
+using Operand = std::variant<StackPush, Memory, Register, il::Immediate>;
 
 class Mapper : il::Visitor {
 public:
@@ -61,6 +62,8 @@ private:
     void _add_register(const il::Variable &variable, const Register &reg);
 
     void _add_memory(const il::Variable &variable, const Memory &memory);
+
+    void _add_push(const il::Variable &variable);
 
 private:
     std::unordered_map<il::Variable, Operand> _mappings{};
