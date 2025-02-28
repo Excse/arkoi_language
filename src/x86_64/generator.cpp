@@ -89,7 +89,14 @@ void Generator::visit(il::Return &instruction) {
     _store(source, destination, type);
 }
 
-void Generator::visit(il::Binary &) {}
+void Generator::visit(il::Binary &instruction) {
+    auto destination = _load(instruction.result());
+    auto left = _load(instruction.left());
+    auto right = _load(instruction.right());
+
+    auto is_commuative = _is_commutative(instruction.op());
+    _adjust_binary_operands(left, right, is_commuative, instruction.op_type());
+}
 
 void Generator::visit(il::Cast &) {}
 
@@ -131,12 +138,33 @@ void Generator::visit(il::Load &instruction) {
 void Generator::visit(il::Constant &instruction) {
     // This instruction is generally unused if the optimizer runs. However, during a function call, it is retained since
     // the call instruction only accepts IL variables as arguments. Thus, most of the constant variables will be mapped
-    // to a register or memory location according to the specific calling convention.
+    // to a register/memory location or stack push according to the specific calling convention.
 
     auto destination = _load(instruction.result());
     auto source = _load(instruction.value());
     auto &type = instruction.result().type();
     _store(source, destination, type);
+}
+
+Operand Generator::_load(const il::Operand &operand) {
+    return std::visit(match{
+        [&](const il::Immediate &immediate) -> Operand {
+            if (std::holds_alternative<double>(immediate)) {
+                auto name = "float" + std::to_string(_constants++);
+                _data << "\t" << name << ": .double\t" << immediate << "\n";
+                return Memory(Size::QWORD, name);
+            } else if (std::holds_alternative<float>(immediate)) {
+                auto name = "float" + std::to_string(_constants++);
+                _data << "\t" << name << ": .float\t" << immediate << "\n";
+                return Memory(Size::DWORD, name);
+            } else {
+                return immediate;
+            }
+        },
+        [&](const il::Variable &variable) -> Operand {
+            return _mapper[variable];
+        },
+    }, operand);
 }
 
 void Generator::_store(Operand source, const Operand &destination, const Type &type) {
@@ -173,25 +201,84 @@ void Generator::_store(Operand source, const Operand &destination, const Type &t
     _text << "\t" << menomic << " " << destination << ", " << source << "\n";
 }
 
-Operand Generator::_load(const il::Operand &operand) {
-    return std::visit(match{
-        [&](const il::Immediate &immediate) -> Operand {
-            if (std::holds_alternative<double>(immediate)) {
-                auto name = "float" + std::to_string(_constants++);
-                _data << "\t" << name << ": .double\t" << immediate << "\n";
-                return Memory(Size::QWORD, name);
-            } else if (std::holds_alternative<float>(immediate)) {
-                auto name = "float" + std::to_string(_constants++);
-                _data << "\t" << name << ": .float\t" << immediate << "\n";
-                return Memory(Size::DWORD, name);
+void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const Type &type) {
+    if (std::holds_alternative<StackPush>(left) || std::holds_alternative<StackPush>(right)) {
+        // If either the left or right operand is a stack push operand an error is thrown, as it isn't a valid instruction.
+        // reg:push	    -> Not valid because push can't be used
+        // push:imm	    -> Not valid because push can't be used
+        // push:mem	    -> Not valid because push can't be used
+        // push:reg	    -> Not valid because push can't be used
+        // push:push	-> Not valid because push can't be used
+        // mem:push	    -> Not valid because push can't be used
+
+        throw std::runtime_error("A binary operation using any push operand is not a valid instruction.");
+    } else if (std::holds_alternative<il::Immediate>(left) && std::holds_alternative<il::Immediate>(right)) {
+        // If both operands are immediate, then one (the lhs) operand must be either transformed into a memory or
+        // register operand.
+        // imm:imm		-> Valid but needs to be transformed into reg:imm
+
+        auto left_immediate = std::get<il::Immediate>(left);
+        if (std::holds_alternative<sem::Floating>(type)) {
+            auto target = Register(TEMP_SSE, type.size());
+            _store(left, target, type);
+            left = target;
+        } else {
+            auto target = Register(TEMP_INT, type.size());
+            _store(left, target, type);
+            left = target;
+        }
+    } else if (std::holds_alternative<Memory>(left) && std::holds_alternative<Memory>(right)) {
+        // Since binary instructions only accept operands in the forms (src:dest) reg:mem, mem:reg, imm:reg, or imm:mem,
+        // a mem:mem operation must be split into two mov instructions.
+        // mem:mem		-> Valid but needs to be transformed into reg:mem
+
+        if (std::holds_alternative<sem::Floating>(type)) {
+            auto target = Register(TEMP_SSE, type.size());
+            _store(left, target, type);
+            left = target;
+        } else {
+            auto target = Register(TEMP_INT, type.size());
+            _store(left, target, type);
+            left = target;
+        }
+    } else if (std::holds_alternative<il::Immediate>(left)) {
+        // If just the left operand is an immediate it either the operands need to be switched or transformed.
+        // imm:mem		-> Valid, either switch to mem:imm (if commutative) or transformed into reg:mem
+        // imm:reg		-> Valid, either switch to reg:imm (if commutative) or transformed into reg:reg
+
+        if (is_commutative) {
+            std::swap(left, right);
+        } else {
+            auto left_immediate = std::get<il::Immediate>(left);
+            if (std::holds_alternative<sem::Floating>(type)) {
+                auto target = Register(TEMP_SSE, type.size());
+                _store(left, target, type);
+                left = target;
             } else {
-                return immediate;
+                auto target = Register(TEMP_INT, type.size());
+                _store(left, target, type);
+                left = target;
             }
-        },
-        [&](const il::Variable &variable) -> Operand {
-            return _mapper[variable];
-        },
-    }, operand);
+        }
+    } else {
+        // Valid otherwise.
+        // mem:im		-> Valid
+        // mem:reg		-> Valid
+        // reg:imm		-> Valid
+        // reg:mem		-> Valid
+        // reg:reg		-> Valid
+    }
+}
+
+bool Generator::_is_commutative(const il::Binary::Operator &op) {
+    switch (op) {
+        case il::Binary::Operator::Add:
+        case il::Binary::Operator::Mul: return true;
+        case il::Binary::Operator::Sub:
+        case il::Binary::Operator::Div:
+        case il::Binary::Operator::GreaterThan:
+        case il::Binary::Operator::LessThan: return false;
+    }
 }
 
 //==============================================================================

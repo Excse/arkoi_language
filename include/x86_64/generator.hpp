@@ -46,6 +46,10 @@ private:
 
     void _store(Operand source, const Operand &destination, const Type &type);
 
+    void _adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const Type &type);
+
+    [[nodiscard]] static bool _is_commutative(const il::Binary::Operator &op);
+
 private:
     il::Function *_current_function{};
     std::stringstream _data{};
