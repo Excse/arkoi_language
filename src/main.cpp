@@ -33,17 +33,18 @@ void dump_cfg(const std::string &base_path, il::Module &module) {
     if (WEXITSTATUS(assemble_result) != 0) exit(1);
 }
 
-int main() {
-    static const std::string INPUT_FILE = "../example/cc/cc.ark";
+int main(int argc, char* argv[]) {
+    if(argc != 2) throw std::runtime_error("You need to provide a arkoi source path to compile.");
+    const std::string input_path = argv[1];
 
-    auto last_dot = INPUT_FILE.find_last_of('.');
-    if (last_dot == std::string::npos || INPUT_FILE.substr(last_dot) != ".ark") {
+    auto last_dot = input_path.find_last_of('.');
+    if (last_dot == std::string::npos || input_path.substr(last_dot) != ".ark") {
         throw std::invalid_argument("This is not a valid file path with '.ark' extension.");
     }
 
-    auto base_path = INPUT_FILE.substr(0, last_dot);
+    auto base_path = input_path.substr(0, last_dot);
 
-    std::ifstream file(INPUT_FILE);
+    std::ifstream file(input_path);
     std::stringstream buffer;
     buffer << file.rdbuf();
 
