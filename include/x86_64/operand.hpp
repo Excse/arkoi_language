@@ -1,7 +1,6 @@
 #pragma once
 
 #include "utils/size.hpp"
-#include "il/operand.hpp"
 
 namespace arkoi::x86_64 {
 
@@ -71,8 +70,8 @@ public:
     bool operator!=(const StackPush &) const { return false; };
 };
 
-struct Immediate : public il::Immediate {
-    using il::Immediate::Immediate;
+struct Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+    using variant::variant;
 };
 
 struct Operand : public std::variant<StackPush, Memory, Register, Immediate> {
@@ -90,6 +89,8 @@ std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Memory &memory);
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Memory::Address &memory);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::StackPush &push);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Immediate &operand);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Operand &mapping);
 

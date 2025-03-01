@@ -12,7 +12,7 @@ bool Register::operator!=(const Register &other) const {
     return !(other == *this);
 }
 
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register &reg) {
+std::ostream &operator<<(std::ostream &os, const Register &reg) {
     if (reg.base() >= Register::Base::R8 && reg.base() <= Register::Base::R15) {
         switch (reg.size()) {
             case Size::BYTE: return os << reg.base() << "b";
@@ -124,8 +124,13 @@ std::ostream &operator<<(std::ostream &os, const Memory &memory) {
     return os;
 }
 
-std::ostream &operator<<(std::ostream &, const arkoi::x86_64::StackPush &) {
+std::ostream &operator<<(std::ostream &, const StackPush &) {
     throw std::runtime_error("This operand type is not displayable.");
+}
+
+std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
+    std::visit([&](const auto &value) { os << value; }, immediate);
+    return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const Operand &mapping) {
