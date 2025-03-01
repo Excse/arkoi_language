@@ -16,7 +16,6 @@ static constinit std::array<Register::Base, 8> SSE_REG_ORDER{Register::Base::XMM
                                                              Register::Base::XMM6, Register::Base::XMM7};
 
 static const Register RBP(Register::Base::BP, Size::QWORD);
-static const Register RSP(Register::Base::SP, Size::QWORD);
 
 Mapper Mapper::map(il::Function &function) {
     Mapper mapper;

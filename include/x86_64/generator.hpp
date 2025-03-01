@@ -25,6 +25,14 @@ private:
 
     void visit(il::Binary &instruction) override;
 
+    [[nodiscard]] Operand _binary_add(const Operand &left, const Operand &right, const Type &type);
+
+    [[nodiscard]] Operand _binary_sub(const Operand &left, const Operand &right, const Type &type);
+
+    [[nodiscard]] Operand _binary_mul(const Operand &left, const Operand &right, const Type &type);
+
+    [[nodiscard]] Operand _binary_div(const Operand &left, const Operand &right, const Type &type);
+
     void visit(il::Cast &instruction) override;
 
     void visit(il::Call &instruction) override;

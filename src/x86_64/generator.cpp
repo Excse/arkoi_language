@@ -90,13 +90,84 @@ void Generator::visit(il::Return &instruction) {
 }
 
 void Generator::visit(il::Binary &instruction) {
+    auto &type = instruction.result().type();
     auto destination = _load(instruction.result());
     auto left = _load(instruction.left());
     auto right = _load(instruction.right());
 
     auto is_commuative = _is_commutative(instruction.op());
     _adjust_binary_operands(left, right, is_commuative, instruction.op_type());
+
+    Operand source;
+    switch (instruction.op()) {
+        case il::Binary::Operator::Add: {
+            source = _binary_add(left, right, type);
+            break;
+        }
+        case il::Binary::Operator::Sub: {
+            source = _binary_sub(left, right, type);
+            break;
+        }
+        case il::Binary::Operator::Mul: {
+            source = _binary_mul(left, right, type);
+            break;
+        }
+        case il::Binary::Operator::Div: {
+            source = _binary_div(left, right, type);
+            break;
+        }
+        default: break;
+    }
+
+    _store(source, destination, type);
 }
+
+Operand Generator::_binary_add(const Operand &left, const Operand &right, const Type &type) {
+    _text << "\tadd";
+    if (std::holds_alternative<sem::Floating>(type)) {
+        _text << (type.size() == Size::QWORD ? "sd" : "ss");
+    } else {
+        // No suffix for this instruction.
+    }
+    _text << " " << left << ", " << right << "\n";
+
+    // Use the left operand as source for the store instruction.
+    return left;
+}
+
+Operand Generator::_binary_sub(const Operand &left, const Operand &right, const Type &type) {
+    _text << "\tsub";
+    if (std::holds_alternative<sem::Floating>(type)) {
+        _text << (type.size() == Size::QWORD ? "sd" : "ss");
+    } else {
+        // No suffix for this instruction.
+    }
+    _text << " " << left << ", " << right << "\n";
+
+    // Use the left operand as source for the store instruction.
+    return left;
+}
+
+Operand Generator::_binary_mul(const Operand &left, const Operand &right, const Type &type) {
+    if (auto *integral = std::get_if<sem::Integral>(&type)) {
+        auto a_reg = Register(Register::Base::A, type.size());
+
+        // Always store the RHS instead of the LHS. The left operand will always be of type mem/reg and thus will
+        // be compatible with imul/mul (the right operand on the otherhand can also be of type imm and is thus not
+        // a valid operand for this instruction).
+        // This is no problem because the mul instruction is commutative.
+        _store(right, a_reg, type);
+
+        if (integral->sign()) _text << "\timul";
+        else _text << "\tmul";
+        _text << " " << left << "\n";
+
+        // Use the lower-order bits as source for the store instruction.
+        return a_reg;
+    }
+}
+
+Operand Generator::_binary_div(const Operand &, const Operand &, const Type &) {}
 
 void Generator::visit(il::Cast &) {}
 
@@ -191,14 +262,11 @@ void Generator::_store(Operand source, const Operand &destination, const Type &t
         }
     }
 
-    std::string menomic;
+    _text << "\tmov";
     if (std::holds_alternative<sem::Floating>(type)) {
-        menomic = type.size() == Size::QWORD ? "movsd" : "movss";
-    } else {
-        menomic = "mov";
+        _text << (type.size() == Size::QWORD ? "sd" : "ss");
     }
-
-    _text << "\t" << menomic << " " << destination << ", " << source << "\n";
+    _text << " " << destination << ", " << source << "\n";
 }
 
 void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const Type &type) {
@@ -217,7 +285,6 @@ void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_c
         // register operand.
         // imm:imm		-> Valid but needs to be transformed into reg:imm
 
-        auto left_immediate = std::get<il::Immediate>(left);
         if (std::holds_alternative<sem::Floating>(type)) {
             auto target = Register(TEMP_SSE, type.size());
             _store(left, target, type);
@@ -248,17 +315,14 @@ void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_c
 
         if (is_commutative) {
             std::swap(left, right);
+        } else if (std::holds_alternative<sem::Floating>(type)) {
+            auto target = Register(TEMP_SSE, type.size());
+            _store(left, target, type);
+            left = target;
         } else {
-            auto left_immediate = std::get<il::Immediate>(left);
-            if (std::holds_alternative<sem::Floating>(type)) {
-                auto target = Register(TEMP_SSE, type.size());
-                _store(left, target, type);
-                left = target;
-            } else {
-                auto target = Register(TEMP_INT, type.size());
-                _store(left, target, type);
-                left = target;
-            }
+            auto target = Register(TEMP_INT, type.size());
+            _store(left, target, type);
+            left = target;
         }
     } else {
         // Valid otherwise.
@@ -278,6 +342,7 @@ bool Generator::_is_commutative(const il::Binary::Operator &op) {
         case il::Binary::Operator::Div:
         case il::Binary::Operator::GreaterThan:
         case il::Binary::Operator::LessThan: return false;
+        default: std::unreachable();
     }
 }
 
