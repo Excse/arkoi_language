@@ -16,9 +16,9 @@ main:
 	call ok
 	# $07 @u32 = cast @bool $06
 	# $08 @u32 = mul @u32 1, $07
-	mov r10d, DWORD PTR [rbp - 16]
-	mov DWORD PTR [rbp - 20], r10d
+	mov DWORD PTR [rbp - 20], 1
 	# $11 @u32 = add @u32 $08, 1
+	add DWORD PTR [rbp - 20], 1
 	mov r10d, DWORD PTR [rbp - 20]
 	mov DWORD PTR [rbp - 24], r10d
 	# $12 @s32 = cast @u32 $11
@@ -30,6 +30,7 @@ main:
 	movss DWORD PTR [rbp - 28], xmm0
 	# $20 @f32 = sub @f32 $17, 42
 	movss xmm10, DWORD PTR [rbp - 28]
+	subss xmm10, DWORD PTR [float3]
 	movss DWORD PTR [rbp - 32], xmm10
 	# $21 @u64 = cast @f32 $20
 	# store @u64 $21, $01
@@ -51,16 +52,16 @@ ok:
 	movsd xmm10, QWORD PTR [rbp - 9]
 	movsd QWORD PTR [rbp - 17], xmm10
 	# $06 @bool = gth @f64 $03, 5
-	movsd xmm10, QWORD PTR [rbp - 17]
-	mov BYTE PTR [rbp - 25], xmm10
+	mov r10b, QWORD PTR [rbp - 17]
+	mov BYTE PTR [rbp - 25], r10b
 	# if $06 then L4 else L5
 L5:
 	# $09 @f64 = load $02
 	movsd xmm10, QWORD PTR [rbp - 9]
 	movsd QWORD PTR [rbp - 26], xmm10
 	# $12 @bool = gth @f64 $09, 10
-	movsd xmm10, QWORD PTR [rbp - 26]
-	mov BYTE PTR [rbp - 34], xmm10
+	mov r10b, QWORD PTR [rbp - 26]
+	mov BYTE PTR [rbp - 34], r10b
 	# if $12 then L7 else L8
 L8:
 	# store @f64 21, $02
@@ -113,8 +114,8 @@ test1:
 	movsd xmm10, QWORD PTR [rbp - 16]
 	movsd QWORD PTR [rbp - 36], xmm10
 	# $07 @bool = lth @f64 $05, $06
-	movsd xmm10, QWORD PTR [rbp - 28]
-	mov BYTE PTR [rbp - 44], xmm10
+	mov r10b, QWORD PTR [rbp - 28]
+	mov BYTE PTR [rbp - 44], r10b
 	# if $07 then L12 else L13
 L13:
 	# $13 @s32 = load $02
@@ -173,8 +174,8 @@ test2:
 	movsd xmm10, QWORD PTR [rbp - 16]
 	movsd QWORD PTR [rbp - 36], xmm10
 	# $07 @bool = lth @f64 $05, $06
-	movsd xmm10, QWORD PTR [rbp - 28]
-	mov BYTE PTR [rbp - 44], xmm10
+	mov r10b, QWORD PTR [rbp - 28]
+	mov BYTE PTR [rbp - 44], r10b
 	# if $07 then L17 else L18
 L18:
 	# $13 @s32 = load $02

@@ -93,25 +93,22 @@ void Generator::visit(il::Binary &instruction) {
     auto left = _load(instruction.left());
     auto right = _load(instruction.right());
 
-    auto is_commuative = _is_commutative(instruction.op());
-    _adjust_binary_operands(left, right, is_commuative, instruction.op_type());
-
     Operand source;
     switch (instruction.op()) {
         case il::Binary::Operator::Add: {
-            source = _binary_add(left, right, type);
+            source = _add(left, right, type);
             break;
         }
         case il::Binary::Operator::Sub: {
-            source = _binary_sub(left, right, type);
+            source = _sub(left, right, type);
             break;
         }
         case il::Binary::Operator::Mul: {
-            source = _binary_mul(left, right, type);
+            source = _mul(left, right, type);
             break;
         }
         case il::Binary::Operator::Div: {
-            source = _binary_div(left, right, type);
+            source = _div(left, right, type);
             break;
         }
         default: {
@@ -123,19 +120,86 @@ void Generator::visit(il::Binary &instruction) {
     _store(source, destination, type);
 }
 
-Operand Generator::_binary_add(const Operand &left, const Operand &, const sem::Type &) {
+Operand Generator::_add(Operand left, Operand right, const sem::Type &type) {
+    if (std::holds_alternative<sem::Floating>(type)) {
+        // If the left:right is not of reg:reg or reg:mem the operands need to be adjusted.
+        if (!_is_rm(left, right)) {
+            // As there are no direct floating immediates (they will always be replaced with memory operands,
+            // see _load), we just need to adjust the lhs.
+            _adjust_to_r(left, type);
+        }
+
+        // Depending on the size of the type choose either addsd or addss.
+        if (type.size() == Size::QWORD) {
+            _text << "\taddsd";
+        } else {
+            _text << "\taddss";
+        }
+        _text << " " << left << ", " << right << "\n";
+
+        // The return operand is the lhs and thus must be returned.
+        return left;
+    } else {
+        // If the left:right is not of reg:mem, reg:reg, mem:reg, reg:imm or mem:imm the operands need to be adjusted.
+        if (!(_is_rm(left, right) || _is_mr(left, right) || _is_mi(left, right))) {
+            // Here the only combinations are imm:imm, imm:reg or imm:mem, thus just the left operand will be adjusted.
+            if (_is_m(right)) {
+                // If it is the case of imm:reg or imm:mem, the operands can be swapped as the commutative property of
+                // addition allows it.
+                std::swap(left, right);
+            } else {
+                // The only case here is imm:imm, thus it must be transformed into reg:imm
+                _adjust_to_r(left, type);
+            }
+        }
+
+        _text << "\tadd " << left << ", " << right << "\n";
+
+        // The return operand is the lhs and thus must be returned.
+        return left;
+    }
+}
+
+Operand Generator::_sub(Operand left, const Operand &right, const sem::Type &type) {
+    if (std::holds_alternative<sem::Floating>(type)) {
+        // If the left:right is not of reg:reg or reg:mem the operands need to be adjusted.
+        if (!_is_rm(left, right)) {
+            // As there are no direct floating immediates (they will always be replaced with memory operands,
+            // see _load), we just need to adjust the lhs.
+            _adjust_to_r(left, type);
+        }
+
+        // Depending on the size of the type choose either addsd or addss.
+        if (type.size() == Size::QWORD) {
+            _text << "\tsubsd";
+        } else {
+            _text << "\tsubss";
+        }
+        _text << " " << left << ", " << right << "\n";
+
+        // The return operand is the lhs and thus must be returned.
+        return left;
+    } else {
+        // If the left:right is not of reg:mem, reg:reg, mem:reg, reg:imm or mem:imm the operands need to be adjusted.
+        if (!(_is_rm(left, right) || _is_mr(left, right) || _is_mi(left, right))) {
+            // Here the only combinations are imm:imm, imm:reg or imm:mem, thus just the left operand will be adjusted.
+            // As the subtraction doesn't have a commutative property, we can only adjust the lhs to a register.
+            // Thus, it will result in reg:imm, reg:reg, reg:mem, which is valid again.
+            _adjust_to_r(left, type);
+        }
+
+        _text << "\tsub " << left << ", " << right << "\n";
+
+        // The return operand is the lhs and thus must be returned.
+        return left;
+    }
+}
+
+Operand Generator::_mul(const Operand &left, const Operand &, const sem::Type &) {
     return left;
 }
 
-Operand Generator::_binary_sub(const Operand &left, const Operand &, const sem::Type &) {
-    return left;
-}
-
-Operand Generator::_binary_mul(const Operand &left, const Operand &, const sem::Type &) {
-    return left;
-}
-
-Operand Generator::_binary_div(const Operand &left, const Operand &, const sem::Type &) {
+Operand Generator::_div(const Operand &left, const Operand &, const sem::Type &) {
     return left;
 }
 
@@ -239,81 +303,43 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     _text << " " << destination << ", " << source << "\n";
 }
 
-void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const sem::Type &type) {
-    if (std::holds_alternative<StackPush>(left) || std::holds_alternative<StackPush>(right)) {
-        // If either the left or right operand is a stack push operand an error is thrown, as it isn't a valid instruction.
-        // reg:push	    -> Not valid because push can't be used
-        // push:imm	    -> Not valid because push can't be used
-        // push:mem	    -> Not valid because push can't be used
-        // push:reg	    -> Not valid because push can't be used
-        // push:push	-> Not valid because push can't be used
-        // mem:push	    -> Not valid because push can't be used
-
-        throw std::runtime_error("A binary operation using any push operand is not a valid instruction.");
-    } else if (std::holds_alternative<Immediate>(left) && std::holds_alternative<Immediate>(right)) {
-        // If both operands are immediate, then one (the lhs) operand must be either transformed into a memory or
-        // register operand.
-        // imm:imm		-> Valid but needs to be transformed into reg:imm
-
-        if (std::holds_alternative<sem::Floating>(type)) {
-            auto target = Register(TEMP_SSE, type.size());
-            _store(left, target, type);
-            left = target;
-        } else {
-            auto target = Register(TEMP_INT, type.size());
-            _store(left, target, type);
-            left = target;
-        }
-    } else if (std::holds_alternative<Memory>(left) && std::holds_alternative<Memory>(right)) {
-        // Since binary instructions only accept operands in the forms (src:dest) reg:mem, mem:reg, imm:reg, or imm:mem,
-        // a mem:mem operation must be split into two mov instructions.
-        // mem:mem		-> Valid but needs to be transformed into reg:mem
-
-        if (std::holds_alternative<sem::Floating>(type)) {
-            auto target = Register(TEMP_SSE, type.size());
-            _store(left, target, type);
-            left = target;
-        } else {
-            auto target = Register(TEMP_INT, type.size());
-            _store(left, target, type);
-            left = target;
-        }
-    } else if (std::holds_alternative<Immediate>(left)) {
-        // If just the left operand is an immediate it either the operands need to be switched or transformed.
-        // imm:mem		-> Valid, either switch to mem:imm (if commutative) or transformed into reg:mem
-        // imm:reg		-> Valid, either switch to reg:imm (if commutative) or transformed into reg:reg
-
-        if (is_commutative) {
-            std::swap(left, right);
-        } else if (std::holds_alternative<sem::Floating>(type)) {
-            auto target = Register(TEMP_SSE, type.size());
-            _store(left, target, type);
-            left = target;
-        } else {
-            auto target = Register(TEMP_INT, type.size());
-            _store(left, target, type);
-            left = target;
-        }
-    } else {
-        // Valid otherwise.
-        // mem:im		-> Valid
-        // mem:reg		-> Valid
-        // reg:imm		-> Valid
-        // reg:mem		-> Valid
-        // reg:reg		-> Valid
-    }
+bool Generator::_is_rm(const Operand &first, const Operand &second) {
+    return _is_r(first) && _is_m(second);
 }
 
-bool Generator::_is_commutative(const il::Binary::Operator &op) {
-    switch (op) {
-        case il::Binary::Operator::Add:
-        case il::Binary::Operator::Mul: return true;
-        case il::Binary::Operator::Sub:
-        case il::Binary::Operator::Div:
-        case il::Binary::Operator::GreaterThan:
-        case il::Binary::Operator::LessThan: return false;
-        default: std::unreachable();
-    }
+bool Generator::_is_mr(const Operand &first, const Operand &second) {
+    return _is_m(first) && _is_r(second);
+}
+
+bool Generator::_is_mi(const Operand &first, const Operand &second) {
+    return _is_m(first) && _is_i(second);
+}
+
+void Generator::_adjust_to_r(Operand &operand, const sem::Type &type) {
+    // Check if the operand is already mem/reg, if yes just return and change nothing.
+    if (_is_r(operand)) return;
+
+    // Always adjust to a register, as there is no memory mapped for such temporaries (also it's too expensive).
+    const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE : TEMP_INT);
+
+    // Store the contents of operand into the register
+    auto temp = Register(reg_base, type.size());
+    _store(operand, temp, type);
+
+    // Change the operand to the temporary register.
+    operand = temp;
+}
+
+bool Generator::_is_m(const Operand &operand) {
+    return (std::holds_alternative<Register>(operand) || std::holds_alternative<Memory>(operand));
+}
+
+bool Generator::_is_r(const Operand &operand) {
+    return std::holds_alternative<Register>(operand);
+}
+
+bool Generator::_is_i(const Operand &operand) {
+    return std::holds_alternative<Immediate>(operand);
 }
 
 //==============================================================================
