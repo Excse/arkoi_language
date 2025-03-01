@@ -1,4 +1,4 @@
-#include "x86_64/register.hpp"
+#include "x86_64/operand.hpp"
 
 #include <utility>
 
@@ -85,6 +85,52 @@ std::ostream &operator<<(std::ostream &os, const Register::Base &reg) {
 
     // As the -Wswitch flag is set, this will never be reached.
     std::unreachable();
+}
+
+bool Memory::operator==(const Memory &other) const {
+    return _index == other._index && _scale == other._scale && _displacement == other._displacement &&
+           _address == other._address && _size == other._size;
+}
+
+bool Memory::operator!=(const Memory &other) const {
+    return !(other == *this);
+}
+
+std::ostream &operator<<(std::ostream &os, const Memory::Address &memory) {
+    std::visit([&os](const auto &value) { os << value; }, memory);
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const Memory &memory) {
+    os << memory.size() << " PTR ";
+
+    os << "[" << memory.address();
+
+    if (memory.index() != 1) {
+        os << " + " << memory.index();
+    }
+
+    if (memory.scale() != 1) {
+        os << " * " << memory.scale();
+    }
+
+    if (memory.displacement() < 0) {
+        os << " - " << std::abs(memory.displacement());
+    } else if (memory.displacement() > 0) {
+        os << " + " << std::abs(memory.displacement());
+    }
+
+    os << "]";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &, const arkoi::x86_64::StackPush &) {
+    throw std::runtime_error("This operand type is not displayable.");
+}
+
+std::ostream &operator<<(std::ostream &os, const Operand &mapping) {
+    std::visit([&](const auto &value) { os << value; }, mapping);
+    return os;
 }
 
 //==============================================================================

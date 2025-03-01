@@ -33,7 +33,7 @@ Operand Mapper::operator[](const il::Operand &operand) {
             return _mappings.at(variable);
         },
         [&](const il::Immediate &immediate) -> Operand {
-            return immediate;
+            return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
         }
     }, operand);
 }
@@ -218,11 +218,6 @@ std::vector<il::Variable> Mapper::get_stack_parameters(const std::vector<il::Var
 size_t Mapper::align_size(size_t input) {
     static const size_t STACK_ALIGNMENT = 16;
     return (input + (STACK_ALIGNMENT - 1)) & ~(STACK_ALIGNMENT - 1);
-}
-
-std::ostream &operator<<(std::ostream &os, const Operand &mapping) {
-    std::visit([&](const auto &value) { os << value; }, mapping);
-    return os;
 }
 
 //==============================================================================

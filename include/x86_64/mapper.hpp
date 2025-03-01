@@ -3,14 +3,10 @@
 #include <unordered_map>
 #include <set>
 
-#include "x86_64/register.hpp"
-#include "x86_64/memory.hpp"
-#include "x86_64/stack.hpp"
+#include "x86_64/operand.hpp"
 #include "il/instruction.hpp"
 
 namespace arkoi::x86_64 {
-
-using Operand = std::variant<StackPush, Memory, Register, il::Immediate>;
 
 class Mapper : il::Visitor {
 public:
@@ -71,8 +67,6 @@ private:
 };
 
 } // namespace arkoi::x86_64
-
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Operand &mapping);
 
 //==============================================================================
 // BSD 3-Clause License

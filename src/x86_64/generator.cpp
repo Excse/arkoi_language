@@ -1,8 +1,6 @@
 #include "x86_64/generator.hpp"
 
 #include "utils/utils.hpp"
-
-#include "x86_64/register.hpp"
 #include "il/cfg.hpp"
 
 using namespace arkoi::x86_64;
@@ -116,58 +114,30 @@ void Generator::visit(il::Binary &instruction) {
             source = _binary_div(left, right, type);
             break;
         }
-        default: break;
+        default: {
+            source = left;
+            break;
+        }
     }
 
     _store(source, destination, type);
 }
 
-Operand Generator::_binary_add(const Operand &left, const Operand &right, const Type &type) {
-    _text << "\tadd";
-    if (std::holds_alternative<sem::Floating>(type)) {
-        _text << (type.size() == Size::QWORD ? "sd" : "ss");
-    } else {
-        // No suffix for this instruction.
-    }
-    _text << " " << left << ", " << right << "\n";
-
-    // Use the left operand as source for the store instruction.
+Operand Generator::_binary_add(const Operand &left, const Operand &, const Type &) {
     return left;
 }
 
-Operand Generator::_binary_sub(const Operand &left, const Operand &right, const Type &type) {
-    _text << "\tsub";
-    if (std::holds_alternative<sem::Floating>(type)) {
-        _text << (type.size() == Size::QWORD ? "sd" : "ss");
-    } else {
-        // No suffix for this instruction.
-    }
-    _text << " " << left << ", " << right << "\n";
-
-    // Use the left operand as source for the store instruction.
+Operand Generator::_binary_sub(const Operand &left, const Operand &, const Type &) {
     return left;
 }
 
-Operand Generator::_binary_mul(const Operand &left, const Operand &right, const Type &type) {
-    if (auto *integral = std::get_if<sem::Integral>(&type)) {
-        auto a_reg = Register(Register::Base::A, type.size());
-
-        // Always store the RHS instead of the LHS. The left operand will always be of type mem/reg and thus will
-        // be compatible with imul/mul (the right operand on the otherhand can also be of type imm and is thus not
-        // a valid operand for this instruction).
-        // This is no problem because the mul instruction is commutative.
-        _store(right, a_reg, type);
-
-        if (integral->sign()) _text << "\timul";
-        else _text << "\tmul";
-        _text << " " << left << "\n";
-
-        // Use the lower-order bits as source for the store instruction.
-        return a_reg;
-    }
+Operand Generator::_binary_mul(const Operand &left, const Operand &, const Type &) {
+    return left;
 }
 
-Operand Generator::_binary_div(const Operand &, const Operand &, const Type &) {}
+Operand Generator::_binary_div(const Operand &left, const Operand &, const Type &) {
+    return left;
+}
 
 void Generator::visit(il::Cast &) {}
 
@@ -229,7 +199,7 @@ Operand Generator::_load(const il::Operand &operand) {
                 _data << "\t" << name << ": .float\t" << immediate << "\n";
                 return Memory(Size::DWORD, name);
             } else {
-                return immediate;
+                return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
             }
         },
         [&](const il::Variable &variable) -> Operand {
@@ -280,7 +250,7 @@ void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_c
         // mem:push	    -> Not valid because push can't be used
 
         throw std::runtime_error("A binary operation using any push operand is not a valid instruction.");
-    } else if (std::holds_alternative<il::Immediate>(left) && std::holds_alternative<il::Immediate>(right)) {
+    } else if (std::holds_alternative<Immediate>(left) && std::holds_alternative<Immediate>(right)) {
         // If both operands are immediate, then one (the lhs) operand must be either transformed into a memory or
         // register operand.
         // imm:imm		-> Valid but needs to be transformed into reg:imm
@@ -308,7 +278,7 @@ void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_c
             _store(left, target, type);
             left = target;
         }
-    } else if (std::holds_alternative<il::Immediate>(left)) {
+    } else if (std::holds_alternative<Immediate>(left)) {
         // If just the left operand is an immediate it either the operands need to be switched or transformed.
         // imm:mem		-> Valid, either switch to mem:imm (if commutative) or transformed into reg:mem
         // imm:reg		-> Valid, either switch to reg:imm (if commutative) or transformed into reg:reg

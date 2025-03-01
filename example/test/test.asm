@@ -19,7 +19,6 @@ main:
 	mov r10d, DWORD PTR [rbp - 16]
 	mov DWORD PTR [rbp - 20], r10d
 	# $11 @u32 = add @u32 $08, 1
-	add DWORD PTR [rbp - 20], 1
 	mov r10d, DWORD PTR [rbp - 20]
 	mov DWORD PTR [rbp - 24], r10d
 	# $12 @s32 = cast @u32 $11
@@ -31,7 +30,6 @@ main:
 	movss DWORD PTR [rbp - 28], xmm0
 	# $20 @f32 = sub @f32 $17, 42
 	movss xmm10, DWORD PTR [rbp - 28]
-	subss xmm10, DWORD PTR [float3]
 	movss DWORD PTR [rbp - 32], xmm10
 	# $21 @u64 = cast @f32 $20
 	# store @u64 $21, $01
