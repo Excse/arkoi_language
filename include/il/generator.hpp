@@ -48,7 +48,7 @@ public:
 private:
     std::string _make_label_symbol();
 
-    Variable _make_temporary(Type &type);
+    Variable _make_temporary(sem::Type &type);
 
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Variable> _allocas{};

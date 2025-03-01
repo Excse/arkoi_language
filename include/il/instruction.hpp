@@ -25,8 +25,6 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    void set_label(std::string label) { _label = std::move(label); }
-
     [[nodiscard]] auto &label() const { return _label; }
 
 private:
@@ -76,7 +74,8 @@ private:
 
 class Return : public InstructionBase {
 public:
-    Return(Operand value, Type type) : _result({"$ret", type}), _value(std::move(value)) {}
+    Return(Operand value, sem::Type type)
+        : _result({"$ret", std::move(type)}), _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -103,7 +102,7 @@ public:
     };
 
 public:
-    Binary(Variable result, Operand left, Operator op, Operand right, Type op_type)
+    Binary(Variable result, Operand left, Operator op, Operand right, sem::Type op_type)
         : _left(std::move(left)), _right(std::move(right)), _result(std::move(result)),
           _op_type(std::move(op_type)), _op(op) {}
 
@@ -129,13 +128,13 @@ public:
 private:
     Operand _left, _right;
     Variable _result;
-    Type _op_type;
+    sem::Type _op_type;
     Operator _op;
 };
 
 class Cast : public InstructionBase {
 public:
-    Cast(Variable result, Operand expression, Type from)
+    Cast(Variable result, Operand expression, sem::Type from)
         : _expression(std::move(expression)), _result(std::move(result)), _from(std::move(from)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -151,7 +150,7 @@ public:
 private:
     Operand _expression;
     Variable _result;
-    Type _from;
+    sem::Type _from;
 };
 
 class Alloca : public InstructionBase {
@@ -221,7 +220,7 @@ private:
     Immediate _value;
 };
 
-struct Instruction : std::variant<
+struct Instruction : public InstructionBase, public std::variant<
     il::Goto,
     il::If,
     il::Cast,
@@ -235,9 +234,9 @@ struct Instruction : std::variant<
 > {
     using variant::variant;
 
-    void accept(il::Visitor &visitor);
+    void accept(il::Visitor &visitor) override;
 
-    [[nodiscard]] bool is_constant();
+    [[nodiscard]] bool is_constant() override;
 };
 
 } // namespace arkoi::mid

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "sem/symbol_table.hpp"
 #include "sem/type.hpp"
 #include "ast/visitor.hpp"
@@ -74,7 +76,8 @@ private:
 
 class Parameter : public Node {
 public:
-    Parameter(Identifier name, Type type) : _name(std::move(name)), _type(type) {}
+    Parameter(Identifier name, sem::Type type)
+        : _name(std::move(name)), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -84,15 +87,15 @@ public:
 
 private:
     Identifier _name;
-    Type _type;
+    sem::Type _type;
 };
 
 class Function : public Node {
 public:
-    Function(Identifier name, std::vector<Parameter> &&parameters, Type type,
+    Function(Identifier name, std::vector<Parameter> &&parameters, sem::Type type,
              std::unique_ptr<Block> &&block, std::shared_ptr<sem::SymbolTable> table)
         : _table(std::move(table)), _parameters(std::move(parameters)), _block(std::move(block)),
-          _name(std::move(name)), _type(type) {}
+          _name(std::move(name)), _type(std::move(type)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -111,7 +114,7 @@ private:
     std::vector<Parameter> _parameters;
     std::unique_ptr<Block> _block;
     Identifier _name;
-    Type _type;
+    sem::Type _type;
 };
 
 class Return : public Node {
@@ -124,13 +127,13 @@ public:
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_type(Type type) { _type = type; }
+    void set_type(sem::Type type) { _type = type; }
 
     [[nodiscard]] auto &type() const { return _type.value(); }
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<Type> _type{};
+    std::optional<sem::Type> _type{};
 };
 
 class If : public Node {
@@ -200,7 +203,7 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_type(Type type) { _type = std::move(type); }
+    void set_type(sem::Type type) { _type = std::move(type); }
 
     [[nodiscard]] auto &type() { return *_type; }
 
@@ -209,7 +212,7 @@ public:
     [[nodiscard]] auto &kind() const { return _kind; }
 
 private:
-    std::optional<Type> _type;
+    std::optional<sem::Type> _type;
     front::Token _value;
     Kind _kind;
 };
@@ -241,33 +244,33 @@ public:
 
     [[nodiscard]] auto &left() const { return _left; }
 
-    void set_result_type(Type type) { _result_type = type; }
+    void set_result_type(sem::Type type) { _result_type = type; }
 
     [[nodiscard]] auto &result_type() { return _result_type.value(); }
     
-    void set_op_type(Type type) { _op_type = type; }
+    void set_op_type(sem::Type type) { _op_type = type; }
     
     [[nodiscard]] auto &op_type() const { return _op_type.value(); }
 
 private:
-    std::optional<Type> _result_type{}, _op_type{};
+    std::optional<sem::Type> _result_type{}, _op_type{};
     std::unique_ptr<Node> _left, _right;
     Operator _op;
 };
 
 class Cast : public Node {
 public:
-    Cast(std::unique_ptr<Node> &&expression, Type from, Type to)
-        : _expression(std::move(expression)), _from(from), _to(to) {}
+    Cast(std::unique_ptr<Node> &&expression, sem::Type from, sem::Type to)
+        : _expression(std::move(expression)), _from(from), _to(std::move(to)) {}
 
-    Cast(std::unique_ptr<Node> &&expression, Type to)
-        : _expression(std::move(expression)), _from(), _to(to) {}
+    Cast(std::unique_ptr<Node> &&expression, sem::Type to)
+        : _expression(std::move(expression)), _from(), _to(std::move(to)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_from(Type type) { _from = type; }
+    void set_from(sem::Type type) { _from = type; }
 
     [[nodiscard]] auto &from() const { return _from.value(); }
 
@@ -275,8 +278,8 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<Type> _from;
-    Type _to;
+    std::optional<sem::Type> _from;
+    sem::Type _to;
 };
 
 }  // namespace arkoi::ast

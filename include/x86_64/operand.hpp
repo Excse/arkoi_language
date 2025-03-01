@@ -30,7 +30,7 @@ private:
 
 class Memory {
 public:
-    struct Address : std::variant<std::string, int64_t, Register> {
+    struct Address : public std::variant<std::string, int64_t, Register> {
         using variant::variant;
     };
 
@@ -75,7 +75,9 @@ struct Immediate : public il::Immediate {
     using il::Immediate::Immediate;
 };
 
-using Operand = std::variant<StackPush, Memory, Register, Immediate>;
+struct Operand : public std::variant<StackPush, Memory, Register, Immediate> {
+    using variant::variant;
+};
 
 } // namespace arkoi::x86_64
 

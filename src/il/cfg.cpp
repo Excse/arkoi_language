@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <stack>
+#include <utility>
 
 using namespace arkoi::il;
 
@@ -59,15 +60,15 @@ BlockIterator BlockIterator::operator++(int) {
     return temp;
 }
 
-Function::Function(std::string name, std::vector<Variable> parameters, Type type, std::string entry_label,
+Function::Function(std::string name, std::vector<Variable> parameters, sem::Type type, std::string entry_label,
                    std::string exit_label)
     : _block_pool(), _parameters(std::move(parameters)), _name(std::move(name)), _type(std::move(type)) {
-    _entry = emplace_back(entry_label);
-    _exit = emplace_back(exit_label);
+    _entry = emplace_back(std::move(entry_label));
+    _exit = emplace_back(std::move(exit_label));
 }
 
-Function::Function(std::string name, std::vector<Variable> parameters, Type type)
-    : Function(name, parameters, type, name + "_entry", name + "_exit") {}
+Function::Function(const std::string &name, std::vector<Variable> parameters, sem::Type type)
+    : Function(name, std::move(parameters), std::move(type), name + "_entry", name + "_exit") {}
 
 bool Function::remove(BasicBlock *target) {
     assert(target->predecessors().empty());

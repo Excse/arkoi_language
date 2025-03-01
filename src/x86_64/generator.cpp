@@ -123,19 +123,19 @@ void Generator::visit(il::Binary &instruction) {
     _store(source, destination, type);
 }
 
-Operand Generator::_binary_add(const Operand &left, const Operand &, const Type &) {
+Operand Generator::_binary_add(const Operand &left, const Operand &, const sem::Type &) {
     return left;
 }
 
-Operand Generator::_binary_sub(const Operand &left, const Operand &, const Type &) {
+Operand Generator::_binary_sub(const Operand &left, const Operand &, const sem::Type &) {
     return left;
 }
 
-Operand Generator::_binary_mul(const Operand &left, const Operand &, const Type &) {
+Operand Generator::_binary_mul(const Operand &left, const Operand &, const sem::Type &) {
     return left;
 }
 
-Operand Generator::_binary_div(const Operand &left, const Operand &, const Type &) {
+Operand Generator::_binary_div(const Operand &left, const Operand &, const sem::Type &) {
     return left;
 }
 
@@ -208,7 +208,7 @@ Operand Generator::_load(const il::Operand &operand) {
     }, operand);
 }
 
-void Generator::_store(Operand source, const Operand &destination, const Type &type) {
+void Generator::_store(Operand source, const Operand &destination, const sem::Type &type) {
     // If the destination is the stack, then just push the operand.
     if (std::holds_alternative<StackPush>(destination)) {
         _text << "\tpush " << source << "\n";
@@ -239,7 +239,7 @@ void Generator::_store(Operand source, const Operand &destination, const Type &t
     _text << " " << destination << ", " << source << "\n";
 }
 
-void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const Type &type) {
+void Generator::_adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const sem::Type &type) {
     if (std::holds_alternative<StackPush>(left) || std::holds_alternative<StackPush>(right)) {
         // If either the left or right operand is a stack push operand an error is thrown, as it isn't a valid instruction.
         // reg:push	    -> Not valid because push can't be used

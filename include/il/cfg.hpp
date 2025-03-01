@@ -86,9 +86,9 @@ private:
 
 class Function {
 public:
-    Function(std::string name, std::vector<Variable> parameters, Type type);
+    Function(const std::string& name, std::vector<Variable> parameters, sem::Type type);
 
-    Function(std::string name, std::vector<Variable> parameters, Type type,
+    Function(std::string name, std::vector<Variable> parameters, sem::Type type,
              std::string entry_label, std::string exit_label);
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
@@ -120,7 +120,7 @@ private:
     BasicBlock *_exit;
     std::vector<Variable> _parameters;
     std::string _name;
-    Type _type;
+    sem::Type _type;
 };
 
 class Module {

@@ -41,7 +41,7 @@ private:
 
     void visit(il::Call &instruction) override;
 
-    Register _return_register(const Type &type);
+    Register _return_register(const sem::Type &type);
 
     void visit(il::If &) override {}
 

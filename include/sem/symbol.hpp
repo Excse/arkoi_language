@@ -52,7 +52,7 @@ private:
 
 } // namespace arkoi::sym
 
-struct Symbol : std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
+struct Symbol : public std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
     using variant::variant;
 };
 

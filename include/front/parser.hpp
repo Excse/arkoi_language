@@ -31,7 +31,7 @@ private:
 
     [[nodiscard]] ast::Parameter _parse_parameter();
 
-    [[nodiscard]] Type _parse_type();
+    [[nodiscard]] sem::Type _parse_type();
 
     [[nodiscard]] std::unique_ptr<ast::Block> _parse_block();
 

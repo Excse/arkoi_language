@@ -287,7 +287,7 @@ std::string Generator::_make_label_symbol() {
     return "L" + to_string(_label_index++);
 }
 
-Variable Generator::_make_temporary(Type &type) {
+Variable Generator::_make_temporary(sem::Type &type) {
     return {"$", type, ++_temp_index};
 }
 

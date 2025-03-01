@@ -30,7 +30,7 @@ il::Immediate ConstantFolding::_cast(il::Cast &instruction) {
     }, expression);
 }
 
-il::Immediate ConstantFolding::_evaluate_cast(const Type &to, auto expression) {
+il::Immediate ConstantFolding::_evaluate_cast(const sem::Type &to, auto expression) {
     return std::visit(match{
         [&](const sem::Integral &type) -> il::Immediate {
             switch (type.size()) {

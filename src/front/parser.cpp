@@ -130,7 +130,7 @@ ast::Parameter Parser::_parse_parameter() {
     return {identifier, type};
 }
 
-Type Parser::_parse_type() {
+sem::Type Parser::_parse_type() {
     _consume(Token::Type::At);
 
     auto token = _consume_any();

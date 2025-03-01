@@ -13,7 +13,7 @@ public:
     [[nodiscard]] virtual Size size() const = 0;
 };
 
-class Integral : TypeBase {
+class Integral : public TypeBase {
 public:
     constexpr Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
 
@@ -55,13 +55,17 @@ public:
     bool operator!=(const Boolean &other) const;
 };
 
-} // namespace arkoi::result_type
-
-struct Type : std::variant<arkoi::sem::Integral, arkoi::sem::Floating, arkoi::sem::Boolean> {
+struct Type : public TypeBase, public std::variant<
+    arkoi::sem::Integral,
+    arkoi::sem::Floating,
+    arkoi::sem::Boolean
+> {
     using variant::variant;
 
-    [[nodiscard]] Size size() const;
+    [[nodiscard]] Size size() const override;
 };
+
+} // namespace arkoi::result_type
 
 std::ostream &operator<<(std::ostream &os, const arkoi::sem::Integral &type);
 
@@ -69,7 +73,7 @@ std::ostream &operator<<(std::ostream &os, const arkoi::sem::Floating &type);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::sem::Boolean &type);
 
-std::ostream &operator<<(std::ostream &os, const Type &type);
+std::ostream &operator<<(std::ostream &os, const arkoi::sem::Type &type);
 
 //==============================================================================
 // BSD 3-Clause License

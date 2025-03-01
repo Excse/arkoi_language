@@ -10,7 +10,7 @@ namespace arkoi::il {
 
 class Variable {
 public:
-    Variable(std::string name, Type type, size_t version = 0)
+    Variable(std::string name, sem::Type type, size_t version = 0)
         : _name(std::move(name)), _version(version), _type(std::move(type)) {}
 
     bool operator<(const Variable& rhs) const;
@@ -28,18 +28,16 @@ public:
 private:
     std::string _name;
     size_t _version;
-    Type _type;
+    sem::Type _type;
 };
 
-class Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
-public:
+struct Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 
     [[nodiscard]] Size size() const;
 };
 
-struct Operand : std::variant<Immediate, Variable> {
-public:
+struct Operand : public std::variant<Immediate, Variable> {
     using variant::variant;
 };
 

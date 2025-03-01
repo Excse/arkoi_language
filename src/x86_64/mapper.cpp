@@ -120,7 +120,7 @@ void Mapper::visit(il::Call &instruction) {
     }
 }
 
-Register Mapper::_return_register(const Type &type) {
+Register Mapper::_return_register(const sem::Type &type) {
     return std::visit(match{
         [&](const sem::Integral &type) -> Register {
             return {Register::Base::A, type.size()};

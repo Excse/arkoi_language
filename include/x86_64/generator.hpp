@@ -25,13 +25,13 @@ private:
 
     void visit(il::Binary &instruction) override;
 
-    [[nodiscard]] Operand _binary_add(const Operand &left, const Operand &right, const Type &type);
+    [[nodiscard]] Operand _binary_add(const Operand &left, const Operand &right, const sem::Type &type);
 
-    [[nodiscard]] Operand _binary_sub(const Operand &left, const Operand &right, const Type &type);
+    [[nodiscard]] Operand _binary_sub(const Operand &left, const Operand &right, const sem::Type &type);
 
-    [[nodiscard]] Operand _binary_mul(const Operand &left, const Operand &right, const Type &type);
+    [[nodiscard]] Operand _binary_mul(const Operand &left, const Operand &right, const sem::Type &type);
 
-    [[nodiscard]] Operand _binary_div(const Operand &left, const Operand &right, const Type &type);
+    [[nodiscard]] Operand _binary_div(const Operand &left, const Operand &right, const sem::Type &type);
 
     void visit(il::Cast &instruction) override;
 
@@ -52,9 +52,9 @@ private:
 private:
     Operand _load(const il::Operand &operand);
 
-    void _store(Operand source, const Operand &destination, const Type &type);
+    void _store(Operand source, const Operand &destination, const sem::Type &type);
 
-    void _adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const Type &type);
+    void _adjust_binary_operands(Operand &left, Operand &right, bool is_commutative, const sem::Type &type);
 
     [[nodiscard]] static bool _is_commutative(const il::Binary::Operator &op);
 
