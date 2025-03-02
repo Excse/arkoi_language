@@ -22,11 +22,11 @@ digraph CFG {
 	L10 [label="fun test1(foo2 @s32, bar @f64) @f32:\l $01 @f32 = alloca\l $02 @s32 = alloca\l $03 @f64 = alloca\l store @s32 foo2, $02\l store @f64 bar, $03\l $04 @s32 = load $02\l $05 @f64 = cast @s32 $04\l $06 @f64 = load $03\l $07 @bool = lth @f64 $05, $06\l if $07 then L12 else L13\l"];
 	L10 -> L13 [label="Next"];
 	L10 -> L12 [label="Branch"];
-	L13 [label="L13:\l $13 @s32 = load $02\l $14 @f64 = cast @s32 $13\l $15 @f64 = load $03\l $16 @f64 = mul @f64 $14, $15\l $17 @f32 = cast @f64 $16\l store @f32 $17, $01\l goto L11\l"];
+	L13 [label="L13:\l $18 @s32 = load $02\l $19 @f64 = cast @s32 $18\l $20 @f64 = load $03\l $21 @f64 = mul @f64 $19, $20\l $22 @f32 = cast @f64 $21\l store @f32 $22, $01\l goto L11\l"];
 	L13 -> L11 [label="Next"];
-	L12 [label="L12:\l $08 @f64 = load $03\l $09 @s32 = load $02\l $10 @f64 = cast @s32 $09\l $11 @f64 = mul @f64 $08, $10\l $12 @f32 = cast @f64 $11\l store @f32 $12, $01\l goto L11\l"];
+	L12 [label="L12:\l $08 @f64 = load $03\l $09 @s32 = load $02\l $10 @f64 = cast @s32 $09\l $11 @f64 = mul @f64 $08, $10\l $12 @s32 = load $02\l $13 @s32 = load $02\l $14 @bool = lth @s32 $12, $13\l $15 @f64 = cast @bool $14\l $16 @f64 = add @f64 $11, $15\l $17 @f32 = cast @f64 $16\l store @f32 $17, $01\l goto L11\l"];
 	L12 -> L11 [label="Next"];
-	L11 [label="L11:\l $18 @f32 = load $01\l ret $18\l"];
+	L11 [label="L11:\l $23 @f32 = load $01\l ret $23\l"];
 	L15 [label="fun test2(foo2 @s32, bar @f64) @f32:\l $01 @f32 = alloca\l $02 @s32 = alloca\l $03 @f64 = alloca\l store @s32 foo2, $02\l store @f64 bar, $03\l $04 @s32 = load $02\l $05 @f64 = cast @s32 $04\l $06 @f64 = load $03\l $07 @bool = lth @f64 $05, $06\l if $07 then L17 else L18\l"];
 	L15 -> L18 [label="Next"];
 	L15 -> L17 [label="Branch"];

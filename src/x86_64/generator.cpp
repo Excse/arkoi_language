@@ -98,7 +98,8 @@ void Generator::visit(il::Binary &instruction) {
         case il::Binary::Operator::Sub: return _sub(result, left, right, type);
         case il::Binary::Operator::Mul: return _mul(result, left, right, type);
         case il::Binary::Operator::Div: return _div(result, left, right, type);
-        default: _text << "\t# TODO: Needs to be implemented\n";
+        case il::Binary::Operator::GreaterThan: return _gth(result, left, right, type);
+        case il::Binary::Operator::LessThan: return _lth(result, left, right, type);
     }
 }
 
@@ -243,6 +244,76 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         _text << "div " << right << "\n";
 
         _store(a_reg, result, type);
+    }
+}
+
+void Generator::_gth(const Operand &result, Operand left, const Operand &right, const sem::Type &type) {
+    if (std::holds_alternative<sem::Floating>(type)) {
+        // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
+        // we just need to adjust the lhs to a register, which we always do.
+        // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
+        left = _adjust_to_register(result, left, type);
+
+        // Depending on the size of the type, either choose addsd or addss.
+        if (type.size() == Size::QWORD) {
+            _text << "\tucomisd";
+        } else {
+            _text << "\tucomiss";
+        }
+        _text << " " << left << ", " << right << "\n";
+
+        _text << "\tseta " << result << "\n";
+    } else {
+        // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
+        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        left = _adjust_to_register(result, left, type);
+
+        _text << "\tcmp " << left << ", " << right << "\n";
+
+        if (auto *integral = std::get_if<sem::Integral>(&type)) {
+            if (integral->sign()) {
+                _text << "\tsetg " << result << "\n";
+            } else {
+                _text << "\tseta " << result << "\n";
+            }
+        } else {
+            _text << "\tseta " << result << "\n";
+        }
+    }
+}
+
+void Generator::_lth(const Operand &result, Operand left, const Operand &right, const sem::Type &type) {
+    if (std::holds_alternative<sem::Floating>(type)) {
+        // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
+        // we just need to adjust the lhs to a register, which we always do.
+        // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
+        left = _adjust_to_register(result, left, type);
+
+        // Depending on the size of the type, either choose addsd or addss.
+        if (type.size() == Size::QWORD) {
+            _text << "\tucomisd";
+        } else {
+            _text << "\tucomiss";
+        }
+        _text << " " << left << ", " << right << "\n";
+
+        _text << "\tsetb " << result << "\n";
+    } else {
+        // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
+        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        left = _adjust_to_register(result, left, type);
+
+        _text << "\tcmp " << left << ", " << right << "\n";
+
+        if (auto *integral = std::get_if<sem::Integral>(&type)) {
+            if (integral->sign()) {
+                _text << "\tsetl " << result << "\n";
+            } else {
+                _text << "\tsetb " << result << "\n";
+            }
+        } else {
+            _text << "\tsetb " << result << "\n";
+        }
     }
 }
 

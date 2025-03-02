@@ -35,6 +35,10 @@ private:
 
     void _div(const Operand &result, Operand left, Operand right, const sem::Type &type);
 
+    void _gth(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
+
+    void _lth(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
+
     void visit(il::Cast &instruction) override;
 
     void visit(il::Call &instruction) override;
