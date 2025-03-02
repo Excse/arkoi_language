@@ -25,13 +25,15 @@ private:
 
     void visit(il::Binary &instruction) override;
 
-    void _add(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
+    Operand _adjust_to_register(const Operand &result, const Operand &left, const sem::Type &type);
 
-    void _sub(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
+    void _add(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
 
-    void _mul(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
+    void _sub(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
 
-    void _div(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
+    void _mul(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
+
+    void _div(const Operand &result, Operand left, Operand right, const sem::Type &type);
 
     void visit(il::Cast &instruction) override;
 

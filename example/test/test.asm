@@ -56,7 +56,6 @@ ok:
 	movsd xmm10, QWORD PTR [rbp - 9]
 	movsd QWORD PTR [rbp - 17], xmm10
 	# $06 @bool = gth @f64 $03, 5
-	movsd xmm10, QWORD PTR [rbp - 17]
 	# TODO: Needs to be implemented
 	# if $06 then L4 else L5
 L5:
@@ -64,7 +63,6 @@ L5:
 	movsd xmm10, QWORD PTR [rbp - 9]
 	movsd QWORD PTR [rbp - 26], xmm10
 	# $12 @bool = gth @f64 $09, 10
-	movsd xmm10, QWORD PTR [rbp - 26]
 	# TODO: Needs to be implemented
 	# if $12 then L7 else L8
 L8:
@@ -86,20 +84,23 @@ L4:
 	# goto L6
 	jmp L6
 L6:
-	# $17 @s32 = const 2
-	mov edi, 2
-	# $18 @f64 = load $02
+	# $19 @s32 = div @s32 4, 2
+	mov eax, 4
+	mov r10d, 2
+	idiv r10d
+	mov edi, eax
+	# $20 @f64 = load $02
 	movsd xmm0, QWORD PTR [rbp - 9]
-	# $19 @f32 = call test2($17, $18)
+	# $21 @f32 = call test2($19, $20)
 	call test2
-	# $20 @bool = cast @f32 $19
-	# store @bool $20, $01
+	# $22 @bool = cast @f32 $21
+	# store @bool $22, $01
 	mov r10b, BYTE PTR [rbp - 35]
 	mov BYTE PTR [rbp - 8], r10b
-	# $21 @bool = load $01
+	# $23 @bool = load $01
 	mov r10b, BYTE PTR [rbp - 8]
 	mov BYTE PTR [rbp - 36], r10b
-	# ret $21
+	# ret $23
 	mov al, BYTE PTR [rbp - 36]
 	leave
 	ret
@@ -118,7 +119,6 @@ test1:
 	movsd xmm10, QWORD PTR [rbp - 16]
 	movsd QWORD PTR [rbp - 36], xmm10
 	# $07 @bool = lth @f64 $05, $06
-	movsd xmm10, QWORD PTR [rbp - 28]
 	# TODO: Needs to be implemented
 	# if $07 then L12 else L13
 L13:
@@ -180,7 +180,6 @@ test2:
 	movsd xmm10, QWORD PTR [rbp - 16]
 	movsd QWORD PTR [rbp - 36], xmm10
 	# $07 @bool = lth @f64 $05, $06
-	movsd xmm10, QWORD PTR [rbp - 28]
 	# TODO: Needs to be implemented
 	# if $07 then L17 else L18
 L18:

@@ -18,7 +18,7 @@ digraph CFG {
 	L7 -> L6 [label="Next"];
 	L4 [label="L4:\l store @f64 0, $02\l goto L6\l"];
 	L4 -> L6 [label="Next"];
-	L6 [label="L6:\l $17 @s32 = const 2\l $18 @f64 = load $02\l $19 @f32 = call test2($17, $18)\l $20 @bool = cast @f32 $19\l store @bool $20, $01\l $21 @bool = load $01\l ret $21\l"];
+	L6 [label="L6:\l $19 @s32 = div @s32 4, 2\l $20 @f64 = load $02\l $21 @f32 = call test2($19, $20)\l $22 @bool = cast @f32 $21\l store @bool $22, $01\l $23 @bool = load $01\l ret $23\l"];
 	L10 [label="fun test1(foo2 @s32, bar @f64) @f32:\l $01 @f32 = alloca\l $02 @s32 = alloca\l $03 @f64 = alloca\l store @s32 foo2, $02\l store @f64 bar, $03\l $04 @s32 = load $02\l $05 @f64 = cast @s32 $04\l $06 @f64 = load $03\l $07 @bool = lth @f64 $05, $06\l if $07 then L12 else L13\l"];
 	L10 -> L13 [label="Next"];
 	L10 -> L12 [label="Branch"];
