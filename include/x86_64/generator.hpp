@@ -25,13 +25,13 @@ private:
 
     void visit(il::Binary &instruction) override;
 
-    [[nodiscard]] Operand _add(Operand left, Operand right, const sem::Type &type);
+    void _add(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
 
-    [[nodiscard]] Operand _sub(Operand left, const Operand &right, const sem::Type &type);
+    void _sub(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
 
-    [[nodiscard]] Operand _mul(const Operand &left, const Operand &right, const sem::Type &type);
+    void _mul(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
 
-    [[nodiscard]] Operand _div(const Operand &left, const Operand &right, const sem::Type &type);
+    void _div(const Operand &result, const Register &left, const Operand &right, const sem::Type &type);
 
     void visit(il::Cast &instruction) override;
 
@@ -54,19 +54,7 @@ private:
 
     void _store(Operand source, const Operand &destination, const sem::Type &type);
 
-    [[nodiscard]] static bool _is_rm(const Operand &first, const Operand &second);
-
-    [[nodiscard]] static bool _is_mr(const Operand &first, const Operand &second);
-
-    [[nodiscard]] static bool _is_mi(const Operand &first, const Operand &second);
-
-    void _adjust_to_r(Operand &operand, const sem::Type &type);
-
-    [[nodiscard]] static bool _is_m(const Operand &operand);
-
-    [[nodiscard]] static bool _is_r(const Operand &operand);
-
-    [[nodiscard]] static bool _is_i(const Operand &operand);
+    [[nodiscard]] Register _store_temp(const Operand &source, const sem::Type &type);
 
 private:
     il::Function *_current_function{};

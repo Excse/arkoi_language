@@ -88,48 +88,44 @@ void Generator::visit(il::Return &instruction) {
 }
 
 void Generator::visit(il::Binary &instruction) {
-    auto &type = instruction.result().type();
-    auto destination = _load(instruction.result());
+    auto &type = instruction.op_type();
+    auto result = _load(instruction.result());
     auto left = _load(instruction.left());
     auto right = _load(instruction.right());
 
-    Operand source;
-    switch (instruction.op()) {
-        case il::Binary::Operator::Add: {
-            source = _add(left, right, type);
-            break;
+    // Always store the lhs operand in a register. This will minimize the code and also is necessary due to possible
+    // overwriting of the lhs operand.
+    if (std::holds_alternative<Register>(result)) {
+        if (result == left) {
+            // The requirement of lhs being a register is already satisfied. Also, the result and lhs register are the
+            // same, thus the last store will be ignored.
+        } else {
+            // The result operand is a register, thus just temporarily store the lhs in it. This will also make sure to
+            // ignore the last store.
+            _store(left, result, type);
+            left = result;
         }
-        case il::Binary::Operator::Sub: {
-            source = _sub(left, right, type);
-            break;
-        }
-        case il::Binary::Operator::Mul: {
-            source = _mul(left, right, type);
-            break;
-        }
-        case il::Binary::Operator::Div: {
-            source = _div(left, right, type);
-            break;
-        }
-        default: {
-            source = left;
-            break;
-        }
+    } else {
+        // Otherwise if the result is not a register, store the lhs in a temp register.
+        left = _store_temp(left, type);
     }
 
-    _store(source, destination, type);
+    switch (instruction.op()) {
+        case il::Binary::Operator::Add: return _add(result, std::get<Register>(left), right, type);
+        case il::Binary::Operator::Sub: return _sub(result, std::get<Register>(left), right, type);
+        case il::Binary::Operator::Mul: return _mul(result, std::get<Register>(left), right, type);
+        case il::Binary::Operator::Div: return _div(result, std::get<Register>(left), right, type);
+        default: _text << "\t# TODO: Needs to be implemented\n";
+    }
 }
 
-Operand Generator::_add(Operand left, Operand right, const sem::Type &type) {
+void Generator::_add(const Operand &result, const Register &left, const Operand &right, const sem::Type &type) {
     if (std::holds_alternative<sem::Floating>(type)) {
-        // If the left:right is not of reg:reg or reg:mem the operands need to be adjusted.
-        if (!_is_rm(left, right)) {
-            // As there are no direct floating immediates (they will always be replaced with memory operands,
-            // see _load), we just need to adjust the lhs.
-            _adjust_to_r(left, type);
-        }
+        // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
+        // we just need to adjust the lhs to a register, which we always do.
+        // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
 
-        // Depending on the size of the type choose either addsd or addss.
+        // Depending on the size of the type, either choose addsd or addss.
         if (type.size() == Size::QWORD) {
             _text << "\taddsd";
         } else {
@@ -137,71 +133,74 @@ Operand Generator::_add(Operand left, Operand right, const sem::Type &type) {
         }
         _text << " " << left << ", " << right << "\n";
 
-        // The return operand is the lhs and thus must be returned.
-        return left;
+        // Finally store the lhs (where the result is written to) to the result operand.
+        _store(left, result, type);
     } else {
-        // If the left:right is not of reg:mem, reg:reg, mem:reg, reg:imm or mem:imm the operands need to be adjusted.
-        if (!(_is_rm(left, right) || _is_mr(left, right) || _is_mi(left, right))) {
-            // Here the only combinations are imm:imm, imm:reg or imm:mem, thus just the left operand will be adjusted.
-            if (_is_m(right)) {
-                // If it is the case of imm:reg or imm:mem, the operands can be swapped as the commutative property of
-                // addition allows it.
-                std::swap(left, right);
-            } else {
-                // The only case here is imm:imm, thus it must be transformed into reg:imm
-                _adjust_to_r(left, type);
-            }
-        }
+        // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
+        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
 
         _text << "\tadd " << left << ", " << right << "\n";
 
-        // The return operand is the lhs and thus must be returned.
-        return left;
+        // Finally store the lhs (where the result is written to) to the result operand.
+        _store(left, result, type);
     }
 }
 
-Operand Generator::_sub(Operand left, const Operand &right, const sem::Type &type) {
+void Generator::_sub(const Operand &result, const Register &left, const Operand &right, const sem::Type &type) {
     if (std::holds_alternative<sem::Floating>(type)) {
-        // If the left:right is not of reg:reg or reg:mem the operands need to be adjusted.
-        if (!_is_rm(left, right)) {
-            // As there are no direct floating immediates (they will always be replaced with memory operands,
-            // see _load), we just need to adjust the lhs.
-            _adjust_to_r(left, type);
-        }
+        // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
+        // we just need to adjust the lhs to a register, which we always do.
+        // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
 
-        // Depending on the size of the type choose either addsd or addss.
+        // Depending on the size of the type, either choose addsd or addss.
         if (type.size() == Size::QWORD) {
-            _text << "\tsubsd";
+            _text << "\taddsd";
         } else {
-            _text << "\tsubss";
+            _text << "\taddss";
         }
         _text << " " << left << ", " << right << "\n";
 
-        // The return operand is the lhs and thus must be returned.
-        return left;
+        // Finally store the lhs (where the result is written to) to the result operand.
+        _store(left, result, type);
     } else {
-        // If the left:right is not of reg:mem, reg:reg, mem:reg, reg:imm or mem:imm the operands need to be adjusted.
-        if (!(_is_rm(left, right) || _is_mr(left, right) || _is_mi(left, right))) {
-            // Here the only combinations are imm:imm, imm:reg or imm:mem, thus just the left operand will be adjusted.
-            // As the subtraction doesn't have a commutative property, we can only adjust the lhs to a register.
-            // Thus, it will result in reg:imm, reg:reg, reg:mem, which is valid again.
-            _adjust_to_r(left, type);
-        }
+        // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
+        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
 
-        _text << "\tsub " << left << ", " << right << "\n";
+        _text << "\tadd " << left << ", " << right << "\n";
 
-        // The return operand is the lhs and thus must be returned.
-        return left;
+        // Finally store the lhs (where the result is written to) to the result operand.
+        _store(left, result, type);
     }
 }
 
-Operand Generator::_mul(const Operand &left, const Operand &, const sem::Type &) {
-    return left;
+void Generator::_mul(const Operand &result, const Register &left, const Operand &right, const sem::Type &type) {
+    if (std::holds_alternative<sem::Floating>(type)) {
+        // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
+        // we just need to adjust the lhs to a register, which we always do.
+        // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
+
+        // Depending on the size of the type, either choose addsd or addss.
+        if (type.size() == Size::QWORD) {
+            _text << "\tmulsd";
+        } else {
+            _text << "\tmulss";
+        }
+        _text << " " << left << ", " << right << "\n";
+
+        // Finally store the lhs (where the result is written to) to the result operand.
+        _store(left, result, type);
+    } else {
+        // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
+        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+
+        _text << "\timul " << left << ", " << right << "\n";
+
+        // Finally store the lhs (where the result is written to) to the result operand.
+        _store(left, result, type);
+    }
 }
 
-Operand Generator::_div(const Operand &left, const Operand &, const sem::Type &) {
-    return left;
-}
+void Generator::_div(const Operand &, const Register &, const Operand &, const sem::Type &) {}
 
 void Generator::visit(il::Cast &) {}
 
@@ -285,15 +284,7 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     // Since mov instructions only accept operands in the forms (src:dest) reg:mem, mem:reg, imm:reg, or imm:mem,
     // a mem:mem operation must be split into two mov instructions.
     if (std::holds_alternative<Memory>(source) && std::holds_alternative<Memory>(destination)) {
-        if (std::holds_alternative<sem::Floating>(type)) {
-            auto target = Register(TEMP_SSE, type.size());
-            _store(source, target, type);
-            source = target;
-        } else {
-            auto target = Register(TEMP_INT, type.size());
-            _store(source, target, type);
-            source = target;
-        }
+        source = _store_temp(source, type);
     }
 
     _text << "\tmov";
@@ -303,43 +294,15 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     _text << " " << destination << ", " << source << "\n";
 }
 
-bool Generator::_is_rm(const Operand &first, const Operand &second) {
-    return _is_r(first) && _is_m(second);
-}
-
-bool Generator::_is_mr(const Operand &first, const Operand &second) {
-    return _is_m(first) && _is_r(second);
-}
-
-bool Generator::_is_mi(const Operand &first, const Operand &second) {
-    return _is_m(first) && _is_i(second);
-}
-
-void Generator::_adjust_to_r(Operand &operand, const sem::Type &type) {
-    // Check if the operand is already mem/reg, if yes just return and change nothing.
-    if (_is_r(operand)) return;
-
+Register Generator::_store_temp(const Operand &source, const sem::Type &type) {
     // Always adjust to a register, as there is no memory mapped for such temporaries (also it's too expensive).
     const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE : TEMP_INT);
 
     // Store the contents of operand into the register
     auto temp = Register(reg_base, type.size());
-    _store(operand, temp, type);
+    _store(source, temp, type);
 
-    // Change the operand to the temporary register.
-    operand = temp;
-}
-
-bool Generator::_is_m(const Operand &operand) {
-    return (std::holds_alternative<Register>(operand) || std::holds_alternative<Memory>(operand));
-}
-
-bool Generator::_is_r(const Operand &operand) {
-    return std::holds_alternative<Register>(operand);
-}
-
-bool Generator::_is_i(const Operand &operand) {
-    return std::holds_alternative<Immediate>(operand);
+    return temp;
 }
 
 //==============================================================================
