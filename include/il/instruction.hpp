@@ -74,19 +74,15 @@ private:
 
 class Return : public InstructionBase {
 public:
-    Return(Operand value, sem::Type type)
-        : _result({"$ret", std::move(type)}), _value(std::move(value)) {}
+    Return(Operand value) : _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &result() const { return _result; };
-
     [[nodiscard]] auto &value() { return _value; };
 
 private:
-    Variable _result;
     Operand _value;
 };
 

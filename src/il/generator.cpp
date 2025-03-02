@@ -66,7 +66,7 @@ void Generator::visit(ast::Function &node) {
 
     auto result_temp = _make_temporary(node.type());
     _current_block->emplace_back<Load>(result_temp, return_temp);
-    _current_block->emplace_back<Return>(result_temp, node.type());
+    _current_block->emplace_back<Return>(result_temp);
 }
 
 void Generator::visit(ast::Block &node) {

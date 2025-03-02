@@ -25,7 +25,7 @@ private:
 
     void visit(il::Binary &instruction) override;
 
-    Operand _adjust_to_register(const Operand &result, const Operand &left, const sem::Type &type);
+    Operand _adjust_lhs_to_reg(const Operand &result, const Operand &left, const sem::Type &type);
 
     void _add(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
 

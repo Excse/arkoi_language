@@ -24,6 +24,8 @@ public:
 
     [[nodiscard]] static std::vector<il::Variable> get_stack_parameters(const std::vector<il::Variable> &parameters);
 
+    [[nodiscard]] static Register return_register(const sem::Type &type);
+
     [[nodiscard]] static size_t align_size(size_t input);
 
 private:
@@ -37,11 +39,9 @@ private:
 
     void visit(il::Cast &instruction) override;
 
-    void visit(il::Return &instruction) override;
+    void visit(il::Return &) override {}
 
     void visit(il::Call &instruction) override;
-
-    Register _return_register(const sem::Type &type);
 
     void visit(il::If &) override {}
 

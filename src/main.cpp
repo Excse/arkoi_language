@@ -93,11 +93,11 @@ int main(int argc, char* argv[]) {
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
 
-    auto assembly_output = x86_64::Generator::generate(module);
-    std::cout << assembly_output.str();
+    auto assembly = x86_64::Generator::generate(module);
+    std::cout << assembly.str();
 
     std::ofstream cfg_file(base_path + ".asm");
-    cfg_file << assembly_output.str();
+    cfg_file << assembly.str();
     cfg_file.close();
 
     return 0;

@@ -87,13 +87,8 @@ void Mapper::visit(il::Cast &instruction) {
     _locals.insert(instruction.result());
 }
 
-void Mapper::visit(il::Return &instruction) {
-    auto reg = _return_register(instruction.result().type());
-    _add_register(instruction.result(), reg);
-}
-
 void Mapper::visit(il::Call &instruction) {
-    auto result_reg = _return_register(instruction.result().type());
+    auto result_reg = return_register(instruction.result().type());
 
     // Set the result register to the right
     _add_register(instruction.result(), result_reg);
@@ -118,20 +113,6 @@ void Mapper::visit(il::Call &instruction) {
     for (auto &argument: stack_arguments) {
         _add_push(argument);
     }
-}
-
-Register Mapper::_return_register(const sem::Type &type) {
-    return std::visit(match{
-        [&](const sem::Integral &type) -> Register {
-            return {Register::Base::A, type.size()};
-        },
-        [&](const sem::Floating &type) -> Register {
-            return {Register::Base::XMM0, type.size()};
-        },
-        [&](const sem::Boolean &) -> Register {
-            return {Register::Base::A, Size::BYTE};
-        }
-    }, type);
 }
 
 void Mapper::visit(il::Alloca &instruction) {
@@ -213,6 +194,20 @@ std::vector<il::Variable> Mapper::get_stack_parameters(const std::vector<il::Var
     }
 
     return result;
+}
+
+Register Mapper::return_register(const sem::Type &type) {
+    return std::visit(match{
+        [&](const sem::Integral &type) -> Register {
+            return {Register::Base::A, type.size()};
+        },
+        [&](const sem::Floating &type) -> Register {
+            return {Register::Base::XMM0, type.size()};
+        },
+        [&](const sem::Boolean &) -> Register {
+            return {Register::Base::A, Size::BYTE};
+        }
+    }, type);
 }
 
 size_t Mapper::align_size(size_t input) {
