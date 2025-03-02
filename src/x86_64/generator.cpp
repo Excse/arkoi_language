@@ -305,7 +305,19 @@ void Generator::visit(il::Call &instruction) {
     }
 }
 
-void Generator::visit(il::If &) {}
+void Generator::visit(il::If &instruction) {
+    auto condition = _load(instruction.condition());
+
+    // The test instruction only works with reg:imm, mem:imm, reg:reg, mem:reg, thus we simply put the condition in a
+    // register if not already available.
+    if (!std::holds_alternative<Register>(condition)) {
+        condition = _store_temp(condition, sem::Boolean());
+    }
+
+    _text << "\ttest " << condition << ", " << condition << "\n";
+    _text << "\tjnz " << instruction.branch() << "\n";
+    _text << "\tjmp " << instruction.next() << "\n";
+}
 
 void Generator::visit(il::Goto &instruction) {
     _text << "\tjmp " << instruction.label() << "\n";

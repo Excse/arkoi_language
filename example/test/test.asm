@@ -34,7 +34,7 @@ main:
 	movss DWORD PTR [rbp - 28], xmm10
 	# $20 @f32 = sub @f32 $17, 42
 	movss xmm10, DWORD PTR [rbp - 28]
-	addss xmm10, DWORD PTR [float3]
+	subss xmm10, DWORD PTR [float3]
 	movss DWORD PTR [rbp - 32], xmm10
 	# $21 @u64 = cast @f32 $20
 	# store @u64 $21, $01
@@ -60,6 +60,10 @@ ok:
 	ucomisd xmm10, QWORD PTR [float4]
 	seta BYTE PTR [rbp - 25]
 	# if $06 then L4 else L5
+	mov r10b, BYTE PTR [rbp - 25]
+	test r10b, r10b
+	jnz L4
+	jmp L5
 L5:
 	# $09 @f64 = load $02
 	movsd xmm10, QWORD PTR [rbp - 9]
@@ -69,6 +73,10 @@ L5:
 	ucomisd xmm10, QWORD PTR [float5]
 	seta BYTE PTR [rbp - 34]
 	# if $12 then L7 else L8
+	mov r10b, BYTE PTR [rbp - 34]
+	test r10b, r10b
+	jnz L7
+	jmp L8
 L8:
 	# store @f64 21, $02
 	movsd xmm10, QWORD PTR [float6]
@@ -127,6 +135,10 @@ test1:
 	ucomisd xmm10, QWORD PTR [rbp - 36]
 	setb BYTE PTR [rbp - 44]
 	# if $07 then L12 else L13
+	mov r10b, BYTE PTR [rbp - 44]
+	test r10b, r10b
+	jnz L12
+	jmp L13
 L13:
 	# $18 @s32 = load $02
 	mov r10d, DWORD PTR [rbp - 12]
@@ -205,6 +217,10 @@ test2:
 	ucomisd xmm10, QWORD PTR [rbp - 36]
 	setb BYTE PTR [rbp - 44]
 	# if $07 then L17 else L18
+	mov r10b, BYTE PTR [rbp - 44]
+	test r10b, r10b
+	jnz L17
+	jmp L18
 L18:
 	# $13 @s32 = load $02
 	mov r10d, DWORD PTR [rbp - 12]
