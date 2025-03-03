@@ -99,32 +99,12 @@ void Generator::visit(il::Binary &instruction) {
     }
 }
 
-Operand Generator::_adjust_lhs_to_reg(const Operand &result, const Operand &left, const sem::Type &type) {
-    // Always store the lhs operand in a register. This will minimize the code and also is necessary due to possible
-    // overwriting of the lhs operand.
-    if (std::holds_alternative<Register>(result)) {
-        if (result == left) {
-            // The requirement of lhs being a register is already satisfied. Also, the result and lhs register are the
-            // same, thus the last store will be ignored.
-            return left;
-        }
-
-        // The result operand is a register, thus just temporarily store the lhs in it. This will also make sure to
-        // ignore the last store.
-        _store(left, result, type);
-        return result;
-    }
-
-    // Otherwise if the result is not a register, store the lhs in a temp register.
-    return _store_temp(left, type);
-}
-
 void Generator::_add(const Operand &result, Operand left, const Operand &right, const sem::Type &type) {
     if (std::holds_alternative<sem::Floating>(type)) {
         // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
         // we just need to adjust the lhs to a register, which we always do.
         // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose addsd or addss.
         auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
@@ -135,7 +115,7 @@ void Generator::_add(const Operand &result, Operand left, const Operand &right, 
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
         // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         _text << "\tadd " << left << ", " << right << "\n";
 
@@ -149,7 +129,7 @@ void Generator::_sub(const Operand &result, Operand left, const Operand &right, 
         // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
         // we just need to adjust the lhs to a register, which we always do.
         // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose subsd or subss.
         auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
@@ -160,7 +140,7 @@ void Generator::_sub(const Operand &result, Operand left, const Operand &right, 
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
         // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         _text << "\tsub " << left << ", " << right << "\n";
 
@@ -174,7 +154,7 @@ void Generator::_mul(const Operand &result, Operand left, const Operand &right, 
         // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
         // we just need to adjust the lhs to a register, which we always do.
         // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose mulsd or mulss.
         auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
@@ -185,8 +165,10 @@ void Generator::_mul(const Operand &result, Operand left, const Operand &right, 
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
         // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
+        // When discarding the upper part of the multiplication result, imul and mul are indistinguisable. Thus, just
+        // imul is used as it also is easier to handle.
         _text << "\timul " << left << ", " << right << "\n";
 
         // Finally store the lhs (where the result is written to) to the result operand.
@@ -199,7 +181,7 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
         // we just need to adjust the lhs to a register, which we always do.
         // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose divsd or divss.
         auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
@@ -217,6 +199,7 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
             right = _store_temp(right, type);
         }
 
+        // Depending on the signess of the integral value, we need to choose idiv or div.
         _text << "\t";
         if (auto *integral = std::get_if<sem::Integral>(&type)) {
             if (integral->sign()) _text << "i";
@@ -232,7 +215,7 @@ void Generator::_gth(const Operand &result, Operand left, const Operand &right, 
         // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
         // we just need to adjust the lhs to a register, which we always do.
         // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose ucomisd or ucomiss.
         auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
@@ -242,7 +225,7 @@ void Generator::_gth(const Operand &result, Operand left, const Operand &right, 
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
         // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         _text << "\tcmp " << left << ", " << right << "\n";
 
@@ -263,7 +246,7 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
         // As there are no direct floating immediates (they will always be replaced with memory operands, see _load),
         // we just need to adjust the lhs to a register, which we always do.
         // Thus left:right will always be reg:mem or reg:reg, which is a valid operand encoding.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose ucomisd or ucomiss.
         auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
@@ -273,7 +256,7 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
         // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
-        left = _adjust_lhs_to_reg(result, left, type);
+        left = _adjust_to_reg(result, left, type);
 
         _text << "\tcmp " << left << ", " << right << "\n";
 
@@ -402,6 +385,23 @@ Register Generator::_store_temp(const Operand &source, const sem::Type &type) {
     _store(source, temp, type);
 
     return temp;
+}
+
+Operand Generator::_adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type) {
+    // If the result operand is already a register, just use it instead.
+    if (std::holds_alternative<Register>(result)) {
+        if (result == operand) {
+            // If both result and operand are the same register, there is nothing more to do.
+            return operand;
+        }
+
+        // If the result operand is a register, then just temporarily store the operand in it.
+        _store(operand, result, type);
+        return result;
+    }
+
+    // Otherwise if the result is not a register, store the lhs in a temp register.
+    return _store_temp(operand, type);
 }
 
 //==============================================================================

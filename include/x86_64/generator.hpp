@@ -25,8 +25,6 @@ private:
 
     void visit(il::Binary &instruction) override;
 
-    Operand _adjust_lhs_to_reg(const Operand &result, const Operand &left, const sem::Type &type);
-
     void _add(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
 
     void _sub(const Operand &result, Operand left, const Operand &right, const sem::Type &type);
@@ -55,12 +53,13 @@ private:
 
     void visit(il::Constant &instruction) override;
 
-private:
     Operand _load(const il::Operand &operand);
 
     void _store(Operand source, const Operand &destination, const sem::Type &type);
 
     [[nodiscard]] Register _store_temp(const Operand &source, const sem::Type &type);
+
+    Operand _adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type);
 
 private:
     il::Function *_current_function{};
