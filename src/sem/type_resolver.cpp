@@ -192,7 +192,7 @@ void TypeResolver::visit(ast::Assign &node) {
     auto type = _current_type.value();
 
     if (!_can_implicit_convert(type, identifier_type)) {
-        throw std::runtime_error("Assign expression has a wrong type.");
+        throw std::runtime_error("Assign source has a wrong type.");
     }
 
     if (type != identifier_type) {

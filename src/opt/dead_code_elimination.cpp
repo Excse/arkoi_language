@@ -14,7 +14,7 @@ bool DeadCodeElimination::enter_function(il::Function &function) {
         for(auto &instruction : block) {
             std::visit(match{
                 [&](il::Cast &instruction) {
-                    _mark_variable(instruction.expression());
+                    _mark_variable(instruction.source());
                 },
                 [&](il::Return &instruction) {
                     _mark_variable(instruction.value());
@@ -23,11 +23,11 @@ bool DeadCodeElimination::enter_function(il::Function &function) {
                     _mark_variable(instruction.condition());
                 },
                 [&](il::Store &instruction) {
-                    _mark_variable(instruction.value());
+                    _mark_variable(instruction.source());
                     _mark_variable(instruction.result());
                 },
                 [&](il::Load &instruction) {
-                    _mark_variable(instruction.value());
+                    _mark_variable(instruction.source());
                 },
                 [&](il::Binary &instruction) {
                     _mark_variable(instruction.left());

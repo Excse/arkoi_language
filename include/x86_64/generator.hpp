@@ -39,6 +39,10 @@ private:
 
     void visit(il::Cast &instruction) override;
 
+    void _float_to_float(const Operand &result, Operand source, const sem::Floating &from, const sem::Floating &to);
+
+    void _float_to_bool(const Operand &result, Operand source, const sem::Floating &from, const sem::Boolean &to);
+
     void visit(il::Call &instruction) override;
 
     void visit(il::If &instruction) override;
@@ -58,6 +62,10 @@ private:
     void _store(Operand source, const Operand &destination, const sem::Type &type);
 
     [[nodiscard]] Register _store_temp(const Operand &source, const sem::Type &type);
+
+    [[nodiscard]] static Register _temp_1_register(const sem::Type &type);
+
+    [[nodiscard]] static Register _temp_2_register(const sem::Type &type);
 
     Operand _adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type);
 

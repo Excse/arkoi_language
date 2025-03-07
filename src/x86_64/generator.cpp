@@ -6,8 +6,10 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-static const Register::Base TEMP_INT = Register::Base::R10;
-static const Register::Base TEMP_SSE = Register::Base::XMM10;
+static const Register::Base TEMP_INT_1 = Register::Base::A;
+static const Register::Base TEMP_INT_2 = Register::Base::C;
+static const Register::Base TEMP_SSE_1 = Register::Base::XMM0;
+static const Register::Base TEMP_SSE_2 = Register::Base::XMM1;
 
 std::stringstream Generator::generate(il::Module &module) {
     std::stringstream output;
@@ -78,16 +80,16 @@ void Generator::visit(il::BasicBlock &block) {
 
 void Generator::visit(il::Return &instruction) {
     auto &type = _current_function->type();
-    auto destination = Mapper::return_register(type);
+    auto result = Mapper::return_register(type);
     auto source = _load(instruction.value());
-    _store(source, destination, type);
+    _store(source, result, type);
 }
 
 void Generator::visit(il::Binary &instruction) {
-    auto &type = instruction.op_type();
     auto result = _load(instruction.result());
     auto left = _load(instruction.left());
     auto right = _load(instruction.right());
+    auto &type = instruction.op_type();
 
     switch (instruction.op()) {
         case il::Binary::Operator::Add: return _add(result, left, right, type);
@@ -191,12 +193,14 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         _store(left, result, type);
     } else {
         // First store the lhs operand in the "A" register of the given operand size.
-        auto a_reg = Register(Register::Base::A, type.size());
-        _store(left, a_reg, type);
+        auto temp_1_int = _temp_1_register(type);
+        _store(left, temp_1_int, type);
 
         // The div/idiv instruction only accepts mem/reg, thus an immediate must be converted.
         if (std::holds_alternative<Immediate>(right)) {
-            right = _store_temp(right, type);
+            auto temp_2_int = _temp_2_register(type);
+            _store(right, temp_2_int, type);
+            right = temp_2_int;
         }
 
         // Depending on the signess of the integral value, we need to choose idiv or div.
@@ -206,7 +210,7 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         }
         _text << "div " << right << "\n";
 
-        _store(a_reg, result, type);
+        _store(temp_1_int, result, type);
     }
 }
 
@@ -272,11 +276,81 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
     }
 }
 
-void Generator::visit(il::Cast &) {}
+void Generator::visit(il::Cast &instruction) {
+    auto result = _load(instruction.result());
+    auto source = _load(instruction.source());
+    auto &from = instruction.from();
+    auto &to = instruction.result().type();
+
+    std::visit(match{
+        [&](const sem::Floating &from, const sem::Floating &to) { _float_to_float(result, source, from, to); },
+        [&](const sem::Floating &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Floating &from, const sem::Boolean &to) { _float_to_bool(result, source, from, to); },
+        [&](const sem::Integral &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Integral &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Integral &, const sem::Boolean &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Boolean &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Boolean &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Boolean &, const sem::Boolean &) { _text << "\t# TODO: Not implemented yet.\n"; },
+    }, from, to);
+}
+
+void Generator::_float_to_float(const Operand &result, Operand source, const sem::Floating &from,
+                                const sem::Floating &to) {
+    // If both are the same, a simple move will fulfill
+    if (from == to) {
+        _store(source, result, to);
+        return;
+    }
+
+    // Always adjust the source to a register.
+    source = _adjust_to_reg(result, source, from);
+
+    if (from.size() == Size::DWORD && to.size() == Size::QWORD) {
+        // Convert a float operand to a double operand.
+        _text << "\tcvtss2sd " << source << ", " << source << "\n";
+    } else if (from.size() == Size::QWORD && to.size() == Size::DWORD) {
+        // Convert a double operand to a float operand.
+        _text << "\tcvtsd2ss " << source << ", " << source << "\n";
+    }
+
+    _store(source, result, to);
+}
+
+void Generator::_float_to_bool(const Operand &result, Operand source, const sem::Floating &from,
+                               const sem::Boolean &to) {
+    // Always adjust the source to a register.
+    source = _adjust_to_reg(result, source, from);
+
+    // We need temp registers to evaluate if it's a bool or not.
+    auto temp_2_sse = _temp_2_register(from);
+    auto temp_1_int = _temp_1_register(to);
+    auto temp_2_int = _temp_2_register(to);
+
+    // Set the temp sse register to 0.0.
+    _text << "\txorps " << temp_2_sse << ", " << temp_2_sse << "\n";
+
+    // Compare the source float with 0.0.
+    if (from.size() == Size::DWORD) {
+        _text << "\tucomiss " << source << ", " << temp_2_sse << "\n";
+    } else if (from.size() == Size::QWORD) {
+        _text << "\tucomisd " << source << ", " << temp_2_sse << "\n";
+    }
+
+    // Set the first temp register if it is not equal to zero.
+    _text << "\tsetne " << temp_1_int << "\n";
+    // Also set the second temp register to check if the number is NaN.
+    _text << "\tsetp " << temp_2_int << "\n";
+    // After that combine the result to form a result.
+    _text << "\tor " << temp_1_int << ", " << temp_2_int << "\n";
+
+    // Finally store the calculated result in the result operand.
+    _store(temp_1_int, result, to);
+}
 
 void Generator::visit(il::Call &instruction) {
-    // instruction.result() is unnecessary because the mapper always assigns the destination to either the XMM0 register
-    // for floating-point values or the RDI register for integers.
+    auto result = _load(instruction.result());
+    auto &type = instruction.result().type();
 
     _text << "\tcall " << instruction.name() << "\n";
 
@@ -286,6 +360,9 @@ void Generator::visit(il::Call &instruction) {
     if (stack_adjust) {
         _text << "\tadd rsp, " << stack_adjust << "\n";
     }
+
+    auto return_reg = Mapper::return_register(type);
+    _store(return_reg, result, type);
 }
 
 void Generator::visit(il::If &instruction) {
@@ -307,17 +384,17 @@ void Generator::visit(il::Goto &instruction) {
 }
 
 void Generator::visit(il::Store &instruction) {
-    auto destination = _load(instruction.result());
-    auto source = _load(instruction.value());
+    auto result = _load(instruction.result());
+    auto source = _load(instruction.source());
     auto &type = instruction.result().type();
-    _store(source, destination, type);
+    _store(source, result, type);
 }
 
 void Generator::visit(il::Load &instruction) {
-    auto destination = _load(instruction.result());
-    auto source = _load(instruction.value());
+    auto result = _load(instruction.result());
+    auto source = _load(instruction.source());
     auto &type = instruction.result().type();
-    _store(source, destination, type);
+    _store(source, result, type);
 }
 
 void Generator::visit(il::Constant &instruction) {
@@ -325,10 +402,10 @@ void Generator::visit(il::Constant &instruction) {
     // the call instruction only accepts IL variables as arguments. Thus, most of the constant variables will be mapped
     // to a register/memory location or stack push according to the specific calling convention.
 
-    auto destination = _load(instruction.result());
-    auto source = _load(instruction.value());
+    auto result = _load(instruction.result());
+    auto immediate = _load(instruction.immediate());
     auto &type = instruction.result().type();
-    _store(source, destination, type);
+    _store(immediate, result, type);
 }
 
 Operand Generator::_load(const il::Operand &operand) {
@@ -377,14 +454,19 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
 }
 
 Register Generator::_store_temp(const Operand &source, const sem::Type &type) {
-    // Always adjust to a register, as there is no memory mapped for such temporaries (also it's too expensive).
-    const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE : TEMP_INT);
-
-    // Store the contents of operand into the register
-    auto temp = Register(reg_base, type.size());
+    auto temp = _temp_1_register(type);
     _store(source, temp, type);
-
     return temp;
+}
+
+Register Generator::_temp_1_register(const sem::Type &type) {
+    const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE_1 : TEMP_INT_1);
+    return {reg_base, type.size()};
+}
+
+Register Generator::_temp_2_register(const sem::Type &type) {
+    const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE_2 : TEMP_INT_2);
+    return {reg_base, type.size()};
 }
 
 Operand Generator::_adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type) {

@@ -18,5 +18,5 @@ fun test() @i32 => 1;
 ```
 
 The main difference is, that a short function is useful for getters, setters or other very trivial functions and thus is
-a "one liner". Generally there is no ``return`` inside a short function as the very first expression will be the result
+a "one liner". Generally there is no ``return`` inside a short function as the very first source will be the result
 of it. In summary those two "types" are just syntax sugar for the same thing. 

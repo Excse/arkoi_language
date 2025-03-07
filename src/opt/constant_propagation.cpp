@@ -15,7 +15,7 @@ bool ConstantPropagation::on_block(il::BasicBlock &block) {
 
     for (auto &instruction: block.instructions()) {
         if(auto *constant = std::get_if<il::Constant>(&instruction)) {
-            _constants[constant->result()] = constant->value();
+            _constants[constant->result()] = constant->immediate();
         }
 
         changed |= _can_propagate(instruction);
@@ -36,13 +36,13 @@ bool ConstantPropagation::_can_propagate(il::Instruction &instruction) {
             propagated |= _propagate(instruction.value());
         },
         [&](il::Cast &instruction) {
-            propagated |= _propagate(instruction.expression());
+            propagated |= _propagate(instruction.source());
         },
         [&](il::If &instruction) {
             propagated |= _propagate(instruction.condition());
         },
         [&](il::Store &instruction) {
-            propagated |= _propagate(instruction.value());
+            propagated |= _propagate(instruction.source());
         },
         [&](il::Constant &) {},
         [&](il::Alloca &) {},

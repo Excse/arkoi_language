@@ -105,8 +105,7 @@ public:
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     [[nodiscard]] bool is_constant() override {
-        return std::holds_alternative<Immediate>(_left) &&
-               std::holds_alternative<Immediate>(_right);
+        return std::holds_alternative<Immediate>(_left) && std::holds_alternative<Immediate>(_right);
     }
 
     [[nodiscard]] auto &result() const { return _result; };
@@ -130,22 +129,22 @@ private:
 
 class Cast : public InstructionBase {
 public:
-    Cast(Variable result, Operand expression, sem::Type from)
-        : _expression(std::move(expression)), _result(std::move(result)), _from(std::move(from)) {}
+    Cast(Variable result, Operand source, sem::Type from)
+        : _result(std::move(result)), _source(std::move(source)), _from(std::move(from)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_expression); }
+    [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_source); }
 
-    [[nodiscard]] auto &expression() { return _expression; };
+    [[nodiscard]] auto &source() { return _source; };
 
     [[nodiscard]] auto &result() const { return _result; };
 
     [[nodiscard]] auto &from() const { return _from; };
 
 private:
-    Operand _expression;
     Variable _result;
+    Operand _source;
     sem::Type _from;
 };
 
@@ -165,8 +164,8 @@ private:
 
 class Load : public InstructionBase {
 public:
-    Load(Variable result, Variable value)
-        : _result(std::move(result)), _value(std::move(value)) {}
+    Load(Variable result, Variable source)
+        : _result(std::move(result)), _source(std::move(source)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -174,16 +173,16 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &value() const { return _value; };
+    [[nodiscard]] auto &source() const { return _source; };
 
 private:
-    Variable _result, _value;
+    Variable _result, _source;
 };
 
 class Store : public InstructionBase {
 public:
-    Store(Variable result, Operand value)
-        : _result(std::move(result)), _value(std::move(value)) {}
+    Store(Variable result, Operand source)
+        : _result(std::move(result)), _source(std::move(source)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -191,17 +190,17 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &value() { return _value; };
+    [[nodiscard]] auto &source() { return _source; };
 
 private:
     Variable _result;
-    Operand _value;
+    Operand _source;
 };
 
 class Constant : public InstructionBase {
 public:
-    Constant(Variable result, Immediate value)
-        : _result(std::move(result)), _value(value) {}
+    Constant(Variable result, Immediate immediate)
+        : _immediate(immediate), _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -209,11 +208,11 @@ public:
 
     [[nodiscard]] auto &result() const { return _result; };
 
-    [[nodiscard]] auto &value() { return _value; };
+    [[nodiscard]] auto &immediate() { return _immediate; };
 
 private:
+    Immediate _immediate;
     Variable _result;
-    Immediate _value;
 };
 
 struct Instruction : public InstructionBase, public std::variant<
