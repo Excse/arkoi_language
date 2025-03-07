@@ -423,6 +423,9 @@ Operand Generator::_load(const il::Operand &operand) {
                 return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
             }
         },
+        [&](const il::Memory &memory) -> Operand {
+            return _mapper[memory];
+        },
         [&](const il::Variable &variable) -> Operand {
             return _mapper[variable];
         },

@@ -150,7 +150,7 @@ private:
 
 class Alloca : public InstructionBase {
 public:
-    Alloca(Variable result) : _result(std::move(result)) {}
+    Alloca(Memory result) : _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -159,12 +159,12 @@ public:
     [[nodiscard]] auto &result() const { return _result; };
 
 private:
-    Variable _result;
+    Memory _result;
 };
 
 class Load : public InstructionBase {
 public:
-    Load(Variable result, Variable source)
+    Load(Variable result, Memory source)
         : _result(std::move(result)), _source(std::move(source)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -176,12 +176,13 @@ public:
     [[nodiscard]] auto &source() const { return _source; };
 
 private:
-    Variable _result, _source;
+    Variable _result;
+    Memory _source;
 };
 
 class Store : public InstructionBase {
 public:
-    Store(Variable result, Operand source)
+    Store(Memory result, Operand source)
         : _result(std::move(result)), _source(std::move(source)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -193,7 +194,7 @@ public:
     [[nodiscard]] auto &source() { return _source; };
 
 private:
-    Variable _result;
+    Memory _result;
     Operand _source;
 };
 

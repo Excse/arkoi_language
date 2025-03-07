@@ -14,28 +14,28 @@ bool DeadCodeElimination::enter_function(il::Function &function) {
         for(auto &instruction : block) {
             std::visit(match{
                 [&](il::Cast &instruction) {
-                    _mark_variable(instruction.source());
+                    _used.insert(instruction.source());
                 },
                 [&](il::Return &instruction) {
-                    _mark_variable(instruction.value());
+                    _used.insert(instruction.value());
                 },
                 [&](il::If &instruction) {
-                    _mark_variable(instruction.condition());
+                    _used.insert(instruction.condition());
                 },
                 [&](il::Store &instruction) {
-                    _mark_variable(instruction.source());
-                    _mark_variable(instruction.result());
+                    _used.insert(instruction.source());
+                    _used.insert(instruction.result());
                 },
                 [&](il::Load &instruction) {
-                    _mark_variable(instruction.source());
+                    _used.insert(instruction.source());
                 },
                 [&](il::Binary &instruction) {
-                    _mark_variable(instruction.left());
-                    _mark_variable(instruction.right());
+                    _used.insert(instruction.left());
+                    _used.insert(instruction.right());
                 },
                 [&](il::Call &instruction) {
                     for (auto &argument: instruction.arguments()) {
-                        _mark_variable(argument);
+                        _used.insert(argument);
                     }
                 },
                 [&](il::Constant &) {},
@@ -73,13 +73,6 @@ bool DeadCodeElimination::on_block(il::BasicBlock &block) {
             [&](il::If &) { return false; },
         }, instruction);
     });
-}
-
-void DeadCodeElimination::_mark_variable(const il::Operand &operand) {
-    const auto *variable = std::get_if<il::Variable>(&operand);
-    if (variable == nullptr) return;
-
-    _used.insert(*variable);
 }
 
 //==============================================================================

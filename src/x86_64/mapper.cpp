@@ -32,6 +32,9 @@ Operand Mapper::operator[](const il::Operand &operand) {
         [&](const il::Variable &variable) -> Operand {
             return _mappings.at(variable);
         },
+        [&](const il::Memory &memory) -> Operand {
+            return _mappings.at(memory);
+        },
         [&](const il::Immediate &immediate) -> Operand {
             return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
         }
@@ -66,9 +69,9 @@ void Mapper::visit(il::Function &function) {
     }
 
     int64_t local_offset = -8;
-    for (auto &variable: _locals) {
-        auto size = variable.type().size();
-        _mappings.emplace(variable, Memory(size, RBP, local_offset));
+    for (auto &local: _locals) {
+        auto size = local.size();
+        _mappings.emplace(local, Memory(size, RBP, local_offset));
         local_offset -= (int64_t) size_to_bytes(size);
     }
 }
@@ -146,7 +149,7 @@ size_t Mapper::stack_size() const {
     size_t stack_size = 0;
 
     for (const auto &local: _locals) {
-        auto size = size_to_bytes(local.type().size());
+        auto size = size_to_bytes(local.size());
         stack_size += size;
     }
 

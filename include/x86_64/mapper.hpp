@@ -62,8 +62,8 @@ private:
     void _add_push(const il::Variable &variable);
 
 private:
-    std::unordered_map<il::Variable, Operand> _mappings{};
-    std::set<il::Variable> _locals{};
+    std::unordered_map<il::Operand, Operand> _mappings{};
+    std::set<il::Operand> _locals{};
 };
 
 } // namespace arkoi::x86_64

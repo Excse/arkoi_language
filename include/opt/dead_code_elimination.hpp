@@ -19,10 +19,7 @@ public:
     bool on_block(il::BasicBlock &block) override;
 
 private:
-    void _mark_variable(const il::Operand &operand);
-
-private:
-    std::unordered_set<il::Variable> _used;
+    std::unordered_set<il::Operand> _used;
 };
 
 } // namespace arkoi::opt

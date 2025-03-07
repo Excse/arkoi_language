@@ -6,6 +6,18 @@
 
 using namespace arkoi::il;
 
+bool Memory::operator<(const Memory &rhs) const {
+    return _name < rhs._name;
+}
+
+bool Memory::operator==(const Memory &rhs) const {
+    return _name == rhs._name;
+}
+
+bool Memory::operator!=(const Memory &rhs) const {
+    return !(rhs == *this);
+}
+
 bool Variable::operator<(const Variable &rhs) const {
     if (_name != rhs._name) return _name < rhs._name;
     return _version < rhs._version;
@@ -54,6 +66,14 @@ std::ostream &operator<<(std::ostream &os, const Variable &variable) {
     return os;
 }
 
+std::ostream &operator<<(std::ostream &os, const Memory &memory) {
+    os << memory.name();
+    return os;
+}
+
+Size Operand::size() const {
+    return std::visit([](const auto &value) { return value.size(); }, *this);
+}
 
 namespace std {
 
@@ -61,6 +81,10 @@ size_t hash<arkoi::il::Variable>::operator()(const arkoi::il::Variable &variable
     size_t name_hash = std::hash<std::string>{}(variable.name());
     size_t generation_hash = std::hash<size_t>{}(variable.version());
     return name_hash ^ (generation_hash << 1);
+}
+
+size_t hash<arkoi::il::Memory>::operator()(const arkoi::il::Memory &memory) const {
+    return std::hash<std::string>{}(memory.name());
 }
 
 size_t hash<arkoi::il::Immediate>::operator()(const arkoi::il::Immediate &immediate) const {

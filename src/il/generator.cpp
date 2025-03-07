@@ -41,12 +41,12 @@ void Generator::visit(ast::Function &node) {
 
     _current_block = function.entry();
 
-    auto return_temp = _make_temporary(node.type());
+    auto return_temp = _make_memory(node.type());
     _current_block->emplace_back<Alloca>(return_temp);
     _return_temp = return_temp;
 
     for (auto &parameter: node.parameters()) {
-        auto alloca_temp = _make_temporary(parameter.type());
+        auto alloca_temp = _make_memory(parameter.type());
         _allocas.emplace(parameter.name().symbol(), alloca_temp);
         _current_block->emplace_back<Alloca>(alloca_temp);
     }
@@ -289,6 +289,10 @@ std::string Generator::_make_label_symbol() {
 
 Variable Generator::_make_temporary(sem::Type &type) {
     return {"$", type, ++_temp_index};
+}
+
+Memory Generator::_make_memory(sem::Type &type) {
+    return {"%" + std::to_string(++_temp_index), type};
 }
 
 //==============================================================================

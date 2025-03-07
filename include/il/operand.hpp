@@ -8,7 +8,36 @@
 
 namespace arkoi::il {
 
-class Variable {
+class OperandBase {
+public:
+    virtual ~OperandBase() = default;
+
+    [[nodiscard]] virtual Size size() const = 0;
+};
+
+class Memory : public OperandBase {
+public:
+    Memory(std::string name, sem::Type type)
+        : _name(std::move(name)), _type(std::move(type)) {}
+
+    bool operator<(const Memory& rhs) const;
+
+    bool operator==(const Memory &rhs) const;
+
+    bool operator!=(const Memory &rhs) const;
+
+    [[nodiscard]] Size size() const override { return _type.size(); }
+
+    [[nodiscard]] auto &name() const { return _name; }
+
+    [[nodiscard]] auto &type() const { return _type; }
+
+private:
+    std::string _name;
+    sem::Type _type;
+};
+
+class Variable : public OperandBase {
 public:
     Variable(std::string name, sem::Type type, size_t version = 0)
         : _name(std::move(name)), _version(version), _type(std::move(type)) {}
@@ -18,6 +47,8 @@ public:
     bool operator==(const Variable &rhs) const;
 
     bool operator!=(const Variable &rhs) const;
+
+    [[nodiscard]] Size size() const override { return _type.size(); }
 
     [[nodiscard]] auto version() const { return _version; }
 
@@ -31,14 +62,16 @@ private:
     sem::Type _type;
 };
 
-struct Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+struct Immediate : public OperandBase, public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 
-    [[nodiscard]] Size size() const;
+    [[nodiscard]] Size size() const override;
 };
 
-struct Operand : public std::variant<Immediate, Variable> {
+struct Operand : public OperandBase, public std::variant<Immediate, Variable, Memory> {
     using variant::variant;
+
+    [[nodiscard]] Size size() const override;
 };
 
 } // namespace arkoi::mid
@@ -48,6 +81,11 @@ namespace std {
 template<>
 struct hash<arkoi::il::Variable> {
     size_t operator()(const arkoi::il::Variable &variable) const;
+};
+
+template<>
+struct hash<arkoi::il::Memory> {
+    size_t operator()(const arkoi::il::Memory &memory) const;
 };
 
 template<>
@@ -65,6 +103,8 @@ struct hash<arkoi::il::Operand> {
 std::ostream &operator<<(std::ostream &os, const arkoi::il::Immediate &operand);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::il::Variable &operand);
+
+std::ostream &operator<<(std::ostream &os, const arkoi::il::Memory &operand);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::il::Operand &operand);
 
