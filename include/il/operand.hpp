@@ -17,8 +17,8 @@ public:
 
 class Memory : public OperandBase {
 public:
-    Memory(std::string name, sem::Type type)
-        : _name(std::move(name)), _type(std::move(type)) {}
+    Memory(size_t version, sem::Type type)
+        : _type(std::move(type)), _index(version) {}
 
     bool operator<(const Memory& rhs) const;
 
@@ -28,13 +28,13 @@ public:
 
     [[nodiscard]] Size size() const override { return _type.size(); }
 
-    [[nodiscard]] auto &name() const { return _name; }
+    [[nodiscard]] auto index() const { return _index; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
 private:
-    std::string _name;
     sem::Type _type;
+    size_t _index;
 };
 
 class Variable : public OperandBase {

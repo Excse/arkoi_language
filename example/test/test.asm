@@ -39,10 +39,10 @@ main:
 	movss DWORD PTR [rbp - 24], xmm0
 	# $21 @u64 = cast @f32 $20
 	# TODO: Not implemented yet.
-	# store @u64 $21, %1
+	# store @u64 $21, %01
 	mov rax, QWORD PTR [rbp - 28]
 	mov QWORD PTR [rbp - 44], rax
-	# $22 @u64 = load %1
+	# $22 @u64 = load %01
 	mov rax, QWORD PTR [rbp - 44]
 	mov QWORD PTR [rbp - 36], rax
 	# ret $22
@@ -52,9 +52,9 @@ main:
 
 ok:
 	enter 32, 0
-	# store @f64 foo1, %2
+	# store @f64 foo1, %02
 	movsd QWORD PTR [rbp - 29], xmm0
-	# $03 @f64 = load %2
+	# $03 @f64 = load %02
 	movsd xmm0, QWORD PTR [rbp - 29]
 	movsd QWORD PTR [rbp - 8], xmm0
 	# $06 @bool = gth @f64 $03, 5
@@ -67,7 +67,7 @@ ok:
 	jnz L4
 	jmp L5
 L5:
-	# $09 @f64 = load %2
+	# $09 @f64 = load %02
 	movsd xmm0, QWORD PTR [rbp - 29]
 	movsd QWORD PTR [rbp - 17], xmm0
 	# $12 @bool = gth @f64 $09, 10
@@ -80,19 +80,19 @@ L5:
 	jnz L7
 	jmp L8
 L8:
-	# store @f64 21, %2
+	# store @f64 21, %02
 	movsd xmm0, QWORD PTR [float6]
 	movsd QWORD PTR [rbp - 29], xmm0
 	# goto L6
 	jmp L6
 L7:
-	# store @f64 20, %2
+	# store @f64 20, %02
 	movsd xmm0, QWORD PTR [float7]
 	movsd QWORD PTR [rbp - 29], xmm0
 	# goto L6
 	jmp L6
 L4:
-	# store @f64 0, %2
+	# store @f64 0, %02
 	movsd xmm0, QWORD PTR [float8]
 	movsd QWORD PTR [rbp - 29], xmm0
 	# goto L6
@@ -103,7 +103,7 @@ L6:
 	mov ecx, 2
 	idiv ecx
 	mov edi, eax
-	# $20 @f64 = load %2
+	# $20 @f64 = load %02
 	movsd xmm0, QWORD PTR [rbp - 29]
 	# $21 @f32 = call test2($19, $20)
 	call test2
@@ -114,10 +114,10 @@ L6:
 	setp cl
 	or al, cl
 	mov BYTE PTR [rbp - 26], al
-	# store @bool $22, %1
+	# store @bool $22, %01
 	mov al, BYTE PTR [rbp - 26]
 	mov BYTE PTR [rbp - 28], al
-	# $23 @bool = load %1
+	# $23 @bool = load %01
 	mov al, BYTE PTR [rbp - 28]
 	mov BYTE PTR [rbp - 27], al
 	# ret $23
@@ -127,16 +127,16 @@ L6:
 
 test1:
 	enter 144, 0
-	# store @s32 foo2, %2
+	# store @s32 foo2, %02
 	mov DWORD PTR [rbp - 126], edi
-	# store @f64 bar, %3
+	# store @f64 bar, %03
 	movsd QWORD PTR [rbp - 130], xmm0
-	# $04 @s32 = load %2
+	# $04 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 8], eax
 	# $05 @f64 = cast @s32 $04
 	# TODO: Not implemented yet.
-	# $06 @f64 = load %3
+	# $06 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 130]
 	movsd QWORD PTR [rbp - 20], xmm0
 	# $07 @bool = lth @f64 $05, $06
@@ -149,12 +149,12 @@ test1:
 	jnz L12
 	jmp L13
 L13:
-	# $18 @s32 = load %2
+	# $18 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 86], eax
 	# $19 @f64 = cast @s32 $18
 	# TODO: Not implemented yet.
-	# $20 @f64 = load %3
+	# $20 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 130]
 	movsd QWORD PTR [rbp - 98], xmm0
 	# $21 @f64 = mul @f64 $19, $20
@@ -165,16 +165,16 @@ L13:
 	movsd xmm0, QWORD PTR [rbp - 106]
 	cvtsd2ss xmm0, xmm0
 	movss DWORD PTR [rbp - 114], xmm0
-	# store @f32 $22, %1
+	# store @f32 $22, %01
 	movss xmm0, DWORD PTR [rbp - 114]
 	movss DWORD PTR [rbp - 122], xmm0
 	# goto L11
 	jmp L11
 L12:
-	# $08 @f64 = load %3
+	# $08 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 130]
 	movsd QWORD PTR [rbp - 29], xmm0
-	# $09 @s32 = load %2
+	# $09 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 37], eax
 	# $10 @f64 = cast @s32 $09
@@ -183,10 +183,10 @@ L12:
 	movsd xmm0, QWORD PTR [rbp - 29]
 	mulsd xmm0, QWORD PTR [rbp - 41]
 	movsd QWORD PTR [rbp - 49], xmm0
-	# $12 @s32 = load %2
+	# $12 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 57], eax
-	# $13 @s32 = load %2
+	# $13 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 61], eax
 	# $14 @bool = lth @s32 $12, $13
@@ -203,13 +203,13 @@ L12:
 	movsd xmm0, QWORD PTR [rbp - 74]
 	cvtsd2ss xmm0, xmm0
 	movss DWORD PTR [rbp - 82], xmm0
-	# store @f32 $17, %1
+	# store @f32 $17, %01
 	movss xmm0, DWORD PTR [rbp - 82]
 	movss DWORD PTR [rbp - 122], xmm0
 	# goto L11
 	jmp L11
 L11:
-	# $23 @f32 = load %1
+	# $23 @f32 = load %01
 	movss xmm0, DWORD PTR [rbp - 122]
 	movss DWORD PTR [rbp - 118], xmm0
 	# ret $23
@@ -219,16 +219,16 @@ L11:
 
 test2:
 	enter 128, 0
-	# store @s32 foo2, %2
+	# store @s32 foo2, %02
 	mov DWORD PTR [rbp - 109], edi
-	# store @f64 bar, %3
+	# store @f64 bar, %03
 	movsd QWORD PTR [rbp - 113], xmm0
-	# $04 @s32 = load %2
+	# $04 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 109]
 	mov DWORD PTR [rbp - 8], eax
 	# $05 @f64 = cast @s32 $04
 	# TODO: Not implemented yet.
-	# $06 @f64 = load %3
+	# $06 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 113]
 	movsd QWORD PTR [rbp - 20], xmm0
 	# $07 @bool = lth @f64 $05, $06
@@ -241,38 +241,38 @@ test2:
 	jnz L17
 	jmp L18
 L18:
-	# $13 @s32 = load %2
+	# $13 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 109]
 	mov DWORD PTR [rbp - 61], eax
 	# $14 @f64 = cast @s32 $13
 	# TODO: Not implemented yet.
-	# $15 @f64 = load %3
+	# $15 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 113]
 	movsd QWORD PTR [rbp - 73], xmm0
 	# $16 @f64 = mul @f64 $14, $15
 	movsd xmm0, QWORD PTR [rbp - 65]
 	mulsd xmm0, QWORD PTR [rbp - 73]
 	movsd QWORD PTR [rbp - 81], xmm0
-	# store @f64 $16, %3
+	# store @f64 $16, %03
 	movsd xmm0, QWORD PTR [rbp - 81]
 	movsd QWORD PTR [rbp - 113], xmm0
-	# $17 @f64 = load %3
+	# $17 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 113]
 	movsd QWORD PTR [rbp - 89], xmm0
 	# $18 @f32 = cast @f64 $17
 	movsd xmm0, QWORD PTR [rbp - 89]
 	cvtsd2ss xmm0, xmm0
 	movss DWORD PTR [rbp - 97], xmm0
-	# store @f32 $18, %1
+	# store @f32 $18, %01
 	movss xmm0, DWORD PTR [rbp - 97]
 	movss DWORD PTR [rbp - 105], xmm0
 	# goto L16
 	jmp L16
 L17:
-	# $08 @f64 = load %3
+	# $08 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 113]
 	movsd QWORD PTR [rbp - 29], xmm0
-	# $09 @s32 = load %2
+	# $09 @s32 = load %02
 	mov eax, DWORD PTR [rbp - 109]
 	mov DWORD PTR [rbp - 37], eax
 	# $10 @f64 = cast @s32 $09
@@ -285,13 +285,13 @@ L17:
 	movsd xmm0, QWORD PTR [rbp - 49]
 	cvtsd2ss xmm0, xmm0
 	movss DWORD PTR [rbp - 57], xmm0
-	# store @f32 $12, %1
+	# store @f32 $12, %01
 	movss xmm0, DWORD PTR [rbp - 57]
 	movss DWORD PTR [rbp - 105], xmm0
 	# goto L16
 	jmp L16
 L16:
-	# $19 @f32 = load %1
+	# $19 @f32 = load %01
 	movss xmm0, DWORD PTR [rbp - 105]
 	movss DWORD PTR [rbp - 101], xmm0
 	# ret $19

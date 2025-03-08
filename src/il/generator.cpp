@@ -292,7 +292,7 @@ Variable Generator::_make_temporary(sem::Type &type) {
 }
 
 Memory Generator::_make_memory(sem::Type &type) {
-    return {"%" + std::to_string(++_temp_index), type};
+    return {++_temp_index, type};
 }
 
 //==============================================================================
