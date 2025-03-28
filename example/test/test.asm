@@ -218,7 +218,6 @@ L11:
 	ret
 
 test2:
-	enter 128, 0
 	# store @s32 foo2, %02
 	mov DWORD PTR [rbp - 109], edi
 	# store @f64 bar, %03
@@ -296,7 +295,6 @@ L16:
 	movss DWORD PTR [rbp - 101], xmm0
 	# ret $19
 	movss xmm0, DWORD PTR [rbp - 101]
-	leave
 	ret
 
 .section .data

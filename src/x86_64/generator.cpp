@@ -30,6 +30,7 @@ void Generator::visit(il::Module &module) {
     _text << "\n";
 
     _text << "_start:\n";
+    _text << "\tand rsp, -16\n";
     _text << "\tcall main\n";
     _text << "\tmov rdi, rax\n";
     _text << "\tmov rax, 60\n";
@@ -55,9 +56,16 @@ void Generator::visit(il::Function &function) {
 }
 
 void Generator::visit(il::BasicBlock &block) {
+    auto stack_size = _mapper.stack_size();
+
     if (_current_function->entry() == &block) {
-        _text << "\tenter " << _mapper.stack_size() << ", 0\n";
+        // If we are in a leaf function and the stack size in less or equal to 128 bytes (redzone), we can skip the enter
+        // instruction.
+        if (!_current_function->is_leaf() || stack_size > 128) {
+            _text << "\tenter " << stack_size << ", 0\n";
+        }
     } else {
+        // Just a normal block.
         _text << block.label() << ":\n";
     }
 
@@ -72,7 +80,12 @@ void Generator::visit(il::BasicBlock &block) {
     }
 
     if (_current_function->exit() == &block) {
-        _text << "\tleave\n";
+        // If the function is not a leaf or the stack size exceeds 128 bytes, we need to restore the stack using the
+        // leave instruction.
+        if (!_current_function->is_leaf() || stack_size > 128) {
+            _text << "\tleave\n";
+        }
+
         _text << "\tret\n";
         _text << "\n";
     }
@@ -352,12 +365,18 @@ void Generator::visit(il::Call &instruction) {
     auto result = _load(instruction.result());
     auto &type = instruction.result().type();
 
+    auto stack_arguments = Mapper::get_stack_parameters(instruction.arguments());
+    if (stack_arguments.size() % 2 != 0) {
+        // If the amount of stack arguments is not even (0, 2, 4 etc., not 16 bytes aligned), we first need to align
+        // the stack.
+        _text << "\tsub rps, 8\n";
+    }
+
     _text << "\tcall " << instruction.name() << "\n";
 
-    auto stack_arguments = Mapper::get_stack_parameters(instruction.arguments());
-    auto stack_adjust = 8 * stack_arguments.size();
-
-    if (stack_adjust) {
+    auto stack_adjust = Mapper::align_size(8 * stack_arguments.size());
+    if (stack_adjust != 0) {
+        // If we had stack arguments, we need to readjust the stack.
         _text << "\tadd rsp, " << stack_adjust << "\n";
     }
 

@@ -70,13 +70,23 @@ Function::Function(std::string name, std::vector<Variable> parameters, sem::Type
 Function::Function(const std::string &name, std::vector<Variable> parameters, sem::Type type)
     : Function(name, std::move(parameters), std::move(type), name + "_entry", name + "_exit") {}
 
+bool Function::is_leaf() {
+    for (auto &block: *this) {
+        for (const auto &instruction: block) {
+            if (std::holds_alternative<Call>(instruction)) return false;
+        }
+    }
+
+    return true;
+}
+
 bool Function::remove(BasicBlock *target) {
     assert(target->predecessors().empty());
 
     if (target->next()) target->next()->predecessors().erase(target);
     if (target->branch()) target->branch()->predecessors().erase(target);
 
-    return std::erase_if(_block_pool, [&](const std::shared_ptr<BasicBlock> &block) {
+    return std::erase_if(_block_pool, [&](const auto &block) {
         return block.get() == target;
     });
 }

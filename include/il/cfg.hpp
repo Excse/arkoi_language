@@ -96,7 +96,9 @@ public:
     template<typename... Args>
     BasicBlock *emplace_back(Args &&... args);
 
-    bool remove(BasicBlock *block);
+    [[nodiscard]] bool is_leaf();
+
+    [[nodiscard]] bool remove(BasicBlock *block);
 
     [[nodiscard]] auto &parameters() { return _parameters; }
 
