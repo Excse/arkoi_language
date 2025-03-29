@@ -63,18 +63,11 @@ private:
     Size _size;
 };
 
-class StackPush {
-public:
-    bool operator==(const StackPush &) const { return true; }
-
-    bool operator!=(const StackPush &) const { return false; };
-};
-
 struct Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 };
 
-struct Operand : public std::variant<StackPush, Memory, Register, Immediate> {
+struct Operand : public std::variant<Memory, Register, Immediate> {
     using variant::variant;
 };
 
@@ -87,8 +80,6 @@ std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Register::Base &
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Memory &memory);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Memory::Address &memory);
-
-std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::StackPush &push);
 
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Immediate &operand);
 

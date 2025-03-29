@@ -124,10 +124,6 @@ std::ostream &operator<<(std::ostream &os, const Memory &memory) {
     return os;
 }
 
-std::ostream &operator<<(std::ostream &, const StackPush &) {
-    throw std::runtime_error("This operand type is not displayable.");
-}
-
 std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
     std::visit([&](const auto &value) { os << value; }, immediate);
     return os;

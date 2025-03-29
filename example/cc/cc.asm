@@ -14,7 +14,17 @@ main:
 	# store @u32 a, %02
 	mov DWORD PTR [rbp - 20], edi
 	# $19 @u64 = call calling_convention(1, 2, 3, 4, 5, 6, 7, 8)
+	sub rsp, 16
+	mov edi, 1
+	mov esi, 2
+	mov edx, 3
+	mov ecx, 4
+	mov r8d, 5
+	mov r9d, 6
+	mov DWORD PTR [rsp], 7
+	mov DWORD PTR [rsp + 8], 8
 	call calling_convention
+	add rsp, 16
 	# $20 @u32 = cast @u64 $19
 	# TODO: Not implemented yet.
 	# store @u32 $20, %01

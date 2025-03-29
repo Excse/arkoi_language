@@ -18,12 +18,6 @@ public:
 
     [[nodiscard]] size_t stack_size() const;
 
-    [[nodiscard]] static std::vector<il::Variable> get_int_parameters(const std::vector<il::Variable> &parameters);
-
-    [[nodiscard]] static std::vector<il::Variable> get_see_parameters(const std::vector<il::Variable> &parameters);
-
-    [[nodiscard]] static std::vector<il::Variable> get_stack_parameters(const std::vector<il::Variable> &parameters);
-
     [[nodiscard]] static Register return_register(const sem::Type &type);
 
     [[nodiscard]] static size_t align_size(size_t input);
@@ -43,6 +37,8 @@ private:
 
     void visit(il::Call &instruction) override;
 
+    void _map_parameters(const std::vector<il::Variable> &parameters);
+
     void visit(il::If &) override {}
 
     void visit(il::Goto &) override {}
@@ -55,11 +51,11 @@ private:
 
     void visit(il::Constant &instruction) override;
 
+    void _add_local(const il::Operand &operand);
+
     void _add_register(const il::Variable &variable, const Register &reg);
 
     void _add_memory(const il::Variable &variable, const Memory &memory);
-
-    void _add_push(const il::Variable &variable);
 
 private:
     std::unordered_map<il::Operand, Operand> _mappings{};

@@ -6,10 +6,22 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
+static std::array<Register::Base, 6> INT_REG_ORDER{
+    Register::Base::DI, Register::Base::SI, Register::Base::D,
+    Register::Base::C, Register::Base::R8, Register::Base::R9
+};
+
+static std::array<Register::Base, 8> SSE_REG_ORDER{
+    Register::Base::XMM0, Register::Base::XMM1, Register::Base::XMM2, Register::Base::XMM3,
+    Register::Base::XMM4, Register::Base::XMM5, Register::Base::XMM6, Register::Base::XMM7
+};
+
 static const Register::Base TEMP_INT_1 = Register::Base::A;
 static const Register::Base TEMP_INT_2 = Register::Base::C;
 static const Register::Base TEMP_SSE_1 = Register::Base::XMM0;
 static const Register::Base TEMP_SSE_2 = Register::Base::XMM1;
+
+static const Register RSP(Register::Base::SP, Size::QWORD);
 
 std::stringstream Generator::generate(il::Module &module) {
     std::stringstream output;
@@ -293,7 +305,7 @@ void Generator::visit(il::Cast &instruction) {
     auto result = _load(instruction.result());
     auto source = _load(instruction.source());
     auto &from = instruction.from();
-    auto &to = instruction.result().type();
+    auto to = instruction.result().type();
 
     std::visit(match{
         [&](const sem::Floating &from, const sem::Floating &to) { _float_to_float(result, source, from, to); },
@@ -363,25 +375,76 @@ void Generator::_float_to_bool(const Operand &result, Operand source, const sem:
 
 void Generator::visit(il::Call &instruction) {
     auto result = _load(instruction.result());
-    auto &type = instruction.result().type();
+    auto type = instruction.result().type();
 
-    auto stack_arguments = Mapper::get_stack_parameters(instruction.arguments());
-    if (stack_arguments.size() % 2 != 0) {
-        // If the amount of stack arguments is not even (0, 2, 4 etc., not 16 bytes aligned), we first need to align
-        // the stack.
-        _text << "\tsub rps, 8\n";
-    }
+    auto stack_size = _generate_arguments(instruction.arguments());
 
     _text << "\tcall " << instruction.name() << "\n";
 
-    auto stack_adjust = Mapper::align_size(8 * stack_arguments.size());
-    if (stack_adjust != 0) {
-        // If we had stack arguments, we need to readjust the stack.
-        _text << "\tadd rsp, " << stack_adjust << "\n";
+    if (stack_size != 0) {
+        _text << "\tadd rsp, " << stack_size << "\n";
     }
 
     auto return_reg = Mapper::return_register(type);
     _store(return_reg, result, type);
+}
+
+size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments) {
+    size_t integer = 0, floating = 0;
+
+    // The first iteration is needed to calculate the stack arguments to allocate enough stack.
+    size_t stack_size = 0;
+    for (auto &argument: arguments) {
+        const auto &type = argument.type();
+
+        if (std::holds_alternative<sem::Integral>(type) || std::holds_alternative<sem::Boolean>(type)) {
+            if (integer++ < INT_REG_ORDER.size()) continue;
+        } else if (std::holds_alternative<sem::Floating>(type)) {
+            if (floating++ < SSE_REG_ORDER.size()) continue;
+        }
+
+        stack_size += 8;
+    }
+
+    // Align the stack size to 16 bytes, so the stack alignment is always fulfilled.
+    stack_size = Mapper::align_size(stack_size);
+
+    // If there are stack arguments, make room for them.
+    if(stack_size != 0) {
+        _text << "\tsub rsp, " << stack_size << "\n";
+    }
+
+    // Reset the integer and floating counter.
+    integer = 0, floating = 0;
+    size_t stack = 0;
+
+    for (auto &argument: arguments) {
+        const auto &type = argument.type();
+        auto source = _load(argument);
+
+        if (std::holds_alternative<sem::Integral>(type) || std::holds_alternative<sem::Boolean>(type)) {
+            if (integer < INT_REG_ORDER.size()) {
+                auto destination = Register(INT_REG_ORDER[integer], type.size());
+                _store(source, destination, type);
+                integer++;
+                continue;
+            }
+        } else if (std::holds_alternative<sem::Floating>(type)) {
+            if (floating < SSE_REG_ORDER.size()) {
+                auto destination = Register(SSE_REG_ORDER[floating], type.size());
+                _store(source, destination, type);
+                floating++;
+                continue;
+            }
+        }
+
+        auto offset = (int64_t) (8 * stack);
+        auto memory = Memory(type.size(), RSP, offset);
+        _store(source, memory, type);
+        stack++;
+    }
+
+    return stack_size;
 }
 
 void Generator::visit(il::If &instruction) {
@@ -405,25 +468,21 @@ void Generator::visit(il::Goto &instruction) {
 void Generator::visit(il::Store &instruction) {
     auto result = _load(instruction.result());
     auto source = _load(instruction.source());
-    auto &type = instruction.result().type();
+    auto type = instruction.result().type();
     _store(source, result, type);
 }
 
 void Generator::visit(il::Load &instruction) {
     auto result = _load(instruction.result());
     auto source = _load(instruction.source());
-    auto &type = instruction.result().type();
+    auto type = instruction.result().type();
     _store(source, result, type);
 }
 
 void Generator::visit(il::Constant &instruction) {
-    // This instruction is generally unused if the optimizer runs. However, during a function call, it is retained since
-    // the call instruction only accepts IL variables as arguments. Thus, most of the constant variables will be mapped
-    // to a register/memory location or stack push according to the specific calling convention.
-
     auto result = _load(instruction.result());
     auto immediate = _load(instruction.immediate());
-    auto &type = instruction.result().type();
+    auto type = instruction.result().type();
     _store(immediate, result, type);
 }
 
@@ -452,12 +511,6 @@ Operand Generator::_load(const il::Operand &operand) {
 }
 
 void Generator::_store(Operand source, const Operand &destination, const sem::Type &type) {
-    // If the destination is the stack, then just push the operand.
-    if (std::holds_alternative<StackPush>(destination)) {
-        _text << "\tpush " << source << "\n";
-        return;
-    }
-
     // If the source and destination is the same, the mov instruction is not needed.
     if (source == destination) return;
 

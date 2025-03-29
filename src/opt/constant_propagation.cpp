@@ -44,9 +44,13 @@ bool ConstantPropagation::_can_propagate(il::Instruction &instruction) {
         [&](il::Store &instruction) {
             propagated |= _propagate(instruction.source());
         },
+        [&](il::Call &instruction) {
+            for (auto &argument: instruction.arguments()) {
+                propagated |= _propagate(argument);
+            }
+        },
         [&](il::Constant &) {},
         [&](il::Alloca &) {},
-        [&](il::Call &) {},
         [&](il::Load &) {},
         [&](il::Goto &) {},
     }, instruction);

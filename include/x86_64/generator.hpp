@@ -8,6 +8,12 @@
 
 namespace arkoi::x86_64 {
 
+struct ClassifiedArguments {
+    std::vector<il::Operand> floating{};
+    std::vector<il::Operand> integer{};
+    std::vector<il::Operand> stack{};
+};
+
 class Generator : il::Visitor {
 public:
     Generator() : _text(), _printer(_text) {}
@@ -45,6 +51,8 @@ private:
 
     void visit(il::Call &instruction) override;
 
+    size_t _generate_arguments(const std::vector<il::Operand> &arguments);
+
     void visit(il::If &instruction) override;
 
     void visit(il::Goto &instruction) override;
@@ -61,13 +69,13 @@ private:
 
     void _store(Operand source, const Operand &destination, const sem::Type &type);
 
+    Operand _adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type);
+
     [[nodiscard]] Register _store_temp(const Operand &source, const sem::Type &type);
 
     [[nodiscard]] static Register _temp_1_register(const sem::Type &type);
 
     [[nodiscard]] static Register _temp_2_register(const sem::Type &type);
-
-    Operand _adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type);
 
 private:
     il::Function *_current_function{};

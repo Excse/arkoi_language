@@ -5,6 +5,7 @@
 #include "utils/utils.hpp"
 
 using namespace arkoi::il;
+using namespace arkoi;
 
 bool Memory::operator<(const Memory &rhs) const {
     return _index < rhs._index;
@@ -31,15 +32,15 @@ bool Variable::operator!=(const Variable &rhs) const {
     return !(rhs == *this);
 }
 
-Size Immediate::size() const {
+sem::Type Immediate::type() const {
     return std::visit(match{
-        [](const double &) { return Size::QWORD; },
-        [](const float &) { return Size::DWORD; },
-        [](const bool &) { return Size::BYTE; },
-        [](const uint32_t &) { return Size::DWORD; },
-        [](const int32_t &) { return Size::DWORD; },
-        [](const uint64_t &) { return Size::QWORD; },
-        [](const int64_t &) { return Size::QWORD; },
+        [](const double &) -> sem::Type { return sem::Floating(Size::QWORD); },
+        [](const float &) -> sem::Type { return sem::Floating(Size::DWORD); },
+        [](const bool &) -> sem::Type { return sem::Boolean(); },
+        [](const uint32_t &) -> sem::Type { return sem::Integral(Size::DWORD, false); },
+        [](const int32_t &) -> sem::Type { return sem::Integral(Size::DWORD, true); },
+        [](const uint64_t &) -> sem::Type { return sem::Integral(Size::QWORD, false); },
+        [](const int64_t &) -> sem::Type { return sem::Integral(Size::QWORD, true); },
     }, *this);
 }
 
@@ -71,8 +72,8 @@ std::ostream &operator<<(std::ostream &os, const Memory &memory) {
     return os;
 }
 
-Size Operand::size() const {
-    return std::visit([](const auto &value) { return value.size(); }, *this);
+sem::Type Operand::type() const {
+    return std::visit([](const auto &value) { return value.type(); }, *this);
 }
 
 namespace std {

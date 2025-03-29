@@ -207,14 +207,14 @@ void Generator::visit(ast::Cast &node) {
 void Generator::visit(ast::Call &node) {
     auto &function = std::get<sem::Function>(*node.name().symbol());
 
-    std::vector<Variable> arguments;
+    std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {
         // This will set _current_operand
         argument->accept(*this);
         auto expression = _current_operand;
 
         auto variable = std::get<Variable>(expression);
-        arguments.push_back(std::move(variable));
+        arguments.emplace_back(std::move(variable));
     }
 
     auto result = _make_temporary(function.return_type());

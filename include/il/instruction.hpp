@@ -53,7 +53,7 @@ private:
 
 class Call : public InstructionBase {
 public:
-    Call(Variable result, std::string name, std::vector<Variable> &&arguments)
+    Call(Variable result, std::string name, std::vector<Operand> &&arguments)
         : _arguments(std::move(arguments)), _name(std::move(name)), _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
@@ -67,7 +67,7 @@ public:
     [[nodiscard]] auto &name() const { return _name; }
 
 private:
-    std::vector<Variable> _arguments;
+    std::vector<Operand> _arguments;
     std::string _name;
     Variable _result;
 };

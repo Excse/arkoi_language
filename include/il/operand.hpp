@@ -12,7 +12,7 @@ class OperandBase {
 public:
     virtual ~OperandBase() = default;
 
-    [[nodiscard]] virtual Size size() const = 0;
+    [[nodiscard]] virtual sem::Type type() const = 0;
 };
 
 class Memory : public OperandBase {
@@ -26,11 +26,9 @@ public:
 
     bool operator!=(const Memory &rhs) const;
 
-    [[nodiscard]] Size size() const override { return _type.size(); }
+    [[nodiscard]] sem::Type type() const override { return _type; }
 
     [[nodiscard]] auto index() const { return _index; }
-
-    [[nodiscard]] auto &type() const { return _type; }
 
 private:
     sem::Type _type;
@@ -48,13 +46,11 @@ public:
 
     bool operator!=(const Variable &rhs) const;
 
-    [[nodiscard]] Size size() const override { return _type.size(); }
+    [[nodiscard]] sem::Type type() const override { return _type; }
 
     [[nodiscard]] auto version() const { return _version; }
 
     [[nodiscard]] auto &name() const { return _name; }
-
-    [[nodiscard]] auto &type() const { return _type; }
 
 private:
     std::string _name;
@@ -65,13 +61,13 @@ private:
 struct Immediate : public OperandBase, public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 
-    [[nodiscard]] Size size() const override;
+    [[nodiscard]] sem::Type type() const override;
 };
 
 struct Operand : public OperandBase, public std::variant<Immediate, Variable, Memory> {
     using variant::variant;
 
-    [[nodiscard]] Size size() const override;
+    [[nodiscard]] sem::Type type() const override;
 };
 
 } // namespace arkoi::mid
