@@ -3,6 +3,7 @@
 .global _start
 
 _start:
+	and rsp, -16
 	call main
 	mov rdi, rax
 	mov rax, 60
@@ -10,9 +11,7 @@ _start:
 
 main:
 	enter 48, 0
-	# $05 @f64 = const 5
-	movsd xmm0, QWORD PTR [float0]
-	# $06 @bool = call ok($05)
+	# $06 @bool = call ok(5)
 	call ok
 	# $07 @u32 = cast @bool $06
 	# TODO: Not implemented yet.
@@ -26,40 +25,38 @@ main:
 	mov DWORD PTR [rbp - 16], eax
 	# $12 @s32 = cast @u32 $11
 	# TODO: Not implemented yet.
-	# $14 @f64 = const 10.5
-	movsd xmm0, QWORD PTR [float1]
-	# $15 @f32 = call test1($12, $14)
+	# $15 @f32 = call test1($12, 10.5)
 	call test1
 	# $17 @f32 = mul @f32 $15, 2.01
-	mulss xmm0, DWORD PTR [float2]
-	movss DWORD PTR [rbp - 20], xmm0
-	# $20 @f32 = sub @f32 $17, 42
-	movss xmm0, DWORD PTR [rbp - 20]
-	subss xmm0, DWORD PTR [float3]
+	mulss xmm0, DWORD PTR [float0]
 	movss DWORD PTR [rbp - 24], xmm0
+	# $20 @f32 = sub @f32 $17, 42
+	movss xmm0, DWORD PTR [rbp - 24]
+	subss xmm0, DWORD PTR [float1]
+	movss DWORD PTR [rbp - 28], xmm0
 	# $21 @u64 = cast @f32 $20
 	# TODO: Not implemented yet.
 	# store @u64 $21, %01
-	mov rax, QWORD PTR [rbp - 28]
-	mov QWORD PTR [rbp - 44], rax
+	mov rax, QWORD PTR [rbp - 32]
+	mov QWORD PTR [rbp - 48], rax
 	# $22 @u64 = load %01
-	mov rax, QWORD PTR [rbp - 44]
-	mov QWORD PTR [rbp - 36], rax
+	mov rax, QWORD PTR [rbp - 48]
+	mov QWORD PTR [rbp - 40], rax
 	# ret $22
-	mov rax, QWORD PTR [rbp - 36]
+	mov rax, QWORD PTR [rbp - 40]
 	leave
 	ret
 
 ok:
-	enter 32, 0
+	enter 48, 0
 	# store @f64 foo1, %02
-	movsd QWORD PTR [rbp - 29], xmm0
+	movsd QWORD PTR [rbp - 41], xmm0
 	# $03 @f64 = load %02
-	movsd xmm0, QWORD PTR [rbp - 29]
+	movsd xmm0, QWORD PTR [rbp - 41]
 	movsd QWORD PTR [rbp - 8], xmm0
 	# $06 @bool = gth @f64 $03, 5
 	movsd xmm0, QWORD PTR [rbp - 8]
-	ucomisd xmm0, QWORD PTR [float4]
+	ucomisd xmm0, QWORD PTR [float2]
 	seta BYTE PTR [rbp - 16]
 	# if $06 then L4 else L5
 	mov al, BYTE PTR [rbp - 16]
@@ -68,11 +65,11 @@ ok:
 	jmp L5
 L5:
 	# $09 @f64 = load %02
-	movsd xmm0, QWORD PTR [rbp - 29]
+	movsd xmm0, QWORD PTR [rbp - 41]
 	movsd QWORD PTR [rbp - 17], xmm0
 	# $12 @bool = gth @f64 $09, 10
 	movsd xmm0, QWORD PTR [rbp - 17]
-	ucomisd xmm0, QWORD PTR [float5]
+	ucomisd xmm0, QWORD PTR [float3]
 	seta BYTE PTR [rbp - 25]
 	# if $12 then L7 else L8
 	mov al, BYTE PTR [rbp - 25]
@@ -81,20 +78,20 @@ L5:
 	jmp L8
 L8:
 	# store @f64 21, %02
-	movsd xmm0, QWORD PTR [float6]
-	movsd QWORD PTR [rbp - 29], xmm0
+	movsd xmm0, QWORD PTR [float4]
+	movsd QWORD PTR [rbp - 41], xmm0
 	# goto L6
 	jmp L6
 L7:
 	# store @f64 20, %02
-	movsd xmm0, QWORD PTR [float7]
-	movsd QWORD PTR [rbp - 29], xmm0
+	movsd xmm0, QWORD PTR [float5]
+	movsd QWORD PTR [rbp - 41], xmm0
 	# goto L6
 	jmp L6
 L4:
 	# store @f64 0, %02
-	movsd xmm0, QWORD PTR [float8]
-	movsd QWORD PTR [rbp - 29], xmm0
+	movsd xmm0, QWORD PTR [float6]
+	movsd QWORD PTR [rbp - 41], xmm0
 	# goto L6
 	jmp L6
 L6:
@@ -102,9 +99,10 @@ L6:
 	mov eax, 4
 	mov ecx, 2
 	idiv ecx
-	mov edi, eax
+	mov DWORD PTR [rbp - 26], eax
 	# $20 @f64 = load %02
-	movsd xmm0, QWORD PTR [rbp - 29]
+	movsd xmm0, QWORD PTR [rbp - 41]
+	movsd QWORD PTR [rbp - 30], xmm0
 	# $21 @f32 = call test2($19, $20)
 	call test2
 	# $22 @bool = cast @f32 $21
@@ -113,15 +111,15 @@ L6:
 	setne al
 	setp cl
 	or al, cl
-	mov BYTE PTR [rbp - 26], al
+	mov BYTE PTR [rbp - 38], al
 	# store @bool $22, %01
-	mov al, BYTE PTR [rbp - 26]
-	mov BYTE PTR [rbp - 28], al
+	mov al, BYTE PTR [rbp - 38]
+	mov BYTE PTR [rbp - 40], al
 	# $23 @bool = load %01
-	mov al, BYTE PTR [rbp - 28]
-	mov BYTE PTR [rbp - 27], al
+	mov al, BYTE PTR [rbp - 40]
+	mov BYTE PTR [rbp - 39], al
 	# ret $23
-	mov al, BYTE PTR [rbp - 27]
+	mov al, BYTE PTR [rbp - 39]
 	leave
 	ret
 
@@ -298,12 +296,10 @@ L16:
 	ret
 
 .section .data
-	float0: .double	5
-	float1: .double	10.5
-	float2: .float	2.01
-	float3: .float	42
-	float4: .double	5
-	float5: .double	10
-	float6: .double	21
-	float7: .double	20
-	float8: .double	0
+	float0: .float	2.01
+	float1: .float	42
+	float2: .double	5
+	float3: .double	10
+	float4: .double	21
+	float5: .double	20
+	float6: .double	0

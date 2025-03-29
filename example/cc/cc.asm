@@ -13,25 +13,8 @@ main:
 	enter 16, 0
 	# store @u32 a, %02
 	mov DWORD PTR [rbp - 20], edi
-	# $04 @u32 = const 1
-	mov edi, 1
-	# $06 @u32 = const 2
-	mov esi, 2
-	# $08 @u32 = const 3
-	mov edx, 3
-	# $10 @u32 = const 4
-	mov ecx, 4
-	# $12 @u32 = const 5
-	mov r8d, 5
-	# $14 @u32 = const 6
-	mov r9d, 6
-	# $16 @u32 = const 7
-	push 7
-	# $18 @u32 = const 8
-	push 8
-	# $19 @u64 = call calling_convention($04, $06, $08, $10, $12, $14, $16, $18)
+	# $19 @u64 = call calling_convention(1, 2, 3, 4, 5, 6, 7, 8)
 	call calling_convention
-	add rsp, 16
 	# $20 @u32 = cast @u64 $19
 	# TODO: Not implemented yet.
 	# store @u32 $20, %01
