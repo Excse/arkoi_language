@@ -39,7 +39,8 @@ main:
 	subss xmm0, DWORD PTR [float3]
 	movss DWORD PTR [rbp - 28], xmm0
 	# $21 @u64 = cast @f32 $20
-	# TODO: Not implemented yet.
+	cvttss2si rax, DWORD PTR [rbp - 28]
+	mov QWORD PTR [rbp - 32], rax
 	# store @u64 $21, %01
 	mov rax, QWORD PTR [rbp - 32]
 	mov QWORD PTR [rbp - 48], rax
@@ -139,7 +140,8 @@ test1:
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 8], eax
 	# $05 @f64 = cast @s32 $04
-	# TODO: Not implemented yet.
+	cvtsi2sd xmm0, DWORD PTR [rbp - 8]
+	movsd QWORD PTR [rbp - 12], xmm0
 	# $06 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 130]
 	movsd QWORD PTR [rbp - 20], xmm0
@@ -157,7 +159,8 @@ L13:
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 86], eax
 	# $19 @f64 = cast @s32 $18
-	# TODO: Not implemented yet.
+	cvtsi2sd xmm0, DWORD PTR [rbp - 86]
+	movsd QWORD PTR [rbp - 90], xmm0
 	# $20 @f64 = load %03
 	movsd xmm0, QWORD PTR [rbp - 130]
 	movsd QWORD PTR [rbp - 98], xmm0
@@ -182,7 +185,8 @@ L12:
 	mov eax, DWORD PTR [rbp - 126]
 	mov DWORD PTR [rbp - 37], eax
 	# $10 @f64 = cast @s32 $09
-	# TODO: Not implemented yet.
+	cvtsi2sd xmm0, DWORD PTR [rbp - 37]
+	movsd QWORD PTR [rbp - 41], xmm0
 	# $11 @f64 = mul @f64 $08, $10
 	movsd xmm0, QWORD PTR [rbp - 29]
 	mulsd xmm0, QWORD PTR [rbp - 41]
@@ -232,7 +236,8 @@ test2:
 	mov eax, DWORD PTR [rsp - 109]
 	mov DWORD PTR [rsp - 8], eax
 	# $05 @f64 = cast @s32 $04
-	# TODO: Not implemented yet.
+	cvtsi2sd xmm0, DWORD PTR [rsp - 8]
+	movsd QWORD PTR [rsp - 12], xmm0
 	# $06 @f64 = load %03
 	movsd xmm0, QWORD PTR [rsp - 113]
 	movsd QWORD PTR [rsp - 20], xmm0
@@ -250,7 +255,8 @@ L18:
 	mov eax, DWORD PTR [rsp - 109]
 	mov DWORD PTR [rsp - 61], eax
 	# $14 @f64 = cast @s32 $13
-	# TODO: Not implemented yet.
+	cvtsi2sd xmm0, DWORD PTR [rsp - 61]
+	movsd QWORD PTR [rsp - 65], xmm0
 	# $15 @f64 = load %03
 	movsd xmm0, QWORD PTR [rsp - 113]
 	movsd QWORD PTR [rsp - 73], xmm0
@@ -281,7 +287,8 @@ L17:
 	mov eax, DWORD PTR [rsp - 109]
 	mov DWORD PTR [rsp - 37], eax
 	# $10 @f64 = cast @s32 $09
-	# TODO: Not implemented yet.
+	cvtsi2sd xmm0, DWORD PTR [rsp - 37]
+	movsd QWORD PTR [rsp - 41], xmm0
 	# $11 @f64 = mul @f64 $08, $10
 	movsd xmm0, QWORD PTR [rsp - 29]
 	mulsd xmm0, QWORD PTR [rsp - 41]

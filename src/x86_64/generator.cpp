@@ -294,10 +294,10 @@ void Generator::visit(il::Cast &instruction) {
 
     std::visit(match{
         [&](const sem::Floating &from, const sem::Floating &to) { _float_to_float(result, source, from, to); },
-        [&](const sem::Floating &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Floating &from, const sem::Integral &to) { _float_to_int(result, source, from, to); },
         [&](const sem::Floating &from, const sem::Boolean &to) { _float_to_bool(result, source, from, to); },
         [&](const sem::Integral &from, const sem::Integral &to) { _int_to_int(result, source, from, to); },
-        [&](const sem::Integral &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Integral &from, const sem::Floating &to) { _int_to_float(result, source, from, to); },
         [&](const sem::Integral &from, const sem::Boolean &to) { _int_to_bool(result, source, from, to); },
         [&](const sem::Boolean &from, const sem::Floating &to) { _bool_to_float(result, source, from, to); },
         [&](const sem::Boolean &from, const sem::Integral &to) { _bool_to_int(result, source, from, to); },
@@ -393,6 +393,23 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
     }
 }
 
+void Generator::_float_to_int(const Operand &result, const Operand &source, const sem::Floating &from,
+                              const sem::Integral &to) {
+    // Get an int register that is at least 32bit big.
+    auto temp_size = (to.size() < Size::DWORD) ? Size::DWORD : to.size();
+    auto temp_1_int = _temp_1_register(sem::Integral(temp_size, to.sign()));
+
+    // Either use the cvttsd2si/cvttss2si instruction based on the from-size.
+    auto suffix = (from.size() == Size::QWORD) ? "sd" : "ss";
+    _text << "\tcvtt" << suffix << "2si " << temp_1_int << ", " << source << "\n";
+
+    // Get the correct sized temp register.
+    auto temp_sized = _temp_1_register(to);
+
+    // Store the converted operand in the result (can be either of type mem or reg).
+    _store(temp_sized, result, to);
+}
+
 void Generator::_float_to_bool(const Operand &result, const Operand &source, const sem::Floating &from,
                                const sem::Boolean &to) {
     // We need temp registers to evaluate if it's a bool or not.
@@ -416,6 +433,43 @@ void Generator::_float_to_bool(const Operand &result, const Operand &source, con
 
     // Finally store the calculated result in the result operand.
     _store(temp_1_int, result, to);
+}
+
+void Generator::_int_to_float(const Operand &result, Operand source, const sem::Integral &from,
+                              const sem::Floating &to) {
+    if (!from.sign() && from.size() == Size::QWORD) {
+        // TODO: Converting a unsigned 64bit integer to float is a bit more complex, thus this is excluded for now.
+        throw std::runtime_error("This is not implemented yet.");
+    }
+
+    // All used instructions only support reg:mem or reg:reg, thus we need to transform imm to reg.
+    if (std::holds_alternative<Immediate>(source)) {
+        source = _store_temp_1(source, from);
+    }
+
+    if (from.size() < Size::DWORD) {
+        // cvtsi2ss/cvtsi2sd only supports 32bit/64bit, thus we need to zero/sign-extend the integer to 32bit.
+
+        // The converted source register with a size of 32bit.
+        auto converted_source = _temp_1_register(sem::Integral(Size::DWORD, from.sign()));
+
+        // Either choose the movsx or movzx instruction based on the signess.
+        auto suffix = from.sign() ? "sx" : "zx";
+        _text << "\tmov" << suffix << " " << converted_source << ", " << source << "\n";
+
+        // Assign the converted source to the source operand.
+        source = converted_source;
+    }
+
+    // A temporary floating register that is needed to hold the converted integer.
+    auto temp_1_sse = _temp_1_register(to);
+
+    // Either choose the cvtsi2ss/cvtsi2sd instruction based on the size.
+    auto suffix = (to.size() == Size::QWORD) ? "sd" : "ss";
+    _text << "\tcvtsi2" << suffix << " " << temp_1_sse << ", " << source << "\n";
+
+    // Finally store the calculated result in the result operand.
+    _store(temp_1_sse, result, to);
 }
 
 void Generator::_int_to_bool(const Operand &result, Operand source, const sem::Integral &from,
