@@ -25,7 +25,8 @@ main:
 	add eax, 1
 	mov DWORD PTR [rbp - 16], eax
 	# $12 @s32 = cast @u32 $11
-	# TODO: Not implemented yet.
+	mov eax, DWORD PTR [rbp - 16]
+	mov DWORD PTR [rbp - 20], eax
 	# $15 @f32 = call test1($12, 10.5)
 	mov edi, DWORD PTR [rbp - 20]
 	movsd xmm0, QWORD PTR [float1]

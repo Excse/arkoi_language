@@ -26,7 +26,7 @@ main:
 	call calling_convention
 	add rsp, 16
 	# $20 @u32 = cast @u64 $19
-	# TODO: Not implemented yet.
+	mov DWORD PTR [rbp - 8], eax
 	# store @u32 $20, %01
 	mov eax, DWORD PTR [rbp - 8]
 	mov DWORD PTR [rbp - 16], eax

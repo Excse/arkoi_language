@@ -6,22 +6,10 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-static std::array<Register::Base, 6> INT_REG_ORDER{
-    Register::Base::DI, Register::Base::SI, Register::Base::D,
-    Register::Base::C, Register::Base::R8, Register::Base::R9
-};
-
-static std::array<Register::Base, 8> SSE_REG_ORDER{
-    Register::Base::XMM0, Register::Base::XMM1, Register::Base::XMM2, Register::Base::XMM3,
-    Register::Base::XMM4, Register::Base::XMM5, Register::Base::XMM6, Register::Base::XMM7
-};
-
 static const Register::Base TEMP_INT_1 = Register::Base::A;
 static const Register::Base TEMP_INT_2 = Register::Base::C;
 static const Register::Base TEMP_SSE_1 = Register::Base::XMM0;
 static const Register::Base TEMP_SSE_2 = Register::Base::XMM1;
-
-static const Register RSP(Register::Base::SP, Size::QWORD);
 
 std::stringstream Generator::generate(il::Module &module) {
     std::stringstream output;
@@ -218,14 +206,13 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         _store(left, result, type);
     } else {
         // First store the lhs operand in the "A" register of the given operand size.
+        static_assert(TEMP_INT_1 == Register::Base::A);
         auto temp_1_int = _temp_1_register(type);
         _store(left, temp_1_int, type);
 
         // The div/idiv instruction only accepts mem/reg, thus an immediate must be converted.
         if (std::holds_alternative<Immediate>(right)) {
-            auto temp_2_int = _temp_2_register(type);
-            _store(right, temp_2_int, type);
-            right = temp_2_int;
+            right = _store_temp_2(right, type);
         }
 
         // Depending on the signess of the integral value, we need to choose idiv or div.
@@ -311,12 +298,12 @@ void Generator::visit(il::Cast &instruction) {
         [&](const sem::Floating &from, const sem::Floating &to) { _float_to_float(result, source, from, to); },
         [&](const sem::Floating &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
         [&](const sem::Floating &from, const sem::Boolean &to) { _float_to_bool(result, source, from, to); },
-        [&](const sem::Integral &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Integral &from, const sem::Integral &to) { _int_to_int(result, source, from, to); },
         [&](const sem::Integral &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
         [&](const sem::Integral &, const sem::Boolean &) { _text << "\t# TODO: Not implemented yet.\n"; },
         [&](const sem::Boolean &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
         [&](const sem::Boolean &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
-        [&](const sem::Boolean &, const sem::Boolean &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Boolean &, const sem::Boolean &) { _store(source, result, to); },
     }, from, to);
 }
 
@@ -340,6 +327,74 @@ void Generator::_float_to_float(const Operand &result, Operand source, const sem
     }
 
     _store(source, result, to);
+}
+
+void Generator::_int_to_int(const Operand &result, Operand source, const sem::Integral &from,
+                            const sem::Integral &to) {
+    // If both are the same exact type just store the source in the result.
+    if (from == to) {
+        _store(source, result, to);
+        return;
+    }
+
+    if(from.sign() == to.sign() && !from.sign() && from.size() == Size::DWORD && to.size() == Size::QWORD) {
+        // This catches the case when you want to transform a 32bit unsigned integer to a 64bit unsigned integer.
+        // There is no zero extension of such operand types, as all 32bit operations implicilty zero-extend 32bit to
+        // 64bit.
+
+        // Thus just adjust the source operand to a register of from-size (32bit). This will automatically also zero-extend
+        // the upper 32bit.
+        source = _adjust_to_reg(result, source, from);
+
+        // Just store the adjusted source in the result (can be either of type mem or reg).
+        _store(source, result, to);
+    } else if(from.sign() == to.sign() && from.sign() && from.size() == Size::DWORD && to.size() == Size::QWORD) {
+        // This is another case where a 32bit signed integer is converted to a 64bit signed integer. The standard movsx
+        // is not applicable to this case, thus there is the movsxd instruction that covers this case.
+
+        // movsxd only works with reg:mem or reg:reg, thus convert imm to reg.
+        if (std::holds_alternative<Immediate>(source)) {
+            source = _store_temp_2(source, from);
+        }
+
+        // This will create a register of 64bit that will hold the converted operand.
+        auto converted_source = _temp_1_register(to);
+        _text << "\tmovsxd " << converted_source << ", " << source << "\n";
+
+        // Store the converted operand in the result (can be either of type mem or reg).
+        _store(converted_source, result, to);
+    } else if (from.size() >= to.size()) {
+        // This case will resolve the problem, when the from-type is greater than the to-type or if they are same-sized
+        // but with different signess.
+
+        // First adjust the source to always be a register of the from-type.
+        auto adjusted_source = _adjust_to_reg(result, source, from);
+        // Then just use the part of the register that is actually needed (the register part of to-size).
+        auto sized_source = Register(adjusted_source.base(), to.size());
+
+        // Store the valid sized register in the result (can be either of type mem or reg).
+        _store(sized_source, result, to);
+    } else if (from.size() < to.size()) {
+        // Here only from-types that are smaller than to-types will be proceeded. Depending on the signess of the
+        // from-type we first need to zero/sign extend the source.
+
+        // movsx/movzx only works with reg:mem or reg:reg, thus convert imm to reg.
+        if (std::holds_alternative<Immediate>(source)) {
+            source = _store_temp_2(source, from);
+        }
+
+        // This will create a register of to-size that will hold the converted operand.
+        auto converted_source = _temp_1_register(to);
+
+        if (from.sign()) {
+            _text << "\tmovsx " << converted_source << ", " << source << "\n";
+        } else {
+            _text << "\tmovsz " << converted_source << ", " << source << "\n";
+        }
+
+        // Store the converted operand in the result (can be either of type mem or reg).
+        _store(converted_source, result, to);
+    }
 }
 
 void Generator::_float_to_bool(const Operand &result, Operand source, const sem::Floating &from,
@@ -398,9 +453,9 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
         const auto &type = argument.type();
 
         if (std::holds_alternative<sem::Integral>(type) || std::holds_alternative<sem::Boolean>(type)) {
-            if (integer++ < INT_REG_ORDER.size()) continue;
+            if (integer++ < INTEGER_ARGUMENT_REGISTERS.size()) continue;
         } else if (std::holds_alternative<sem::Floating>(type)) {
-            if (floating++ < SSE_REG_ORDER.size()) continue;
+            if (floating++ < SSE_ARGUMENT_REGISTERS.size()) continue;
         }
 
         stack_size += 8;
@@ -423,15 +478,15 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
         auto source = _load(argument);
 
         if (std::holds_alternative<sem::Integral>(type) || std::holds_alternative<sem::Boolean>(type)) {
-            if (integer < INT_REG_ORDER.size()) {
-                auto destination = Register(INT_REG_ORDER[integer], type.size());
+            if (integer < INTEGER_ARGUMENT_REGISTERS.size()) {
+                auto destination = Register(INTEGER_ARGUMENT_REGISTERS[integer], type.size());
                 _store(source, destination, type);
                 integer++;
                 continue;
             }
         } else if (std::holds_alternative<sem::Floating>(type)) {
-            if (floating < SSE_REG_ORDER.size()) {
-                auto destination = Register(SSE_REG_ORDER[floating], type.size());
+            if (floating < SSE_ARGUMENT_REGISTERS.size()) {
+                auto destination = Register(SSE_ARGUMENT_REGISTERS[floating], type.size());
                 _store(source, destination, type);
                 floating++;
                 continue;
@@ -453,7 +508,7 @@ void Generator::visit(il::If &instruction) {
     // The test instruction only works with reg:imm, mem:imm, reg:reg, mem:reg, thus we simply put the condition in a
     // register if not already available.
     if (!std::holds_alternative<Register>(condition)) {
-        condition = _store_temp(condition, sem::Boolean());
+        condition = _store_temp_1(condition, sem::Boolean());
     }
 
     _text << "\ttest " << condition << ", " << condition << "\n";
@@ -517,7 +572,7 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     // Since mov instructions only accept operands in the forms (src:dest) reg:mem, mem:reg, imm:reg, or imm:mem,
     // a mem:mem operation must be split into two mov instructions.
     if (std::holds_alternative<Memory>(source) && std::holds_alternative<Memory>(destination)) {
-        source = _store_temp(source, type);
+        source = _store_temp_1(source, type);
     }
 
     if (std::holds_alternative<sem::Floating>(type)) {
@@ -528,7 +583,7 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     }
 }
 
-Register Generator::_store_temp(const Operand &source, const sem::Type &type) {
+Register Generator::_store_temp_1(const Operand &source, const sem::Type &type) {
     auto temp = _temp_1_register(type);
     _store(source, temp, type);
     return temp;
@@ -539,26 +594,32 @@ Register Generator::_temp_1_register(const sem::Type &type) {
     return {reg_base, type.size()};
 }
 
+Register Generator::_store_temp_2(const Operand &source, const sem::Type &type) {
+    auto temp = _temp_2_register(type);
+    _store(source, temp, type);
+    return temp;
+}
+
 Register Generator::_temp_2_register(const sem::Type &type) {
     const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE_2 : TEMP_INT_2);
     return {reg_base, type.size()};
 }
 
-Operand Generator::_adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type) {
+Register Generator::_adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type) {
     // If the result operand is already a register, just use it instead.
     if (std::holds_alternative<Register>(result)) {
         if (result == operand) {
             // If both result and operand are the same register, there is nothing more to do.
-            return operand;
+            return std::get<Register>(operand);
         }
 
         // If the result operand is a register, then just temporarily store the operand in it.
         _store(operand, result, type);
-        return result;
+        return std::get<Register>(result);
     }
 
     // Otherwise if the result is not a register, store the lhs in a temp register.
-    return _store_temp(operand, type);
+    return _store_temp_1(operand, type);
 }
 
 //==============================================================================

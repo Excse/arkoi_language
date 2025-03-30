@@ -8,18 +8,6 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-static std::array<Register::Base, 6> INT_REG_ORDER{
-    Register::Base::DI, Register::Base::SI, Register::Base::D,
-    Register::Base::C, Register::Base::R8, Register::Base::R9
-};
-
-static std::array<Register::Base, 8> SSE_REG_ORDER{
-    Register::Base::XMM0, Register::Base::XMM1, Register::Base::XMM2, Register::Base::XMM3,
-    Register::Base::XMM4, Register::Base::XMM5, Register::Base::XMM6, Register::Base::XMM7
-};
-
-static const Register RBP(Register::Base::BP, Size::QWORD);
-
 Mapper Mapper::map(il::Function &function) {
     Mapper mapper;
     mapper.visit(function);
@@ -66,15 +54,15 @@ void Mapper::_map_parameters(const std::vector<il::Variable> &parameters) {
         const auto &type = parameter.type();
 
         if (std::holds_alternative<sem::Integral>(type) || std::holds_alternative<sem::Boolean>(type)) {
-            if (integer < INT_REG_ORDER.size()) {
-                auto reg = Register(INT_REG_ORDER[integer], type.size());
+            if (integer < INTEGER_ARGUMENT_REGISTERS.size()) {
+                auto reg = Register(INTEGER_ARGUMENT_REGISTERS[integer], type.size());
                 _add_register(parameter, reg);
                 integer++;
                 continue;
             }
         } else if (std::holds_alternative<sem::Floating>(type)) {
-            if (floating < SSE_REG_ORDER.size()) {
-                auto reg = Register(SSE_REG_ORDER[floating], type.size());
+            if (floating < SSE_ARGUMENT_REGISTERS.size()) {
+                auto reg = Register(SSE_ARGUMENT_REGISTERS[floating], type.size());
                 _add_register(parameter, reg);
                 floating++;
                 continue;

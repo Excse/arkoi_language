@@ -85,6 +85,21 @@ std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Immediate &opera
 
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Operand &mapping);
 
+namespace arkoi::x86_64 {
+    static const std::array<Register::Base, 6> INTEGER_ARGUMENT_REGISTERS{
+        Register::Base::DI, Register::Base::SI, Register::Base::D,
+        Register::Base::C, Register::Base::R8, Register::Base::R9
+    };
+
+    static const std::array<Register::Base, 8> SSE_ARGUMENT_REGISTERS{
+        Register::Base::XMM0, Register::Base::XMM1, Register::Base::XMM2, Register::Base::XMM3,
+        Register::Base::XMM4, Register::Base::XMM5, Register::Base::XMM6, Register::Base::XMM7
+    };
+
+    static const Register RSP(Register::Base::SP, Size::QWORD);
+    static const Register RBP(Register::Base::BP, Size::QWORD);
+} // namespace arkoi::x86_64
+
 //==============================================================================
 // BSD 3-Clause License
 //
