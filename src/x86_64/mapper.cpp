@@ -39,10 +39,14 @@ void Mapper::visit(il::Function &function) {
         block.accept(*this);
     }
 
+    auto stack_size = this->stack_size();
+    auto use_redzone = function.is_leaf() && stack_size <= 128;
+
     int64_t local_offset = -8;
     for (auto &local: _locals) {
         auto size = local.type().size();
-        _mappings.emplace(local, Memory(size, RBP, local_offset));
+        auto reg = use_redzone ? RSP : RBP;
+        _mappings.emplace(local, Memory(size, reg, local_offset));
         local_offset -= (int64_t) size_to_bytes(size);
     }
 }

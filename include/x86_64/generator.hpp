@@ -49,7 +49,13 @@ private:
 
     void _int_to_int(const Operand &result, Operand source, const sem::Integral &from, const sem::Integral &to);
 
-    void _float_to_bool(const Operand &result, Operand source, const sem::Floating &from, const sem::Boolean &to);
+    void _float_to_bool(const Operand &result, const Operand& source, const sem::Floating &from, const sem::Boolean &to);
+
+    void _int_to_bool(const Operand &result, Operand source, const sem::Integral &from, const sem::Boolean &to);
+
+    void _bool_to_float(const Operand &result, Operand source, const sem::Boolean &from, const sem::Floating &to);
+
+    void _bool_to_int(const Operand &result, Operand source, const sem::Boolean &from, const sem::Integral &to);
 
     void visit(il::Call &instruction) override;
 

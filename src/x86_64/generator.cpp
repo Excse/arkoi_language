@@ -30,7 +30,6 @@ void Generator::visit(il::Module &module) {
     _text << "\n";
 
     _text << "_start:\n";
-    _text << "\tand rsp, -16\n";
     _text << "\tcall main\n";
     _text << "\tmov rdi, rax\n";
     _text << "\tmov rax, 60\n";
@@ -206,9 +205,8 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         _store(left, result, type);
     } else {
         // First store the lhs operand in the "A" register of the given operand size.
-        static_assert(TEMP_INT_1 == Register::Base::A);
-        auto temp_1_int = _temp_1_register(type);
-        _store(left, temp_1_int, type);
+        auto a_reg = Register(Register::Base::A, type.size());
+        _store(left, a_reg, type);
 
         // The div/idiv instruction only accepts mem/reg, thus an immediate must be converted.
         if (std::holds_alternative<Immediate>(right)) {
@@ -222,7 +220,7 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         }
         _text << "div " << right << "\n";
 
-        _store(temp_1_int, result, type);
+        _store(a_reg, result, type);
     }
 }
 
@@ -300,9 +298,9 @@ void Generator::visit(il::Cast &instruction) {
         [&](const sem::Floating &from, const sem::Boolean &to) { _float_to_bool(result, source, from, to); },
         [&](const sem::Integral &from, const sem::Integral &to) { _int_to_int(result, source, from, to); },
         [&](const sem::Integral &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
-        [&](const sem::Integral &, const sem::Boolean &) { _text << "\t# TODO: Not implemented yet.\n"; },
-        [&](const sem::Boolean &, const sem::Floating &) { _text << "\t# TODO: Not implemented yet.\n"; },
-        [&](const sem::Boolean &, const sem::Integral &) { _text << "\t# TODO: Not implemented yet.\n"; },
+        [&](const sem::Integral &from, const sem::Boolean &to) { _int_to_bool(result, source, from, to); },
+        [&](const sem::Boolean &from, const sem::Floating &to) { _bool_to_float(result, source, from, to); },
+        [&](const sem::Boolean &from, const sem::Integral &to) { _bool_to_int(result, source, from, to); },
         [&](const sem::Boolean &, const sem::Boolean &) { _store(source, result, to); },
     }, from, to);
 }
@@ -386,22 +384,17 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
         // This will create a register of to-size that will hold the converted operand.
         auto converted_source = _temp_1_register(to);
 
-        if (from.sign()) {
-            _text << "\tmovsx " << converted_source << ", " << source << "\n";
-        } else {
-            _text << "\tmovsz " << converted_source << ", " << source << "\n";
-        }
+        // Either choose the movsx or movzx instruction based on the from-signess.
+        auto suffix = from.sign() ? "sx" : "zx";
+        _text << "\tmov" << suffix << " " << converted_source << ", " << source << "\n";
 
         // Store the converted operand in the result (can be either of type mem or reg).
         _store(converted_source, result, to);
     }
 }
 
-void Generator::_float_to_bool(const Operand &result, Operand source, const sem::Floating &from,
+void Generator::_float_to_bool(const Operand &result, const Operand &source, const sem::Floating &from,
                                const sem::Boolean &to) {
-    // Always adjust the source to a register.
-    source = _adjust_to_reg(result, source, from);
-
     // We need temp registers to evaluate if it's a bool or not.
     auto temp_2_sse = _temp_2_register(from);
     auto temp_1_int = _temp_1_register(to);
@@ -411,11 +404,8 @@ void Generator::_float_to_bool(const Operand &result, Operand source, const sem:
     _text << "\txorps " << temp_2_sse << ", " << temp_2_sse << "\n";
 
     // Compare the source float with 0.0.
-    if (from.size() == Size::DWORD) {
-        _text << "\tucomiss " << source << ", " << temp_2_sse << "\n";
-    } else if (from.size() == Size::QWORD) {
-        _text << "\tucomisd " << source << ", " << temp_2_sse << "\n";
-    }
+    auto suffix = (from.size() == Size::DWORD) ? "ss" : "sd";
+    _text << "\tucomi" << suffix << " " << temp_2_sse << ", " << source << "\n";
 
     // Set the first temp register if it is not equal to zero.
     _text << "\tsetne " << temp_1_int << "\n";
@@ -428,6 +418,73 @@ void Generator::_float_to_bool(const Operand &result, Operand source, const sem:
     _store(temp_1_int, result, to);
 }
 
+void Generator::_int_to_bool(const Operand &result, Operand source, const sem::Integral &from,
+                             const sem::Boolean &to) {
+    // If the source holds an immediate, instead turn it into a register.
+    if (std::holds_alternative<Immediate>(source)) {
+        source = _store_temp_1(source, from);
+    }
+
+    auto temp_1_int = _temp_1_register(to);
+
+    // Compare the source integer with 0.
+    _text << "\tcmp " << source << ", 0\n";
+    // Set the first temp register if it is not equal to zero.
+    _text << "\tsetne " << temp_1_int << "\n";
+
+    // Finally store the calculated result in the result operand.
+    _store(temp_1_int, result, to);
+}
+
+void Generator::_bool_to_float(const Operand &result, Operand source, const sem::Boolean &from,
+                               const sem::Floating &to) {
+    // If the source holds an immediate, instead turn it into a register.
+    if (std::holds_alternative<Immediate>(source)) {
+        source = _store_temp_1(source, from);
+    }
+
+    // One sse and one int register is needed to transform a bool to a float.
+    auto temp_1_int = _temp_1_register(sem::Integral(Size::DWORD, false));
+    auto temp_1_sse = _temp_1_register(to);
+
+    // Zero-extend the bool to 32bit.
+    _text << "\tmovzx " << temp_1_int << ", " << source << "\n";
+
+    // Convert the 32bit integer to either a float (cvtsi2ss) or double (cvtsi2sd).
+    auto suffix = (to.size() == Size::QWORD ? "sd" : "ss");
+    _text << "\tcvtsi2" << suffix << " " << temp_1_sse << ", " << temp_1_int << "\n";
+
+    // Finally store the calculated result in the result operand.
+    _store(temp_1_sse, result, to);
+}
+
+void Generator::_bool_to_int(const Operand &result, Operand source, const sem::Boolean &from,
+                             const sem::Integral &to) {
+    if(to.size() == Size::BYTE) {
+        // If we want to store a boolean in a 8bit integer we do not need to change anything.
+
+        // Thus we will just store the source in the result (can be either of type mem or reg).
+        _store(source, result, to);
+    } else {
+        // Here we will convert from a 8bit boolean to a 16, 32 or 64bit integer. We just need to zero-extend the boolean
+        // and then store the result.
+
+        // If the source holds an immediate, instead turn it into a register.
+        if (std::holds_alternative<Immediate>(source)) {
+            source = _store_temp_1(source, from);
+        }
+
+        // This will create a register of to-size that will hold the converted operand.
+        auto converted_source = _temp_1_register(to);
+
+        // Zero-extend the source to the right size.
+        _text << "\tmovzx " << converted_source << ", " << source << "\n";
+
+        // Store the converted operand in the result (can be either of type mem or reg).
+        _store(converted_source, result, to);
+    }
+}
+
 void Generator::visit(il::Call &instruction) {
     auto result = _load(instruction.result());
     auto type = instruction.result().type();
@@ -436,6 +493,7 @@ void Generator::visit(il::Call &instruction) {
 
     _text << "\tcall " << instruction.name() << "\n";
 
+    // We need to clean up the stack if there were some stack arguments.
     if (stack_size != 0) {
         _text << "\tadd rsp, " << stack_size << "\n";
     }
@@ -448,7 +506,7 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
     size_t integer = 0, floating = 0;
 
     // The first iteration is needed to calculate the stack arguments to allocate enough stack.
-    size_t stack_size = 0;
+    size_t arg_stack_size = 0;
     for (auto &argument: arguments) {
         const auto &type = argument.type();
 
@@ -458,15 +516,15 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
             if (floating++ < SSE_ARGUMENT_REGISTERS.size()) continue;
         }
 
-        stack_size += 8;
+        arg_stack_size += 8;
     }
 
-    // Align the stack size to 16 bytes, so the stack alignment is always fulfilled.
-    stack_size = Mapper::align_size(stack_size);
+    // Align the argument stack size to 16 bytes, so the stack alignment is always fulfilled.
+    arg_stack_size = Mapper::align_size(arg_stack_size);
 
     // If there are stack arguments, make room for them.
-    if(stack_size != 0) {
-        _text << "\tsub rsp, " << stack_size << "\n";
+    if(arg_stack_size != 0) {
+        _text << "\tsub rsp, " << arg_stack_size << "\n";
     }
 
     // Reset the integer and floating counter.
@@ -499,7 +557,7 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
         stack++;
     }
 
-    return stack_size;
+    return arg_stack_size;
 }
 
 void Generator::visit(il::If &instruction) {
