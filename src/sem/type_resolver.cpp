@@ -109,9 +109,8 @@ void TypeResolver::visit(ast::Return &node) {
         throw std::runtime_error("Return statement has a wrong return op.");
     }
 
-    // We assure to override the const casted node with a new node. Thus, this exception is legal.
-    auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.expression());
-    node.set_expression(std::make_unique<ast::Cast>(std::move(expression), type, _return_type.value()));
+    auto casted_expression = _cast(node.expression(), type, _return_type.value());
+    node.set_expression(std::move(casted_expression));
 }
 
 void TypeResolver::visit(ast::Identifier &node) {
@@ -142,15 +141,13 @@ void TypeResolver::visit(ast::Binary &node) {
     node.set_op_type(op_type);
 
     if (left != op_type) {
-        // We assure to override the const casted node with a new node. Thus, this exception is legal.
-        auto &left_node = const_cast<std::unique_ptr<ast::Node> &>(node.left());
-        node.set_left(std::make_unique<ast::Cast>(std::move(left_node), left, op_type));
+        auto casted_left = _cast(node.left(), left, op_type);
+        node.set_left(std::move(casted_left));
     }
 
     if (right != op_type) {
-        // We assure to override the const casted node with a new node. Thus, this exception is legal.
-        auto &right_node = const_cast<std::unique_ptr<ast::Node> &>(node.right());
-        node.set_right(std::make_unique<ast::Cast>(std::move(right_node), right, op_type));
+        auto casted_right = _cast(node.right(), right, op_type);
+        node.set_right(std::move(casted_right));
     }
 
     switch (node.op()) {
@@ -196,9 +193,8 @@ void TypeResolver::visit(ast::Assign &node) {
     }
 
     if (type != identifier_type) {
-        // We assure to override the const casted node with a new node. Thus, this exception is legal.
-        auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.expression());
-        node.set_expression(std::make_unique<ast::Cast>(std::move(expression), type, identifier_type));
+        auto casted_expression = _cast(node.expression(), type, identifier_type);
+        node.set_expression(std::move(casted_expression));
     }
 }
 
@@ -225,7 +221,8 @@ void TypeResolver::visit(ast::Call &node) {
         }
 
         // Replace the argument with its implicit conversion.
-        node.arguments()[index] = std::make_unique<ast::Cast>(std::move(argument), type, variable->type());
+        auto casted_argument = _cast(argument, type, variable->type());
+        node.arguments()[index] = std::move(casted_argument);
     }
 
     _current_type = function.return_type();
@@ -241,9 +238,8 @@ void TypeResolver::visit(ast::If &node) {
     }
 
     if (!std::holds_alternative<Boolean>(type)) {
-        // We assure to override the const casted node with a new node. Thus, this exception is legal.
-        auto &expression = const_cast<std::unique_ptr<ast::Node> &>(node.condition());
-        node.set_condition(std::make_unique<ast::Cast>(std::move(expression), type, BOOL_TYPE));
+        auto casted_condition = _cast(node.condition(), type, BOOL_TYPE);
+        node.set_condition(std::move(casted_condition));
     }
 
     node.branch()->accept(*this);
@@ -343,6 +339,10 @@ bool TypeResolver::_can_implicit_convert(const Type &from, const Type &destinati
         [](const Boolean &, const Floating &) { return true; },
         [&](const auto &, const auto &) { return from == destination; },
     }, from, destination);
+}
+
+std::unique_ptr<ast::Node> TypeResolver::_cast(std::unique_ptr<ast::Node> &node, const Type &from, const Type &to) {
+    return std::make_unique<ast::Cast>(std::move(node), from, to);
 }
 
 //==============================================================================

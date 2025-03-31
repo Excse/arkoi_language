@@ -125,9 +125,9 @@ public:
 
     void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
 
-    [[nodiscard]] auto &expression() const { return _expression; }
+    [[nodiscard]] auto &expression() { return _expression; }
 
-    void set_type(sem::Type type) { _type = type; }
+    void set_type(sem::Type type) { _type = std::move(type); }
 
     [[nodiscard]] auto &type() const { return _type.value(); }
 
@@ -145,7 +145,7 @@ public:
 
     void set_condition(std::unique_ptr<Node> &&condition) { _condition = std::move(condition); }
 
-    [[nodiscard]] auto &condition() const { return _condition; }
+    [[nodiscard]] auto &condition() { return _condition; }
 
     [[nodiscard]] auto &branch() const { return _branch; }
 
@@ -165,7 +165,7 @@ public:
 
     void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
 
-    [[nodiscard]] auto &expression() const { return _expression; }
+    [[nodiscard]] auto &expression() { return _expression; }
 
     [[nodiscard]] auto &name() { return _name; }
 
@@ -238,17 +238,17 @@ public:
 
     void set_right(std::unique_ptr<Node> &&node) { _right = std::move(node); }
 
-    [[nodiscard]] auto &right() const { return _right; }
+    [[nodiscard]] auto &right() { return _right; }
 
     void set_left(std::unique_ptr<Node> &&node) { _left = std::move(node); }
 
-    [[nodiscard]] auto &left() const { return _left; }
+    [[nodiscard]] auto &left() { return _left; }
 
-    void set_result_type(sem::Type type) { _result_type = type; }
+    void set_result_type(sem::Type type) { _result_type = std::move(type); }
 
     [[nodiscard]] auto &result_type() { return _result_type.value(); }
     
-    void set_op_type(sem::Type type) { _op_type = type; }
+    void set_op_type(sem::Type type) { _op_type = std::move(type); }
     
     [[nodiscard]] auto &op_type() const { return _op_type.value(); }
 
@@ -270,7 +270,7 @@ public:
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
-    void set_from(sem::Type type) { _from = type; }
+    void set_from(sem::Type type) { _from = std::move(type); }
 
     [[nodiscard]] auto &from() const { return _from.value(); }
 

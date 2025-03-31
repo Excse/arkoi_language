@@ -6,11 +6,6 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-static const Register::Base TEMP_INT_1 = Register::Base::A;
-static const Register::Base TEMP_INT_2 = Register::Base::C;
-static const Register::Base TEMP_SSE_1 = Register::Base::XMM0;
-static const Register::Base TEMP_SSE_2 = Register::Base::XMM1;
-
 std::stringstream Generator::generate(il::Module &module) {
     std::stringstream output;
 
@@ -702,7 +697,7 @@ Register Generator::_store_temp_1(const Operand &source, const sem::Type &type) 
 }
 
 Register Generator::_temp_1_register(const sem::Type &type) {
-    const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE_1 : TEMP_INT_1);
+    auto reg_base = (std::holds_alternative<sem::Floating>(type) ? Register::Base::XMM0 : Register::Base::A);
     return {reg_base, type.size()};
 }
 
@@ -713,7 +708,7 @@ Register Generator::_store_temp_2(const Operand &source, const sem::Type &type) 
 }
 
 Register Generator::_temp_2_register(const sem::Type &type) {
-    const auto &reg_base = (std::holds_alternative<sem::Floating>(type) ? TEMP_SSE_2 : TEMP_INT_2);
+    auto reg_base = (std::holds_alternative<sem::Floating>(type) ? Register::Base::XMM1 : Register::Base::C);
     return {reg_base, type.size()};
 }
 

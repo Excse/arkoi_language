@@ -51,6 +51,8 @@ private:
 
     static bool _can_implicit_convert(const Type &from, const Type &destination);
 
+    static std::unique_ptr<ast::Node> _cast(std::unique_ptr<ast::Node> &node, const Type &from, const Type &to);
+
 private:
     std::optional<Type> _current_type{}, _return_type{};
     bool _failed{};
