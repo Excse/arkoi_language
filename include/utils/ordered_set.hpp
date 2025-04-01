@@ -1,69 +1,41 @@
 #pragma once
 
-#include <unordered_map>
-#include <set>
+#include <unordered_set>
+#include <vector>
 
-#include "utils/ordered_set.hpp"
-#include "x86_64/operand.hpp"
-#include "il/instruction.hpp"
-
-namespace arkoi::x86_64 {
-
-class Mapper : il::Visitor {
+template<typename T>
+class OrderedSet {
 public:
-    [[nodiscard]] static Mapper map(il::Function &function);
+    using const_iterator = typename std::vector<T>::const_iterator;
+    using iterator = typename std::vector<T>::iterator;
 
-    [[nodiscard]] Operand &operator[](const il::Variable& variable);
+public:
+    bool insert(const T &value);
 
-    [[nodiscard]] Operand operator[](const il::Operand &operand);
+    bool erase(const T &value);
 
-    [[nodiscard]] size_t stack_size() const;
+    [[nodiscard]] bool contains(const T &value) const;
 
-    [[nodiscard]] static Register return_register(const sem::Type &type);
+    void clear();
 
-    [[nodiscard]] static size_t align_size(size_t input);
+    [[nodiscard]] size_t size() const { return _set.size(); }
 
-private:
-    void visit(il::Module &) override {}
+    [[nodiscard]] bool empty() const { return _set.empty(); }
 
-    void visit(il::Function &function) override;
+    const_iterator begin() const { return _vector.begin(); }
 
-    void visit(il::BasicBlock &block) override;
+    const_iterator end() const { return _vector.end(); }
 
-    void visit(il::Binary &instruction) override;
+    iterator begin() { return _vector.begin(); }
 
-    void visit(il::Cast &instruction) override;
-
-    void visit(il::Return &) override {}
-
-    void visit(il::Call &instruction) override;
-
-    void _map_parameters(const std::vector<il::Variable> &parameters);
-
-    void visit(il::If &) override {}
-
-    void visit(il::Goto &) override {}
-
-    void visit(il::Alloca &instruction) override;
-
-    void visit(il::Store &) override {}
-
-    void visit(il::Load &instruction) override;
-
-    void visit(il::Constant &instruction) override;
-
-    void _add_local(const il::Operand &operand);
-
-    void _add_register(const il::Variable &variable, const Register &reg);
-
-    void _add_memory(const il::Variable &variable, const Memory &memory);
+    iterator end() { return _vector.end(); }
 
 private:
-    std::unordered_map<il::Operand, Operand> _mappings{};
-    OrderedSet<il::Operand> _locals{};
+    std::unordered_set<T> _set;
+    std::vector<T> _vector;
 };
 
-} // namespace arkoi::x86_64
+#include "../../src/utils/ordered_set.tpp"
 
 //==============================================================================
 // BSD 3-Clause License

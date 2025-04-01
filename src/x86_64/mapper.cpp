@@ -1,7 +1,5 @@
 #include "x86_64/mapper.hpp"
 
-#include <array>
-
 #include "utils/utils.hpp"
 #include "il/cfg.hpp"
 
@@ -42,12 +40,13 @@ void Mapper::visit(il::Function &function) {
     auto stack_size = this->stack_size();
     auto use_redzone = function.is_leaf() && stack_size <= 128;
 
-    int64_t local_offset = -8;
+    int64_t local_offset = 0;
     for (auto &local: _locals) {
         auto size = local.type().size();
+        local_offset -= (int64_t) size_to_bytes(size);
+
         auto reg = use_redzone ? RSP : RBP;
         _mappings.emplace(local, Memory(size, reg, local_offset));
-        local_offset -= (int64_t) size_to_bytes(size);
     }
 }
 

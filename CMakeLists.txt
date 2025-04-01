@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME}_lib
         src/x86_64/mapper.cpp
         src/x86_64/operand.cpp
         src/x86_64/generator.cpp
+        src/utils/ordered_set.tpp
         src/utils/dep_graph.tpp
         src/utils/size.cpp
 )

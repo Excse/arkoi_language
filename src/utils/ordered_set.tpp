@@ -1,69 +1,35 @@
-#pragma once
+template<typename T>
+bool OrderedSet<T>::insert(const T &value) {
+    if (this->contains(value)) return false;
 
-#include <unordered_map>
-#include <set>
+    _vector.push_back(value);
+    _set.insert(value);
 
-#include "utils/ordered_set.hpp"
-#include "x86_64/operand.hpp"
-#include "il/instruction.hpp"
+    return true;
+}
 
-namespace arkoi::x86_64 {
+template<typename T>
+bool OrderedSet<T>::erase(const T &value) {
+    if (!this->contains(value)) return false;
 
-class Mapper : il::Visitor {
-public:
-    [[nodiscard]] static Mapper map(il::Function &function);
+    // This can be very inefficient, use something else in the future, maybe.
+    std::erase_if(_vector, [&](const auto &it) { return it == value; });
 
-    [[nodiscard]] Operand &operator[](const il::Variable& variable);
+    _set.erase(value);
 
-    [[nodiscard]] Operand operator[](const il::Operand &operand);
+    return true;
+}
 
-    [[nodiscard]] size_t stack_size() const;
+template<typename T>
+bool OrderedSet<T>::contains(const T &value) const {
+    return _set.find(value) != _set.end();
+}
 
-    [[nodiscard]] static Register return_register(const sem::Type &type);
-
-    [[nodiscard]] static size_t align_size(size_t input);
-
-private:
-    void visit(il::Module &) override {}
-
-    void visit(il::Function &function) override;
-
-    void visit(il::BasicBlock &block) override;
-
-    void visit(il::Binary &instruction) override;
-
-    void visit(il::Cast &instruction) override;
-
-    void visit(il::Return &) override {}
-
-    void visit(il::Call &instruction) override;
-
-    void _map_parameters(const std::vector<il::Variable> &parameters);
-
-    void visit(il::If &) override {}
-
-    void visit(il::Goto &) override {}
-
-    void visit(il::Alloca &instruction) override;
-
-    void visit(il::Store &) override {}
-
-    void visit(il::Load &instruction) override;
-
-    void visit(il::Constant &instruction) override;
-
-    void _add_local(const il::Operand &operand);
-
-    void _add_register(const il::Variable &variable, const Register &reg);
-
-    void _add_memory(const il::Variable &variable, const Memory &memory);
-
-private:
-    std::unordered_map<il::Operand, Operand> _mappings{};
-    OrderedSet<il::Operand> _locals{};
-};
-
-} // namespace arkoi::x86_64
+template<typename T>
+void OrderedSet<T>::clear() {
+    _vector.clear();
+    _set.clear();
+}
 
 //==============================================================================
 // BSD 3-Clause License
