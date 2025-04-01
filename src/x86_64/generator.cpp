@@ -210,9 +210,8 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
 
         // Depending on the signess of the integral value, we need to choose idiv or div.
         _text << "\t";
-        if (auto *integral = std::get_if<sem::Integral>(&type)) {
-            if (integral->sign()) _text << "i";
-        }
+        auto *integral = std::get_if<sem::Integral>(&type);
+        if (integral && integral->sign()) _text << "i";
         _text << "div " << right << "\n";
 
         _store(a_reg, result, type);
@@ -238,15 +237,10 @@ void Generator::_gth(const Operand &result, Operand left, const Operand &right, 
 
         _text << "\tcmp " << left << ", " << right << "\n";
 
-        if (auto *integral = std::get_if<sem::Integral>(&type)) {
-            if (integral->sign()) {
-                _text << "\tsetg " << result << "\n";
-            } else {
-                _text << "\tseta " << result << "\n";
-            }
-        } else {
-            _text << "\tseta " << result << "\n";
-        }
+        auto *integral = std::get_if<sem::Integral>(&type);
+        auto suffix = (integral && integral->sign()) ? "g" : "a";
+
+        _text << "\tset" << suffix << " " << result << "\n";
     }
 }
 
@@ -269,15 +263,10 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
 
         _text << "\tcmp " << left << ", " << right << "\n";
 
-        if (auto *integral = std::get_if<sem::Integral>(&type)) {
-            if (integral->sign()) {
-                _text << "\tsetl " << result << "\n";
-            } else {
-                _text << "\tsetb " << result << "\n";
-            }
-        } else {
-            _text << "\tsetb " << result << "\n";
-        }
+        auto *integral = std::get_if<sem::Integral>(&type);
+        auto suffix = (integral && integral->sign()) ? "l" : "b";
+
+        _text << "\tset" << suffix << " " << result << "\n";
     }
 }
 
@@ -347,7 +336,7 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
 
         // movsxd only works with reg:mem or reg:reg, thus convert imm to reg.
         if (std::holds_alternative<Immediate>(source)) {
-            source = _store_temp_2(source, from);
+            source = _adjust_to_reg(result, source, from);
         }
 
         // This will create a register of 64bit that will hold the converted operand.
@@ -373,7 +362,7 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
 
         // movsx/movzx only works with reg:mem or reg:reg, thus convert imm to reg.
         if (std::holds_alternative<Immediate>(source)) {
-            source = _store_temp_2(source, from);
+            source = _adjust_to_reg(result, source, from);
         }
 
         // This will create a register of to-size that will hold the converted operand.
@@ -471,7 +460,7 @@ void Generator::_int_to_bool(const Operand &result, Operand source, const sem::I
                              const sem::Boolean &to) {
     // If the source holds an immediate, instead turn it into a register.
     if (std::holds_alternative<Immediate>(source)) {
-        source = _store_temp_1(source, from);
+        source = _adjust_to_reg(result, source, from);
     }
 
     auto temp_1_int = _temp_1_register(to);
@@ -520,7 +509,7 @@ void Generator::_bool_to_int(const Operand &result, Operand source, const sem::B
 
         // If the source holds an immediate, instead turn it into a register.
         if (std::holds_alternative<Immediate>(source)) {
-            source = _store_temp_1(source, from);
+            source = _adjust_to_reg(result, source, from);
         }
 
         // This will create a register of to-size that will hold the converted operand.

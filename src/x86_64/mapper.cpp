@@ -31,27 +31,28 @@ Operand Mapper::operator[](const il::Operand &operand) {
 }
 
 void Mapper::visit(il::Function &function) {
-    _map_parameters(function.parameters());
-
     for (auto &block: function) {
         block.accept(*this);
     }
 
     auto stack_size = this->stack_size();
     auto use_redzone = function.is_leaf() && stack_size <= 128;
+    auto stack_reg = use_redzone ? RSP : RBP;
+
+    _map_parameters(function.parameters(), use_redzone);
 
     int64_t local_offset = 0;
     for (auto &local: _locals) {
         auto size = local.type().size();
         local_offset -= (int64_t) size_to_bytes(size);
 
-        auto reg = use_redzone ? RSP : RBP;
-        _mappings.emplace(local, Memory(size, reg, local_offset));
+        _mappings.emplace(local, Memory(size, stack_reg, local_offset));
     }
 }
 
-void Mapper::_map_parameters(const std::vector<il::Variable> &parameters) {
+void Mapper::_map_parameters(const std::vector<il::Variable> &parameters, bool use_redzone) {
     size_t stack = 0, integer = 0, floating = 0;
+    auto stack_reg = use_redzone ? RSP : RBP;
 
     for (auto &parameter: parameters) {
         const auto &type = parameter.type();
@@ -73,7 +74,7 @@ void Mapper::_map_parameters(const std::vector<il::Variable> &parameters) {
         }
 
         auto offset = (int64_t) (16 + 8 * stack);
-        auto memory = Memory(type.size(), RBP, offset);
+        auto memory = Memory(type.size(), stack_reg, offset);
         _add_memory(parameter, memory);
         stack++;
     }

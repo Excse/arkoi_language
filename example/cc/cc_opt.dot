@@ -5,6 +5,6 @@ digraph CFG {
 	bgcolor = "#f7f7f7";
 	splines = false;
 
-	L0 [label="fun main(a @u32) @u32:\l %01 @u32 = alloca\l %02 @u32 = alloca\l store @u32 a, %02\l $19 @u64 = call calling_convention(1, 2, 3, 4, 5, 6, 7, 8)\l $20 @u32 = cast @u64 $19\l store @u32 $20, %01\l $21 @u32 = load %01\l ret $21\l"];
-	L2 [label="fun calling_convention(a @u32, b @u32, c @u32, d @u32, e @u32, f @u32, g @u32, h @u32) @u64:\l %01 @u64 = alloca\l %02 @u32 = alloca\l %03 @u32 = alloca\l %04 @u32 = alloca\l %05 @u32 = alloca\l %06 @u32 = alloca\l %07 @u32 = alloca\l %08 @u32 = alloca\l %09 @u32 = alloca\l store @u32 a, %02\l store @u32 b, %03\l store @u32 c, %04\l store @u32 d, %05\l store @u32 e, %06\l store @u32 f, %07\l store @u32 g, %08\l store @u32 h, %09\l store @u64 1, %01\l $12 @u64 = load %01\l ret $12\l"];
+	L0 [label="fun main(a @u32) @u32:\l %01 @u32 = alloca\l $19 @u64 = call calling_convention(1, 2, 3, 4, 5, 6, 7, 8)\l $20 @u32 = cast @u64 $19\l store @u32 $20, %01\l $21 @u32 = load %01\l ret $21\l"];
+	L2 [label="fun calling_convention(a @u32, b @u32, c @u32, d @u32, e @u32, f @u32, g @u32, h @u32) @u64:\l %01 @u64 = alloca\l store @u64 1, %01\l $12 @u64 = load %01\l ret $12\l"];
 }

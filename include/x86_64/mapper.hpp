@@ -38,7 +38,7 @@ private:
 
     void visit(il::Call &instruction) override;
 
-    void _map_parameters(const std::vector<il::Variable> &parameters);
+    void _map_parameters(const std::vector<il::Variable> &parameters, bool use_redzone);
 
     void visit(il::If &) override {}
 
