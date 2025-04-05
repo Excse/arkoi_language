@@ -62,7 +62,7 @@ private:
     Module _module;
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::il
 
 //==============================================================================
 // BSD 3-Clause License

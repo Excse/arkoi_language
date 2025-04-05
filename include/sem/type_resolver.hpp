@@ -58,7 +58,7 @@ private:
     bool _failed{};
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::sem
 
 //==============================================================================
 // BSD 3-Clause License

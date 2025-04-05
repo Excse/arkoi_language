@@ -704,11 +704,6 @@ Register Generator::_temp_2_register(const sem::Type &type) {
 Register Generator::_adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type) {
     // If the result operand is already a register, just use it instead.
     if (std::holds_alternative<Register>(result)) {
-        if (result == operand) {
-            // If both result and operand are the same register, there is nothing more to do.
-            return std::get<Register>(operand);
-        }
-
         // If the result operand is a register, then just temporarily store the operand in it.
         _store(operand, result, type);
         return std::get<Register>(result);

@@ -47,7 +47,7 @@ private:
     std::stringstream &_output;
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::il
 
 //==============================================================================
 // BSD 3-Clause License

@@ -15,6 +15,7 @@ class Function;
 
 class BasicBlock {
 public:
+    using Predecessors = std::unordered_set<BasicBlock *>;
     using Instructions = std::vector<Instruction>;
 
 public:
@@ -44,10 +45,10 @@ public:
     Instructions::iterator end() { return _instructions.end(); }
 
 private:
-    std::unordered_set<BasicBlock *> _predecessors;
+    Instructions _instructions{};
+    Predecessors _predecessors;
     BasicBlock *_branch;
     BasicBlock *_next;
-    Instructions _instructions{};
     std::string _label;
 };
 
@@ -147,7 +148,7 @@ private:
 
 #include "../../src/il/cfg.tpp"
 
-} // namespace arkoi::mid
+} // namespace arkoi::il
 
 //==============================================================================
 // BSD 3-Clause License

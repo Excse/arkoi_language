@@ -70,7 +70,7 @@ struct Operand : public OperandBase, public std::variant<Immediate, Variable, Me
     [[nodiscard]] sem::Type type() const override;
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::il
 
 namespace std {
 

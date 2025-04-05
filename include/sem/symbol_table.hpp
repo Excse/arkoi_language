@@ -37,7 +37,7 @@ public:
 
 #include "../../src/sem/symbol_table.tpp"
 
-} // namespace arkoi::mid
+} // namespace arkoi::sem
 
 //==============================================================================
 // BSD 3-Clause License

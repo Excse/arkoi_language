@@ -235,7 +235,7 @@ struct Instruction : public InstructionBase, public std::variant<
     [[nodiscard]] bool is_constant() override;
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::il
 
 std::ostream &operator<<(std::ostream &os, const arkoi::il::Binary::Operator &op);
 

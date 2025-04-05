@@ -48,7 +48,7 @@ private:
     ILPrinter _printer;
 };
 
-} // namespace arkoi::mid
+} // namespace arkoi::il
 
 //==============================================================================
 // BSD 3-Clause License
