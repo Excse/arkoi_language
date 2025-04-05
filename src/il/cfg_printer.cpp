@@ -20,7 +20,6 @@ void CFGPrinter::visit(Module &module) {
     _output << "\tsplines = false;\n\n";
 
     for (auto &function: module) {
-        _current_function = &function;
         function.accept(*this);
     }
 
@@ -28,6 +27,9 @@ void CFGPrinter::visit(Module &module) {
 }
 
 void CFGPrinter::visit(Function &function) {
+    _current_function = &function;
+    _liveness.run(function);
+
     for(auto &block : function) {
         block.accept(*this);
     }
@@ -58,6 +60,15 @@ void CFGPrinter::visit(BasicBlock &block) {
         instruction.accept(*this);
         _output << "\\l";
     }
+
+    _output << "\\l";
+
+    _output << "IN:  { ";
+    for(const auto &in : _liveness.in()[&block]) _output << in << " ";
+    _output << "}\\l";
+    _output << "OUT: { ";
+    for(const auto &out : _liveness.out()[&block]) _output << out << " ";
+    _output << "}\\l";
 
     _output << "\"];\n";
 

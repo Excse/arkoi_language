@@ -1,4 +1,41 @@
-#include "il/dataflow.hpp"
+#include <ranges>
+
+#include "il/analyses.hpp"
+
+using namespace arkoi::il;
+using namespace arkoi;
+
+std::set<Operand> LivenessAnalysis::initialize_entry(Function &, BasicBlock &) {
+    return {};
+}
+
+std::set<Operand> LivenessAnalysis::initialize(BasicBlock &) {
+    return {};
+}
+
+std::set<Operand> LivenessAnalysis::merge(const std::vector<State<Operand>> &states) {
+    State<Operand> result;
+    for (const auto &state: states) result.insert(state.begin(), state.end());
+    return result;
+}
+
+std::set<Operand> LivenessAnalysis::transfer(BasicBlock &block, State<Operand> &out) {
+    State<Operand> in = out;
+
+    for (auto &instruction: std::ranges::reverse_view(block.instructions())) {
+        for (const auto &definition: instruction.defs()) {
+            if (std::holds_alternative<Immediate>(definition)) continue;
+            in.erase(definition);
+        }
+
+        for (const auto &use: instruction.uses()) {
+            if (std::holds_alternative<Immediate>(use)) continue;
+            in.insert(use);
+        }
+    }
+
+    return in;
+}
 
 //==============================================================================
 // BSD 3-Clause License

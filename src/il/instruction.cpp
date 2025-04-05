@@ -20,9 +20,18 @@ void Instruction::accept(Visitor &visitor) {
     std::visit([&](auto &item) { item.accept(visitor); }, *this);
 }
 
+std::vector<Operand> Instruction::defs() const {
+    return std::visit([&](auto &item) { return item.defs(); }, *this);
+}
+
+std::vector<Operand> Instruction::uses() const {
+    return std::visit([&](auto &item) { return item.uses(); }, *this);
+}
+
 bool Instruction::is_constant() {
     return std::visit([&](auto &item) { return item.is_constant(); }, *this);
 }
+
 
 std::ostream &operator<<(std::ostream &os, const Binary::Operator &op) {
     switch (op) {

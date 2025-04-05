@@ -14,6 +14,10 @@ public:
 
     virtual void accept(Visitor &visitor) = 0;
 
+    [[nodiscard]] virtual std::vector<Operand> defs() const { return {}; };
+
+    [[nodiscard]] virtual std::vector<Operand> uses() const { return {}; };
+
     [[nodiscard]] virtual bool is_constant() = 0;
 };
 
@@ -38,6 +42,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] std::vector<Operand> uses() const override { return {_condition}; }
+
     [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_condition); }
 
     [[nodiscard]] auto &condition() { return _condition; }
@@ -58,6 +64,10 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] std::vector<Operand> defs() const override { return {_result}; }
+
+    [[nodiscard]] std::vector<Operand> uses() const override { return _arguments; }
+
     [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &arguments() { return _arguments; };
@@ -77,6 +87,8 @@ public:
     Return(Operand value) : _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] std::vector<Operand> uses() const override { return {_value}; }
 
     [[nodiscard]] bool is_constant() override { return false; }
 
@@ -103,6 +115,10 @@ public:
           _op_type(std::move(op_type)), _op(op) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] std::vector<Operand> defs() const override { return {_result}; }
+
+    [[nodiscard]] std::vector<Operand> uses() const override { return {_left, _right}; }
 
     [[nodiscard]] bool is_constant() override {
         return std::holds_alternative<Immediate>(_left) && std::holds_alternative<Immediate>(_right);
@@ -134,6 +150,10 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] std::vector<Operand> defs() const override { return { _result }; }
+
+    [[nodiscard]] std::vector<Operand> uses() const override { return { _source }; }
+
     [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_source); }
 
     [[nodiscard]] auto &source() { return _source; };
@@ -154,6 +174,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] std::vector<Operand> defs() const override { return { _result }; }
+
     [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &result() const { return _result; };
@@ -168,6 +190,10 @@ public:
         : _result(std::move(result)), _source(std::move(source)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] std::vector<Operand> defs() const override { return { _result }; }
+
+    [[nodiscard]] std::vector<Operand> uses() const override { return { _source }; }
 
     [[nodiscard]] bool is_constant() override { return false; }
 
@@ -187,6 +213,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
+    [[nodiscard]] std::vector<Operand> uses() const override { return { _source }; }
+
     [[nodiscard]] bool is_constant() override { return false; }
 
     [[nodiscard]] auto &result() const { return _result; };
@@ -201,9 +229,13 @@ private:
 class Constant : public InstructionBase {
 public:
     Constant(Variable result, Immediate immediate)
-        : _immediate(immediate), _result(std::move(result)) {}
+        : _immediate(std::move(std::move(immediate))), _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] std::vector<Operand> defs() const override { return { _result }; }
+
+    [[nodiscard]] std::vector<Operand> uses() const override { return { _immediate }; }
 
     [[nodiscard]] bool is_constant() override { return true; }
 
@@ -231,6 +263,10 @@ struct Instruction : public InstructionBase, public std::variant<
     using variant::variant;
 
     void accept(il::Visitor &visitor) override;
+
+    [[nodiscard]] std::vector<Operand> defs() const override;
+
+    [[nodiscard]] std::vector<Operand> uses() const override;
 
     [[nodiscard]] bool is_constant() override;
 };

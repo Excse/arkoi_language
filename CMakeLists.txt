@@ -42,7 +42,8 @@ add_library(${PROJECT_NAME}_lib
         src/il/generator.cpp
         src/il/il_printer.cpp
         src/il/cfg_printer.cpp
-        src/il/dataflow.cpp
+        src/il/dataflow.tpp
+        src/il/analyses.cpp
         src/il/operand.cpp
         src/il/cfg.cpp
         src/opt/pass.cpp

@@ -13,6 +13,7 @@
 #include "il/cfg_printer.hpp"
 #include "il/il_printer.hpp"
 #include "il/generator.hpp"
+#include "il/analyses.hpp"
 #include "front/scanner.hpp"
 #include "front/parser.hpp"
 
@@ -24,9 +25,8 @@ void dump_cfg(const std::string &base_path, il::Module &module) {
     auto dot_path = base_path + ".dot";
     auto png_path = base_path + ".png";
 
-    std::ofstream cfg_file(dot_path);
-    cfg_file << cfg_output.str();
-    cfg_file.close();
+    std::ofstream file(dot_path);
+    file << cfg_output.str();
 
     std::string assemble_command = "dot -Tpng " + dot_path + " -o " + png_path;
     int assemble_result = std::system(assemble_command.c_str());
@@ -44,11 +44,13 @@ int main(int argc, char* argv[]) {
 
     auto base_path = input_path.substr(0, last_dot);
 
-    std::ifstream file(input_path);
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-
-    std::string source = buffer.str();
+    std::string source;
+    {
+        std::stringstream buffer;
+        std::ifstream file(input_path);
+        buffer << file.rdbuf();
+        source = buffer.str();
+    }
 
     std::cout << "~~~~~~~~~~~~         Lex & Scan           ~~~~~~~~~~~~ " << std::endl;
 
@@ -72,8 +74,11 @@ int main(int argc, char* argv[]) {
 
     auto module = il::Generator::generate(program);
 
-    auto il_org_output = il::ILPrinter::print(module);
-    std::cout << il_org_output.str();
+    {
+        auto output = il::ILPrinter::print(module);
+        std::ofstream out_file(base_path + "_org.il");
+        out_file << output.str();
+    }
 
     dump_cfg(base_path + "_org", module);
 
@@ -86,19 +91,27 @@ int main(int argc, char* argv[]) {
     manager.add<opt::SimplifyCFG>();
     manager.run(module);
 
-    auto il_opt_output = il::ILPrinter::print(module);
-    std::cout << il_opt_output.str();
+    {
+        auto output = il::ILPrinter::print(module);
+        std::ofstream out_file(base_path + "_opt.il");
+        out_file << output.str();
+    }
 
     dump_cfg(base_path + "_opt", module);
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
 
-    auto assembly = x86_64::Generator::generate(module);
-    std::cout << assembly.str();
+    for (auto &function: module) {
+        auto analysis = il::DataflowAnalysis<il::LivenessAnalysis>();
+        analysis.run(function);
 
-    std::ofstream cfg_file(base_path + ".asm");
-    cfg_file << assembly.str();
-    cfg_file.close();
+    }
+
+    {
+        auto output = x86_64::Generator::generate(module);
+        std::ofstream out_file(base_path + ".asm");
+        out_file << output.str();
+    }
 
     return 0;
 }

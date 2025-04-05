@@ -1,62 +1,23 @@
 #pragma once
 
-#include <concepts>
-#include <set>
-
-#include "il/instruction.hpp"
-#include "il/cfg.hpp"
+#include "il/dataflow.hpp"
 
 namespace arkoi::il {
 
-enum class DataflowDirection {
-    Forward,
-    Backward
-};
-
-template<typename Result>
-using State = std::set<Result>;
-
-template<typename Result>
-class DataflowPass {
+class LivenessAnalysis : public DataflowPass<Operand> {
 public:
-    using ResultType [[maybe_unused]] = Result;
+    static constexpr DataflowDirection Direction = DataflowDirection::Backward;
 
-public:
-    virtual ~DataflowPass() = default;
+    LivenessAnalysis() = default;
 
-    virtual std::set<Result> initialize_entry(Function &function, BasicBlock &entry) = 0;
+    std::set<Operand> initialize_entry(Function &function, BasicBlock &entry) override;
 
-    virtual std::set<Result> initialize(BasicBlock &current) = 0;
+    std::set<Operand> initialize(BasicBlock &current) override;
 
-    virtual std::set<Result> merge(const std::vector<State<Result>> &predecessors) = 0;
+    std::set<Operand> merge(const std::vector<State<Operand>> &predecessors) override;
 
-    virtual std::set<Result> transfer(BasicBlock &current, State<Result> &state) = 0;
+    std::set<Operand> transfer(BasicBlock &current, State<Operand> &state) override;
 };
-
-template<typename Pass>
-class DataflowAnalysis {
-    static_assert(std::is_base_of<DataflowPass<typename Pass::ResultType>, Pass>::value,
-        "Pass must be a subclass of DataflowPass");
-    static_assert(std::is_same<decltype(Pass::Direction), const DataflowDirection>::value,
-        "Derived class must define a static constexpr DataflowDirection Direction");
-
-public:
-    template<typename... Args>
-    DataflowAnalysis(Args&&... args) : _pass(std::make_unique<Pass>(std::forward<Args>(args)...)) {}
-
-    void run(Function &function);
-
-    [[nodiscard]] auto &out() { return _out; }
-
-    [[nodiscard]] auto &in() { return _in; }
-
-private:
-    std::unordered_map<BasicBlock *, State<typename Pass::ResultType>> _out{};
-    std::unordered_map<BasicBlock *, State<typename Pass::ResultType>> _in{};
-    std::unique_ptr<Pass> _pass;
-};
-
-#include "../../src/il/dataflow.tpp"
 
 } // namespace arkoi::il
 
