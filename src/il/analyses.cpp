@@ -5,22 +5,24 @@
 using namespace arkoi::il;
 using namespace arkoi;
 
-std::set<Operand> LivenessAnalysis::initialize_entry(Function &, BasicBlock &) {
+using State = LivenessAnalysis::State;
+
+State LivenessAnalysis::initialize_entry(Function &, BasicBlock &) {
     return {};
 }
 
-std::set<Operand> LivenessAnalysis::initialize(BasicBlock &) {
+State LivenessAnalysis::initialize(BasicBlock &) {
     return {};
 }
 
-std::set<Operand> LivenessAnalysis::merge(const std::vector<State<Operand>> &states) {
-    State<Operand> result;
+State LivenessAnalysis::merge(const std::vector<State> &states) {
+    State result;
     for (const auto &state: states) result.insert(state.begin(), state.end());
     return result;
 }
 
-std::set<Operand> LivenessAnalysis::transfer(BasicBlock &block, State<Operand> &out) {
-    State<Operand> in = out;
+State LivenessAnalysis::transfer(BasicBlock &block, const State &out) {
+    State in = out;
 
     for (auto &instruction: std::ranges::reverse_view(block.instructions())) {
         for (const auto &definition: instruction.defs()) {

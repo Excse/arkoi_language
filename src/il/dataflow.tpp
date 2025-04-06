@@ -1,4 +1,4 @@
-template<typename Pass>
+template<DataflowPassConcept Pass>
 void DataflowAnalysis<Pass>::run(Function &function) {
     _out.clear();
     _in.clear();
@@ -28,7 +28,7 @@ void DataflowAnalysis<Pass>::run(Function &function) {
         auto &old_out = _out[block];
         auto &old_in = _in[block];
 
-        std::vector<State<typename Pass::ResultType>> states;
+        std::vector<State> states;
         if constexpr (Pass::Direction == DataflowDirection::Forward) {
             for (auto *predecessor: block->predecessors()) {
                 states.push_back(_out[predecessor]);
@@ -60,7 +60,6 @@ void DataflowAnalysis<Pass>::run(Function &function) {
         }
     }
 }
-
 
 //==============================================================================
 // BSD 3-Clause License

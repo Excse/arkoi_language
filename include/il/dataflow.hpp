@@ -13,32 +13,36 @@ enum class DataflowDirection {
     Backward
 };
 
-template<typename Result>
-using State = std::set<Result>;
-
-template<typename Result>
+template<typename ResultType, DataflowDirection DirectionType>
 class DataflowPass {
 public:
-    using ResultType [[maybe_unused]] = Result;
+    using Result [[maybe_unused]] = ResultType;
+    using State = std::unordered_set<Result>;
+
+    static constexpr DataflowDirection Direction [[maybe_unused]] = DirectionType;
 
 public:
     virtual ~DataflowPass() = default;
 
-    virtual std::set<Result> initialize_entry(Function &function, BasicBlock &entry) = 0;
+    virtual State initialize_entry(Function &function, BasicBlock &entry) = 0;
 
-    virtual std::set<Result> initialize(BasicBlock &current) = 0;
+    virtual State initialize(BasicBlock &current) = 0;
 
-    virtual std::set<Result> merge(const std::vector<State<Result>> &predecessors) = 0;
+    virtual State merge(const std::vector<State> &predecessors) = 0;
 
-    virtual std::set<Result> transfer(BasicBlock &current, State<Result> &state) = 0;
+    virtual State transfer(BasicBlock &current, const State &state) = 0;
 };
 
-template<typename Pass>
+template <typename T>
+concept DataflowPassConcept = requires {
+    typename T::Result;
+    { T::Direction } -> std::convertible_to<DataflowDirection>;
+} && std::is_base_of_v<DataflowPass<typename T::Result, T::Direction>, T>;
+
+template<DataflowPassConcept Pass>
 class DataflowAnalysis {
-    static_assert(std::is_base_of<DataflowPass<typename Pass::ResultType>, Pass>::value,
-        "Pass must be a subclass of DataflowPass");
-    static_assert(std::is_same<decltype(Pass::Direction), const DataflowDirection>::value,
-        "Derived class must define a static constexpr DataflowDirection Direction");
+public:
+    using State = std::unordered_set<typename Pass::Result>;
 
 public:
     template<typename... Args>
@@ -46,13 +50,13 @@ public:
 
     void run(Function &function);
 
-    [[nodiscard]] auto &out() { return _out; }
+    [[nodiscard]] auto &out() const { return _out; }
 
-    [[nodiscard]] auto &in() { return _in; }
+    [[nodiscard]] auto &in() const { return _in; }
 
 private:
-    std::unordered_map<BasicBlock *, State<typename Pass::ResultType>> _out{};
-    std::unordered_map<BasicBlock *, State<typename Pass::ResultType>> _in{};
+    std::unordered_map<BasicBlock *, State> _out{};
+    std::unordered_map<BasicBlock *, State> _in{};
     std::unique_ptr<Pass> _pass;
 };
 

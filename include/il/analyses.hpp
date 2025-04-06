@@ -4,19 +4,17 @@
 
 namespace arkoi::il {
 
-class LivenessAnalysis : public DataflowPass<Operand> {
+class LivenessAnalysis : public DataflowPass<Operand, DataflowDirection::Backward> {
 public:
-    static constexpr DataflowDirection Direction = DataflowDirection::Backward;
-
     LivenessAnalysis() = default;
 
-    std::set<Operand> initialize_entry(Function &function, BasicBlock &entry) override;
+    State initialize_entry(Function &function, BasicBlock &entry) override;
 
-    std::set<Operand> initialize(BasicBlock &current) override;
+    State initialize(BasicBlock &current) override;
 
-    std::set<Operand> merge(const std::vector<State<Operand>> &predecessors) override;
+    State merge(const std::vector<State> &predecessors) override;
 
-    std::set<Operand> transfer(BasicBlock &current, State<Operand> &state) override;
+    State transfer(BasicBlock &current, const State &state) override;
 };
 
 } // namespace arkoi::il

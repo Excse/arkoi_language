@@ -64,10 +64,10 @@ void CFGPrinter::visit(BasicBlock &block) {
     _output << "\\l";
 
     _output << "IN:  { ";
-    for(const auto &in : _liveness.in()[&block]) _output << in << " ";
+    for(const auto &in : _liveness.in().at(&block)) _output << in << " ";
     _output << "}\\l";
     _output << "OUT: { ";
-    for(const auto &out : _liveness.out()[&block]) _output << out << " ";
+    for(const auto &out : _liveness.out().at(&block)) _output << out << " ";
     _output << "}\\l";
 
     _output << "\"];\n";
