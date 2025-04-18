@@ -4,7 +4,7 @@
 
 namespace arkoi::opt {
 
-class ConstantPropagation : public Pass {
+class ConstantPropagation final : public Pass {
 public:
     bool enter_module(il::Module &) override { return false; }
 

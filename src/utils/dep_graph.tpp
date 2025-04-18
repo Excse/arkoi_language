@@ -1,7 +1,7 @@
-#include <unordered_set>
-#include <stdexcept>
-#include <stack>
 #include <queue>
+#include <stack>
+#include <stdexcept>
+#include <unordered_set>
 
 template <typename ID>
 void DependencyGraph<ID>::add_node(ID node) {
@@ -27,7 +27,7 @@ std::vector<ID> DependencyGraph<ID>::topological_sort() const {
         in_degree.try_emplace(node);
 
         for (const auto &neighbor: neighbors) {
-            in_degree[neighbor]++;
+            ++in_degree[neighbor];
         }
     }
 

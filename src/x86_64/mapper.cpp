@@ -1,7 +1,7 @@
 #include "x86_64/mapper.hpp"
 
-#include "utils/utils.hpp"
 #include "il/cfg.hpp"
+#include "utils/utils.hpp"
 
 using namespace arkoi::x86_64;
 using namespace arkoi;
@@ -35,16 +35,16 @@ void Mapper::visit(il::Function &function) {
         block.accept(*this);
     }
 
-    auto stack_size = this->stack_size();
-    auto use_redzone = function.is_leaf() && stack_size <= 128;
-    auto stack_reg = use_redzone ? RSP : RBP;
+    const auto stack_size = this->stack_size();
+    const auto use_redzone = function.is_leaf() && stack_size <= 128;
+    const auto stack_reg = use_redzone ? RSP : RBP;
 
     _map_parameters(function.parameters(), use_redzone);
 
     int64_t local_offset = 0;
     for (auto &local: _locals) {
         auto size = local.type().size();
-        local_offset -= (int64_t) size_to_bytes(size);
+        local_offset -= static_cast<int64_t>(size_to_bytes(size));
 
         _mappings.emplace(local, Memory(size, stack_reg, local_offset));
     }
@@ -52,7 +52,7 @@ void Mapper::visit(il::Function &function) {
 
 void Mapper::_map_parameters(const std::vector<il::Variable> &parameters, bool use_redzone) {
     size_t stack = 0, integer = 0, floating = 0;
-    auto stack_reg = use_redzone ? RSP : RBP;
+    const auto stack_reg = use_redzone ? RSP : RBP;
 
     for (auto &parameter: parameters) {
         const auto &type = parameter.type();
@@ -73,7 +73,7 @@ void Mapper::_map_parameters(const std::vector<il::Variable> &parameters, bool u
             }
         }
 
-        auto offset = (int64_t) (16 + 8 * stack);
+        const auto offset = static_cast<int64_t>(16 + 8 * stack);
         auto memory = Memory(type.size(), stack_reg, offset);
         _add_memory(parameter, memory);
         stack++;
@@ -95,7 +95,7 @@ void Mapper::visit(il::Cast &instruction) {
 }
 
 void Mapper::visit(il::Call &instruction) {
-    auto result_reg = return_register(instruction.result().type());
+    const auto result_reg = return_register(instruction.result().type());
     _add_register(instruction.result(), result_reg);
 }
 
@@ -129,7 +129,7 @@ size_t Mapper::stack_size() const {
     size_t stack_size = 0;
 
     for (const auto &local: _locals) {
-        auto size = size_to_bytes(local.type().size());
+        const auto size = size_to_bytes(local.type().size());
         stack_size += size;
     }
 
@@ -151,7 +151,7 @@ Register Mapper::return_register(const sem::Type &type) {
 }
 
 size_t Mapper::align_size(size_t input) {
-    static const size_t STACK_ALIGNMENT = 16;
+    static constexpr size_t STACK_ALIGNMENT = 16;
     return (input + (STACK_ALIGNMENT - 1)) & ~(STACK_ALIGNMENT - 1);
 }
 

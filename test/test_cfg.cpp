@@ -18,12 +18,12 @@ using namespace arkoi;
  *                  [   exit   ]
  */
 il::Function create_example_cfg() {
-    il::Function function("main", std::vector<il::Parameter>(), sem::Boolean());
+    il::Function function("main", std::vector<il::Variable>(), sem::Boolean());
 
-    auto next_1_block = function.emplace_back("next_1");
-    auto next_2_block = function.emplace_back("next_2");
-    auto branch_2_block = function.emplace_back("branch_2");
-    auto branch_1_block = function.emplace_back("branch_1");
+    auto *next_1_block = function.emplace_back("next_1");
+    auto *next_2_block = function.emplace_back("next_2");
+    auto *branch_2_block = function.emplace_back("branch_2");
+    auto *branch_1_block = function.emplace_back("branch_1");
 
     function.entry()->set_next(next_1_block);
     function.entry()->set_branch(branch_1_block);

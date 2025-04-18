@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "sem/symbol_table.hpp"
+#include "il/cfg.hpp"
 #include "il/instruction.hpp"
 #include "utils/utils.hpp"
 

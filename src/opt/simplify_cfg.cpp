@@ -37,7 +37,7 @@ bool SimplifyCFG::exit_function(il::Function &function) {
 }
 
 void SimplifyCFG::_remove_proxy_block(il::Function &function, il::BasicBlock &block) {
-    auto &target = std::get<il::Goto>(block.instructions().front());
+    const auto &target = std::get<il::Goto>(block.instructions().front());
     auto *target_block = block.next();
 
     // Replace every predecessor goto with a copy of the current one. Also delete the predecessor, as a

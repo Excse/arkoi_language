@@ -1,11 +1,11 @@
 #pragma once
 
-#include <unordered_set>
 #include <functional>
-#include <utility>
-#include <vector>
 #include <memory>
 #include <stack>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "il/instruction.hpp"
 
@@ -19,7 +19,7 @@ public:
     using Instructions = std::vector<Instruction>;
 
 public:
-    BasicBlock(std::string label) : _branch(), _next(), _label(std::move(label)) {}
+    explicit BasicBlock(std::string label) : _branch(), _next(), _label(std::move(label)) {}
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -60,7 +60,7 @@ public:
     using pointer = value_type *;
 
 public:
-    BlockIterator(Function *function);
+    explicit BlockIterator(Function *function);
 
     reference operator*() const { return *_current; }
 
@@ -80,7 +80,7 @@ public:
 
 private:
     std::unordered_set<BasicBlock *> _visited{};
-    std::stack<BasicBlock *> _queue;
+    std::stack<BasicBlock *> _queue{};
     Function *_function;
     pointer _current;
 };
@@ -113,12 +113,12 @@ public:
 
     [[nodiscard]] auto *exit() const { return _exit; }
 
-    BlockIterator begin() { return {this}; }
+    BlockIterator begin() { return BlockIterator(this); }
 
-    BlockIterator end() { return {nullptr}; }
+    BlockIterator end() { return BlockIterator(nullptr); }
 
 private:
-    std::vector<std::shared_ptr<BasicBlock>> _block_pool;
+    std::vector<std::shared_ptr<BasicBlock>> _block_pool{};
     BasicBlock *_entry;
     BasicBlock *_exit;
     std::vector<Variable> _parameters;
@@ -131,7 +131,7 @@ public:
     using Functions = std::vector<Function>;
 
 public:
-    Module() : _functions() {}
+    Module() {}
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -143,7 +143,7 @@ public:
     Functions::iterator end() { return _functions.end(); }
 
 private:
-    Functions _functions;
+    Functions _functions{};
 };
 
 #include "../../src/il/cfg.tpp"

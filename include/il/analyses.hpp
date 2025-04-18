@@ -4,7 +4,7 @@
 
 namespace arkoi::il {
 
-class LivenessAnalysis : public DataflowPass<Operand, DataflowDirection::Backward> {
+class LivenessAnalysis final : public DataflowPass<Operand, DataflowDirection::Backward> {
 public:
     LivenessAnalysis() = default;
 

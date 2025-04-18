@@ -1,21 +1,21 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 
-#include "opt/dead_code_elimination.hpp"
-#include "opt/constant_propagation.hpp"
+#include "front/parser.hpp"
+#include "front/scanner.hpp"
+#include "il/analyses.hpp"
+#include "il/cfg_printer.hpp"
+#include "il/generator.hpp"
+#include "il/il_printer.hpp"
 #include "opt/constant_folding.hpp"
-#include "opt/simplify_cfg.hpp"
+#include "opt/constant_propagation.hpp"
+#include "opt/dead_code_elimination.hpp"
 #include "opt/pass.hpp"
+#include "opt/simplify_cfg.hpp"
 #include "sem/name_resolver.hpp"
 #include "sem/type_resolver.hpp"
 #include "x86_64/generator.hpp"
-#include "il/cfg_printer.hpp"
-#include "il/il_printer.hpp"
-#include "il/generator.hpp"
-#include "il/analyses.hpp"
-#include "front/scanner.hpp"
-#include "front/parser.hpp"
 
 using namespace arkoi;
 

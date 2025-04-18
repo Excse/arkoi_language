@@ -2,7 +2,7 @@
 
 using namespace arkoi::il;
 
-Binary::Operator Binary::node_to_instruction(ast::Binary::Operator op) {
+Binary::Operator Binary::node_to_instruction(const ast::Binary::Operator op) {
     switch (op) {
         case ast::Binary::Operator::Add: return Operator::Add;
         case ast::Binary::Operator::Sub: return Operator::Sub;

@@ -2,10 +2,10 @@
 
 #include <utility>
 
-#include "sem/symbol_table.hpp"
-#include "sem/type.hpp"
 #include "ast/visitor.hpp"
 #include "front/token.hpp"
+#include "sem/symbol_table.hpp"
+#include "sem/type.hpp"
 
 namespace arkoi::ast {
 
@@ -16,39 +16,39 @@ public:
     virtual void accept(Visitor &visitor) = 0;
 };
 
-class Program : public Node {
+class Program final : public Node {
 public:
     Program(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<sem::SymbolTable> table)
         : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &statements() const { return _statements; };
+    [[nodiscard]] auto &statements() const { return _statements; }
 
-    [[nodiscard]] auto &table() const { return _table; };
+    [[nodiscard]] auto &table() const { return _table; }
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
     std::shared_ptr<sem::SymbolTable> _table;
 };
 
-class Block : public Node {
+class Block final : public Node {
 public:
     Block(std::vector<std::unique_ptr<Node>> &&statements, std::shared_ptr<sem::SymbolTable> table)
         : _statements(std::move(statements)), _table(std::move(table)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &statements() const { return _statements; };
+    [[nodiscard]] auto &statements() const { return _statements; }
 
-    [[nodiscard]] auto &table() const { return _table; };
+    [[nodiscard]] auto &table() const { return _table; }
 
 private:
     std::vector<std::unique_ptr<Node>> _statements;
     std::shared_ptr<sem::SymbolTable> _table;
 };
 
-class Identifier : public Node {
+class Identifier final : public Node {
 public:
     enum class Kind {
         Function,
@@ -74,7 +74,7 @@ private:
     Kind _kind;
 };
 
-class Parameter : public Node {
+class Parameter final : public Node {
 public:
     Parameter(Identifier name, sem::Type type)
         : _name(std::move(name)), _type(std::move(type)) {}
@@ -90,7 +90,7 @@ private:
     sem::Type _type;
 };
 
-class Function : public Node {
+class Function final : public Node {
 public:
     Function(Identifier name, std::vector<Parameter> &&parameters, sem::Type type,
              std::unique_ptr<Block> &&block, std::shared_ptr<sem::SymbolTable> table)
@@ -117,9 +117,9 @@ private:
     sem::Type _type;
 };
 
-class Return : public Node {
+class Return final : public Node {
 public:
-    Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
+    explicit Return(std::unique_ptr<Node> &&expression) : _expression(std::move(expression)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -136,7 +136,7 @@ private:
     std::optional<sem::Type> _type{};
 };
 
-class If : public Node {
+class If final : public Node {
 public:
     If(std::unique_ptr<Node> &&condition, std::unique_ptr<Node> &&branch, std::unique_ptr<Node> &&next)
         : _next(std::move(next)), _branch(std::move(branch)), _condition(std::move(condition)) {}
@@ -156,7 +156,7 @@ private:
     std::unique_ptr<Node> _condition;
 };
 
-class Assign : public Node {
+class Assign final : public Node {
 public:
     Assign(Identifier name, std::unique_ptr<Node> &&expression)
         : _expression(std::move(expression)), _name(std::move(name)){}
@@ -174,7 +174,7 @@ private:
     Identifier _name;
 };
 
-class Call : public Node {
+class Call final : public Node {
 public:
     Call(Identifier name, std::vector<std::unique_ptr<Node>> &&arguments)
         : _arguments(std::move(arguments)), _name(std::move(name)) {}
@@ -190,7 +190,7 @@ private:
     Identifier _name;
 };
 
-class Immediate : public Node {
+class Immediate final : public Node {
 public:
     enum class Kind {
         Integer,
@@ -217,7 +217,7 @@ private:
     Kind _kind;
 };
 
-class Binary : public Node {
+class Binary final : public Node {
 public:
     enum class Operator {
         Add,
@@ -247,9 +247,9 @@ public:
     void set_result_type(sem::Type type) { _result_type = std::move(type); }
 
     [[nodiscard]] auto &result_type() { return _result_type.value(); }
-    
+
     void set_op_type(sem::Type type) { _op_type = std::move(type); }
-    
+
     [[nodiscard]] auto &op_type() const { return _op_type.value(); }
 
 private:
@@ -258,13 +258,13 @@ private:
     Operator _op;
 };
 
-class Cast : public Node {
+class Cast final : public Node {
 public:
     Cast(std::unique_ptr<Node> &&expression, sem::Type from, sem::Type to)
         : _expression(std::move(expression)), _from(from), _to(std::move(to)) {}
 
     Cast(std::unique_ptr<Node> &&expression, sem::Type to)
-        : _expression(std::move(expression)), _from(), _to(std::move(to)) {}
+        : _expression(std::move(expression)), _to(std::move(to)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -278,7 +278,7 @@ public:
 
 private:
     std::unique_ptr<Node> _expression;
-    std::optional<sem::Type> _from;
+    std::optional<sem::Type> _from{};
     sem::Type _to;
 };
 

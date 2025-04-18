@@ -68,9 +68,9 @@ public:
 
     [[nodiscard]] auto row() const { return _row; }
 
-    [[nodiscard]] static std::optional<Token::Type> lookup_keyword(const std::string_view &value);
+    [[nodiscard]] static std::optional<Type> lookup_keyword(const std::string_view &value);
 
-    [[nodiscard]] static std::optional<Token::Type> lookup_special(char value);
+    [[nodiscard]] static std::optional<Type> lookup_special(char value);
 
 private:
     std::string _contents;

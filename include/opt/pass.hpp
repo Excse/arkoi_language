@@ -24,7 +24,7 @@ public:
 
 class PassManager {
 public:
-    void run(il::Module &module);
+    void run(il::Module &module) const;
 
     template<typename Type, typename... Args>
     void add(Args &&... args);

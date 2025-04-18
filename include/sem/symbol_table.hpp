@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <unordered_map>
 #include <utility>
-#include <memory>
 
 #include "sem/symbol.hpp"
 
@@ -10,7 +10,7 @@ namespace arkoi::sem {
 
 class SymbolTable {
 public:
-    SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
+    explicit SymbolTable(std::shared_ptr<SymbolTable> parent = nullptr) : _parent(std::move(parent)) {}
 
     template<typename Type, typename... Args>
     std::shared_ptr<Symbol> &insert(const std::string &name, Args &&... args);
@@ -23,15 +23,15 @@ private:
     std::shared_ptr<SymbolTable> _parent;
 };
 
-class IdentifierAlreadyTaken : public std::runtime_error {
+class IdentifierAlreadyTaken final : public std::runtime_error {
 public:
-    IdentifierAlreadyTaken(const std::string &name)
+    explicit IdentifierAlreadyTaken(const std::string &name)
         : std::runtime_error("The identifier " + name + " is already taken.") {}
 };
 
-class IdentifierNotFound : public std::runtime_error {
+class IdentifierNotFound final : public std::runtime_error {
 public:
-    IdentifierNotFound(const std::string &name)
+    explicit IdentifierNotFound(const std::string &name)
         : std::runtime_error("The identifier " + name + " was not found.") {}
 };
 

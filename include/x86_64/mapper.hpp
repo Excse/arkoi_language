@@ -1,15 +1,14 @@
 #pragma once
 
 #include <unordered_map>
-#include <set>
 
+#include "il/instruction.hpp"
 #include "utils/ordered_set.hpp"
 #include "x86_64/operand.hpp"
-#include "il/instruction.hpp"
 
 namespace arkoi::x86_64 {
 
-class Mapper : il::Visitor {
+class Mapper final : il::Visitor {
 public:
     [[nodiscard]] static Mapper map(il::Function &function);
 

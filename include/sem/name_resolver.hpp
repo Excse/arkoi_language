@@ -2,13 +2,13 @@
 
 #include <stack>
 
-#include "sem/symbol_table.hpp"
-#include "front/token.hpp"
 #include "ast/visitor.hpp"
+#include "front/token.hpp"
+#include "sem/symbol_table.hpp"
 
 namespace arkoi::sem {
 
-class NameResolver : ast::Visitor {
+class NameResolver final : ast::Visitor {
 private:
     NameResolver() = default;
 
@@ -30,7 +30,7 @@ private:
 
     void visit(ast::Identifier &node) override;
 
-    void visit(ast::Immediate &) override {};
+    void visit(ast::Immediate &) override {}
 
     void visit(ast::Return &node) override;
 
@@ -57,7 +57,7 @@ private:
 
 #include "../../src/sem/name_resolver.tpp"
 
-} // namespace arkoi::mid
+} // namespace arkoi::sem
 
 //==============================================================================
 // BSD 3-Clause License

@@ -2,15 +2,13 @@
 
 #include <sstream>
 
-#include "il/instruction.hpp"
 #include "il/visitor.hpp"
-#include "il/cfg.hpp"
 
 namespace arkoi::il {
 
-class ILPrinter : public Visitor {
+class ILPrinter final : public Visitor {
 public:
-    ILPrinter(std::stringstream &output) : _output(output) {}
+    explicit ILPrinter(std::stringstream &output) : _output(output) {}
 
 public:
     [[nodiscard]] static std::stringstream print(Module &module);

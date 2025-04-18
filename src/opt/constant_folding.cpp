@@ -1,7 +1,7 @@
 #include "opt/constant_folding.hpp"
 
-#include "utils/utils.hpp"
 #include "il/operand.hpp"
+#include "utils/utils.hpp"
 
 using namespace arkoi::opt;
 using namespace arkoi;
@@ -12,8 +12,8 @@ bool ConstantFolding::on_block(il::BasicBlock &block) {
     for (auto &instruction: block.instructions()) {
         if(!instruction.is_constant()) continue;
 
-        if (auto cast = std::get_if<il::Cast>(&instruction)) {
-            auto value = _cast(*cast);
+        if (auto *const cast = std::get_if<il::Cast>(&instruction)) {
+            const auto value = _cast(*cast);
             instruction = il::Constant(cast->result(), value);
             changed = true;
         }
@@ -34,22 +34,26 @@ il::Immediate ConstantFolding::_evaluate_cast(const sem::Type &to, auto expressi
     return std::visit(match{
         [&](const sem::Integral &type) -> il::Immediate {
             switch (type.size()) {
-                case Size::BYTE: return type.sign() ? (int8_t) expression : (uint8_t) expression;
-                case Size::WORD: return type.sign() ? (int16_t) expression : (uint16_t) expression;
-                case Size::DWORD: return type.sign() ? (int32_t) expression : (uint32_t) expression;
-                case Size::QWORD: return type.sign() ? (int64_t) expression : (uint64_t) expression;
+                case Size::BYTE:
+                    return type.sign() ? static_cast<int8_t>(expression) : static_cast<uint8_t>(expression);
+                case Size::WORD:
+                    return type.sign() ? static_cast<int16_t>(expression) : static_cast<uint16_t>(expression);
+                case Size::DWORD:
+                    return type.sign() ? static_cast<int32_t>(expression) : static_cast<uint32_t>(expression);
+                case Size::QWORD:
+                    return type.sign() ? static_cast<int64_t>(expression) : static_cast<uint64_t>(expression);
                 default: std::unreachable();
             }
         },
         [&](const sem::Floating &type) -> il::Immediate {
             switch (type.size()) {
-                case Size::DWORD: return (float) expression;
-                case Size::QWORD: return (double) expression;
+                case Size::DWORD: return static_cast<float>(expression);
+                case Size::QWORD: return static_cast<double>(expression);
                 default: std::unreachable();
             }
         },
         [&](const sem::Boolean &) -> il::Immediate {
-            return (bool) expression;
+            return static_cast<bool>(expression);
         }
     }, to);
 }

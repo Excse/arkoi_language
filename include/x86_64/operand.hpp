@@ -29,7 +29,7 @@ private:
 
 class Memory {
 public:
-    struct Address : public std::variant<std::string, int64_t, Register> {
+    struct Address : std::variant<std::string, int64_t, Register> {
         using variant::variant;
     };
 
@@ -63,11 +63,11 @@ private:
     Size _size;
 };
 
-struct Immediate : public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 };
 
-struct Operand : public std::variant<Memory, Register, Immediate> {
+struct Operand : std::variant<Memory, Register, Immediate> {
     using variant::variant;
 };
 
@@ -86,18 +86,18 @@ std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Immediate &opera
 std::ostream &operator<<(std::ostream &os, const arkoi::x86_64::Operand &mapping);
 
 namespace arkoi::x86_64 {
-    static const std::array<Register::Base, 6> INTEGER_ARGUMENT_REGISTERS{
+    static constexpr std::array INTEGER_ARGUMENT_REGISTERS{
         Register::Base::DI, Register::Base::SI, Register::Base::D,
         Register::Base::C, Register::Base::R8, Register::Base::R9
     };
 
-    static const std::array<Register::Base, 8> SSE_ARGUMENT_REGISTERS{
+    static constexpr std::array SSE_ARGUMENT_REGISTERS{
         Register::Base::XMM0, Register::Base::XMM1, Register::Base::XMM2, Register::Base::XMM3,
         Register::Base::XMM4, Register::Base::XMM5, Register::Base::XMM6, Register::Base::XMM7
     };
 
-    static const Register RSP(Register::Base::SP, Size::QWORD);
-    static const Register RBP(Register::Base::BP, Size::QWORD);
+    static constexpr Register RSP(Register::Base::SP, Size::QWORD);
+    static constexpr Register RBP(Register::Base::BP, Size::QWORD);
 } // namespace arkoi::x86_64
 
 //==============================================================================

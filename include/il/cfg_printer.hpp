@@ -1,18 +1,17 @@
 #pragma once
 
-#include "il/instruction.hpp"
-#include "il/il_printer.hpp"
-#include "il/dataflow.hpp"
 #include "il/analyses.hpp"
-#include "il/visitor.hpp"
 #include "il/cfg.hpp"
+#include "il/dataflow.hpp"
+#include "il/il_printer.hpp"
+#include "il/visitor.hpp"
 
 namespace arkoi::il {
 
-class CFGPrinter : Visitor {
+class CFGPrinter final : Visitor {
 public:
-    CFGPrinter(std::stringstream &output)
-        : _liveness(), _current_function(nullptr), _output(output), _printer(output) {};
+    explicit CFGPrinter(std::stringstream &output)
+        : _current_function(nullptr), _output(output), _printer(output) {}
 
 public:
     [[nodiscard]] static std::stringstream print(Module &module);
@@ -46,7 +45,7 @@ public:
     [[nodiscard]] auto &output() const { return _output; }
 
 private:
-    DataflowAnalysis<LivenessAnalysis> _liveness;
+    DataflowAnalysis<LivenessAnalysis> _liveness{};
     Function *_current_function;
     std::stringstream &_output;
     ILPrinter _printer;

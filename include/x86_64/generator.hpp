@@ -2,9 +2,9 @@
 
 #include <sstream>
 
-#include "x86_64/mapper.hpp"
-#include "il/instruction.hpp"
 #include "il/il_printer.hpp"
+#include "il/instruction.hpp"
+#include "x86_64/mapper.hpp"
 
 namespace arkoi::x86_64 {
 
@@ -14,9 +14,9 @@ struct ClassifiedArguments {
     std::vector<il::Operand> stack{};
 };
 
-class Generator : il::Visitor {
+class Generator final : il::Visitor {
 public:
-    Generator() : _text(), _printer(_text) {}
+    Generator() : _printer(_text) {}
 
     [[nodiscard]] static std::stringstream generate(il::Module &module);
 
@@ -94,7 +94,7 @@ private:
 private:
     il::Function *_current_function{};
     std::stringstream _data{};
-    std::stringstream _text;
+    std::stringstream _text{};
     il::ILPrinter _printer;
     size_t _constants{};
     Mapper _mapper{};

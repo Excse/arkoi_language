@@ -2,7 +2,7 @@
 
 using namespace arkoi::opt;
 
-void PassManager::run(il::Module &module) {
+void PassManager::run(il::Module &module) const {
     while (true) {
         bool changed = false;
 

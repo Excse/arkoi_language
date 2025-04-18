@@ -22,7 +22,7 @@ bool OrderedSet<T>::erase(const T &value) {
 
 template<typename T>
 bool OrderedSet<T>::contains(const T &value) const {
-    return _set.find(value) != _set.end();
+    return _set.contains(value);
 }
 
 template<typename T>

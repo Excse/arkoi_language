@@ -3,7 +3,6 @@
 #include <iostream>
 #include <variant>
 
-#include "utils/size.hpp"
 #include "sem/type.hpp"
 
 namespace arkoi::il {
@@ -15,7 +14,7 @@ public:
     [[nodiscard]] virtual sem::Type type() const = 0;
 };
 
-class Memory : public OperandBase {
+class Memory final : public OperandBase {
 public:
     Memory(size_t version, sem::Type type)
         : _type(std::move(type)), _index(version) {}
@@ -35,7 +34,7 @@ private:
     size_t _index;
 };
 
-class Variable : public OperandBase {
+class Variable final : public OperandBase {
 public:
     Variable(std::string name, sem::Type type, size_t version = 0)
         : _name(std::move(name)), _version(version), _type(std::move(type)) {}
@@ -58,13 +57,13 @@ private:
     sem::Type _type;
 };
 
-struct Immediate : public OperandBase, public std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+struct Immediate final : OperandBase, std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 
     [[nodiscard]] sem::Type type() const override;
 };
 
-struct Operand : public OperandBase, public std::variant<Immediate, Variable, Memory> {
+struct Operand final : OperandBase, std::variant<Immediate, Variable, Memory> {
     using variant::variant;
 
     [[nodiscard]] sem::Type type() const override;
@@ -76,22 +75,22 @@ namespace std {
 
 template<>
 struct hash<arkoi::il::Variable> {
-    size_t operator()(const arkoi::il::Variable &variable) const;
+    size_t operator()(const arkoi::il::Variable &variable) const noexcept;
 };
 
 template<>
 struct hash<arkoi::il::Memory> {
-    size_t operator()(const arkoi::il::Memory &memory) const;
+    size_t operator()(const arkoi::il::Memory &memory) const noexcept;
 };
 
 template<>
 struct hash<arkoi::il::Immediate> {
-    size_t operator()(const arkoi::il::Immediate &immediate) const;
+    size_t operator()(const arkoi::il::Immediate &immediate) const noexcept;
 };
 
 template<>
 struct hash<arkoi::il::Operand> {
-    size_t operator()(const arkoi::il::Operand &operand) const;
+    size_t operator()(const arkoi::il::Operand &operand) const noexcept;
 };
 
 } // namespace std

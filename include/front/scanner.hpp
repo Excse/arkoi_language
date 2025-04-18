@@ -1,8 +1,8 @@
 #pragma once
 
 #include <functional>
-#include <utility>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "token.hpp"
@@ -16,7 +16,7 @@ private:
     };
 
 public:
-    Scanner(std::string data) : _data(std::move(data)) {}
+    explicit Scanner(std::string data) : _data(std::move(data)) {}
 
     [[nodiscard]] std::vector<Token> tokenize();
 
@@ -35,17 +35,17 @@ private:
 
     [[nodiscard]] Token _lex_special();
 
-    [[nodiscard]] std::string _current_view();
+    [[nodiscard]] std::string _current_view() const;
 
-    [[nodiscard]] char _current_char();
+    [[nodiscard]] char _current_char() const;
 
-    [[nodiscard]] bool _is_eol();
+    [[nodiscard]] bool _is_eol() const;
 
     [[nodiscard]] Location _mark_start();
 
     void _next();
 
-    char _peek();
+    char _peek() const;
 
     void _consume(char expected);
 
@@ -86,28 +86,28 @@ private:
 
 class ScannerError : public std::runtime_error {
 public:
-    ScannerError(const std::string &error) : std::runtime_error(error) {}
+    explicit ScannerError(const std::string &error) : std::runtime_error(error) {}
 };
 
-class UnexpectedEndOfLine : public ScannerError {
+class UnexpectedEndOfLine final : public ScannerError {
 public:
     UnexpectedEndOfLine() : ScannerError("Unexpectedly reached the End Of Line") {}
 };
 
-class UnexpectedChar : public ScannerError {
+class UnexpectedChar final : public ScannerError {
 public:
     UnexpectedChar(const std::string &expected, char got)
         : ScannerError("Expected " + expected + " but got " + std::string(1, got)) {}
 };
 
-class UnknownChar : public ScannerError {
+class UnknownChar final : public ScannerError {
 public:
-    UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
+    explicit UnknownChar(char got) : ScannerError("Didn't expect " + std::string(1, got)) {}
 };
 
-class NumberOutOfRange : public ScannerError {
+class NumberOutOfRange final : public ScannerError {
 public:
-    NumberOutOfRange(const std::string &number)
+    explicit NumberOutOfRange(const std::string &number)
         : ScannerError("The number " + number + " exceeds the 64bit limitations.") {}
 };
 

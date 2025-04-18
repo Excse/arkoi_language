@@ -13,7 +13,7 @@ public:
     [[nodiscard]] virtual Size size() const = 0;
 };
 
-class Integral : public TypeBase {
+class Integral final : public TypeBase {
 public:
     constexpr Integral(const Size size, const bool sign) : _size(size), _sign(sign) {}
 
@@ -32,9 +32,9 @@ private:
     bool _sign;
 };
 
-class Floating : public TypeBase {
+class Floating final : public TypeBase {
 public:
-    Floating(const Size size) : _size(size) {}
+    explicit Floating(const Size size) : _size(size) {}
 
     [[nodiscard]] Size size() const override { return _size; }
 
@@ -46,7 +46,7 @@ private:
     Size _size;
 };
 
-class Boolean : public TypeBase {
+class Boolean final : public TypeBase {
 public:
     [[nodiscard]] Size size() const override { return Size::BYTE; }
 
@@ -55,17 +55,13 @@ public:
     bool operator!=(const Boolean &other) const;
 };
 
-struct Type : public TypeBase, public std::variant<
-    arkoi::sem::Integral,
-    arkoi::sem::Floating,
-    arkoi::sem::Boolean
-> {
+struct Type final : TypeBase, std::variant<Integral, Floating, Boolean> {
     using variant::variant;
 
     [[nodiscard]] Size size() const override;
 };
 
-} // namespace arkoi::result_type
+} // namespace arkoi::sem
 
 std::ostream &operator<<(std::ostream &os, const arkoi::sem::Integral &type);
 

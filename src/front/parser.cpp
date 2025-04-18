@@ -14,7 +14,9 @@ ast::Program Parser::parse_program() {
         if (current.type() == Token::Type::Comment || current.type() == Token::Type::Newline) {
             _next();
             continue;
-        } else if (current.type() == Token::Type::EndOfFile) {
+        }
+
+        if (current.type() == Token::Type::EndOfFile) {
             break;
         }
 
@@ -40,9 +42,9 @@ std::unique_ptr<ast::Node> Parser::_parse_program_statement() {
     const auto &current = _consume_any();
     if (current.type() == Token::Type::Fun) {
         return _parse_function(current);
-    } else {
-        throw UnexpectedToken("fun", current);
     }
+
+    throw UnexpectedToken("fun", current);
 }
 
 void Parser::_recover_program() {
@@ -169,8 +171,8 @@ std::unique_ptr<ast::Block> Parser::_parse_block() {
             std::cout << error.what() << std::endl;
             _recover_block();
             _failed = true;
-        } catch (const UnexpectedEndOfTokens &error) {
-            throw error;
+        } catch (const UnexpectedEndOfTokens &) {
+            throw;
         }
     }
 
@@ -239,7 +241,7 @@ std::unique_ptr<ast::If> Parser::_parse_if(const Token &) {
         return std::make_unique<ast::If>(std::move(expression), std::move(branch), nullptr);
     }
 
-    if (auto token = _try_consume(Token::Type::If)) {
+    if (const auto token = _try_consume(Token::Type::If)) {
         return std::make_unique<ast::If>(std::move(expression), std::move(branch), _parse_if(*token));
     }
 
@@ -335,21 +337,26 @@ std::unique_ptr<ast::Node> Parser::_parse_primary() {
         if (_current().type() != Token::Type::At) return node;
 
         return std::make_unique<ast::Cast>(std::move(node), _parse_type());
-    } else if (consumed.type() == Token::Type::Floating) {
+    }
+
+    if (consumed.type() == Token::Type::Floating) {
         auto node = std::make_unique<ast::Immediate>(consumed, ast::Immediate::Kind::Floating);
         if (_current().type() != Token::Type::At) return node;
 
         return std::make_unique<ast::Cast>(std::move(node), _parse_type());
-    } else if (consumed.type() == Token::Type::Identifier) {
-        if (_current().type() == Token::Type::LParent) {
-            return _parse_call(consumed);
-        } else {
-            return std::make_unique<ast::Identifier>(consumed, ast::Identifier::Kind::Variable);
-        }
-    } else if (consumed.type() == Token::Type::True ||
-               consumed.type() == Token::Type::False) {
+    }
+
+    if (consumed.type() == Token::Type::Identifier) {
+        if (_current().type() == Token::Type::LParent) return _parse_call(consumed);
+
+        return std::make_unique<ast::Identifier>(consumed, ast::Identifier::Kind::Variable);
+    }
+
+    if (consumed.type() == Token::Type::True || consumed.type() == Token::Type::False) {
         return std::make_unique<ast::Immediate>(consumed, ast::Immediate::Kind::Boolean);
-    } else if (consumed.type() == Token::Type::LParent) {
+    }
+
+    if (consumed.type() == Token::Type::LParent) {
         auto expression = _parse_expression();
         _consume(Token::Type::RParent);
         return expression;

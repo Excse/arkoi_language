@@ -1,18 +1,18 @@
 #pragma once
 
 #include <functional>
-#include <vector>
 #include <stack>
+#include <vector>
 
-#include "front/token.hpp"
 #include "ast/nodes.hpp"
+#include "front/token.hpp"
 #include "utils/utils.hpp"
 
 namespace arkoi::front {
 
 class Parser {
 public:
-    Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
+    explicit Parser(std::vector<Token> &&tokens) : _tokens(std::move(tokens)) {}
 
     [[nodiscard]] ast::Program parse_program();
 
@@ -92,15 +92,15 @@ private:
 
 class ParserError : public std::runtime_error {
 public:
-    ParserError(const std::string &error) : std::runtime_error(error) {}
+    explicit ParserError(const std::string &error) : std::runtime_error(error) {}
 };
 
-class UnexpectedEndOfTokens : public ParserError {
+class UnexpectedEndOfTokens final : public ParserError {
 public:
     UnexpectedEndOfTokens() : ParserError("Unexpectedly reached the End Of Tokens") {}
 };
 
-class UnexpectedToken : public ParserError {
+class UnexpectedToken final : public ParserError {
 public:
     UnexpectedToken(const std::string &expected, const Token &got)
         : ParserError("Expected " + expected + " but got " + to_string(got.type())) {}

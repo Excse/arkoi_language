@@ -2,8 +2,8 @@
 
 #include <limits>
 
-#include "utils/utils.hpp"
 #include "ast/nodes.hpp"
+#include "utils/utils.hpp"
 
 using namespace arkoi::sem;
 using namespace arkoi;
@@ -35,12 +35,12 @@ void TypeResolver::visit_as_prototype(ast::Function &node) {
         parameter.accept(*this);
     }
 
-    auto &function = std::get<sem::Function>(*node.name().symbol());
+    auto &function = std::get<Function>(*node.name().symbol());
     function.set_return_type(node.type());
 }
 
 void TypeResolver::visit(ast::Function &node) {
-    auto &function = std::get<sem::Function>(*node.name().symbol());
+    auto &function = std::get<Function>(*node.name().symbol());
     _return_type = function.return_type();
 
     node.block()->accept(*this);
@@ -53,7 +53,7 @@ void TypeResolver::visit(ast::Block &node) {
 }
 
 void TypeResolver::visit(ast::Parameter &node) {
-    auto &variable = std::get<sem::Variable>(*node.name().symbol());
+    auto &variable = std::get<Variable>(*node.name().symbol());
     variable.set_type(node.type());
 }
 
@@ -68,7 +68,7 @@ void TypeResolver::visit(ast::Immediate &node) {
 
 void TypeResolver::visit_integer(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
-    auto sign = !number_string.starts_with('-');
+    const auto sign = !number_string.starts_with('-');
 
     Size size;
     if (sign) {
@@ -84,7 +84,7 @@ void TypeResolver::visit_integer(ast::Immediate &node) {
 void TypeResolver::visit_floating(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
-    auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
+    const auto size = std::stold(number_string) > std::numeric_limits<float>::max() ? Size::QWORD : Size::DWORD;
 
     node.set_type(Floating(size));
     _current_type = node.type();
@@ -97,7 +97,7 @@ void TypeResolver::visit_boolean(ast::Immediate &node) {
 
 void TypeResolver::visit(ast::Return &node) {
     node.expression()->accept(*this);
-    auto type = _current_type.value();
+    const auto type = _current_type.value();
 
     node.set_type(_return_type.value());
 
@@ -115,13 +115,13 @@ void TypeResolver::visit(ast::Return &node) {
 
 void TypeResolver::visit(ast::Identifier &node) {
     if(node.kind() == ast::Identifier::Kind::Function) {
-        auto &function = std::get<sem::Function>(*node.symbol());
+        auto &function = std::get<Function>(*node.symbol());
         _current_type = function.return_type();
     } else if(node.kind() == ast::Identifier::Kind::Variable) {
-        // TODO: In the future there will be local/global and parameter variables,
-        //       thus they need to be searched in such order: local, parameter, global.
-        //       For now only parameter variables exist.
-        auto &variable = std::get<sem::Variable>(*node.symbol());
+        // TODO(timo): In the future there will be local/global and parameter variables,
+        //             thus they need to be searched in such order: local, parameter, global.
+        //             For now only parameter variables exist.
+        auto &variable = std::get<Variable>(*node.symbol());
         _current_type = variable.type();
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
@@ -131,11 +131,11 @@ void TypeResolver::visit(ast::Identifier &node) {
 void TypeResolver::visit(ast::Binary &node) {
     // This will set _current_type
     node.left()->accept(*this);
-    auto left = _current_type.value();
+    const auto left = _current_type.value();
 
     // This will set _current_type
     node.right()->accept(*this);
-    auto right = _current_type.value();
+    const auto right = _current_type.value();
 
     auto op_type = _arithmetic_conversion(left, right);
     node.set_op_type(op_type);
@@ -171,7 +171,7 @@ void TypeResolver::visit(ast::Binary &node) {
 void TypeResolver::visit(ast::Cast &node) {
     // This will set _current_type
     node.expression()->accept(*this);
-    auto from = _current_type.value();
+    const auto from = _current_type.value();
     node.set_from(from);
 
     if (!_can_implicit_convert(from, node.to())) {
@@ -183,10 +183,10 @@ void TypeResolver::visit(ast::Cast &node) {
 
 void TypeResolver::visit(ast::Assign &node) {
     node.name().accept(*this);
-    auto identifier_type = _current_type.value();
+    const auto identifier_type = _current_type.value();
 
     node.expression()->accept(*this);
-    auto type = _current_type.value();
+    const auto type = _current_type.value();
 
     if (!_can_implicit_convert(type, identifier_type)) {
         throw std::runtime_error("Assign source has a wrong type.");
@@ -201,7 +201,7 @@ void TypeResolver::visit(ast::Assign &node) {
 void TypeResolver::visit(ast::Call &node) {
     node.name().accept(*this);
 
-    auto function = std::get<sem::Function>(*node.name().symbol());
+    auto function = std::get<Function>(*node.name().symbol());
 
     if (function.parameters().size() != node.arguments().size()) {
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");
@@ -231,7 +231,7 @@ void TypeResolver::visit(ast::Call &node) {
 void TypeResolver::visit(ast::If &node) {
     // This will set _current_type
     node.condition()->accept(*this);
-    auto type = _current_type.value();
+    const auto type = _current_type.value();
 
     if (!_can_implicit_convert(type, BOOL_TYPE)) {
         throw std::runtime_error("Return statement has a wrong return op.");
@@ -249,8 +249,8 @@ void TypeResolver::visit(ast::If &node) {
 
 // https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
 Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &right_type) {
-    auto floating_left = std::get_if<Floating>(&left_type);
-    auto floating_right = std::get_if<Floating>(&right_type);
+    const auto *floating_left = std::get_if<Floating>(&left_type);
+    const auto *floating_right = std::get_if<Floating>(&right_type);
 
     // Stage 4: If either operand is of floating-point type, the following rules are applied:
     if (floating_left || floating_right) {
@@ -293,7 +293,7 @@ Type TypeResolver::_arithmetic_conversion(const Type &left_type, const Type &rig
     //    conversion rank.
     if (t1.sign() == t2.sign()) {
         if (t2.size() > t1.size()) return t2;
-        else return t1;
+        return t1;
     }
 
     // 3. Otherwise, one mid between T1 and T2 is an signed integer mid S, the other type is an unsigned integer op U.

@@ -6,7 +6,7 @@
 
 namespace arkoi::opt {
 
-class DeadCodeElimination : public Pass {
+class DeadCodeElimination final : public Pass {
 public:
     bool enter_module(il::Module &) override { return false; }
 

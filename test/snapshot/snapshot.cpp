@@ -1,15 +1,15 @@
 #include "snapshot.hpp"
 
-#include <stdexcept>
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
-void SnapshotTester::save(const std::string &data) {
+void SnapshotTester::save(const std::string &data) const {
     std::ofstream file(_path);
     file << data;
 }
 
-std::string SnapshotTester::load() {
+std::string SnapshotTester::load() const {
     std::ifstream file(_path);
     std::stringstream buffer;
 
@@ -18,8 +18,8 @@ std::string SnapshotTester::load() {
     return buffer.str();
 }
 
-bool SnapshotTester::compare(const std::string &current) {
-    std::string expected = load();
+bool SnapshotTester::compare(const std::string &current) const {
+    const std::string expected = load();
 
     if (expected.empty()) {
         save(current);

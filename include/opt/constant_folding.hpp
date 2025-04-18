@@ -4,7 +4,7 @@
 
 namespace arkoi::opt {
 
-class ConstantFolding : public Pass {
+class ConstantFolding final : public Pass {
 public:
     bool enter_module(il::Module &) override { return false; }
 

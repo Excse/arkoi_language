@@ -1,12 +1,12 @@
 #pragma once
 
-#include "il/instruction.hpp"
 #include "il/cfg.hpp"
+#include "il/instruction.hpp"
 #include "sem/type.hpp"
 
 namespace arkoi::il {
 
-class Generator : ast::Visitor {
+class Generator final : ast::Visitor {
 private:
     Generator() = default;
 
@@ -19,7 +19,7 @@ public:
 
     void visit(ast::Block &node) override;
 
-    void visit(ast::Parameter &) override {};
+    void visit(ast::Parameter &) override {}
 
     void visit(ast::Immediate &node) override;
 

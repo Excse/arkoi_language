@@ -4,7 +4,7 @@
 
 namespace arkoi::opt {
 
-class SimplifyCFG : public Pass {
+class SimplifyCFG final : public Pass {
 public:
     bool enter_module(il::Module &) override { return false; }
 

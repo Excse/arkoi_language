@@ -1,10 +1,9 @@
 #pragma once
 
 #include <concepts>
-#include <set>
 
-#include "il/instruction.hpp"
 #include "il/cfg.hpp"
+#include "il/instruction.hpp"
 
 namespace arkoi::il {
 
@@ -46,7 +45,7 @@ public:
 
 public:
     template<typename... Args>
-    DataflowAnalysis(Args&&... args) : _pass(std::make_unique<Pass>(std::forward<Args>(args)...)) {}
+    explicit DataflowAnalysis(Args&&... args) : _pass(std::make_unique<Pass>(std::forward<Args>(args)...)) {}
 
     void run(Function &function);
 

@@ -1,7 +1,7 @@
 #include "x86_64/generator.hpp"
 
-#include "utils/utils.hpp"
 #include "il/cfg.hpp"
+#include "utils/utils.hpp"
 
 using namespace arkoi::x86_64;
 using namespace arkoi;
@@ -50,7 +50,7 @@ void Generator::visit(il::Function &function) {
 }
 
 void Generator::visit(il::BasicBlock &block) {
-    auto stack_size = _mapper.stack_size();
+    const auto stack_size = _mapper.stack_size();
 
     if (_current_function->entry() == &block) {
         // If we are in a leaf function and the stack size in less or equal to 128 bytes (redzone), we can skip the enter
@@ -88,15 +88,15 @@ void Generator::visit(il::BasicBlock &block) {
 void Generator::visit(il::Return &instruction) {
     auto &type = _current_function->type();
     auto result = Mapper::return_register(type);
-    auto source = _load(instruction.value());
+    const auto source = _load(instruction.value());
     _store(source, result, type);
 }
 
 void Generator::visit(il::Binary &instruction) {
-    auto result = _load(instruction.result());
-    auto left = _load(instruction.left());
-    auto right = _load(instruction.right());
-    auto &type = instruction.op_type();
+    const auto result = _load(instruction.result());
+    const auto left = _load(instruction.left());
+    const auto right = _load(instruction.right());
+    const auto &type = instruction.op_type();
 
     switch (instruction.op()) {
         case il::Binary::Operator::Add: return _add(result, left, right, type);
@@ -116,7 +116,7 @@ void Generator::_add(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose addsd or addss.
-        auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
+        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
         _text << "\tadd" << suffix << " " << left << ", " << right << "\n";
 
         // Finally store the lhs (where the result is written to) to the result operand.
@@ -141,7 +141,7 @@ void Generator::_sub(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose subsd or subss.
-        auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
+        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
         _text << "\tsub" << suffix << " " << left << ", " << right << "\n";
 
         // Finally store the lhs (where the result is written to) to the result operand.
@@ -166,7 +166,7 @@ void Generator::_mul(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose mulsd or mulss.
-        auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
+        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
         _text << "\tmul" << suffix << " " << left << ", " << right << "\n";
 
         // Finally store the lhs (where the result is written to) to the result operand.
@@ -193,7 +193,7 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose divsd or divss.
-        auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
+        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
         _text << "\tdiv" << suffix << " " << left << ", " << right << "\n";
 
         // Finally store the lhs (where the result is written to) to the result operand.
@@ -226,7 +226,7 @@ void Generator::_gth(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose ucomisd or ucomiss.
-        auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
+        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
         _text << "\tucomi" << suffix << " " << left << ", " << right << "\n";
 
         _text << "\tseta " << result << "\n";
@@ -238,7 +238,7 @@ void Generator::_gth(const Operand &result, Operand left, const Operand &right, 
         _text << "\tcmp " << left << ", " << right << "\n";
 
         auto *integral = std::get_if<sem::Integral>(&type);
-        auto suffix = (integral && integral->sign()) ? "g" : "a";
+        const auto *suffix = (integral && integral->sign()) ? "g" : "a";
 
         _text << "\tset" << suffix << " " << result << "\n";
     }
@@ -252,7 +252,7 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose ucomisd or ucomiss.
-        auto suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
+        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
         _text << "\tucomi" << suffix << " " << left << ", " << right << "\n";
 
         _text << "\tsetb " << result << "\n";
@@ -264,17 +264,15 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
         _text << "\tcmp " << left << ", " << right << "\n";
 
         auto *integral = std::get_if<sem::Integral>(&type);
-        auto suffix = (integral && integral->sign()) ? "l" : "b";
+        const auto *suffix = (integral && integral->sign()) ? "l" : "b";
 
         _text << "\tset" << suffix << " " << result << "\n";
     }
 }
 
 void Generator::visit(il::Cast &instruction) {
-    auto result = _load(instruction.result());
-    auto source = _load(instruction.source());
-    auto &from = instruction.from();
-    auto to = instruction.result().type();
+    const auto result = _load(instruction.result());
+    const auto source = _load(instruction.source());
 
     std::visit(match{
         [&](const sem::Floating &from, const sem::Floating &to) { _float_to_float(result, source, from, to); },
@@ -285,8 +283,8 @@ void Generator::visit(il::Cast &instruction) {
         [&](const sem::Integral &from, const sem::Boolean &to) { _int_to_bool(result, source, from, to); },
         [&](const sem::Boolean &from, const sem::Floating &to) { _bool_to_float(result, source, from, to); },
         [&](const sem::Boolean &from, const sem::Integral &to) { _bool_to_int(result, source, from, to); },
-        [&](const sem::Boolean &, const sem::Boolean &) { _store(source, result, to); },
-    }, from, to);
+        [&](const sem::Boolean &, const sem::Boolean &to) { _store(source, result, to); },
+    }, instruction.from(), instruction.result().type());
 }
 
 void Generator::_float_to_float(const Operand &result, Operand source, const sem::Floating &from,
@@ -350,7 +348,7 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
         // but with different signess.
 
         // First adjust the source to always be a register of the from-type.
-        auto adjusted_source = _adjust_to_reg(result, source, from);
+        const auto adjusted_source = _adjust_to_reg(result, source, from);
         // Then just use the part of the register that is actually needed (the register part of to-size).
         auto sized_source = Register(adjusted_source.base(), to.size());
 
@@ -369,7 +367,7 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
         auto converted_source = _temp_1_register(to);
 
         // Either choose the movsx or movzx instruction based on the from-signess.
-        auto suffix = from.sign() ? "sx" : "zx";
+        const auto *suffix = from.sign() ? "sx" : "zx";
         _text << "\tmov" << suffix << " " << converted_source << ", " << source << "\n";
 
         // Store the converted operand in the result (can be either of type mem or reg).
@@ -380,11 +378,11 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
 void Generator::_float_to_int(const Operand &result, const Operand &source, const sem::Floating &from,
                               const sem::Integral &to) {
     // Get an int register that is at least 32bit big.
-    auto temp_size = (to.size() < Size::DWORD) ? Size::DWORD : to.size();
-    auto temp_1_int = _temp_1_register(sem::Integral(temp_size, to.sign()));
+    const auto temp_size = (to.size() < Size::DWORD) ? Size::DWORD : to.size();
+    const auto temp_1_int = _temp_1_register(sem::Integral(temp_size, to.sign()));
 
     // Either use the cvttsd2si/cvttss2si instruction based on the from-size.
-    auto suffix = (from.size() == Size::QWORD) ? "sd" : "ss";
+    const auto *suffix = (from.size() == Size::QWORD) ? "sd" : "ss";
     _text << "\tcvtt" << suffix << "2si " << temp_1_int << ", " << source << "\n";
 
     // Get the correct sized temp register.
@@ -397,15 +395,15 @@ void Generator::_float_to_int(const Operand &result, const Operand &source, cons
 void Generator::_float_to_bool(const Operand &result, const Operand &source, const sem::Floating &from,
                                const sem::Boolean &to) {
     // We need temp registers to evaluate if it's a bool or not.
-    auto temp_2_sse = _temp_2_register(from);
-    auto temp_1_int = _temp_1_register(to);
-    auto temp_2_int = _temp_2_register(to);
+    const auto temp_2_sse = _temp_2_register(from);
+    const auto temp_1_int = _temp_1_register(to);
+    const auto temp_2_int = _temp_2_register(to);
 
     // Set the temp sse register to 0.0.
     _text << "\txorps " << temp_2_sse << ", " << temp_2_sse << "\n";
 
     // Compare the source float with 0.0.
-    auto suffix = (from.size() == Size::DWORD) ? "ss" : "sd";
+    const auto *suffix = (from.size() == Size::DWORD) ? "ss" : "sd";
     _text << "\tucomi" << suffix << " " << temp_2_sse << ", " << source << "\n";
 
     // Set the first temp register if it is not equal to zero.
@@ -422,7 +420,7 @@ void Generator::_float_to_bool(const Operand &result, const Operand &source, con
 void Generator::_int_to_float(const Operand &result, Operand source, const sem::Integral &from,
                               const sem::Floating &to) {
     if (!from.sign() && from.size() == Size::QWORD) {
-        // TODO: Converting a unsigned 64bit integer to float is a bit more complex, thus this is excluded for now.
+        // TODO(timo): Converting a unsigned 64bit integer to float is a bit more complex, thus this is excluded for now.
         throw std::runtime_error("This is not implemented yet.");
     }
 
@@ -438,7 +436,7 @@ void Generator::_int_to_float(const Operand &result, Operand source, const sem::
         auto converted_source = _temp_1_register(sem::Integral(Size::DWORD, from.sign()));
 
         // Either choose the movsx or movzx instruction based on the signess.
-        auto suffix = from.sign() ? "sx" : "zx";
+        const auto *suffix = from.sign() ? "sx" : "zx";
         _text << "\tmov" << suffix << " " << converted_source << ", " << source << "\n";
 
         // Assign the converted source to the source operand.
@@ -449,7 +447,7 @@ void Generator::_int_to_float(const Operand &result, Operand source, const sem::
     auto temp_1_sse = _temp_1_register(to);
 
     // Either choose the cvtsi2ss/cvtsi2sd instruction based on the size.
-    auto suffix = (to.size() == Size::QWORD) ? "sd" : "ss";
+    const auto *suffix = (to.size() == Size::QWORD) ? "sd" : "ss";
     _text << "\tcvtsi2" << suffix << " " << temp_1_sse << ", " << source << "\n";
 
     // Finally store the calculated result in the result operand.
@@ -482,14 +480,14 @@ void Generator::_bool_to_float(const Operand &result, Operand source, const sem:
     }
 
     // One sse and one int register is needed to transform a bool to a float.
-    auto temp_1_int = _temp_1_register(sem::Integral(Size::DWORD, false));
-    auto temp_1_sse = _temp_1_register(to);
+    const auto temp_1_int = _temp_1_register(sem::Integral(Size::DWORD, false));
+    const auto temp_1_sse = _temp_1_register(to);
 
     // Zero-extend the bool to 32bit.
     _text << "\tmovzx " << temp_1_int << ", " << source << "\n";
 
     // Convert the 32bit integer to either a float (cvtsi2ss) or double (cvtsi2sd).
-    auto suffix = (to.size() == Size::QWORD ? "sd" : "ss");
+    const auto *suffix = (to.size() == Size::QWORD ? "sd" : "ss");
     _text << "\tcvtsi2" << suffix << " " << temp_1_sse << ", " << temp_1_int << "\n";
 
     // Finally store the calculated result in the result operand.
@@ -524,10 +522,10 @@ void Generator::_bool_to_int(const Operand &result, Operand source, const sem::B
 }
 
 void Generator::visit(il::Call &instruction) {
-    auto result = _load(instruction.result());
-    auto type = instruction.result().type();
+    const auto result = _load(instruction.result());
+    const auto type = instruction.result().type();
 
-    auto stack_size = _generate_arguments(instruction.arguments());
+    const auto stack_size = _generate_arguments(instruction.arguments());
 
     _text << "\tcall " << instruction.name() << "\n";
 
@@ -571,7 +569,7 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
 
     for (auto &argument: arguments) {
         const auto &type = argument.type();
-        auto source = _load(argument);
+        const auto source = _load(argument);
 
         if (std::holds_alternative<sem::Integral>(type) || std::holds_alternative<sem::Boolean>(type)) {
             if (integer < INTEGER_ARGUMENT_REGISTERS.size()) {
@@ -589,7 +587,7 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
             }
         }
 
-        auto offset = (int64_t) (8 * stack);
+        const auto offset = static_cast<int64_t>(8 * stack);
         auto memory = Memory(type.size(), RSP, offset);
         _store(source, memory, type);
         stack++;
@@ -617,23 +615,23 @@ void Generator::visit(il::Goto &instruction) {
 }
 
 void Generator::visit(il::Store &instruction) {
-    auto result = _load(instruction.result());
-    auto source = _load(instruction.source());
-    auto type = instruction.result().type();
+    const auto result = _load(instruction.result());
+    const auto source = _load(instruction.source());
+    const auto type = instruction.result().type();
     _store(source, result, type);
 }
 
 void Generator::visit(il::Load &instruction) {
-    auto result = _load(instruction.result());
-    auto source = _load(instruction.source());
-    auto type = instruction.result().type();
+    const auto result = _load(instruction.result());
+    const auto source = _load(instruction.source());
+    const auto type = instruction.result().type();
     _store(source, result, type);
 }
 
 void Generator::visit(il::Constant &instruction) {
-    auto result = _load(instruction.result());
-    auto immediate = _load(instruction.immediate());
-    auto type = instruction.result().type();
+    const auto result = _load(instruction.result());
+    const auto immediate = _load(instruction.immediate());
+    const auto type = instruction.result().type();
     _store(immediate, result, type);
 }
 
@@ -644,13 +642,15 @@ Operand Generator::_load(const il::Operand &operand) {
                 auto name = "float" + std::to_string(_constants++);
                 _data << "\t" << name << ": .double\t" << immediate << "\n";
                 return Memory(Size::QWORD, name);
-            } else if (std::holds_alternative<float>(immediate)) {
+            }
+
+            if (std::holds_alternative<float>(immediate)) {
                 auto name = "float" + std::to_string(_constants++);
                 _data << "\t" << name << ": .float\t" << immediate << "\n";
                 return Memory(Size::DWORD, name);
-            } else {
-                return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
             }
+
+            return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
         },
         [&](const il::Memory &memory) -> Operand {
             return _mapper[memory];
@@ -672,7 +672,7 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     }
 
     if (std::holds_alternative<sem::Floating>(type)) {
-        auto suffix = (type.size() == Size::QWORD ? "sd" : "ss");
+        const auto *suffix = (type.size() == Size::QWORD ? "sd" : "ss");
         _text << "\tmov" << suffix << " " << destination << ", " << source << "\n";
     } else {
         _text << "\tmov " << destination << ", " << source << "\n";

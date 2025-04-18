@@ -124,8 +124,8 @@ std::ostream &operator<<(std::ostream &os, const Memory &memory) {
     return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const Immediate &immediate) {
-    std::visit([&](const auto &value) { os << value; }, immediate);
+std::ostream &operator<<(std::ostream &os, const Immediate &operand) {
+    std::visit([&](const auto &value) { os << value; }, operand);
     return os;
 }
 

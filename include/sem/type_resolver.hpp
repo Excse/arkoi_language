@@ -5,7 +5,7 @@
 
 namespace arkoi::sem {
 
-class TypeResolver : ast::Visitor {
+class TypeResolver final : ast::Visitor {
 private:
     TypeResolver() = default;
 

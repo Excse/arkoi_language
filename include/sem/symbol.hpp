@@ -1,8 +1,8 @@
 #pragma once
 
+#include <memory>
 #include <utility>
 #include <vector>
-#include <memory>
 
 #include "sem/type.hpp"
 
@@ -14,7 +14,7 @@ class Variable;
 
 class Function {
 public:
-    Function(std::string name) : _name(std::move(name)) {}
+    explicit Function(std::string name) : _name(std::move(name)) {}
 
     void set_parameters(std::vector<std::shared_ptr<Variable>> &&symbols) { _parameters = std::move(symbols); }
 
@@ -34,10 +34,9 @@ private:
 
 class Variable {
 public:
-    Variable(std::string name, Type type)
-        : _type(type), _name(std::move(name)) {}
+    Variable(std::string name, Type type) : _type(type), _name(std::move(name)) {}
 
-    Variable(std::string name) : _name(std::move(name)) {}
+    explicit Variable(std::string name) : _name(std::move(name)) {}
 
     void set_type(Type type) { _type = type; }
 
@@ -50,9 +49,9 @@ private:
     std::string _name;
 };
 
-} // namespace arkoi::sym
+} // namespace arkoi::sem
 
-struct Symbol : public std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
+struct Symbol : std::variant<arkoi::sem::Function, arkoi::sem::Variable> {
     using variant::variant;
 };
 

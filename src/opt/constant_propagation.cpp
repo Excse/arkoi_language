@@ -59,10 +59,10 @@ bool ConstantPropagation::_can_propagate(il::Instruction &instruction) {
 }
 
 bool ConstantPropagation::_propagate(il::Operand &operand) {
-    auto *variable = std::get_if<il::Variable>(&operand);
+    const auto *variable = std::get_if<il::Variable>(&operand);
     if (variable == nullptr) return false;
 
-    auto result = _constants.find(*variable);
+    const auto result = _constants.find(*variable);
     if (result == _constants.end()) return false;
 
     operand = result->second;

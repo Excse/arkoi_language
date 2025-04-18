@@ -12,7 +12,7 @@ TEST(DependencyGraph, NoDependencies) {
         graph.add_node(index);
     }
 
-    auto order = graph.topological_sort();
+    const auto order = graph.topological_sort();
     ASSERT_EQ(order.size(), 10);
     EXPECT_THAT(order, ElementsAre(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
 }
@@ -28,7 +28,7 @@ TEST(DependencyGraph, Dependencies) {
         }
     }
 
-    auto order = graph.topological_sort();
+    const auto order = graph.topological_sort();
     ASSERT_EQ(order.size(), 10);
     EXPECT_THAT(order, ElementsAre(9, 8, 7, 6, 5, 4, 3, 2, 1, 0));
 }
@@ -64,7 +64,7 @@ TEST(DependencyGraph, Complex) {
     graph.add_dependency('F', 'C');
     graph.add_dependency('H', 'E');
 
-    auto order = graph.topological_sort();
+    const auto order = graph.topological_sort();
     ASSERT_EQ(order.size(), 8);
     EXPECT_THAT(order, ElementsAre('A', 'D', 'G', 'B', 'C', 'F', 'E', 'H'));
 }
@@ -97,7 +97,7 @@ TEST(DependencyGraph, ComplexEnum) {
     graph.add_dependency(F, C);
     graph.add_dependency(H, E);
 
-    auto order = graph.topological_sort();
+    const auto order = graph.topological_sort();
     ASSERT_EQ(order.size(), 8);
     EXPECT_THAT(order, ElementsAre(A, D, G, B, C, F, E, H));
 }

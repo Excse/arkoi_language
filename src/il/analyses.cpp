@@ -15,16 +15,16 @@ State LivenessAnalysis::initialize(BasicBlock &) {
     return {};
 }
 
-State LivenessAnalysis::merge(const std::vector<State> &states) {
+State LivenessAnalysis::merge(const std::vector<State> &predecessors) {
     State result;
-    for (const auto &state: states) result.insert(state.begin(), state.end());
+    for (const auto &state: predecessors) result.insert(state.begin(), state.end());
     return result;
 }
 
-State LivenessAnalysis::transfer(BasicBlock &block, const State &out) {
-    State in = out;
+State LivenessAnalysis::transfer(BasicBlock &current, const State &state) {
+    State in = state;
 
-    for (auto &instruction: std::ranges::reverse_view(block.instructions())) {
+    for (auto &instruction: std::ranges::reverse_view(current.instructions())) {
         for (const auto &definition: instruction.defs()) {
             if (std::holds_alternative<Immediate>(definition)) continue;
             in.erase(definition);

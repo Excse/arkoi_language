@@ -2,9 +2,9 @@
 
 #include <utility>
 
-#include "il/visitor.hpp"
-#include "il/operand.hpp"
 #include "ast/nodes.hpp"
+#include "il/operand.hpp"
+#include "il/visitor.hpp"
 
 namespace arkoi::il {
 
@@ -14,16 +14,16 @@ public:
 
     virtual void accept(Visitor &visitor) = 0;
 
-    [[nodiscard]] virtual std::vector<Operand> defs() const { return {}; };
+    [[nodiscard]] virtual std::vector<Operand> defs() const { return {}; }
 
-    [[nodiscard]] virtual std::vector<Operand> uses() const { return {}; };
+    [[nodiscard]] virtual std::vector<Operand> uses() const { return {}; }
 
     [[nodiscard]] virtual bool is_constant() = 0;
 };
 
-class Goto : public InstructionBase {
+class Goto final : public InstructionBase {
 public:
-    Goto(std::string label) : _label(std::move(label)) {}
+    explicit Goto(std::string label) : _label(std::move(label)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -35,7 +35,7 @@ private:
     std::string _label;
 };
 
-class If : public InstructionBase {
+class If final : public InstructionBase {
 public:
     If(Operand condition, std::string next, std::string branch)
         : _next(std::move(next)), _branch(std::move(branch)), _condition(std::move(condition)) {}
@@ -57,7 +57,7 @@ private:
     Operand _condition;
 };
 
-class Call : public InstructionBase {
+class Call final : public InstructionBase {
 public:
     Call(Variable result, std::string name, std::vector<Operand> &&arguments)
         : _arguments(std::move(arguments)), _name(std::move(name)), _result(std::move(result)) {}
@@ -70,9 +70,9 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &arguments() { return _arguments; };
+    [[nodiscard]] auto &arguments() { return _arguments; }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
     [[nodiscard]] auto &name() const { return _name; }
 
@@ -82,9 +82,9 @@ private:
     Variable _result;
 };
 
-class Return : public InstructionBase {
+class Return final : public InstructionBase {
 public:
-    Return(Operand value) : _value(std::move(value)) {}
+    explicit Return(Operand value) : _value(std::move(value)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -92,13 +92,13 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &value() { return _value; };
+    [[nodiscard]] auto &value() { return _value; }
 
 private:
     Operand _value;
 };
 
-class Binary : public InstructionBase {
+class Binary final : public InstructionBase {
 public:
     enum class Operator {
         Add,
@@ -124,15 +124,15 @@ public:
         return std::holds_alternative<Immediate>(_left) && std::holds_alternative<Immediate>(_right);
     }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
-    [[nodiscard]] auto &right() { return _right; };
+    [[nodiscard]] auto &right() { return _right; }
 
-    [[nodiscard]] auto &left() { return _left; };
+    [[nodiscard]] auto &left() { return _left; }
 
-    [[nodiscard]] auto &op_type() const { return _op_type; };
+    [[nodiscard]] auto &op_type() const { return _op_type; }
 
-    [[nodiscard]] auto &op() const { return _op; };
+    [[nodiscard]] auto &op() const { return _op; }
 
     [[nodiscard]] static Operator node_to_instruction(ast::Binary::Operator op);
 
@@ -143,7 +143,7 @@ private:
     Operator _op;
 };
 
-class Cast : public InstructionBase {
+class Cast final : public InstructionBase {
 public:
     Cast(Variable result, Operand source, sem::Type from)
         : _result(std::move(result)), _source(std::move(source)), _from(std::move(from)) {}
@@ -156,11 +156,11 @@ public:
 
     [[nodiscard]] bool is_constant() override { return std::holds_alternative<Immediate>(_source); }
 
-    [[nodiscard]] auto &source() { return _source; };
+    [[nodiscard]] auto &source() { return _source; }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
-    [[nodiscard]] auto &from() const { return _from; };
+    [[nodiscard]] auto &from() const { return _from; }
 
 private:
     Variable _result;
@@ -168,9 +168,9 @@ private:
     sem::Type _from;
 };
 
-class Alloca : public InstructionBase {
+class Alloca final : public InstructionBase {
 public:
-    Alloca(Memory result) : _result(std::move(result)) {}
+    explicit Alloca(Memory result) : _result(std::move(result)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -178,13 +178,13 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
 private:
     Memory _result;
 };
 
-class Load : public InstructionBase {
+class Load final : public InstructionBase {
 public:
     Load(Variable result, Memory source)
         : _result(std::move(result)), _source(std::move(source)) {}
@@ -197,16 +197,16 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
-    [[nodiscard]] auto &source() const { return _source; };
+    [[nodiscard]] auto &source() const { return _source; }
 
 private:
     Variable _result;
     Memory _source;
 };
 
-class Store : public InstructionBase {
+class Store final : public InstructionBase {
 public:
     Store(Memory result, Operand source)
         : _result(std::move(result)), _source(std::move(source)) {}
@@ -217,16 +217,16 @@ public:
 
     [[nodiscard]] bool is_constant() override { return false; }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
-    [[nodiscard]] auto &source() { return _source; };
+    [[nodiscard]] auto &source() { return _source; }
 
 private:
     Memory _result;
     Operand _source;
 };
 
-class Constant : public InstructionBase {
+class Constant final : public InstructionBase {
 public:
     Constant(Variable result, Immediate immediate)
         : _immediate(std::move(std::move(immediate))), _result(std::move(result)) {}
@@ -239,30 +239,22 @@ public:
 
     [[nodiscard]] bool is_constant() override { return true; }
 
-    [[nodiscard]] auto &result() const { return _result; };
+    [[nodiscard]] auto &result() const { return _result; }
 
-    [[nodiscard]] auto &immediate() { return _immediate; };
+    [[nodiscard]] auto &immediate() { return _immediate; }
 
 private:
     Immediate _immediate;
     Variable _result;
 };
 
-struct Instruction : public InstructionBase, public std::variant<
-    il::Goto,
-    il::If,
-    il::Cast,
-    il::Call,
-    il::Return,
-    il::Binary,
-    il::Alloca,
-    il::Store,
-    il::Load,
-    il::Constant
+struct Instruction final : InstructionBase, std::variant<
+    Goto, If, Cast, Call, Return,
+    Binary, Alloca, Store, Load, Constant
 > {
     using variant::variant;
 
-    void accept(il::Visitor &visitor) override;
+    void accept(Visitor &visitor) override;
 
     [[nodiscard]] std::vector<Operand> defs() const override;
 

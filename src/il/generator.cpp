@@ -2,8 +2,8 @@
 
 #include <limits>
 
-#include "utils/utils.hpp"
 #include "ast/nodes.hpp"
+#include "utils/utils.hpp"
 
 using namespace arkoi::il;
 using namespace arkoi;
@@ -27,7 +27,7 @@ void Generator::visit(ast::Function &node) {
 
     auto &function_symbol = std::get<sem::Function>(*node.name().symbol());
 
-    std::vector<il::Variable> parameters;
+    std::vector<Variable> parameters;
     for (auto &parameter: function_symbol.parameters()) {
         parameters.emplace_back(parameter->name(), parameter->type());
     }
@@ -91,22 +91,22 @@ void Generator::visit(ast::Immediate &node) {
 void Generator::visit_integer(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
-    auto sign = !number_string.starts_with('-');
+    const auto sign = !number_string.starts_with('-');
 
     Immediate immediate;
     if (sign) {
         auto value = std::stoll(number_string);
         if (value > std::numeric_limits<int32_t>::max()) {
-            immediate = (int64_t) value;
+            immediate = static_cast<int64_t>(value);
         } else {
-            immediate = (int32_t) value;
+            immediate = static_cast<int32_t>(value);
         }
     } else {
         auto value = std::stoull(number_string);
         if (value > std::numeric_limits<uint32_t>::max()) {
-            immediate = (uint64_t) value;
+            immediate = static_cast<uint64_t>(value);
         } else {
-            immediate = (uint32_t) value;
+            immediate = static_cast<uint32_t>(value);
         }
     }
 
@@ -118,13 +118,13 @@ void Generator::visit_integer(ast::Immediate &node) {
 void Generator::visit_floating(ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
-    auto value = std::stold(number_string);
+    const auto value = std::stold(number_string);
 
     Immediate immediate;
     if (value > std::numeric_limits<float>::max()) {
-        immediate = (double) value;
+        immediate = static_cast<double>(value);
     } else {
-        immediate = (float) value;
+        immediate = static_cast<float>(value);
     }
 
     auto temp = _make_temporary(node.type());
@@ -157,9 +157,9 @@ void Generator::visit(ast::Identifier &node) {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
     }
 
-    // TODO: In the future there will be local/global and parameter variables,
-    //       thus they need to be searched in such order: local, parameter, global.
-    //       For now only parameter variables exist.
+    // TODO(timo): In the future there will be local/global and parameter variables,
+    //             thus they need to be searched in such order: local, parameter, global.
+    //             For now only parameter variables exist.
     auto &variable = std::get<sem::Variable>(*node.symbol());
 
     auto alloca_temp = _allocas.at(node.symbol());

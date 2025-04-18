@@ -1,7 +1,7 @@
 #include "sem/name_resolver.hpp"
 
-#include "utils/utils.hpp"
 #include "ast/nodes.hpp"
+#include "utils/utils.hpp"
 
 using namespace arkoi::sem;
 
@@ -42,7 +42,7 @@ void NameResolver::visit(ast::Function &node) {
     for (auto &parameter: node.parameters()) {
         parameter.accept(*this);
 
-        auto symbol = std::reinterpret_pointer_cast<sem::Variable>(parameter.name().symbol());
+        auto symbol = std::reinterpret_pointer_cast<Variable>(parameter.name().symbol());
         parameters.push_back(symbol);
     }
 
@@ -69,13 +69,13 @@ void NameResolver::visit(ast::Block &node) {
 
 void NameResolver::visit(ast::Identifier &node) {
     if (node.kind() == ast::Identifier::Kind::Function) {
-        auto symbol = _check_existence<Function>(node.value());
+        const auto symbol = _check_existence<Function>(node.value());
         node.set_symbol(symbol);
     } else if (node.kind() == ast::Identifier::Kind::Variable) {
-        // TODO: In the future there will be local/global and parameter variables,
-        //       thus they need to be searched in such order: local, parameter, global.
-        //       For now only parameter variables exist.
-        auto symbol = _check_existence<Variable>(node.value());
+        // TODO(timo): In the future there will be local/global and parameter variables,
+        //             thus they need to be searched in such order: local, parameter, global.
+        //             For now only parameter variables exist.
+        const auto symbol = _check_existence<Variable>(node.value());
         node.set_symbol(symbol);
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
