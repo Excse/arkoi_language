@@ -95,17 +95,17 @@ Token Scanner::_next_token() {
 }
 
 Token Scanner::_lex_comment() {
-    auto{_column, _row} = _mark_start();
+    auto[column, row] = _mark_start();
 
     _consume('#');
     while (_try_consume(_is_not_newline)) {
     }
 
-    return {Token::Type::Comment, _column, _row, _current_view()};
+    return {Token::Type::Comment, column, row, _current_view()};
 }
 
 Token Scanner::_lex_identifier() {
-    auto{_column, _row} = _mark_start();
+    auto[column, row] = _mark_start();
 
     _consume(_is_ident_start, "_, a-z or A-Z");
     while (_try_consume(_is_ident_inner)) {
@@ -113,17 +113,17 @@ Token Scanner::_lex_identifier() {
 
     auto value = _current_view();
     if (auto keyword = Token::lookup_keyword(value)) {
-        return {*keyword, _column, _row, value};
+        return {*keyword, column, row, value};
     }
 
-    return {Token::Type::Identifier, _column, _row, value};
+    return {Token::Type::Identifier, column, row, value};
 }
 
 Token Scanner::_lex_number() {
-    auto{_column, _row} = _mark_start();
+    auto[column, row] = _mark_start();
 
     if (_try_consume('-') && !_is_digit(_peek())) {
-        return {Token::Type::Minus, _column, _row, _current_view()};
+        return {Token::Type::Minus, column, row, _current_view()};
     }
 
     const auto consumed = _consume(_is_digit, "0-9");
@@ -178,26 +178,26 @@ Token Scanner::_lex_number() {
 
     auto kind = (floating ? Token::Type::Floating : Token::Type::Integer);
 
-    return {kind, _column, _row, number};
+    return {kind, column, row, number};
 }
 
 Token Scanner::_lex_char() {
-    auto{_column, _row} = _mark_start();
+    auto[column, row] = _mark_start();
 
     _consume('\'');
     const auto consumed = _consume(_is_ascii, "'");
     _consume('\'');
 
-    return {Token::Type::Integer, _column, _row, std::to_string(consumed)};
+    return {Token::Type::Integer, column, row, std::to_string(consumed)};
 }
 
 Token Scanner::_lex_special() {
-    auto{_column, _row} = _mark_start();
+    auto[column, row] = _mark_start();
 
     const auto current = _current_char();
     if (auto special = Token::lookup_special(current)) {
         _next();
-        return {*special, _column, _row, _current_view()};
+        return {*special, column, row, _current_view()};
     }
 
     throw UnknownChar(current);
