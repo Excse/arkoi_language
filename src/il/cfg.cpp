@@ -7,12 +7,12 @@
 using namespace arkoi::il;
 
 void BasicBlock::set_branch(BasicBlock *branch) {
-    if(branch) branch->_predecessors.insert(this);
+    if (branch) branch->_predecessors.insert(this);
     _branch = branch;
 }
 
 void BasicBlock::set_next(BasicBlock *next) {
-    if(next) next->_predecessors.insert(this);
+    if (next) next->_predecessors.insert(this);
     _next = next;
 }
 
@@ -68,7 +68,8 @@ Function::Function(std::string name, std::vector<Variable> parameters, sem::Type
 }
 
 Function::Function(const std::string &name, std::vector<Variable> parameters, sem::Type type)
-    : Function(name, std::move(parameters), std::move(type), name + "_entry", name + "_exit") {}
+    : Function(name, std::move(parameters), std::move(type), name + "_entry", name + "_exit") {
+}
 
 bool Function::is_leaf() {
     for (auto &block: *this) {
