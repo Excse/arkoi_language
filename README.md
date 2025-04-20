@@ -123,7 +123,7 @@ We welcome contributions to improve the Arkoi Language project! Here’s how you
 2. Write clear and concise commit messages explaining your changes.
 3. Submit a pull request to the `main` branch.
 
-Please make sure to follow the [contribution guidelines](CODE_OF_CONDUCT.md) (if available).
+Please make sure to follow the [contribution guidelines](CODE_OF_CONDUCT.md).
 
 ---
 
