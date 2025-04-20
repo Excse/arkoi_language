@@ -7,11 +7,7 @@ using namespace arkoi;
 
 using State = LivenessAnalysis::State;
 
-State LivenessAnalysis::initialize_entry(Function &, BasicBlock &) {
-    return {};
-}
-
-State LivenessAnalysis::initialize(BasicBlock &) {
+State LivenessAnalysis::initialize(Function &, BasicBlock &) {
     return {};
 }
 

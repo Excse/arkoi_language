@@ -5,17 +5,11 @@ void DataflowAnalysis<Pass>::run(Function &function) {
 
     std::stack<BasicBlock *> worklist;
 
-    if constexpr (Pass::Direction == DataflowDirection::Forward) {
-        _in[function.entry()] = _pass->initialize_entry(function, *function.entry());
-    } else {
-        _out[function.exit()] = _pass->initialize_entry(function, *function.exit());
-    }
-
     for (auto &block: function) {
         if constexpr (Pass::Direction == DataflowDirection::Forward) {
-            _out[&block] = _pass->initialize(block);
+            _out[&block] = _pass->initialize(function, block);
         } else {
-            _in[&block] = _pass->initialize(block);
+            _in[&block] = _pass->initialize(function, block);
         }
 
         worklist.push(&block);

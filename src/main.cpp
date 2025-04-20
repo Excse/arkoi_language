@@ -47,34 +47,28 @@ int main(int argc, char* argv[]) {
     argparse::ArgumentParser argument_parser(PROJECT_NAME, PROJECT_VERSION);
 
     argument_parser.add_argument("input_path")
-            .help("The path to the arkoi source file to compile.");
-    argument_parser.add_argument("-il", "--output-il")
-            .default_value(false)
-            .implicit_value(true)
-            .help("Print the intermediate language to a file ending with \".il\".");
-    argument_parser.add_argument("-asm", "--output-asm")
-            .default_value(false)
-            .implicit_value(true)
-            .help("Print the assembly code to a file ending with \".asm\".");
-    argument_parser.add_argument("-cfg", "--output-cfg")
-            .default_value(false)
-            .implicit_value(true)
-            .help("Print the control flow graph to a file ending with \".dot\".");
+            .help("the path to the arkoi source file to compile.");
+    argument_parser.add_argument("-il", "--output-il").flag()
+            .help("print the intermediate language to a file ending with \".il\".");
+    argument_parser.add_argument("-asm", "--output-asm").flag()
+            .help("print the assembly code to a file ending with \".asm\".");
+    argument_parser.add_argument("-cfg", "--output-cfg").flag()
+            .help("print the control flow graph to a file ending with \".dot\".");
 
     try {
         argument_parser.parse_args(argc, argv);
-    } catch (const std::exception &err) {
-        std::cerr << err.what() << std::endl;
+    } catch (const std::exception &error) {
+        std::cerr << error.what() << std::endl;
         std::cerr << argument_parser;
         return 1;
     }
 
-    const std::string input_path = argument_parser.get<std::string>("input_path");
-    const bool output_il = argument_parser.get<bool>("--output-il");
-    const bool output_asm = argument_parser.get<bool>("--output-asm");
-    const bool output_cfg = argument_parser.get<bool>("--output-cfg");
+    const auto input_path = argument_parser.get<std::string>("input_path");
+    const auto base_path = get_base_path(input_path);
 
-    const std::string base_path = get_base_path(input_path);
+    const auto output_il = argument_parser.get<bool>("--output-il");
+    const auto output_asm = argument_parser.get<bool>("--output-asm");
+    const auto output_cfg = argument_parser.get<bool>("--output-cfg");
 
     std::string source;
     {

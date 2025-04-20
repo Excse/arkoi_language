@@ -12,35 +12,57 @@ enum class DataflowDirection {
     Backward
 };
 
-template<typename ResultType, DataflowDirection DirectionType>
+enum class DataflowGranularity {
+    Block,
+    Instruction
+};
+
+template<typename ResultType, DataflowDirection DirectionType, DataflowGranularity GranularityType>
 class DataflowPass {
 public:
     using Result [[maybe_unused]] = ResultType;
     using State = std::unordered_set<Result>;
 
+    static constexpr DataflowGranularity Granularity [[maybe_unused]] = GranularityType;
     static constexpr DataflowDirection Direction [[maybe_unused]] = DirectionType;
 
 public:
     virtual ~DataflowPass() = default;
 
-    virtual State initialize_entry(Function &function, BasicBlock &entry) = 0;
-
-    virtual State initialize(BasicBlock &current) = 0;
-
     virtual State merge(const std::vector<State> &predecessors) = 0;
 
-    virtual State transfer(BasicBlock &current, const State &state) = 0;
+    virtual State initialize(Function &, BasicBlock &) {
+        if constexpr (Granularity != DataflowGranularity::Block) return State{};
+        throw std::runtime_error("initialize(BasicBlock &) must be implemented for block-level analysis");
+    }
+
+    virtual State transfer(BasicBlock &, const State &state) {
+        if constexpr (Granularity != DataflowGranularity::Block) return state;
+        throw std::runtime_error("transfer(BasicBlock &, State &) must be implemented for block-level analysis");
+    }
+
+    virtual State initialize(Function &, Instruction &) {
+        if constexpr (Granularity != DataflowGranularity::Instruction) return State{};
+        throw std::runtime_error("initialize(Instruction &) must be implemented for instruction-level analysis");
+    }
+
+    virtual State transfer(Instruction &, const State &state) {
+        if constexpr (Granularity != DataflowGranularity::Instruction) return state;
+        throw std::runtime_error("transfer(Instruction &, State &) must be implemented for instruction-level analysis");
+    }
 };
 
 template <typename T>
 concept DataflowPassConcept = requires {
     typename T::Result;
     { T::Direction } -> std::convertible_to<DataflowDirection>;
-} && std::is_base_of_v<DataflowPass<typename T::Result, T::Direction>, T>;
+    { T::Granularity } -> std::convertible_to<DataflowGranularity>;
+} && std::is_base_of_v<DataflowPass<typename T::Result, T::Direction, T::Granularity>, T>;
 
 template<DataflowPassConcept Pass>
 class DataflowAnalysis {
 public:
+    using Key = std::conditional_t<Pass::Granularity == DataflowGranularity::Block, BasicBlock *, Instruction *>;
     using State = std::unordered_set<typename Pass::Result>;
 
 public:
@@ -54,8 +76,8 @@ public:
     [[nodiscard]] auto &in() const { return _in; }
 
 private:
-    std::unordered_map<BasicBlock *, State> _out{};
-    std::unordered_map<BasicBlock *, State> _in{};
+    std::unordered_map<Key, State> _out{};
+    std::unordered_map<Key, State> _in{};
     std::unique_ptr<Pass> _pass;
 };
 

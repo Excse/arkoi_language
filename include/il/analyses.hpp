@@ -4,13 +4,11 @@
 
 namespace arkoi::il {
 
-class LivenessAnalysis final : public DataflowPass<Operand, DataflowDirection::Backward> {
+class LivenessAnalysis final : public DataflowPass<Operand, DataflowDirection::Backward, DataflowGranularity::Block> {
 public:
     LivenessAnalysis() = default;
 
-    State initialize_entry(Function &function, BasicBlock &entry) override;
-
-    State initialize(BasicBlock &current) override;
+    State initialize(Function &function, BasicBlock &current) override;
 
     State merge(const std::vector<State> &predecessors) override;
 
