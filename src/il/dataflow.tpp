@@ -1,3 +1,5 @@
+#include <cassert>
+
 template<DataflowPassConcept Pass>
 void DataflowAnalysis<Pass>::run(Function &function) {
     _out.clear();
@@ -6,10 +8,20 @@ void DataflowAnalysis<Pass>::run(Function &function) {
     std::stack<BasicBlock *> worklist;
 
     for (auto &block: function) {
-        if constexpr (Pass::Direction == DataflowDirection::Forward) {
-            _out[&block] = _pass->initialize(function, block);
+        if constexpr (Pass::Granularity == DataflowGranularity::Block) {
+            if constexpr (Pass::Direction == DataflowDirection::Forward) {
+                _out[&block] = _pass->initialize(function, block);
+            } else {
+                _in[&block] = _pass->initialize(function, block);
+            }
         } else {
-            _in[&block] = _pass->initialize(function, block);
+            for (auto &instruction: block) {
+                if constexpr (Pass::Direction == DataflowDirection::Forward) {
+                    _out[&instruction] = _pass->initialize(function, instruction);
+                } else {
+                    _in[&instruction] = _pass->initialize(function, instruction);
+                }
+            }
         }
 
         worklist.push(&block);
@@ -19,37 +31,125 @@ void DataflowAnalysis<Pass>::run(Function &function) {
         auto *block = worklist.top();
         worklist.pop();
 
-        auto &old_out = _out[block];
-        auto &old_in = _in[block];
+        // A requirement for every basic block.
+        assert(!block->instructions().empty());
 
-        std::vector<State> states;
-        if constexpr (Pass::Direction == DataflowDirection::Forward) {
-            for (auto *predecessor: block->predecessors()) {
-                states.push_back(_out[predecessor]);
+        if constexpr (Pass::Granularity == DataflowGranularity::Block) {
+            auto &old_out = _out[block];
+            auto &old_in = _in[block];
+
+            if constexpr (Pass::Direction == DataflowDirection::Forward) {
+                std::vector<State> states;
+                for (auto *predecessor: block->predecessors()) {
+                    states.push_back(_out[predecessor]);
+                }
+
+                auto new_in = _pass->merge(states);
+                auto new_out = _pass->transfer(*block, new_in);
+                old_in = std::move(new_in);
+
+                if (new_out == old_out) continue;
+                old_out = std::move(new_out);
+
+                if (block->next()) worklist.push(block->next());
+                if (block->branch()) worklist.push(block->branch());
+            } else {
+                std::vector<State> states;
+                if (block->next()) states.push_back(_in[block->next()]);
+                if (block->branch()) states.push_back(_in[block->branch()]);
+
+                auto new_out = _pass->merge(states);
+                auto new_in = _pass->transfer(*block, new_out);
+                old_out = std::move(new_out);
+
+                if (new_in == old_in) continue;
+                old_in = std::move(new_in);
+
+                for (auto *predecessor: block->predecessors()) {
+                    worklist.push(predecessor);
+                }
             }
-
-            auto new_in = _pass->merge(states);
-            auto new_out = _pass->transfer(*block, new_in);
-            old_in = std::move(new_in);
-
-            if (new_out == old_out) continue;
-            old_out = std::move(new_out);
-
-            if (block->next()) worklist.push(block->next());
-            if (block->branch()) worklist.push(block->branch());
         } else {
-            if (block->next()) states.push_back(_in[block->next()]);
-            if (block->branch()) states.push_back(_in[block->branch()]);
+            if constexpr (Pass::Direction == DataflowDirection::Forward) {
+                std::vector<State> states;
+                for (auto *predecessor: block->predecessors()) {
+                    if (predecessor->instructions().empty()) continue;
 
-            auto new_out = _pass->merge(states);
-            auto new_in = _pass->transfer(*block, new_out);
-            old_out = std::move(new_out);
+                    const auto &last_instruction = predecessor->instructions().back();
+                    states.push_back(_out[&last_instruction]);
+                }
 
-            if (new_in == old_in) continue;
-            old_in = std::move(new_in);
+                auto &first_instruction = block->instructions().front();
+                auto new_in = _pass->merge(states);
+                auto new_out = _pass->transfer(first_instruction, new_in);
+                _in[&first_instruction] = std::move(new_in);
 
-            for (auto *predecessor: block->predecessors()) {
-                worklist.push(predecessor);
+                auto changed = new_out != _out[&first_instruction];
+                _out[&first_instruction] = std::move(new_out);
+
+                for (auto it = block->instructions().begin() + 1; it != block->instructions().end(); ++it) {
+                    auto &previous_instruction = *(it - 1);
+                    auto &instruction = *it;
+
+                    std::vector<State> states;
+                    states.push_back(_out[&previous_instruction]);
+
+                    auto new_in = _pass->merge(states);
+                    auto new_out = _pass->transfer(instruction, new_in);
+                    _in[&instruction] = std::move(new_in);
+
+                    changed |= new_out != _out[&instruction];
+                    _out[&instruction] = std::move(new_out);
+                }
+
+                if (!changed) continue;
+
+                for (auto *predecessor: block->predecessors()) {
+                    worklist.push(predecessor);
+                }
+            } else {
+                std::vector<State> states;
+                if (block->next()) {
+                    assert(!block->next()->instructions().empty());
+
+                    auto &first_instruction = block->next()->instructions().front();
+                    states.push_back(_in[&first_instruction]);
+                }
+                if (block->branch()) {
+                    assert(!block->branch()->instructions().empty());
+
+                    auto &first_instruction = block->branch()->instructions().front();
+                    states.push_back(_in[&first_instruction]);
+                }
+
+                auto &last_instruction = block->instructions().back();
+                auto new_out = _pass->merge(states);
+                auto new_in = _pass->transfer(last_instruction, new_out);
+                _out[&last_instruction] = std::move(new_out);
+
+                auto changed = new_in != _in[&last_instruction];
+                _in[&last_instruction] = std::move(new_in);
+
+                for (auto it = block->instructions().rbegin() + 1; it != block->instructions().rend(); ++it) {
+                    auto &previous_instruction = *(it - 1);
+                    auto &instruction = *it;
+
+                    std::vector<State> states;
+                    states.push_back(_in[&previous_instruction]);
+
+                    auto new_out = _pass->merge(states);
+                    auto new_in = _pass->transfer(instruction, new_out);
+                    _out[&instruction] = std::move(new_out);
+
+                    changed |= new_in != _in[&instruction];
+                    _in[&instruction] = std::move(new_in);
+                }
+
+                if (!changed) continue;
+
+                for (auto *predecessor: block->predecessors()) {
+                    worklist.push(predecessor);
+                }
             }
         }
     }

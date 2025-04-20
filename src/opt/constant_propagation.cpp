@@ -24,7 +24,7 @@ bool ConstantPropagation::on_block(il::BasicBlock &block) {
     return changed;
 }
 
-bool ConstantPropagation::_can_propagate(il::Instruction &instruction) {
+bool ConstantPropagation::_can_propagate(il::Instruction &target) {
     auto propagated = false;
 
     std::visit(match{
@@ -53,7 +53,7 @@ bool ConstantPropagation::_can_propagate(il::Instruction &instruction) {
         [&](il::Alloca &) {},
         [&](il::Load &) {},
         [&](il::Goto &) {},
-    }, instruction);
+    }, target);
 
     return propagated;
 }

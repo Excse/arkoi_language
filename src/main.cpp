@@ -17,6 +17,7 @@
 #include "sem/name_resolver.hpp"
 #include "sem/type_resolver.hpp"
 #include "x86_64/generator.hpp"
+#include "il/analyses.hpp"
 
 using namespace arkoi;
 
@@ -130,6 +131,11 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
+
+    for (auto &function: module) {
+        auto analysis = il::DataflowAnalysis<il::InstructionLivenessAnalysis>();
+        analysis.run(function);
+    }
 
     auto output = x86_64::Generator::generate(module);
     if (output_asm) {

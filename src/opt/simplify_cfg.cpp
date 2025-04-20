@@ -58,9 +58,10 @@ bool SimplifyCFG::_is_proxy_block(il::BasicBlock &block) {
     if (!std::holds_alternative<il::Goto>(block.instructions().front())) return false;
 
     for (auto *predecessor: block.predecessors()) {
-        if (predecessor->instructions().empty()) return false;
+        assert(!predecessor->instructions().empty());
 
-        auto *goto_instruction = std::get_if<il::Goto>(&predecessor->instructions().back());
+        const auto &last_instruction = predecessor->instructions().back();
+        const auto *goto_instruction = std::get_if<il::Goto>(&last_instruction);
         if (!goto_instruction) return false;
     }
 
@@ -99,7 +100,7 @@ bool SimplifyCFG::_is_mergable_block(il::BasicBlock &block) {
     if (block.predecessors().size() != 1) return false;
 
     auto *predecessor = *block.predecessors().begin();
-    if (predecessor->instructions().empty()) return false;
+    assert(!predecessor->instructions().empty());
 
     auto &instruction = predecessor->instructions().back();
     if (!std::holds_alternative<il::Goto>(instruction)) return false;

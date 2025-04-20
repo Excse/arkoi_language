@@ -23,11 +23,11 @@ public:
 
     void visit(ast::Immediate &node) override;
 
-    void visit_integer(ast::Immediate &node);
+    void visit_integer(const ast::Immediate &node);
 
-    void visit_floating(ast::Immediate &node);
+    void visit_floating(const ast::Immediate &node);
 
-    void visit_boolean(ast::Immediate &node);
+    void visit_boolean(const ast::Immediate &node);
 
     void visit(ast::Return &node) override;
 

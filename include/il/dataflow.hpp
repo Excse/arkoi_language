@@ -20,36 +20,21 @@ enum class DataflowGranularity {
 template<typename ResultType, DataflowDirection DirectionType, DataflowGranularity GranularityType>
 class DataflowPass {
 public:
+    using Target = std::conditional_t<GranularityType == DataflowGranularity::Block, BasicBlock, Instruction>;
     using Result [[maybe_unused]] = ResultType;
     using State = std::unordered_set<Result>;
 
-    static constexpr DataflowGranularity Granularity [[maybe_unused]] = GranularityType;
-    static constexpr DataflowDirection Direction [[maybe_unused]] = DirectionType;
+    static constexpr auto Granularity = GranularityType;
+    static constexpr auto Direction = DirectionType;
 
 public:
     virtual ~DataflowPass() = default;
 
     virtual State merge(const std::vector<State> &predecessors) = 0;
 
-    virtual State initialize(Function &, BasicBlock &) {
-        if constexpr (Granularity != DataflowGranularity::Block) return State{};
-        throw std::runtime_error("initialize(BasicBlock &) must be implemented for block-level analysis");
-    }
+    virtual State initialize(Function &, Target &) = 0;
 
-    virtual State transfer(BasicBlock &, const State &state) {
-        if constexpr (Granularity != DataflowGranularity::Block) return state;
-        throw std::runtime_error("transfer(BasicBlock &, State &) must be implemented for block-level analysis");
-    }
-
-    virtual State initialize(Function &, Instruction &) {
-        if constexpr (Granularity != DataflowGranularity::Instruction) return State{};
-        throw std::runtime_error("initialize(Instruction &) must be implemented for instruction-level analysis");
-    }
-
-    virtual State transfer(Instruction &, const State &state) {
-        if constexpr (Granularity != DataflowGranularity::Instruction) return state;
-        throw std::runtime_error("transfer(Instruction &, State &) must be implemented for instruction-level analysis");
-    }
+    virtual State transfer(Target &, const State &state) = 0;
 };
 
 template <typename T>

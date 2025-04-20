@@ -136,7 +136,7 @@ size_t Mapper::stack_size() const {
     return align_size(stack_size);
 }
 
-Register Mapper::return_register(const sem::Type &type) {
+Register Mapper::return_register(const sem::Type &target) {
     return std::visit(match{
         [&](const sem::Integral &type) -> Register {
             return {Register::Base::A, type.size()};
@@ -147,7 +147,7 @@ Register Mapper::return_register(const sem::Type &type) {
         [&](const sem::Boolean &) -> Register {
             return {Register::Base::A, Size::BYTE};
         }
-    }, type);
+    }, target);
 }
 
 size_t Mapper::align_size(size_t input) {

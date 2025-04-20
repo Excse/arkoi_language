@@ -45,7 +45,7 @@ public:
     [[nodiscard]] auto &output() const { return _output; }
 
 private:
-    DataflowAnalysis<LivenessAnalysis> _liveness{};
+    DataflowAnalysis<BlockLivenessAnalysis> _liveness{};
     Function *_current_function;
     std::stringstream &_output;
     ILPrinter _printer;

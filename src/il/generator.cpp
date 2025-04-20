@@ -1,5 +1,6 @@
 #include "il/generator.hpp"
 
+#include <cassert>
 #include <limits>
 
 #include "ast/nodes.hpp"
@@ -77,6 +78,10 @@ void Generator::visit(ast::Block &node) {
         auto *_return = dynamic_cast<ast::Return *>(statement.get());
         if (_return) break;
     }
+
+    // There should never be blocks that can be empty at any time. This would break dataflow analysis and other stuff.
+    // Thus, the generator enforces this requirement.
+    assert(!_current_block->instructions().empty());
 }
 
 void Generator::visit(ast::Immediate &node) {
@@ -88,7 +93,7 @@ void Generator::visit(ast::Immediate &node) {
     }
 }
 
-void Generator::visit_integer(ast::Immediate &node) {
+void Generator::visit_integer(const ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     const auto sign = !number_string.starts_with('-');
@@ -115,7 +120,7 @@ void Generator::visit_integer(ast::Immediate &node) {
     _current_operand = temp;
 }
 
-void Generator::visit_floating(ast::Immediate &node) {
+void Generator::visit_floating(const ast::Immediate &node) {
     const auto &number_string = node.value().contents();
 
     const auto value = std::stold(number_string);
@@ -132,7 +137,7 @@ void Generator::visit_floating(ast::Immediate &node) {
     _current_operand = temp;
 }
 
-void Generator::visit_boolean(ast::Immediate &node) {
+void Generator::visit_boolean(const ast::Immediate &node) {
     auto temp = _make_temporary(node.type());
     auto immediate = (node.value().type() == front::Token::Type::True);
     _current_block->emplace_back<Constant>(temp, immediate);
@@ -160,7 +165,7 @@ void Generator::visit(ast::Identifier &node) {
     // TODO(timo): In the future there will be local/global and parameter variables,
     //             thus they need to be searched in such order: local, parameter, global.
     //             For now only parameter variables exist.
-    auto &variable = std::get<sem::Variable>(*node.symbol());
+    const auto &variable = std::get<sem::Variable>(*node.symbol());
 
     auto alloca_temp = _allocas.at(node.symbol());
     auto temp = _make_temporary(variable.type());
@@ -205,7 +210,7 @@ void Generator::visit(ast::Cast &node) {
 }
 
 void Generator::visit(ast::Call &node) {
-    auto &function = std::get<sem::Function>(*node.name().symbol());
+    const auto &function = std::get<sem::Function>(*node.name().symbol());
 
     std::vector<Operand> arguments;
     for (const auto &argument: node.arguments()) {

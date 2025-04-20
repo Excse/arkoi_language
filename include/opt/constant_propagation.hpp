@@ -17,7 +17,7 @@ public:
     bool on_block(il::BasicBlock &block) override;
 
 private:
-    [[nodiscard]] bool _can_propagate(il::Instruction &instruction);
+    [[nodiscard]] bool _can_propagate(il::Instruction &target);
 
     [[nodiscard]] bool _propagate(il::Operand &operand);
 

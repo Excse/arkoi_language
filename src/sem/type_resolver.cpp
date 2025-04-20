@@ -40,7 +40,7 @@ void TypeResolver::visit_as_prototype(ast::Function &node) {
 }
 
 void TypeResolver::visit(ast::Function &node) {
-    auto &function = std::get<Function>(*node.name().symbol());
+    const auto &function = std::get<Function>(*node.name().symbol());
     _return_type = function.return_type();
 
     node.block()->accept(*this);
@@ -115,13 +115,13 @@ void TypeResolver::visit(ast::Return &node) {
 
 void TypeResolver::visit(ast::Identifier &node) {
     if(node.kind() == ast::Identifier::Kind::Function) {
-        auto &function = std::get<Function>(*node.symbol());
+        const auto &function = std::get<Function>(*node.symbol());
         _current_type = function.return_type();
     } else if(node.kind() == ast::Identifier::Kind::Variable) {
         // TODO(timo): In the future there will be local/global and parameter variables,
         //             thus they need to be searched in such order: local, parameter, global.
         //             For now only parameter variables exist.
-        auto &variable = std::get<Variable>(*node.symbol());
+        const auto &variable = std::get<Variable>(*node.symbol());
         _current_type = variable.type();
     } else {
         throw std::runtime_error("This kind of identifier is not yet implemented.");
@@ -201,7 +201,7 @@ void TypeResolver::visit(ast::Assign &node) {
 void TypeResolver::visit(ast::Call &node) {
     node.name().accept(*this);
 
-    auto function = std::get<Function>(*node.name().symbol());
+    const auto &function = std::get<Function>(*node.name().symbol());
 
     if (function.parameters().size() != node.arguments().size()) {
         throw std::runtime_error("The argument count doesn't equal to the parameters count.");

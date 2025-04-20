@@ -18,7 +18,7 @@ public:
 
     [[nodiscard]] size_t stack_size() const;
 
-    [[nodiscard]] static Register return_register(const sem::Type &type);
+    [[nodiscard]] static Register return_register(const sem::Type &target);
 
     [[nodiscard]] static size_t align_size(size_t input);
 

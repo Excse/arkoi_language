@@ -3,7 +3,7 @@
 using namespace arkoi::sem;
 
 std::ostream &operator<<(std::ostream &os, const std::shared_ptr<Symbol> &symbol) {
-    std::visit([&os](auto &symbol) { os << symbol.name(); }, *symbol);
+    std::visit([&os](auto &value) { os << value.name(); }, *symbol);
     return os;
 }
 
