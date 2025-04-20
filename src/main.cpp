@@ -2,9 +2,10 @@
 #include <iostream>
 #include <sstream>
 
+#include "argparse/argparse.hpp"
+
 #include "front/parser.hpp"
 #include "front/scanner.hpp"
-#include "il/analyses.hpp"
 #include "il/cfg_printer.hpp"
 #include "il/generator.hpp"
 #include "il/il_printer.hpp"
@@ -33,16 +34,47 @@ void dump_cfg(const std::string &base_path, il::Module &module) {
     if (WEXITSTATUS(assemble_result) != 0) exit(1);
 }
 
-int main(int argc, char* argv[]) {
-    if(argc != 2) throw std::runtime_error("You need to provide a arkoi source path to compile.");
-    const std::string input_path = argv[1];
-
-    auto last_dot = input_path.find_last_of('.');
-    if (last_dot == std::string::npos || input_path.substr(last_dot) != ".ark") {
+std::string get_base_path(const std::string &path) {
+    auto last_dot = path.find_last_of('.');
+    if (last_dot == std::string::npos || path.substr(last_dot) != ".ark") {
         throw std::invalid_argument("This is not a valid file path with '.ark' extension.");
     }
 
-    auto base_path = input_path.substr(0, last_dot);
+    return path.substr(0, last_dot);
+}
+
+int main(int argc, char* argv[]) {
+    argparse::ArgumentParser argument_parser(PROJECT_NAME, PROJECT_VERSION);
+
+    argument_parser.add_argument("input_path")
+            .help("The path to the arkoi source file to compile.");
+    argument_parser.add_argument("-il", "--output-il")
+            .default_value(false)
+            .implicit_value(true)
+            .help("Print the intermediate language to a file ending with \".il\".");
+    argument_parser.add_argument("-asm", "--output-asm")
+            .default_value(false)
+            .implicit_value(true)
+            .help("Print the assembly code to a file ending with \".asm\".");
+    argument_parser.add_argument("-cfg", "--output-cfg")
+            .default_value(false)
+            .implicit_value(true)
+            .help("Print the control flow graph to a file ending with \".dot\".");
+
+    try {
+        argument_parser.parse_args(argc, argv);
+    } catch (const std::exception &err) {
+        std::cerr << err.what() << std::endl;
+        std::cerr << argument_parser;
+        return 1;
+    }
+
+    const std::string input_path = argument_parser.get<std::string>("input_path");
+    const bool output_il = argument_parser.get<bool>("--output-il");
+    const bool output_asm = argument_parser.get<bool>("--output-asm");
+    const bool output_cfg = argument_parser.get<bool>("--output-cfg");
+
+    const std::string base_path = get_base_path(input_path);
 
     std::string source;
     {
@@ -74,13 +106,15 @@ int main(int argc, char* argv[]) {
 
     auto module = il::Generator::generate(program);
 
-    {
+    if (output_il) {
         auto output = il::ILPrinter::print(module);
         std::ofstream out_file(base_path + "_org.il");
         out_file << output.str();
     }
 
-    dump_cfg(base_path + "_org", module);
+    if (output_cfg) {
+        dump_cfg(base_path + "_org", module);
+    }
 
     std::cout << "~~~~~~~~~~~~       Optimizing IL          ~~~~~~~~~~~~" << std::endl;
 
@@ -91,24 +125,20 @@ int main(int argc, char* argv[]) {
     manager.add<opt::SimplifyCFG>();
     manager.run(module);
 
-    {
+    if (output_il) {
         auto output = il::ILPrinter::print(module);
         std::ofstream out_file(base_path + "_opt.il");
         out_file << output.str();
     }
 
-    dump_cfg(base_path + "_opt", module);
+    if (output_cfg) {
+        dump_cfg(base_path + "_opt", module);
+    }
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
 
-    for (auto &function: module) {
-        auto analysis = il::DataflowAnalysis<il::LivenessAnalysis>();
-        analysis.run(function);
-
-    }
-
-    {
-        auto output = x86_64::Generator::generate(module);
+    auto output = x86_64::Generator::generate(module);
+    if (output_asm) {
         std::ofstream out_file(base_path + ".asm");
         out_file << output.str();
     }

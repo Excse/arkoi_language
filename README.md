@@ -127,6 +127,13 @@ Please make sure to follow the [contribution guidelines](CODE_OF_CONDUCT.md).
 
 ---
 
+## Credits
+This repository uses the following open source projects:
+- [Google Test](https://github.com/google/googletest)
+- [argparse](https://github.com/p-ranav/argparse/)
+
+---
+
 ## License
 This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.
 
