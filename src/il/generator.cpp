@@ -287,11 +287,11 @@ std::string Generator::_make_label_symbol() {
     return "L" + to_string(_label_index++);
 }
 
-Variable Generator::_make_temporary(sem::Type &type) {
+Variable Generator::_make_temporary(const sem::Type &type) {
     return {"$", type, ++_temp_index};
 }
 
-Memory Generator::_make_memory(sem::Type &type) {
+Memory Generator::_make_memory(const sem::Type &type) {
     return {++_temp_index, type};
 }
 

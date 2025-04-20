@@ -60,9 +60,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
-
     [[nodiscard]] auto &symbol() const { return _symbol.value(); }
+    void set_symbol(std::shared_ptr<Symbol> symbol) { _symbol = std::move(symbol); }
 
     [[nodiscard]] auto &value() const { return _value; }
 
@@ -81,9 +80,9 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &name() { return _name; }
+    [[nodiscard]] auto &type() const { return _type; }
 
-    [[nodiscard]] auto &type() { return _type; }
+    [[nodiscard]] auto &name() { return _name; }
 
 private:
     Identifier _name;
@@ -99,11 +98,11 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    [[nodiscard]] auto &parameters() { return _parameters; }
-
     [[nodiscard]] auto &table() const { return _table; }
 
-    [[nodiscard]] auto &type() { return _type; }
+    [[nodiscard]] auto &type() const { return _type; }
+
+    [[nodiscard]] auto &parameters() { return _parameters; }
 
     [[nodiscard]] auto &block() { return _block; }
 
@@ -123,13 +122,11 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
-
-    [[nodiscard]] auto &expression() { return _expression; }
-
+    [[nodiscard]] auto &type() const { return _type.value(); }
     void set_type(sem::Type type) { _type = std::move(type); }
 
-    [[nodiscard]] auto &type() const { return _type.value(); }
+    [[nodiscard]] auto &expression() { return _expression; }
+    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
 
 private:
     std::unique_ptr<Node> _expression;
@@ -143,13 +140,12 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_condition(std::unique_ptr<Node> &&condition) { _condition = std::move(condition); }
-
-    [[nodiscard]] auto &condition() { return _condition; }
-
     [[nodiscard]] auto &branch() const { return _branch; }
 
     [[nodiscard]] auto &next() const { return _next; }
+
+    [[nodiscard]] auto &condition() { return _condition; }
+    void set_condition(std::unique_ptr<Node> &&condition) { _condition = std::move(condition); }
 
 private:
     std::unique_ptr<Node> _next, _branch;
@@ -163,9 +159,8 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
-
     [[nodiscard]] auto &expression() { return _expression; }
+    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
 
     [[nodiscard]] auto &name() { return _name; }
 
@@ -203,13 +198,12 @@ public:
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
-    void set_type(sem::Type type) { _type = std::move(type); }
-
-    [[nodiscard]] auto &type() { return *_type; }
-
     [[nodiscard]] auto &value() const { return _value; }
 
     [[nodiscard]] auto &kind() const { return _kind; }
+
+    [[nodiscard]] auto &type() const { return *_type; }
+    void set_type(sem::Type type) { _type = std::move(type); }
 
 private:
     std::optional<sem::Type> _type;
@@ -236,21 +230,17 @@ public:
 
     [[nodiscard]] auto &op() const { return _op; }
 
-    void set_right(std::unique_ptr<Node> &&node) { _right = std::move(node); }
-
-    [[nodiscard]] auto &right() { return _right; }
-
-    void set_left(std::unique_ptr<Node> &&node) { _left = std::move(node); }
-
-    [[nodiscard]] auto &left() { return _left; }
-
-    void set_result_type(sem::Type type) { _result_type = std::move(type); }
-
-    [[nodiscard]] auto &result_type() { return _result_type.value(); }
-
+    [[nodiscard]] auto &op_type() const { return _op_type.value(); }
     void set_op_type(sem::Type type) { _op_type = std::move(type); }
 
-    [[nodiscard]] auto &op_type() const { return _op_type.value(); }
+    [[nodiscard]] auto &right() { return _right; }
+    void set_right(std::unique_ptr<Node> &&node) { _right = std::move(node); }
+
+    [[nodiscard]] auto &left() { return _left; }
+    void set_left(std::unique_ptr<Node> &&node) { _left = std::move(node); }
+
+    [[nodiscard]] auto &result_type() const { return _result_type.value(); }
+    void set_result_type(sem::Type type) { _result_type = std::move(type); }
 
 private:
     std::optional<sem::Type> _result_type{}, _op_type{};
@@ -270,11 +260,10 @@ public:
 
     [[nodiscard]] auto &expression() const { return _expression; }
 
+    [[nodiscard]] auto &from() const { return _from.value(); }
     void set_from(sem::Type type) { _from = std::move(type); }
 
-    [[nodiscard]] auto &from() const { return _from.value(); }
-
-    [[nodiscard]] auto &to() { return _to; }
+    [[nodiscard]] auto &to() const { return _to; }
 
 private:
     std::unique_ptr<Node> _expression;

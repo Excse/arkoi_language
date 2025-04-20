@@ -23,22 +23,20 @@ public:
 
     void accept(Visitor &visitor) { visitor.visit(*this); }
 
-    void set_branch(BasicBlock *branch);
-
-    void set_next(BasicBlock *next);
-
     template<typename Type, typename... Args>
     Instruction &emplace_back(Args &&... args);
 
-    [[nodiscard]] auto &predecessors() { return _predecessors; }
+    [[nodiscard]] auto &label() const { return _label; }
 
     [[nodiscard]] auto *branch() const { return _branch; }
+    void set_branch(BasicBlock *branch);
 
     [[nodiscard]] auto *next() const { return _next; }
+    void set_next(BasicBlock *next);
+
+    [[nodiscard]] auto &predecessors() { return _predecessors; }
 
     [[nodiscard]] auto &instructions() { return _instructions; }
-
-    [[nodiscard]] auto &label() const { return _label; }
 
     Instructions::iterator begin() { return _instructions.begin(); }
 
@@ -101,17 +99,16 @@ public:
 
     [[nodiscard]] bool remove(BasicBlock *block);
 
-    [[nodiscard]] auto &parameters() { return _parameters; }
-
     [[nodiscard]] auto &name() const { return _name; }
 
     [[nodiscard]] auto &type() const { return _type; }
 
     [[nodiscard]] auto *entry() const { return _entry; }
 
+    [[nodiscard]] auto *exit() const { return _exit; }
     void set_exit(BasicBlock *exit) { _exit = exit; }
 
-    [[nodiscard]] auto *exit() const { return _exit; }
+    [[nodiscard]] auto &parameters() { return _parameters; }
 
     BlockIterator begin() { return BlockIterator(this); }
 

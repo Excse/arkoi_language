@@ -1,0 +1,11 @@
+digraph CFG {
+	graph [fontname = "Monospace"];
+	node  [fontname = "Monospace", shape=box, style=filled, margin=0.1];
+	edge  [fontname = "Monospace"];
+	bgcolor = "#f7f7f7";
+	splines = false;
+
+	L0 [label="fun main() @s32:\l %01 @s32 = alloca\l $02 @s32 = const 0\l store @s32 $02, %01\l goto L1\l\lIN:  { }\lOUT: { %01 }\l"];
+	L0 -> L1 [label="Next"];
+	L1 [label="L1:\l $03 @s32 = load %01\l ret $03\l\lIN:  { %01 }\lOUT: { }\l"];
+}

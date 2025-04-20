@@ -16,15 +16,13 @@ class Function {
 public:
     explicit Function(std::string name) : _name(std::move(name)) {}
 
+    [[nodiscard]] auto &parameters() const { return _parameters; }
     void set_parameters(std::vector<std::shared_ptr<Variable>> &&symbols) { _parameters = std::move(symbols); }
 
-    [[nodiscard]] auto &parameters() const { return _parameters; }
-
-    void set_return_type(Type type) { _return_type = type; }
-
-    [[nodiscard]] auto &return_type() { return _return_type.value(); }
-
     [[nodiscard]] auto &name() const { return _name; }
+
+    [[nodiscard]] auto &return_type() const { return _return_type.value(); }
+    void set_return_type(Type type) { _return_type = type; }
 
 private:
     std::vector<std::shared_ptr<Variable>> _parameters{};
@@ -38,11 +36,10 @@ public:
 
     explicit Variable(std::string name) : _name(std::move(name)) {}
 
+    [[nodiscard]] auto &type() const { return _type.value(); }
     void set_type(Type type) { _type = type; }
 
-    [[nodiscard]] auto &type() { return _type.value(); }
-
-    [[nodiscard]] auto &name() { return _name; }
+    [[nodiscard]] auto &name() const { return _name; }
 
 private:
     std::optional<Type> _type{};

@@ -48,9 +48,9 @@ public:
 private:
     std::string _make_label_symbol();
 
-    Variable _make_temporary(sem::Type &type);
+    Variable _make_temporary(const sem::Type &type);
 
-    Memory _make_memory(sem::Type &type);
+    Memory _make_memory(const sem::Type &type);
 
 private:
     std::unordered_map<std::shared_ptr<Symbol>, Memory> _allocas{};
