@@ -55,8 +55,8 @@ add_library(${PROJECT_NAME}_lib
         src/x86_64/mapper.cpp
         src/x86_64/operand.cpp
         src/x86_64/generator.cpp
+        src/utils/interference_graph.tpp
         src/utils/ordered_set.tpp
-        src/utils/dep_graph.tpp
         src/utils/size.cpp
 )
 
@@ -82,7 +82,7 @@ enable_testing()
 add_executable(${PROJECT_NAME}_tests
         test/snapshot/snapshot.cpp
         test/snapshot/test_snapshot.cpp
-        test/test_dep_graph.cpp
+        test/test_interference.cpp
         test/test_cfg.cpp
 )
 

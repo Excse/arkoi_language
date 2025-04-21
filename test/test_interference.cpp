@@ -1,27 +1,50 @@
-#pragma once
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
-#include <unordered_map>
-#include <vector>
+#include "utils/interference_graph.hpp"
 
-template <typename ID>
-class DependencyGraph {
-public:
-    void add_node(ID node);
+using testing::UnorderedElementsAre;
 
-    void add_dependency(ID node, ID dependency);
+TEST(InterferenceGraphTest, AddNodesAndEdges) {
+    InterferenceGraph<std::string> graph;
 
-    std::vector<ID> topological_sort() const;
+    graph.add_node("a");
+    graph.add_node("b");
+    graph.add_node("c");
 
-private:
-    bool _has_path(ID start, ID target);
+    graph.add_edge("a", "b");
+    graph.add_edge("a", "c");
 
-private:
-    std::unordered_map<ID, std::vector<ID>> _graph;
-};
+    EXPECT_TRUE(graph.is_interfering("a", "b"));
+    EXPECT_TRUE(graph.is_interfering("a", "c"));
+    EXPECT_FALSE(graph.is_interfering("b", "c"));
 
-#include "../../src/utils/dep_graph.tpp"
+    const auto interferences = graph.get_interferences("a");
+    EXPECT_THAT(interferences, UnorderedElementsAre("b", "c"));
+}
 
-//==============================================================================
+TEST(InterferenceGraphTest, DuplicateAdditionsDontCrash) {
+    InterferenceGraph<std::string> graph;
+
+    graph.add_node("x");
+    graph.add_node("x");
+
+    graph.add_edge("x", "y");
+    graph.add_edge("x", "y");
+
+    EXPECT_TRUE(graph.is_interfering("x", "y"));
+    EXPECT_FALSE(graph.is_interfering("x", "z"));
+}
+
+TEST(InterferenceGraphTest, IsolatedNodeHasNoNeighbors) {
+    InterferenceGraph<std::string> graph;
+
+    graph.add_node("u");
+
+    const auto interferences = graph.get_interferences("u");
+    EXPECT_TRUE(interferences.empty());
+}
+
 // BSD 3-Clause License
 //
 // Copyright (c) 2025, Timo Behrend
@@ -50,4 +73,3 @@ private:
 // CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//==============================================================================
