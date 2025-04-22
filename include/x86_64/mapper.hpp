@@ -33,7 +33,7 @@ private:
 
     void visit(il::Cast &instruction) override;
 
-    void visit(il::Return &) override {}
+    void visit(il::Return &instruction) override;
 
     void visit(il::Call &instruction) override;
 

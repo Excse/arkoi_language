@@ -1,6 +1,10 @@
 #include "x86_64/mapper.hpp"
 
+#include <ranges>
+
+#include "il/analyses.hpp"
 #include "il/cfg.hpp"
+#include "utils/interference_graph.hpp"
 #include "utils/utils.hpp"
 
 using namespace arkoi::x86_64;
@@ -48,6 +52,34 @@ void Mapper::visit(il::Function &function) {
 
         _mappings.emplace(local, Memory(size, stack_reg, local_offset));
     }
+
+    il::DataflowAnalysis<il::InstructionLivenessAnalysis> analysis;
+    analysis.run(function);
+
+    InterferenceGraph<il::Operand> graph;
+    for (const auto &in_operands: std::views::values(analysis.in())) {
+        for (const auto &operand: in_operands) {
+            if (!std::holds_alternative<il::Variable>(operand)) continue;
+
+            // Also, add the in-operands to fully cover the interference graph with all the operands in the program.
+            graph.add_node(operand);
+        }
+    }
+
+    for (const auto &[instruction, out_operands]: analysis.out()) {
+        for (const auto &definition: instruction->defs()) {
+            if (!std::holds_alternative<il::Variable>(definition)) continue;
+
+            for (const auto &operand: out_operands) {
+                if (!std::holds_alternative<il::Variable>(operand)) continue;
+
+                graph.add_edge(definition, operand);
+            }
+        }
+    }
+
+    std::cout << "Interference graph " << function.name() << ":" << std::endl;
+    std::cout << graph << std::endl;
 }
 
 void Mapper::_map_parameters(const std::vector<il::Variable> &parameters, bool use_redzone) {
@@ -92,6 +124,14 @@ void Mapper::visit(il::Binary &instruction) {
 
 void Mapper::visit(il::Cast &instruction) {
     _add_local(instruction.result());
+}
+
+void Mapper::visit(il::Return &instruction) {
+    const auto *variable = std::get_if<il::Variable>(&instruction.value());
+    if (!variable) return;
+
+    const auto result_reg = return_register(variable->type());
+    _add_register(*variable, result_reg);
 }
 
 void Mapper::visit(il::Call &instruction) {

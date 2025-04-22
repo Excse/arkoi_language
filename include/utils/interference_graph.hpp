@@ -105,8 +105,10 @@ public:
      */
     std::vector<Node> get_nodes() const;
 
+    [[nodiscard]] auto &adjacents() const { return _adjacents; }
+
 private:
-    std::unordered_map<Node, std::unordered_set<Node> > _adjacent;
+    std::unordered_map<Node, std::unordered_set<Node> > _adjacents;
 };
 
 template<typename Node>

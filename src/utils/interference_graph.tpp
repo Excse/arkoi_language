@@ -1,18 +1,18 @@
 template<typename Node>
 void InterferenceGraph<Node>::add_node(const Node &node) {
-    _adjacent.emplace(node, std::unordered_set<Node>());
+    _adjacents.emplace(node, std::unordered_set<Node>());
 }
 
 template<typename Node>
 void InterferenceGraph<Node>::remove_node(const Node &node) {
-    auto found = _adjacent.find(node);
-    if (found == _adjacent.end()) return;
+    auto found = _adjacents.find(node);
+    if (found == _adjacents.end()) return;
 
     for (const auto &adjacent: found->second) {
-        _adjacent[adjacent].erase(node);
+        _adjacents[adjacent].erase(node);
     }
 
-    _adjacent.erase(found);
+    _adjacents.erase(found);
 }
 
 template<typename Node>
@@ -21,28 +21,28 @@ void InterferenceGraph<Node>::add_edge(const Node &first, const Node &second) {
 
     add_node(first);
     add_node(second);
-    _adjacent[first].insert(second);
-    _adjacent[second].insert(first);
+    _adjacents[first].insert(second);
+    _adjacents[second].insert(first);
 }
 
 template<typename Node>
 bool InterferenceGraph<Node>::is_interfering(const Node &first, const Node &second) const {
-    auto found = _adjacent.find(first);
-    if (found == _adjacent.end()) return false;
+    auto found = _adjacents.find(first);
+    if (found == _adjacents.end()) return false;
     return found->second.count(second) > 0;
 }
 
 template<typename Node>
 std::unordered_set<Node> InterferenceGraph<Node>::get_interferences(const Node &node) const {
-    auto found = _adjacent.find(node);
-    if (found == _adjacent.end()) return {};
+    auto found = _adjacents.find(node);
+    if (found == _adjacents.end()) return {};
     return found->second;
 }
 
 template<typename Node>
 std::vector<Node> InterferenceGraph<Node>::get_nodes() const {
     std::vector<Node> nodes;
-    for (const auto &[node, _]: _adjacent) nodes.push_back(node);
+    for (const auto &[node, _]: _adjacents) nodes.push_back(node);
     return nodes;
 }
 
@@ -50,14 +50,13 @@ template<typename Node>
 std::ostream &operator<<(std::ostream &os, const InterferenceGraph<Node> &graph) {
     os << "graph InterferenceGraph {\n";
 
-    for (const auto &[node, _]: graph._adjacent) os << "    \"" << node << "\"\n";
+    for (const auto &[node, _]: graph.adjacents()) os << "    \"\\" << node << "\"\n";
 
-    for (const auto &[node, adjacents]: graph._adjacent) {
+    for (const auto &[node, adjacents]: graph.adjacents()) {
         for (const auto &adjacent: adjacents) {
-            // Only print out each edge once.
-            if (node >= adjacent) continue;
+            if (node < adjacent) continue;
 
-            os << "    \"" << node << "\" -- \"" << adjacent << "\"\n";
+            os << "    \"\\" << node << "\" -- \"\\" << adjacent << "\"\n";
         }
     }
 
