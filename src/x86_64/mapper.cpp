@@ -1,11 +1,11 @@
 #include "x86_64/mapper.hpp"
 
+#include <cassert>
 #include <ranges>
 
-#include "il/analyses.hpp"
 #include "il/cfg.hpp"
-#include "utils/interference_graph.hpp"
 #include "utils/utils.hpp"
+#include "x86_64/register_allocation.hpp"
 
 using namespace arkoi::x86_64;
 using namespace arkoi;
@@ -45,6 +45,16 @@ void Mapper::visit(il::Function &function) {
 
     _map_parameters(function.parameters(), use_redzone);
 
+    auto allocator = RegisterAllocater(function);
+
+    for (const auto &[variable, base]: allocator.assigned()) {
+        _add_register(variable, Register(base, variable.type().size()));
+    }
+
+    for (const auto &variable: allocator.spilled()) {
+        assert(_locals.contains(variable) == true);
+    }
+
     int64_t local_offset = 0;
     for (auto &local: _locals) {
         auto size = local.type().size();
@@ -52,99 +62,6 @@ void Mapper::visit(il::Function &function) {
 
         _mappings.emplace(local, Memory(size, stack_reg, local_offset));
     }
-
-    il::DataflowAnalysis<il::InstructionLivenessAnalysis> analysis;
-    analysis.run(function);
-
-    InterferenceGraph<il::Variable> graph;
-    for (const auto &in_operands: std::views::values(analysis.in())) {
-        for (const auto &operand: in_operands) {
-            const auto *op_variable = std::get_if<il::Variable>(&operand);
-            if (!op_variable) continue;
-            graph.add_node(*op_variable);
-        }
-    }
-
-    for (const auto &[instruction, out_operands]: analysis.out()) {
-        for (const auto &definition: instruction->defs()) {
-            const auto *def_variable = std::get_if<il::Variable>(&definition);
-            if (!def_variable) continue;
-
-            for (const auto &operand: out_operands) {
-                const auto *op_variable = std::get_if<il::Variable>(&operand);
-                if (!op_variable) continue;
-
-                graph.add_edge(*def_variable, *op_variable);
-            }
-        }
-    }
-
-    static constexpr size_t K = 4;
-
-    std::unordered_map<il::Variable, size_t> colored;
-    std::vector<il::Variable> spilled;
-
-    std::stack<il::Variable> stack;
-
-    auto work_list = graph.nodes();
-    while (!work_list.empty()) {
-        auto found = false;
-
-        for (const auto &node: work_list) {
-            const auto interferences = graph.interferences(node);
-            if (interferences.size() >= K) continue;
-
-            stack.push(node);
-            work_list.erase(node);
-            found = true;
-            break;
-        }
-
-        if (found) continue;
-
-        const auto &first = *work_list.begin();
-        spilled.push_back(first);
-        work_list.erase(first);
-    }
-
-    while (!stack.empty()) {
-        auto node = stack.top();
-        stack.pop();
-
-        std::unordered_set<size_t> colors;
-        for (const auto &interference: graph.interferences(node)) {
-            const auto found = colored.find(interference);
-            if (found == colored.end()) continue;
-            colors.insert(found->second);
-        }
-
-        if (colors.size() == K) {
-            spilled.push_back(node);
-            continue;
-        }
-
-        for (size_t color = 0; color < K; color++) {
-            if (colors.contains(color)) continue;
-            colored[node] = color;
-            break;
-        }
-    }
-
-    std::cout << graph << std::endl;
-
-    std::cout << "Color graphing " << function.name() << ":" << std::endl;
-
-    std::cout << "Colored variables:" << std::endl;
-    for (const auto &[var, color]: colored) {
-        std::cout << "  " << var << " -> " << color << std::endl;
-    }
-    std::cout << std::endl;
-
-    std::cout << "Spilled variables:" << std::endl;
-    for (const auto &spill: spilled) {
-        std::cout << "  " << spill << std::endl;
-    }
-    std::cout << std::endl;
 }
 
 void Mapper::_map_parameters(const std::vector<il::Variable> &parameters, bool use_redzone) {

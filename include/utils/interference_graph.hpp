@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <ostream>
 
 template<typename Node>
 class InterferenceGraph {
