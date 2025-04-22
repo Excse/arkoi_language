@@ -46,9 +46,7 @@ main:
 	mov QWORD PTR [rbp - 8], rax
 	# $22 @u64 = load %01
 	mov rax, QWORD PTR [rbp - 8]
-	mov QWORD PTR [rbp - 48], rax
 	# ret $22
-	mov rax, QWORD PTR [rbp - 48]
 	leave
 	ret
 
@@ -124,107 +122,101 @@ L6:
 	mov BYTE PTR [rbp - 1], al
 	# $23 @bool = load %01
 	mov al, BYTE PTR [rbp - 1]
-	mov BYTE PTR [rbp - 41], al
 	# ret $23
-	mov al, BYTE PTR [rbp - 41]
 	leave
 	ret
 
 test1:
-	enter 144, 0
 	# store @s32 foo2, %02
-	mov DWORD PTR [rbp - 8], edi
+	mov DWORD PTR [rsp - 8], edi
 	# store @f64 bar, %03
-	movsd QWORD PTR [rbp - 16], xmm0
+	movsd QWORD PTR [rsp - 16], xmm0
 	# $04 @s32 = load %02
-	mov eax, DWORD PTR [rbp - 8]
-	mov DWORD PTR [rbp - 20], eax
+	mov eax, DWORD PTR [rsp - 8]
+	mov DWORD PTR [rsp - 20], eax
 	# $05 @f64 = cast @s32 $04
-	cvtsi2sd xmm0, DWORD PTR [rbp - 20]
-	movsd QWORD PTR [rbp - 28], xmm0
+	cvtsi2sd xmm0, DWORD PTR [rsp - 20]
+	movsd QWORD PTR [rsp - 28], xmm0
 	# $06 @f64 = load %03
-	movsd xmm0, QWORD PTR [rbp - 16]
-	movsd QWORD PTR [rbp - 36], xmm0
+	movsd xmm0, QWORD PTR [rsp - 16]
+	movsd QWORD PTR [rsp - 36], xmm0
 	# $07 @bool = lth @f64 $05, $06
-	movsd xmm0, QWORD PTR [rbp - 28]
-	ucomisd xmm0, QWORD PTR [rbp - 36]
-	setb BYTE PTR [rbp - 37]
+	movsd xmm0, QWORD PTR [rsp - 28]
+	ucomisd xmm0, QWORD PTR [rsp - 36]
+	setb BYTE PTR [rsp - 37]
 	# if $07 then L12 else L13
-	mov al, BYTE PTR [rbp - 37]
+	mov al, BYTE PTR [rsp - 37]
 	test al, al
 	jnz L12
 	jmp L13
 L13:
 	# $18 @s32 = load %02
-	mov eax, DWORD PTR [rbp - 8]
-	mov DWORD PTR [rbp - 41], eax
+	mov eax, DWORD PTR [rsp - 8]
+	mov DWORD PTR [rsp - 41], eax
 	# $19 @f64 = cast @s32 $18
-	cvtsi2sd xmm0, DWORD PTR [rbp - 41]
-	movsd QWORD PTR [rbp - 49], xmm0
+	cvtsi2sd xmm0, DWORD PTR [rsp - 41]
+	movsd QWORD PTR [rsp - 49], xmm0
 	# $20 @f64 = load %03
-	movsd xmm0, QWORD PTR [rbp - 16]
-	movsd QWORD PTR [rbp - 57], xmm0
+	movsd xmm0, QWORD PTR [rsp - 16]
+	movsd QWORD PTR [rsp - 57], xmm0
 	# $21 @f64 = mul @f64 $19, $20
-	movsd xmm0, QWORD PTR [rbp - 49]
-	mulsd xmm0, QWORD PTR [rbp - 57]
-	movsd QWORD PTR [rbp - 65], xmm0
+	movsd xmm0, QWORD PTR [rsp - 49]
+	mulsd xmm0, QWORD PTR [rsp - 57]
+	movsd QWORD PTR [rsp - 65], xmm0
 	# $22 @f32 = cast @f64 $21
-	movsd xmm0, QWORD PTR [rbp - 65]
+	movsd xmm0, QWORD PTR [rsp - 65]
 	cvtsd2ss xmm0, xmm0
-	movss DWORD PTR [rbp - 69], xmm0
+	movss DWORD PTR [rsp - 69], xmm0
 	# store @f32 $22, %01
-	movss xmm0, DWORD PTR [rbp - 69]
-	movss DWORD PTR [rbp - 4], xmm0
+	movss xmm0, DWORD PTR [rsp - 69]
+	movss DWORD PTR [rsp - 4], xmm0
 	# goto L11
 	jmp L11
 L12:
 	# $08 @f64 = load %03
-	movsd xmm0, QWORD PTR [rbp - 16]
-	movsd QWORD PTR [rbp - 77], xmm0
+	movsd xmm0, QWORD PTR [rsp - 16]
+	movsd QWORD PTR [rsp - 77], xmm0
 	# $09 @s32 = load %02
-	mov eax, DWORD PTR [rbp - 8]
-	mov DWORD PTR [rbp - 81], eax
+	mov eax, DWORD PTR [rsp - 8]
+	mov DWORD PTR [rsp - 81], eax
 	# $10 @f64 = cast @s32 $09
-	cvtsi2sd xmm0, DWORD PTR [rbp - 81]
-	movsd QWORD PTR [rbp - 89], xmm0
+	cvtsi2sd xmm0, DWORD PTR [rsp - 81]
+	movsd QWORD PTR [rsp - 89], xmm0
 	# $11 @f64 = mul @f64 $08, $10
-	movsd xmm0, QWORD PTR [rbp - 77]
-	mulsd xmm0, QWORD PTR [rbp - 89]
-	movsd QWORD PTR [rbp - 97], xmm0
+	movsd xmm0, QWORD PTR [rsp - 77]
+	mulsd xmm0, QWORD PTR [rsp - 89]
+	movsd QWORD PTR [rsp - 97], xmm0
 	# $12 @s32 = load %02
-	mov eax, DWORD PTR [rbp - 8]
-	mov DWORD PTR [rbp - 101], eax
+	mov eax, DWORD PTR [rsp - 8]
+	mov DWORD PTR [rsp - 101], eax
 	# $13 @s32 = load %02
-	mov eax, DWORD PTR [rbp - 8]
-	mov DWORD PTR [rbp - 105], eax
+	mov eax, DWORD PTR [rsp - 8]
+	mov DWORD PTR [rsp - 105], eax
 	# $14 @bool = lth @s32 $12, $13
-	mov eax, DWORD PTR [rbp - 101]
-	cmp eax, DWORD PTR [rbp - 105]
-	setl BYTE PTR [rbp - 106]
+	mov eax, DWORD PTR [rsp - 101]
+	cmp eax, DWORD PTR [rsp - 105]
+	setl BYTE PTR [rsp - 106]
 	# $15 @f64 = cast @bool $14
-	movzx eax, BYTE PTR [rbp - 106]
+	movzx eax, BYTE PTR [rsp - 106]
 	cvtsi2sd xmm0, eax
-	movsd QWORD PTR [rbp - 114], xmm0
+	movsd QWORD PTR [rsp - 114], xmm0
 	# $16 @f64 = add @f64 $11, $15
-	movsd xmm0, QWORD PTR [rbp - 97]
-	addsd xmm0, QWORD PTR [rbp - 114]
-	movsd QWORD PTR [rbp - 122], xmm0
+	movsd xmm0, QWORD PTR [rsp - 97]
+	addsd xmm0, QWORD PTR [rsp - 114]
+	movsd QWORD PTR [rsp - 122], xmm0
 	# $17 @f32 = cast @f64 $16
-	movsd xmm0, QWORD PTR [rbp - 122]
+	movsd xmm0, QWORD PTR [rsp - 122]
 	cvtsd2ss xmm0, xmm0
-	movss DWORD PTR [rbp - 126], xmm0
+	movss DWORD PTR [rsp - 126], xmm0
 	# store @f32 $17, %01
-	movss xmm0, DWORD PTR [rbp - 126]
-	movss DWORD PTR [rbp - 4], xmm0
+	movss xmm0, DWORD PTR [rsp - 126]
+	movss DWORD PTR [rsp - 4], xmm0
 	# goto L11
 	jmp L11
 L11:
 	# $23 @f32 = load %01
-	movss xmm0, DWORD PTR [rbp - 4]
-	movss DWORD PTR [rbp - 130], xmm0
+	movss xmm0, DWORD PTR [rsp - 4]
 	# ret $23
-	movss xmm0, DWORD PTR [rbp - 130]
-	leave
 	ret
 
 test2:
@@ -305,9 +297,7 @@ L17:
 L16:
 	# $19 @f32 = load %01
 	movss xmm0, DWORD PTR [rsp - 4]
-	movss DWORD PTR [rsp - 113], xmm0
 	# ret $19
-	movss xmm0, DWORD PTR [rsp - 113]
 	ret
 
 .section .data

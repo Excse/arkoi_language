@@ -33,16 +33,16 @@ bool InterferenceGraph<Node>::is_interfering(const Node &first, const Node &seco
 }
 
 template<typename Node>
-std::unordered_set<Node> InterferenceGraph<Node>::get_interferences(const Node &node) const {
+std::unordered_set<Node> InterferenceGraph<Node>::interferences(const Node &node) const {
     auto found = _adjacents.find(node);
     if (found == _adjacents.end()) return {};
     return found->second;
 }
 
 template<typename Node>
-std::vector<Node> InterferenceGraph<Node>::get_nodes() const {
-    std::vector<Node> nodes;
-    for (const auto &[node, _]: _adjacents) nodes.push_back(node);
+std::unordered_set<Node> InterferenceGraph<Node>::nodes() const {
+    std::unordered_set<Node> nodes;
+    for (const auto &[node, _]: _adjacents) nodes.insert(node);
     return nodes;
 }
 

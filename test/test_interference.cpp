@@ -19,7 +19,7 @@ TEST(InterferenceGraphTest, AddNodesAndEdges) {
     EXPECT_TRUE(graph.is_interfering("a", "c"));
     EXPECT_FALSE(graph.is_interfering("b", "c"));
 
-    const auto interferences = graph.get_interferences("a");
+    const auto interferences = graph.interferences("a");
     EXPECT_THAT(interferences, UnorderedElementsAre("b", "c"));
 }
 
@@ -41,7 +41,7 @@ TEST(InterferenceGraphTest, IsolatedNodeHasNoNeighbors) {
 
     graph.add_node("u");
 
-    const auto interferences = graph.get_interferences("u");
+    const auto interferences = graph.interferences("u");
     EXPECT_TRUE(interferences.empty());
 }
 

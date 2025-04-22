@@ -29,9 +29,7 @@ main:
 	mov DWORD PTR [rbp - 4], eax
 	# $21 @u32 = load %01
 	mov eax, DWORD PTR [rbp - 4]
-	mov DWORD PTR [rbp - 12], eax
 	# ret $21
-	mov eax, DWORD PTR [rbp - 12]
 	leave
 	ret
 
@@ -40,9 +38,7 @@ calling_convention:
 	mov QWORD PTR [rsp - 8], 1
 	# $12 @u64 = load %01
 	mov rax, QWORD PTR [rsp - 8]
-	mov QWORD PTR [rsp - 16], rax
 	# ret $12
-	mov rax, QWORD PTR [rsp - 16]
 	ret
 
 .section .data

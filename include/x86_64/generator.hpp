@@ -27,7 +27,7 @@ private:
 
     void visit(il::BasicBlock &block) override;
 
-    void visit(il::Return &instruction) override;
+    void visit(il::Return &) override {}
 
     void visit(il::Binary &instruction) override;
 
@@ -97,7 +97,7 @@ private:
     std::stringstream _text{};
     il::ILPrinter _printer;
     size_t _constants{};
-    Mapper _mapper{};
+    Mapper _current_mapper{};
 };
 
 } // namespace arkoi::x86_64

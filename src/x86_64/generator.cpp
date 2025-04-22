@@ -39,7 +39,7 @@ void Generator::visit(il::Module &module) {
 }
 
 void Generator::visit(il::Function &function) {
-    _mapper = Mapper::map(function);
+    _current_mapper = Mapper::map(function);
     _current_function = &function;
 
     _text << function.name() << ":\n";
@@ -50,7 +50,7 @@ void Generator::visit(il::Function &function) {
 }
 
 void Generator::visit(il::BasicBlock &block) {
-    const auto stack_size = _mapper.stack_size();
+    const auto stack_size = _current_mapper.stack_size();
 
     if (_current_function->entry() == &block) {
         // If we are in a leaf function and the stack size in less or equal to 128 bytes (redzone), we can skip the enter
@@ -83,13 +83,6 @@ void Generator::visit(il::BasicBlock &block) {
         _text << "\tret\n";
         _text << "\n";
     }
-}
-
-void Generator::visit(il::Return &instruction) {
-    auto &type = _current_function->type();
-    auto result = Mapper::return_register(type);
-    const auto source = _load(instruction.value());
-    _store(source, result, type);
 }
 
 void Generator::visit(il::Binary &instruction) {
@@ -653,10 +646,10 @@ Operand Generator::_load(const il::Operand &operand) {
             return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
         },
         [&](const il::Memory &memory) -> Operand {
-            return _mapper[memory];
+            return _current_mapper[memory];
         },
         [&](const il::Variable &variable) -> Operand {
-            return _mapper[variable];
+            return _current_mapper[variable];
         },
     }, operand);
 }
