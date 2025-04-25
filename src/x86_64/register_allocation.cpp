@@ -6,14 +6,12 @@
 using namespace arkoi::x86_64;
 
 static constexpr std::array INTEGER_REGISTERS{
-    Register::Base::B, Register::Base::R10, Register::Base::R11,
-    Register::Base::R12, Register::Base::R13, Register::Base::R14,
+    Register::Base::B, Register::Base::R12, Register::Base::R13, Register::Base::R14,
     Register::Base::R15,
 };
 
 static constexpr std::array FLOATING_REGISTERS{
-    Register::Base::XMM8, Register::Base::XMM9, Register::Base::XMM10,
-    Register::Base::XMM11, Register::Base::XMM12, Register::Base::XMM13,
+    Register::Base::XMM8, Register::Base::XMM9, Register::Base::XMM12, Register::Base::XMM13,
     Register::Base::XMM14, Register::Base::XMM15,
 };
 

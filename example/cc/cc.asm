@@ -23,10 +23,9 @@ main:
 	call calling_convention
 	add rsp, 16
 	# $20 @u32 = cast @u64 $19
-	mov DWORD PTR [rbp - 8], eax
+	mov ebx, eax
 	# store @u32 $20, %01
-	mov eax, DWORD PTR [rbp - 8]
-	mov DWORD PTR [rbp - 4], eax
+	mov DWORD PTR [rbp - 4], ebx
 	# $21 @u32 = load %01
 	mov eax, DWORD PTR [rbp - 4]
 	# ret $21

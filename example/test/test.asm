@@ -14,11 +14,12 @@ main:
 	movsd xmm0, QWORD PTR [float0]
 	call ok
 	# $07 @u32 = cast @bool $06
-	movzx eax, al
-	mov ebx, eax
+	movzx r10d, al
+	mov ebx, r10d
 	# $08 @u32 = mul @u32 1, $07
-	mov ebx, 1
-	imul ebx, ebx
+	mov r10d, 1
+	imul r10d, ebx
+	mov ebx, r10d
 	# $11 @u32 = add @u32 $08, 1
 	add ebx, 1
 	# $12 @s32 = cast @u32 $11
@@ -32,8 +33,8 @@ main:
 	# $20 @f32 = sub @f32 $17, 42
 	subss xmm8, DWORD PTR [float3]
 	# $21 @u64 = cast @f32 $20
-	cvttss2si rax, xmm8
-	mov rbx, rax
+	cvttss2si r10, xmm8
+	mov rbx, r10
 	# store @u64 $21, %01
 	mov QWORD PTR [rbp - 8], rbx
 	# $22 @u64 = load %01
@@ -67,27 +68,27 @@ L5:
 	jmp L8
 L8:
 	# store @f64 21, %02
-	movsd xmm0, QWORD PTR [float6]
-	movsd QWORD PTR [rbp - 9], xmm0
+	movsd xmm10, QWORD PTR [float6]
+	movsd QWORD PTR [rbp - 9], xmm10
 	# goto L6
 	jmp L6
 L7:
 	# store @f64 20, %02
-	movsd xmm0, QWORD PTR [float7]
-	movsd QWORD PTR [rbp - 9], xmm0
+	movsd xmm10, QWORD PTR [float7]
+	movsd QWORD PTR [rbp - 9], xmm10
 	# goto L6
 	jmp L6
 L4:
 	# store @f64 0, %02
-	movsd xmm0, QWORD PTR [float8]
-	movsd QWORD PTR [rbp - 9], xmm0
+	movsd xmm10, QWORD PTR [float8]
+	movsd QWORD PTR [rbp - 9], xmm10
 	# goto L6
 	jmp L6
 L6:
 	# $19 @s32 = div @s32 4, 2
 	mov eax, 4
-	mov ecx, 2
-	idiv ecx
+	mov r11d, 2
+	idiv r11d
 	mov ebx, eax
 	# $20 @f64 = load %02
 	movsd xmm8, QWORD PTR [rbp - 9]
@@ -96,12 +97,12 @@ L6:
 	movsd xmm0, xmm8
 	call test2
 	# $22 @bool = cast @f32 $21
-	xorps xmm1, xmm1
-	ucomiss xmm1, xmm0
-	setne al
-	setp cl
-	or al, cl
-	mov bl, al
+	xorps xmm11, xmm11
+	ucomiss xmm11, xmm0
+	setne r10b
+	setp r11b
+	or r10b, r11b
+	mov bl, r10b
 	# store @bool $22, %01
 	mov BYTE PTR [rbp - 1], bl
 	# $23 @bool = load %01
@@ -118,8 +119,8 @@ test1:
 	# $04 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $05 @f64 = cast @s32 $04
-	cvtsi2sd xmm0, ebx
-	movsd xmm9, xmm0
+	cvtsi2sd xmm10, ebx
+	movsd xmm9, xmm10
 	# $06 @f64 = load %03
 	movsd xmm8, QWORD PTR [rsp - 16]
 	# $07 @bool = lth @f64 $05, $06
@@ -133,8 +134,8 @@ L13:
 	# $18 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $19 @f64 = cast @s32 $18
-	cvtsi2sd xmm0, ebx
-	movsd xmm8, xmm0
+	cvtsi2sd xmm10, ebx
+	movsd xmm8, xmm10
 	# $20 @f64 = load %03
 	movsd xmm9, QWORD PTR [rsp - 16]
 	# $21 @f64 = mul @f64 $19, $20
@@ -152,22 +153,22 @@ L12:
 	# $09 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $10 @f64 = cast @s32 $09
-	cvtsi2sd xmm0, ebx
-	movsd xmm9, xmm0
+	cvtsi2sd xmm10, ebx
+	movsd xmm9, xmm10
 	# $11 @f64 = mul @f64 $08, $10
 	mulsd xmm8, xmm9
 	movsd xmm9, xmm8
 	# $12 @s32 = load %02
-	mov r10d, DWORD PTR [rsp - 8]
+	mov r12d, DWORD PTR [rsp - 8]
 	# $13 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $14 @bool = lth @s32 $12, $13
-	cmp r10d, ebx
+	cmp r12d, ebx
 	setl bl
 	# $15 @f64 = cast @bool $14
-	movzx eax, bl
-	cvtsi2sd xmm0, eax
-	movsd xmm8, xmm0
+	movzx r10d, bl
+	cvtsi2sd xmm10, r10d
+	movsd xmm8, xmm10
 	# $16 @f64 = add @f64 $11, $15
 	addsd xmm9, xmm8
 	movsd xmm8, xmm9
@@ -192,8 +193,8 @@ test2:
 	# $04 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $05 @f64 = cast @s32 $04
-	cvtsi2sd xmm0, ebx
-	movsd xmm8, xmm0
+	cvtsi2sd xmm10, ebx
+	movsd xmm8, xmm10
 	# $06 @f64 = load %03
 	movsd xmm9, QWORD PTR [rsp - 16]
 	# $07 @bool = lth @f64 $05, $06
@@ -207,8 +208,8 @@ L18:
 	# $13 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $14 @f64 = cast @s32 $13
-	cvtsi2sd xmm0, ebx
-	movsd xmm8, xmm0
+	cvtsi2sd xmm10, ebx
+	movsd xmm8, xmm10
 	# $15 @f64 = load %03
 	movsd xmm9, QWORD PTR [rsp - 16]
 	# $16 @f64 = mul @f64 $14, $15
@@ -230,8 +231,8 @@ L17:
 	# $09 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
 	# $10 @f64 = cast @s32 $09
-	cvtsi2sd xmm0, ebx
-	movsd xmm8, xmm0
+	cvtsi2sd xmm10, ebx
+	movsd xmm8, xmm10
 	# $11 @f64 = mul @f64 $08, $10
 	mulsd xmm9, xmm8
 	movsd xmm8, xmm9

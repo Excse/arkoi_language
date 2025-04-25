@@ -173,7 +173,7 @@ void Generator::_mul(const Operand &result, Operand left, const Operand &right, 
         // imul is used as it also is easier to handle.
         _text << "\timul " << left << ", " << right << "\n";
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     }
 }
@@ -679,7 +679,7 @@ Register Generator::_store_temp_1(const Operand &source, const sem::Type &type) 
 }
 
 Register Generator::_temp_1_register(const sem::Type &type) {
-    auto reg_base = (std::holds_alternative<sem::Floating>(type) ? Register::Base::XMM0 : Register::Base::A);
+    auto reg_base = (std::holds_alternative<sem::Floating>(type) ? Register::Base::XMM10 : Register::Base::R10);
     return {reg_base, type.size()};
 }
 
@@ -690,20 +690,16 @@ Register Generator::_store_temp_2(const Operand &source, const sem::Type &type) 
 }
 
 Register Generator::_temp_2_register(const sem::Type &type) {
-    auto reg_base = (std::holds_alternative<sem::Floating>(type) ? Register::Base::XMM1 : Register::Base::C);
+    auto reg_base = (std::holds_alternative<sem::Floating>(type) ? Register::Base::XMM11 : Register::Base::R11);
     return {reg_base, type.size()};
 }
 
-Register Generator::_adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type) {
-    // If the result operand is already a register, just use it instead.
-    if (std::holds_alternative<Register>(result)) {
-        // If the result operand is a register, then just temporarily store the operand in it.
-        _store(operand, result, type);
-        return std::get<Register>(result);
-    }
+Register Generator::_adjust_to_reg(const Operand &, const Operand &target, const sem::Type &type) {
+    // Early exit if the target operand already is a register.
+    if (std::holds_alternative<Register>(target)) return std::get<Register>(target);
 
     // Otherwise if the result is not a register, store the lhs in a temp register.
-    return _store_temp_1(operand, type);
+    return _store_temp_1(target, type);
 }
 
 //==============================================================================

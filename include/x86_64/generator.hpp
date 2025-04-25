@@ -81,7 +81,7 @@ private:
 
     void _store(Operand source, const Operand &destination, const sem::Type &type);
 
-    Register _adjust_to_reg(const Operand &result, const Operand &operand, const sem::Type &type);
+    Register _adjust_to_reg(const Operand &result, const Operand &target, const sem::Type &type);
 
     [[nodiscard]] Register _store_temp_1(const Operand &source, const sem::Type &type);
 
