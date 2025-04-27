@@ -250,12 +250,12 @@ L16:
 	ret
 
 .section .data
-	float0: .double	5
-	float1: .double	10.5
-	float2: .float	2.01
-	float3: .float	42
-	float4: .double	5
-	float5: .double	10
-	float6: .double	21
-	float7: .double	20
-	float8: .double	0
+	float0: .double	5.000000
+	float1: .double	10.500000
+	float2: .float	2.010000
+	float3: .float	42.000000
+	float4: .double	5.000000
+	float5: .double	10.000000
+	float6: .double	21.000000
+	float7: .double	20.000000
+	float8: .double	0.000000

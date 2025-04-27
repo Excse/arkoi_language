@@ -12,26 +12,26 @@ std::stringstream Generator::generate(il::Module &module) {
     Generator generator;
     generator.visit(module);
 
-    output << generator._text.rdbuf();
-    output << generator._data.rdbuf();
+    for (const auto &item: generator._text) output << item << "\n";
+    for (const auto &item: generator._data) output << item << "\n";
 
     return output;
 }
 
 void Generator::visit(il::Module &module) {
-    _text << ".intel_syntax noprefix\n";
-    _text << ".section .text\n";
-    _text << ".global _start\n";
-    _text << "\n";
+    _directive(".section .data", _data);
 
-    _text << "_start:\n";
-    _text << "\tcall main\n";
-    _text << "\tmov rdi, rax\n";
-    _text << "\tmov rax, 60\n";
-    _text << "\tsyscall\n";
-    _text << "\n";
+    _directive(".intel_syntax noprefix", _text);
+    _directive(".section .text", _text);
+    _directive(".global _start", _text);
+    _newline(_text);
 
-    _data << ".section .data\n";
+    _label("_start");
+    _call("main");
+    _mov(RDI, RAX);
+    _mov(RAX, 60);
+    _syscall();
+    _newline(_text);
 
     for (auto &function: module) {
         function.accept(*this);
@@ -42,7 +42,7 @@ void Generator::visit(il::Function &function) {
     _current_mapper = Mapper::map(function);
     _current_function = &function;
 
-    _text << function.name() << ":\n";
+    _label(function.name());
 
     for (auto &block: function) {
         block.accept(*this);
@@ -55,33 +55,31 @@ void Generator::visit(il::BasicBlock &block) {
     if (_current_function->entry() == &block) {
         // If we are in a leaf function and the stack size in less or equal to 128 bytes (redzone), we can skip the enter
         // instruction.
-        if (!_current_function->is_leaf() || stack_size > 128) {
-            _text << "\tenter " << stack_size << ", 0\n";
-        }
+        if (!_current_function->is_leaf() || stack_size > 128) _enter(stack_size, 0);
     } else {
         // Just a normal block.
-        _text << block.label() << ":\n";
+        _label(block.label());
     }
 
     for (auto &instruction: block) {
         if (std::holds_alternative<il::Alloca>(instruction)) continue;
 
-        _text << "\t# ";
-        instruction.accept(_printer);
-        _text << "\n";
+        std::stringstream output;
+        output << "\t# ";
+        il::ILPrinter printer(output);
+        instruction.accept(printer);
 
+        _directive(output.str(), _text);
         instruction.accept(*this);
     }
 
     if (_current_function->exit() == &block) {
         // If the function is not a leaf or the stack size exceeds 128 bytes, we need to restore the stack using the
         // leave instruction.
-        if (!_current_function->is_leaf() || stack_size > 128) {
-            _text << "\tleave\n";
-        }
+        if (!_current_function->is_leaf() || stack_size > 128) _leave();
 
-        _text << "\tret\n";
-        _text << "\n";
+        _ret();
+        _newline(_text);
     }
 }
 
@@ -109,19 +107,19 @@ void Generator::_add(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose addsd or addss.
-        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
-        _text << "\tadd" << suffix << " " << left << ", " << right << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_addsd : &Generator::_addss;
+        (this->*instruction)(left, right);
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
-        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        // always be a register, you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
         left = _adjust_to_reg(result, left, type);
 
-        _text << "\tadd " << left << ", " << right << "\n";
+        _add(left, right);
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     }
 }
@@ -134,19 +132,19 @@ void Generator::_sub(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose subsd or subss.
-        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
-        _text << "\tsub" << suffix << " " << left << ", " << right << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_subsd : &Generator::_subss;
+        (this->*instruction)(left, right);
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
-        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        // always be a register, you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
         left = _adjust_to_reg(result, left, type);
 
-        _text << "\tsub " << left << ", " << right << "\n";
+        _sub(left, right);
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     }
 }
@@ -159,19 +157,19 @@ void Generator::_mul(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose mulsd or mulss.
-        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
-        _text << "\tmul" << suffix << " " << left << ", " << right << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_mulsd : &Generator::_mulss;
+        (this->*instruction)(left, right);
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
-        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        // always be a register, you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
         left = _adjust_to_reg(result, left, type);
 
         // When discarding the upper part of the multiplication result, imul and mul are indistinguisable. Thus, just
         // imul is used as it also is easier to handle.
-        _text << "\timul " << left << ", " << right << "\n";
+        _imul(left, right);
 
         // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
@@ -186,10 +184,10 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose divsd or divss.
-        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
-        _text << "\tdiv" << suffix << " " << left << ", " << right << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_divsd : &Generator::_divss;
+        (this->*instruction)(left, right);
 
-        // Finally store the lhs (where the result is written to) to the result operand.
+        // Finally, store the lhs (where the result is written to) to the result operand.
         _store(left, result, type);
     } else {
         // First store the lhs operand in the "A" register of the given operand size.
@@ -202,10 +200,9 @@ void Generator::_div(const Operand &result, Operand left, Operand right, const s
         }
 
         // Depending on the signess of the integral value, we need to choose idiv or div.
-        _text << "\t";
         auto *integral = std::get_if<sem::Integral>(&type);
-        if (integral && integral->sign()) _text << "i";
-        _text << "div " << right << "\n";
+        const auto &instruction = (integral && integral->sign()) ? &Generator::_idiv : &Generator::_udiv;
+        (this->*instruction)(right);
 
         _store(a_reg, result, type);
     }
@@ -219,21 +216,20 @@ void Generator::_gth(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose ucomisd or ucomiss.
-        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
-        _text << "\tucomi" << suffix << " " << left << ", " << right << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_ucomisd : &Generator::_ucomiss;
+        (this->*instruction)(left, right);
 
-        _text << "\tseta " << result << "\n";
+        _seta(result);
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
-        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        // always be a register, you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
         left = _adjust_to_reg(result, left, type);
 
-        _text << "\tcmp " << left << ", " << right << "\n";
+        _cmp(left, right);
 
-        auto *integral = std::get_if<sem::Integral>(&type);
-        const auto *suffix = (integral && integral->sign()) ? "g" : "a";
-
-        _text << "\tset" << suffix << " " << result << "\n";
+        const auto *integral = std::get_if<sem::Integral>(&type);
+        const auto &instruction = (integral && integral->sign()) ? &Generator::_setg : &Generator::_seta;
+        (this->*instruction)(result);
     }
 }
 
@@ -245,21 +241,20 @@ void Generator::_lth(const Operand &result, Operand left, const Operand &right, 
         left = _adjust_to_reg(result, left, type);
 
         // Depending on the size of the type, either choose ucomisd or ucomiss.
-        const auto *suffix = (type.size() == Size::QWORD) ? "sd" : "ss";
-        _text << "\tucomi" << suffix << " " << left << ", " << right << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_ucomisd : &Generator::_ucomiss;
+        (this->*instruction)(left, right);
 
-        _text << "\tsetb " << result << "\n";
+        _setb(result);
     } else {
         // The only valid combinations of left:right are reg:mem, reg:reg, mem:reg, reg:imm, mem:imm. But as left will
-        // always be a register you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
+        // always be a register, you only need to care about reg:mem, reg:reg, reg:imm, which covers all other cases.
         left = _adjust_to_reg(result, left, type);
 
-        _text << "\tcmp " << left << ", " << right << "\n";
+        _cmp(left, right);
 
-        auto *integral = std::get_if<sem::Integral>(&type);
-        const auto *suffix = (integral && integral->sign()) ? "l" : "b";
-
-        _text << "\tset" << suffix << " " << result << "\n";
+        const auto *integral = std::get_if<sem::Integral>(&type);
+        const auto &instruction = (integral && integral->sign()) ? &Generator::_setl : &Generator::_setb;
+        (this->*instruction)(result);
     }
 }
 
@@ -291,20 +286,15 @@ void Generator::_float_to_float(const Operand &result, Operand source, const sem
     // Always adjust the source to a register.
     source = _adjust_to_reg(result, source, from);
 
-    if (from.size() == Size::DWORD && to.size() == Size::QWORD) {
-        // Convert a float operand to a double operand.
-        _text << "\tcvtss2sd " << source << ", " << source << "\n";
-    } else if (from.size() == Size::QWORD && to.size() == Size::DWORD) {
-        // Convert a double operand to a float operand.
-        _text << "\tcvtsd2ss " << source << ", " << source << "\n";
-    }
+    const auto &instruction = (from.size() == Size::QWORD) ? &Generator::_cvtsd2ss : &Generator::_cvtss2sd;
+    (this->*instruction)(source, source);
 
     _store(source, result, to);
 }
 
 void Generator::_int_to_int(const Operand &result, Operand source, const sem::Integral &from,
                             const sem::Integral &to) {
-    // If both are the same exact type just store the source in the result.
+    // If both are the same exact type, store the source in the result.
     if (from == to) {
         _store(source, result, to);
         return;
@@ -315,11 +305,11 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
         // There is no zero extension of such operand types, as all 32bit operations implicilty zero-extend 32bit to
         // 64bit.
 
-        // Thus just adjust the source operand to a register of from-size (32bit). This will automatically also zero-extend
+        // Thus adjust the source operand to a register of from-size (32bit). This will automatically also zero-extend
         // the upper 32bit.
         source = _adjust_to_reg(result, source, from);
 
-        // Just store the adjusted source in the result (can be either of type mem or reg).
+        // Store the adjusted source in the result (can be either of type mem or reg).
         _store(source, result, to);
     } else if(from.sign() == to.sign() && from.sign() && from.size() == Size::DWORD && to.size() == Size::QWORD) {
         // This is another case where a 32bit signed integer is converted to a 64bit signed integer. The standard movsx
@@ -332,24 +322,24 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
 
         // This will create a register of 64bit that will hold the converted operand.
         auto converted_source = _temp_1_register(to);
-        _text << "\tmovsxd " << converted_source << ", " << source << "\n";
+        _movsxd(converted_source, source);
 
         // Store the converted operand in the result (can be either of type mem or reg).
         _store(converted_source, result, to);
     } else if (from.size() >= to.size()) {
-        // This case will resolve the problem, when the from-type is greater than the to-type or if they are same-sized
+        // This case will resolve the problem when the from-type is greater than the to-type or if they are same-sized
         // but with different signess.
 
-        // First adjust the source to always be a register of the from-type.
+        // First, adjust the source to always be a register of the from-type.
         const auto adjusted_source = _adjust_to_reg(result, source, from);
-        // Then just use the part of the register that is actually needed (the register part of to-size).
+        // Then use the part of the register that is actually needed (the register part of to-size).
         auto sized_source = Register(adjusted_source.base(), to.size());
 
         // Store the valid sized register in the result (can be either of type mem or reg).
         _store(sized_source, result, to);
     } else if (from.size() < to.size()) {
         // Here only from-types that are smaller than to-types will be proceeded. Depending on the signess of the
-        // from-type we first need to zero/sign extend the source.
+        // from-type, we first need to zero/sign extend the source.
 
         // movsx/movzx only works with reg:mem or reg:reg, thus convert imm to reg.
         if (std::holds_alternative<Immediate>(source)) {
@@ -360,8 +350,8 @@ void Generator::_int_to_int(const Operand &result, Operand source, const sem::In
         auto converted_source = _temp_1_register(to);
 
         // Either choose the movsx or movzx instruction based on the from-signess.
-        const auto *suffix = from.sign() ? "sx" : "zx";
-        _text << "\tmov" << suffix << " " << converted_source << ", " << source << "\n";
+        const auto &instruction = from.sign() ? &Generator::_movsx : &Generator::_movzx;
+        (this->*instruction)(converted_source, source);
 
         // Store the converted operand in the result (can be either of type mem or reg).
         _store(converted_source, result, to);
@@ -375,8 +365,8 @@ void Generator::_float_to_int(const Operand &result, const Operand &source, cons
     const auto temp_1_int = _temp_1_register(sem::Integral(temp_size, to.sign()));
 
     // Either use the cvttsd2si/cvttss2si instruction based on the from-size.
-    const auto *suffix = (from.size() == Size::QWORD) ? "sd" : "ss";
-    _text << "\tcvtt" << suffix << "2si " << temp_1_int << ", " << source << "\n";
+    const auto &instruction = (from.size() == Size::QWORD) ? &Generator::_cvttsd2si : &Generator::_cvttss2si;
+    (this->*instruction)(temp_1_int, source);
 
     // Get the correct sized temp register.
     auto temp_sized = _temp_1_register(to);
@@ -393,20 +383,20 @@ void Generator::_float_to_bool(const Operand &result, const Operand &source, con
     const auto temp_2_int = _temp_2_register(to);
 
     // Set the temp sse register to 0.0.
-    _text << "\txorps " << temp_2_sse << ", " << temp_2_sse << "\n";
+    _xorps(temp_2_sse, temp_2_sse);
 
     // Compare the source float with 0.0.
-    const auto *suffix = (from.size() == Size::DWORD) ? "ss" : "sd";
-    _text << "\tucomi" << suffix << " " << temp_2_sse << ", " << source << "\n";
+    const auto &instruction = (from.size() == Size::QWORD) ? &Generator::_ucomisd : &Generator::_ucomiss;
+    (this->*instruction)(temp_2_sse, source);
 
     // Set the first temp register if it is not equal to zero.
-    _text << "\tsetne " << temp_1_int << "\n";
-    // Also set the second temp register to check if the number is NaN.
-    _text << "\tsetp " << temp_2_int << "\n";
+    _setne(temp_1_int);
+    // Also, set the second temp register to check if the number is NaN.
+    _setp(temp_2_int);
     // After that combine the result to form a result.
-    _text << "\tor " << temp_1_int << ", " << temp_2_int << "\n";
+    _or(temp_1_int, temp_2_int);
 
-    // Finally store the calculated result in the result operand.
+    // Finally, store the calculated result in the result operand.
     _store(temp_1_int, result, to);
 }
 
@@ -429,8 +419,8 @@ void Generator::_int_to_float(const Operand &result, Operand source, const sem::
         auto converted_source = _temp_1_register(sem::Integral(Size::DWORD, from.sign()));
 
         // Either choose the movsx or movzx instruction based on the signess.
-        const auto *suffix = from.sign() ? "sx" : "zx";
-        _text << "\tmov" << suffix << " " << converted_source << ", " << source << "\n";
+        const auto &instruction = from.sign() ? &Generator::_movsx : &Generator::_movzx;
+        (this->*instruction)(converted_source, source);
 
         // Assign the converted source to the source operand.
         source = converted_source;
@@ -440,10 +430,10 @@ void Generator::_int_to_float(const Operand &result, Operand source, const sem::
     auto temp_1_sse = _temp_1_register(to);
 
     // Either choose the cvtsi2ss/cvtsi2sd instruction based on the size.
-    const auto *suffix = (to.size() == Size::QWORD) ? "sd" : "ss";
-    _text << "\tcvtsi2" << suffix << " " << temp_1_sse << ", " << source << "\n";
+    const auto &instruction = (to.size() == Size::QWORD) ? &Generator::_cvtsi2sd : &Generator::_cvtsi2ss;
+    (this->*instruction)(temp_1_sse, source);
 
-    // Finally store the calculated result in the result operand.
+    // Finally, store the calculated result in the result operand.
     _store(temp_1_sse, result, to);
 }
 
@@ -454,14 +444,14 @@ void Generator::_int_to_bool(const Operand &result, Operand source, const sem::I
         source = _adjust_to_reg(result, source, from);
     }
 
-    auto temp_1_int = _temp_1_register(to);
+    const auto temp_1_int = _temp_1_register(to);
 
     // Compare the source integer with 0.
-    _text << "\tcmp " << source << ", 0\n";
+    _cmp(source, 0);
     // Set the first temp register if it is not equal to zero.
-    _text << "\tsetne " << temp_1_int << "\n";
+    _setne(temp_1_int);
 
-    // Finally store the calculated result in the result operand.
+    // Finally, store the calculated result in the result operand.
     _store(temp_1_int, result, to);
 }
 
@@ -477,13 +467,13 @@ void Generator::_bool_to_float(const Operand &result, Operand source, const sem:
     const auto temp_1_sse = _temp_1_register(to);
 
     // Zero-extend the bool to 32bit.
-    _text << "\tmovzx " << temp_1_int << ", " << source << "\n";
+    _movzx(temp_1_int, source);
 
     // Convert the 32bit integer to either a float (cvtsi2ss) or double (cvtsi2sd).
-    const auto *suffix = (to.size() == Size::QWORD ? "sd" : "ss");
-    _text << "\tcvtsi2" << suffix << " " << temp_1_sse << ", " << temp_1_int << "\n";
+    const auto &instruction = (to.size() == Size::QWORD) ? &Generator::_cvtsi2sd : &Generator::_cvtsi2ss;
+    (this->*instruction)(temp_1_sse, temp_1_int);
 
-    // Finally store the calculated result in the result operand.
+    // Finally, store the calculated result in the result operand.
     _store(temp_1_sse, result, to);
 }
 
@@ -495,7 +485,7 @@ void Generator::_bool_to_int(const Operand &result, Operand source, const sem::B
         // Thus we will just store the source in the result (can be either of type mem or reg).
         _store(source, result, to);
     } else {
-        // Here we will convert from a 8bit boolean to a 16, 32 or 64bit integer. We just need to zero-extend the boolean
+        // Here we will convert from 8bit boolean to a 16, 32 or 64bit integer. We just need to zero-extend the boolean
         // and then store the result.
 
         // If the source holds an immediate, instead turn it into a register.
@@ -507,7 +497,7 @@ void Generator::_bool_to_int(const Operand &result, Operand source, const sem::B
         auto converted_source = _temp_1_register(to);
 
         // Zero-extend the source to the right size.
-        _text << "\tmovzx " << converted_source << ", " << source << "\n";
+        _movzx(converted_source, source);
 
         // Store the converted operand in the result (can be either of type mem or reg).
         _store(converted_source, result, to);
@@ -520,14 +510,12 @@ void Generator::visit(il::Call &instruction) {
 
     const auto stack_size = _generate_arguments(instruction.arguments());
 
-    _text << "\tcall " << instruction.name() << "\n";
+    _call(instruction.name());
 
     // We need to clean up the stack if there were some stack arguments.
-    if (stack_size != 0) {
-        _text << "\tadd rsp, " << stack_size << "\n";
-    }
+    if (stack_size != 0) _add(RSP, stack_size);
 
-    auto return_reg = Mapper::return_register(type);
+    const auto return_reg = Mapper::return_register(type);
     _store(return_reg, result, type);
 }
 
@@ -552,9 +540,7 @@ size_t Generator::_generate_arguments(const std::vector<il::Operand> &arguments)
     arg_stack_size = Mapper::align_size(arg_stack_size);
 
     // If there are stack arguments, make room for them.
-    if(arg_stack_size != 0) {
-        _text << "\tsub rsp, " << arg_stack_size << "\n";
-    }
+    if (arg_stack_size != 0) _sub(RSP, arg_stack_size);
 
     // Reset the integer and floating counter.
     integer = 0, floating = 0;
@@ -598,13 +584,13 @@ void Generator::visit(il::If &instruction) {
         condition = _store_temp_1(condition, sem::Boolean());
     }
 
-    _text << "\ttest " << condition << ", " << condition << "\n";
-    _text << "\tjnz " << instruction.branch() << "\n";
-    _text << "\tjmp " << instruction.next() << "\n";
+    _test(condition, condition);
+    _jnz(instruction.branch());
+    _jmp(instruction.next());
 }
 
 void Generator::visit(il::Goto &instruction) {
-    _text << "\tjmp " << instruction.label() << "\n";
+    _jmp(instruction.label());
 }
 
 void Generator::visit(il::Store &instruction) {
@@ -632,14 +618,16 @@ Operand Generator::_load(const il::Operand &operand) {
     return std::visit(match{
         [&](const il::Immediate &immediate) -> Operand {
             if (std::holds_alternative<double>(immediate)) {
-                auto name = "float" + std::to_string(_constants++);
-                _data << "\t" << name << ": .double\t" << immediate << "\n";
+                const auto name = "float" + std::to_string(_constants++);
+                const auto value = std::to_string(std::get<double>(immediate));
+                _directive("\t" + name + ": .double\t" + value, _data);
                 return Memory(Size::QWORD, name);
             }
 
             if (std::holds_alternative<float>(immediate)) {
                 auto name = "float" + std::to_string(_constants++);
-                _data << "\t" << name << ": .float\t" << immediate << "\n";
+                const auto value = std::to_string(std::get<float>(immediate));
+                _directive("\t" + name + ": .float\t" + value, _data);
                 return Memory(Size::DWORD, name);
             }
 
@@ -665,10 +653,10 @@ void Generator::_store(Operand source, const Operand &destination, const sem::Ty
     }
 
     if (std::holds_alternative<sem::Floating>(type)) {
-        const auto *suffix = (type.size() == Size::QWORD ? "sd" : "ss");
-        _text << "\tmov" << suffix << " " << destination << ", " << source << "\n";
+        const auto &instruction = (type.size() == Size::QWORD) ? &Generator::_movsd : &Generator::_movss;
+        (this->*instruction)(destination, source);
     } else {
-        _text << "\tmov " << destination << ", " << source << "\n";
+        _mov(destination, source);
     }
 }
 
@@ -700,6 +688,194 @@ Register Generator::_adjust_to_reg(const Operand &, const Operand &target, const
 
     // Otherwise if the result is not a register, store the lhs in a temp register.
     return _store_temp_1(target, type);
+}
+
+void Generator::_directive(const std::string &directive, std::vector<AssemblyItem> &output) {
+    output.push_back(Directive(directive));
+}
+
+void Generator::_label(const std::string &name) {
+    _text.push_back(Label(name));
+}
+
+void Generator::_jmp(const std::string &name) {
+    _text.push_back(Instruction(Instruction::Opcode::JMP, {name}));
+}
+
+void Generator::_jnz(const std::string &name) {
+    _text.push_back(Instruction(Instruction::Opcode::JNZ, {name}));
+}
+
+void Generator::_call(const std::string &name) {
+    _text.push_back(Instruction(Instruction::Opcode::CALL, {name}));
+}
+
+void Generator::_movsxd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MOVSXD, {destination, source}));
+}
+
+void Generator::_movsd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MOVSD, {destination, source}));
+}
+
+void Generator::_movss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MOVSS, {destination, source}));
+}
+
+void Generator::_movzx(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MOVZX, {destination, source}));
+}
+
+void Generator::_movsx(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MOVSX, {destination, source}));
+}
+
+void Generator::_mov(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MOV, {destination, source}));
+}
+
+void Generator::_addsd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::ADDSD, {destination, source}));
+}
+
+void Generator::_addss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::ADDSS, {destination, source}));
+}
+
+void Generator::_add(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::ADD, {destination, source}));
+}
+
+void Generator::_subsd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::SUBSD, {destination, source}));
+}
+
+void Generator::_subss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::SUBSS, {destination, source}));
+}
+
+void Generator::_sub(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::SUB, {destination, source}));
+}
+
+void Generator::_mulsd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MULSD, {destination, source}));
+}
+
+void Generator::_mulss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::MULSS, {destination, source}));
+}
+
+void Generator::_imul(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::IMUL, {destination, source}));
+}
+
+void Generator::_divsd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::DIVSD, {destination, source}));
+}
+
+void Generator::_divss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::DIVSS, {destination, source}));
+}
+
+void Generator::_idiv(const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::IDIV, {source}));
+}
+
+void Generator::_udiv(const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::DIV, {source}));
+}
+
+void Generator::_xorps(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::XORPS, {destination, source}));
+}
+
+void Generator::_or(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::OR, {destination, source}));
+}
+
+void Generator::_ucomisd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::UCOMISD, {destination, source}));
+}
+
+void Generator::_ucomiss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::UCOMISS, {destination, source}));
+}
+
+void Generator::_cvtsd2ss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::CVTSD2SS, {destination, source}));
+}
+
+void Generator::_cvtss2sd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::CVTSS2SD, {destination, source}));
+}
+
+void Generator::_cvtsi2sd(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::CVTSI2SD, {destination, source}));
+}
+
+void Generator::_cvtsi2ss(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::CVTSI2SS, {destination, source}));
+}
+
+void Generator::_cvttsd2si(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::CVTTSD2SI, {destination, source}));
+}
+
+void Generator::_cvttss2si(const Operand &destination, const Operand &source) {
+    _text.push_back(Instruction(Instruction::Opcode::CVTTSS2SI, {destination, source}));
+}
+
+void Generator::_test(const Operand &first, const Operand &second) {
+    _text.push_back(Instruction(Instruction::Opcode::TEST, {first, second}));
+}
+
+void Generator::_cmp(const Operand &first, const Operand &second) {
+    _text.push_back(Instruction(Instruction::Opcode::CMP, {first, second}));
+}
+
+void Generator::_setne(const Operand &destination) {
+    _text.push_back(Instruction(Instruction::Opcode::SETNE, {destination}));
+}
+
+void Generator::_setg(const Operand &destination) {
+    _text.push_back(Instruction(Instruction::Opcode::SETG, {destination}));
+}
+
+void Generator::_seta(const Operand &destination) {
+    _text.push_back(Instruction(Instruction::Opcode::SETA, {destination}));
+}
+
+void Generator::_setb(const Operand &destination) {
+    _text.push_back(Instruction(Instruction::Opcode::SETB, {destination}));
+}
+
+void Generator::_setl(const Operand &destination) {
+    _text.push_back(Instruction(Instruction::Opcode::SETL, {destination}));
+}
+
+void Generator::_setp(const Operand &destination) {
+    _text.push_back(Instruction(Instruction::Opcode::SETP, {destination}));
+}
+
+void Generator::_enter(uint16_t size, uint8_t nesting_level) {
+    _text.push_back(Instruction(Instruction::Opcode::ENTER, {size, nesting_level}));
+}
+
+void Generator::_syscall() {
+    _text.push_back(Instruction(Instruction::Opcode::SYSCALL, {}));
+}
+
+void Generator::_leave() {
+    _text.push_back(Instruction(Instruction::Opcode::LEAVE, {}));
+}
+
+void Generator::_ret() {
+    _text.push_back(Instruction(Instruction::Opcode::RET, {}));
+}
+
+void Generator::_newline(std::vector<AssemblyItem> &output) {
+    _directive("", output);
 }
 
 //==============================================================================

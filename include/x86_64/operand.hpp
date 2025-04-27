@@ -63,7 +63,7 @@ private:
     Size _size;
 };
 
-struct Immediate : std::variant<uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
+struct Immediate : std::variant<std::string, uint64_t, int64_t, uint32_t, int32_t, double, float, bool> {
     using variant::variant;
 };
 
@@ -98,6 +98,8 @@ namespace arkoi::x86_64 {
 
     static constexpr Register RSP(Register::Base::SP, Size::QWORD);
     static constexpr Register RBP(Register::Base::BP, Size::QWORD);
+    static constexpr Register RAX(Register::Base::A, Size::QWORD);
+    static constexpr Register RDI(Register::Base::DI, Size::QWORD);
 } // namespace arkoi::x86_64
 
 //==============================================================================

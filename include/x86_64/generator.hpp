@@ -4,6 +4,7 @@
 
 #include "il/il_printer.hpp"
 #include "il/instruction.hpp"
+#include "x86_64/assembly.hpp"
 #include "x86_64/mapper.hpp"
 
 namespace arkoi::x86_64 {
@@ -16,7 +17,7 @@ struct ClassifiedArguments {
 
 class Generator final : il::Visitor {
 public:
-    Generator() : _printer(_text) {}
+    Generator() {}
 
     [[nodiscard]] static std::stringstream generate(il::Module &module);
 
@@ -91,11 +92,104 @@ private:
 
     [[nodiscard]] static Register _temp_2_register(const sem::Type &type);
 
+    static void _directive(const std::string &directive, std::vector<AssemblyItem> &output);
+
+    void _label(const std::string &name);
+
+    void _jmp(const std::string &name);
+
+    void _jnz(const std::string &name);
+
+    void _call(const std::string &name);
+
+    void _movsxd(const Operand &destination, const Operand &source);
+
+    void _movsd(const Operand &destination, const Operand &source);
+
+    void _movss(const Operand &destination, const Operand &source);
+
+    void _movzx(const Operand &destination, const Operand &source);
+
+    void _movsx(const Operand &destination, const Operand &source);
+
+    void _mov(const Operand &destination, const Operand &source);
+
+    void _addsd(const Operand &destination, const Operand &source);
+
+    void _addss(const Operand &destination, const Operand &source);
+
+    void _add(const Operand &destination, const Operand &source);
+
+    void _subsd(const Operand &destination, const Operand &source);
+
+    void _subss(const Operand &destination, const Operand &source);
+
+    void _sub(const Operand &destination, const Operand &source);
+
+    void _mulsd(const Operand &destination, const Operand &source);
+
+    void _mulss(const Operand &destination, const Operand &source);
+
+    void _imul(const Operand &destination, const Operand &source);
+
+    void _divsd(const Operand &destination, const Operand &source);
+
+    void _divss(const Operand &destination, const Operand &source);
+
+    void _idiv(const Operand &source);
+
+    void _udiv(const Operand &source);
+
+    void _xorps(const Operand &destination, const Operand &source);
+
+    void _or(const Operand &destination, const Operand &source);
+
+    void _ucomisd(const Operand &destination, const Operand &source);
+
+    void _ucomiss(const Operand &destination, const Operand &source);
+
+    void _cvtsd2ss(const Operand &destination, const Operand &source);
+
+    void _cvtss2sd(const Operand &destination, const Operand &source);
+
+    void _cvtsi2sd(const Operand &destination, const Operand &source);
+
+    void _cvtsi2ss(const Operand &destination, const Operand &source);
+
+    void _cvttsd2si(const Operand &destination, const Operand &source);
+
+    void _cvttss2si(const Operand &destination, const Operand &source);
+
+    void _test(const Operand &first, const Operand &second);
+
+    void _cmp(const Operand &first, const Operand &second);
+
+    void _setne(const Operand &destination);
+
+    void _setg(const Operand &destination);
+
+    void _seta(const Operand &destination);
+
+    void _setb(const Operand &destination);
+
+    void _setl(const Operand &destination);
+
+    void _setp(const Operand &destination);
+
+    void _enter(uint16_t size, uint8_t nesting_level);
+
+    void _syscall();
+
+    void _leave();
+
+    void _ret();
+
+    static void _newline(std::vector<AssemblyItem> &output);
+
 private:
     il::Function *_current_function{};
-    std::stringstream _data{};
-    std::stringstream _text{};
-    il::ILPrinter _printer;
+    std::vector<AssemblyItem> _data{};
+    std::vector<AssemblyItem> _text{};
     size_t _constants{};
     Mapper _current_mapper{};
 };
