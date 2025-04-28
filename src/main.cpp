@@ -132,11 +132,6 @@ int main(int argc, char* argv[]) {
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
 
-    for (auto &function: module) {
-        auto analysis = il::DataflowAnalysis<il::InstructionLivenessAnalysis>();
-        analysis.run(function);
-    }
-
     auto output = x86_64::Generator::generate(module);
     if (output_asm) {
         std::ofstream out_file(base_path + ".asm");

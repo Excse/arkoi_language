@@ -18,6 +18,8 @@ public:
 
     bool operator!=(const Register &other) const;
 
+    void set_size(Size size) { _size = size; }
+
     [[nodiscard]] auto size() const { return _size; }
 
     [[nodiscard]] auto base() const { return _base; }

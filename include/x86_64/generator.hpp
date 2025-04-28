@@ -2,7 +2,6 @@
 
 #include <sstream>
 
-#include "il/il_printer.hpp"
 #include "il/instruction.hpp"
 #include "x86_64/assembly.hpp"
 #include "x86_64/mapper.hpp"
@@ -187,11 +186,11 @@ private:
     static void _newline(std::vector<AssemblyItem> &output);
 
 private:
-    il::Function *_current_function{};
     std::vector<AssemblyItem> _data{};
     std::vector<AssemblyItem> _text{};
-    size_t _constants{};
+    il::Function *_current_function{};
     Mapper _current_mapper{};
+    size_t _constants{};
 };
 
 } // namespace arkoi::x86_64

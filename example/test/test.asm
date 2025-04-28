@@ -14,12 +14,10 @@ main:
 	movsd xmm0, QWORD PTR [float0]
 	call ok
 	# $07 @u32 = cast @bool $06
-	movzx r10d, al
-	mov ebx, r10d
+	movzx ebx, al
 	# $08 @u32 = mul @u32 1, $07
 	mov r10d, 1
-	imul r10d, ebx
-	mov ebx, r10d
+	imul ebx, r10d
 	# $11 @u32 = add @u32 $08, 1
 	add ebx, 1
 	# $12 @s32 = cast @u32 $11
@@ -142,7 +140,6 @@ L13:
 	mulsd xmm8, xmm9
 	# $22 @f32 = cast @f64 $21
 	cvtsd2ss xmm8, xmm8
-	movss xmm8, xmm8
 	# store @f32 $22, %01
 	movss DWORD PTR [rsp - 4], xmm8
 	# goto L11
@@ -174,7 +171,6 @@ L12:
 	movsd xmm8, xmm9
 	# $17 @f32 = cast @f64 $16
 	cvtsd2ss xmm8, xmm8
-	movss xmm8, xmm8
 	# store @f32 $17, %01
 	movss DWORD PTR [rsp - 4], xmm8
 	# goto L11
@@ -220,7 +216,6 @@ L18:
 	movsd xmm8, QWORD PTR [rsp - 16]
 	# $18 @f32 = cast @f64 $17
 	cvtsd2ss xmm8, xmm8
-	movss xmm8, xmm8
 	# store @f32 $18, %01
 	movss DWORD PTR [rsp - 4], xmm8
 	# goto L16
@@ -234,11 +229,9 @@ L17:
 	cvtsi2sd xmm10, ebx
 	movsd xmm8, xmm10
 	# $11 @f64 = mul @f64 $08, $10
-	mulsd xmm9, xmm8
-	movsd xmm8, xmm9
+	mulsd xmm8, xmm9
 	# $12 @f32 = cast @f64 $11
 	cvtsd2ss xmm8, xmm8
-	movss xmm8, xmm8
 	# store @f32 $12, %01
 	movss DWORD PTR [rsp - 4], xmm8
 	# goto L16

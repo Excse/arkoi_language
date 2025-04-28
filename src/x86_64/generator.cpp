@@ -1,6 +1,7 @@
 #include "x86_64/generator.hpp"
 
 #include "il/cfg.hpp"
+#include "il/il_printer.hpp"
 #include "utils/utils.hpp"
 
 using namespace arkoi::x86_64;
@@ -286,10 +287,13 @@ void Generator::_float_to_float(const Operand &result, Operand source, const sem
     // Always adjust the source to a register.
     source = _adjust_to_reg(result, source, from);
 
-    const auto &instruction = (from.size() == Size::QWORD) ? &Generator::_cvtsd2ss : &Generator::_cvtss2sd;
-    (this->*instruction)(source, source);
+    auto converted_source = std::get<Register>(source);
+    converted_source.set_size(to.size());
 
-    _store(source, result, to);
+    const auto &instruction = (from.size() == Size::QWORD) ? &Generator::_cvtsd2ss : &Generator::_cvtss2sd;
+    (this->*instruction)(converted_source, source);
+
+    _store(converted_source, result, to);
 }
 
 void Generator::_int_to_int(const Operand &result, Operand source, const sem::Integral &from,
