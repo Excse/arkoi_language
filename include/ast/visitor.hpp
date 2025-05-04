@@ -5,6 +5,7 @@ namespace arkoi::ast {
 class Identifier;
 class Parameter;
 class Immediate;
+class Variable;
 class Function;
 class Program;
 class Assign;
@@ -28,6 +29,8 @@ public:
     virtual void visit(Parameter &node) = 0;
 
     virtual void visit(Immediate &node) = 0;
+
+    virtual void visit(Variable &node) = 0;
 
     virtual void visit(Return &node) = 0;
 

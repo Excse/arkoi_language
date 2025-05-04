@@ -8,7 +8,10 @@
 namespace arkoi::x86_64 {
 class RegisterAllocater {
 public:
-    explicit RegisterAllocater(il::Function &function);
+    using Mapping = std::unordered_map<il::Variable, Register::Base>;
+
+public:
+    RegisterAllocater(il::Function &function, Mapping precolored);
 
     [[nodiscard]] auto &assigned() { return _assigned; }
 
@@ -23,10 +26,10 @@ private:
 
 private:
     il::DataflowAnalysis<il::InstructionLivenessAnalysis> _analysis;
-    std::unordered_map<il::Variable, Register::Base> _assigned;
     InterferenceGraph<il::Variable> _graph;
     std::vector<il::Variable> _spilled;
     il::Function &_function;
+    Mapping _assigned;
 };
 } // namespace arkoi::x86_64
 

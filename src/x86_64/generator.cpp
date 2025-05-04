@@ -63,8 +63,6 @@ void Generator::visit(il::BasicBlock &block) {
     }
 
     for (auto &instruction: block) {
-        if (std::holds_alternative<il::Alloca>(instruction)) continue;
-
         std::stringstream output;
         output << "\t# ";
         il::ILPrinter printer(output);

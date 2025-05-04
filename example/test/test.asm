@@ -10,6 +10,7 @@ _start:
 
 main:
 	enter 16, 0
+	# %01 @u64 = alloca
 	# $06 @bool = call ok(5)
 	movsd xmm0, QWORD PTR [float0]
 	call ok
@@ -45,6 +46,8 @@ main:
 
 ok:
 	enter 16, 0
+	# %01 @bool = alloca
+	# %02 @f64 = alloca
 	# store @f64 foo1, %02
 	movsd QWORD PTR [rbp - 9], xmm0
 	# $03 @f64 = load %02
@@ -112,78 +115,91 @@ L6:
 	ret
 
 test1:
+	# %01 @f32 = alloca
+	# %02 @s32 = alloca
+	# %03 @f64 = alloca
 	# store @s32 foo2, %02
 	mov DWORD PTR [rsp - 8], edi
 	# store @f64 bar, %03
 	movsd QWORD PTR [rsp - 16], xmm0
-	# $04 @s32 = load %02
+	# %04 @f32 = alloca
+	# store @f32 0, %04
+	movss xmm10, DWORD PTR [float9]
+	movss DWORD PTR [rsp - 20], xmm10
+	# $06 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
-	# $05 @f64 = cast @s32 $04
+	# $07 @f64 = cast @s32 $06
 	cvtsi2sd xmm10, ebx
-	movsd xmm9, xmm10
-	# $06 @f64 = load %03
-	movsd xmm8, QWORD PTR [rsp - 16]
-	# $07 @bool = lth @f64 $05, $06
-	ucomisd xmm9, xmm8
+	movsd xmm8, xmm10
+	# $08 @f64 = load %03
+	movsd xmm9, QWORD PTR [rsp - 16]
+	# $09 @bool = lth @f64 $07, $08
+	ucomisd xmm8, xmm9
 	setb bl
-	# if $07 then L12 else L13
+	# if $09 then L12 else L13
 	test bl, bl
 	jnz L12
 	jmp L13
 L13:
-	# $18 @s32 = load %02
+	# $20 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
-	# $19 @f64 = cast @s32 $18
-	cvtsi2sd xmm10, ebx
-	movsd xmm8, xmm10
-	# $20 @f64 = load %03
-	movsd xmm9, QWORD PTR [rsp - 16]
-	# $21 @f64 = mul @f64 $19, $20
-	mulsd xmm8, xmm9
-	# $22 @f32 = cast @f64 $21
-	cvtsd2ss xmm8, xmm8
-	# store @f32 $22, %01
-	movss DWORD PTR [rsp - 4], xmm8
-	# goto L11
-	jmp L11
-L12:
-	# $08 @f64 = load %03
-	movsd xmm8, QWORD PTR [rsp - 16]
-	# $09 @s32 = load %02
-	mov ebx, DWORD PTR [rsp - 8]
-	# $10 @f64 = cast @s32 $09
+	# $21 @f64 = cast @s32 $20
 	cvtsi2sd xmm10, ebx
 	movsd xmm9, xmm10
-	# $11 @f64 = mul @f64 $08, $10
-	mulsd xmm8, xmm9
-	movsd xmm9, xmm8
-	# $12 @s32 = load %02
-	mov r12d, DWORD PTR [rsp - 8]
-	# $13 @s32 = load %02
+	# $22 @f64 = load %03
+	movsd xmm8, QWORD PTR [rsp - 16]
+	# $23 @f64 = mul @f64 $21, $22
+	mulsd xmm9, xmm8
+	movsd xmm8, xmm9
+	# $24 @f32 = cast @f64 $23
+	cvtsd2ss xmm8, xmm8
+	# store @f32 $24, %04
+	movss DWORD PTR [rsp - 20], xmm8
+	# goto L14
+	jmp L14
+L12:
+	# $10 @f64 = load %03
+	movsd xmm8, QWORD PTR [rsp - 16]
+	# $11 @s32 = load %02
 	mov ebx, DWORD PTR [rsp - 8]
-	# $14 @bool = lth @s32 $12, $13
-	cmp r12d, ebx
+	# $12 @f64 = cast @s32 $11
+	cvtsi2sd xmm10, ebx
+	movsd xmm9, xmm10
+	# $13 @f64 = mul @f64 $10, $12
+	mulsd xmm8, xmm9
+	# $14 @s32 = load %02
+	mov ebx, DWORD PTR [rsp - 8]
+	# $15 @s32 = load %02
+	mov r12d, DWORD PTR [rsp - 8]
+	# $16 @bool = lth @s32 $14, $15
+	cmp ebx, r12d
 	setl bl
-	# $15 @f64 = cast @bool $14
+	# $17 @f64 = cast @bool $16
 	movzx r10d, bl
 	cvtsi2sd xmm10, r10d
-	movsd xmm8, xmm10
-	# $16 @f64 = add @f64 $11, $15
-	addsd xmm9, xmm8
-	movsd xmm8, xmm9
-	# $17 @f32 = cast @f64 $16
+	movsd xmm9, xmm10
+	# $18 @f64 = add @f64 $13, $17
+	addsd xmm8, xmm9
+	# $19 @f32 = cast @f64 $18
 	cvtsd2ss xmm8, xmm8
-	# store @f32 $17, %01
+	# store @f32 $19, %04
+	movss DWORD PTR [rsp - 20], xmm8
+	# goto L14
+	jmp L14
+L14:
+	# $25 @f32 = load %04
+	movss xmm8, DWORD PTR [rsp - 20]
+	# store @f32 $25, %01
 	movss DWORD PTR [rsp - 4], xmm8
-	# goto L11
-	jmp L11
-L11:
-	# $23 @f32 = load %01
+	# $26 @f32 = load %01
 	movss xmm0, DWORD PTR [rsp - 4]
-	# ret $23
+	# ret $26
 	ret
 
 test2:
+	# %01 @f32 = alloca
+	# %02 @s32 = alloca
+	# %03 @f64 = alloca
 	# store @s32 foo2, %02
 	mov DWORD PTR [rsp - 8], edi
 	# store @f64 bar, %03
@@ -207,11 +223,12 @@ L18:
 	mov ebx, DWORD PTR [rsp - 8]
 	# $14 @f64 = cast @s32 $13
 	cvtsi2sd xmm10, ebx
-	movsd xmm8, xmm10
+	movsd xmm9, xmm10
 	# $15 @f64 = load %03
-	movsd xmm9, QWORD PTR [rsp - 16]
+	movsd xmm8, QWORD PTR [rsp - 16]
 	# $16 @f64 = mul @f64 $14, $15
-	mulsd xmm8, xmm9
+	mulsd xmm9, xmm8
+	movsd xmm8, xmm9
 	# store @f64 $16, %03
 	movsd QWORD PTR [rsp - 16], xmm8
 	# $17 @f64 = load %03
@@ -255,3 +272,4 @@ L16:
 	float6: .double	21.000000
 	float7: .double	20.000000
 	float8: .double	0.000000
+	float9: .float	0.000000

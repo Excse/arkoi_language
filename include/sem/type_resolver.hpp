@@ -30,6 +30,8 @@ public:
 
     void visit_boolean(ast::Immediate &node);
 
+    void visit(ast::Variable &node) override;
+
     void visit(ast::Return &node) override;
 
     void visit(ast::Identifier &node) override;

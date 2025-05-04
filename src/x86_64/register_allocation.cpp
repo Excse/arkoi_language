@@ -15,7 +15,8 @@ static constexpr std::array FLOATING_REGISTERS{
     Register::Base::XMM14, Register::Base::XMM15,
 };
 
-RegisterAllocater::RegisterAllocater(il::Function &function) : _function(function) {
+RegisterAllocater::RegisterAllocater(il::Function &function, Mapping precolored)
+    : _function(function), _assigned(std::move(precolored)) {
     _renumber();
     _build();
     _simplify();
@@ -56,6 +57,12 @@ void RegisterAllocater::_simplify() {
     std::stack<il::Variable> stack;
 
     auto work_list = _graph.nodes();
+
+    // Remove precolored variables.
+    for (const auto &variable: std::views::keys(_assigned)) {
+        work_list.erase(variable);
+    }
+
     while (!work_list.empty()) {
         auto found = false;
 

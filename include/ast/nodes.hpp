@@ -52,7 +52,7 @@ class Identifier final : public Node {
 public:
     enum class Kind {
         Function,
-        Variable
+        Variable,
     };
 
 public:
@@ -167,6 +167,26 @@ public:
 private:
     std::unique_ptr<Node> _expression;
     Identifier _name;
+};
+
+class Variable final : public Node {
+public:
+    Variable(Identifier name, sem::Type type, std::unique_ptr<Node> &&expression)
+        : _expression(std::move(expression)), _name(std::move(name)), _type(std::move(type)) {}
+
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    [[nodiscard]] auto &expression() { return _expression; }
+    void set_expression(std::unique_ptr<Node> &&node) { _expression = std::move(node); }
+
+    [[nodiscard]] auto &type() const { return _type; }
+
+    [[nodiscard]] auto &name() { return _name; }
+
+private:
+    std::unique_ptr<Node> _expression;
+    Identifier _name;
+    sem::Type _type;
 };
 
 class Call final : public Node {

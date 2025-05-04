@@ -95,6 +95,25 @@ void TypeResolver::visit_boolean(ast::Immediate &node) {
     _current_type = node.type();
 }
 
+void TypeResolver::visit(ast::Variable &node) {
+    auto &variable = std::get<Variable>(*node.name().symbol());
+    variable.set_type(node.type());
+
+    node.expression()->accept(*this);
+    const auto type = _current_type.value();
+
+    if (type == node.type()) {
+        return;
+    }
+
+    if (!_can_implicit_convert(type, node.type())) {
+        throw std::runtime_error("Variable has a wrong type.");
+    }
+
+    auto casted_expression = _cast(node.expression(), type, node.type());
+    node.set_expression(std::move(casted_expression));
+}
+
 void TypeResolver::visit(ast::Return &node) {
     node.expression()->accept(*this);
     const auto type = _current_type.value();
@@ -118,9 +137,6 @@ void TypeResolver::visit(ast::Identifier &node) {
         const auto &function = std::get<Function>(*node.symbol());
         _current_type = function.return_type();
     } else if(node.kind() == ast::Identifier::Kind::Variable) {
-        // TODO(timo): In the future there will be local/global and parameter variables,
-        //             thus they need to be searched in such order: local, parameter, global.
-        //             For now only parameter variables exist.
         const auto &variable = std::get<Variable>(*node.symbol());
         _current_type = variable.type();
     } else {

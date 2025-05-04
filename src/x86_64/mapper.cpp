@@ -37,28 +37,34 @@ void Mapper::visit(il::Function &function) {
         block.accept(*this);
     }
 
+    RegisterAllocater::Mapping precolored;
+    for (const auto &[source, target]: _mappings) {
+        const auto *variable = std::get_if<il::Variable>(&source);
+        if (!variable) continue;
+
+        const auto *reg = std::get_if<Register>(&target);
+        if (!reg) continue;
+
+        precolored.insert_or_assign(*variable, reg->base());
+    }
+
+    auto allocator = RegisterAllocater(function, precolored);
+    for (const auto &[variable, base]: allocator.assigned()) {
+        _add_register(variable, Register(base, variable.type().size()));
+    }
+
     const auto stack_size = this->stack_size();
     const auto use_redzone = function.is_leaf() && stack_size <= 128;
     const auto stack_reg = use_redzone ? RSP : RBP;
 
     _map_parameters(function.parameters(), use_redzone);
 
-    auto allocator = RegisterAllocater(function);
-
-    for (const auto &[variable, base]: allocator.assigned()) {
-        _add_register(variable, Register(base, variable.type().size()));
-    }
-
-    for (const auto &variable: allocator.spilled()) {
-        assert(_locals.contains(variable) == true);
-    }
-
     int64_t local_offset = 0;
     for (auto &local: _locals) {
         auto size = local.type().size();
         local_offset -= static_cast<int64_t>(size_to_bytes(size));
 
-        _mappings.emplace(local, Memory(size, stack_reg, local_offset));
+        _mappings.insert_or_assign(local, Memory(size, stack_reg, local_offset));
     }
 }
 
@@ -137,12 +143,12 @@ void Mapper::_add_local(const il::Operand &operand) {
 
 void Mapper::_add_register(const il::Variable &variable, const Register &reg) {
     _locals.erase(variable);
-    _mappings.emplace(variable, reg);
+    _mappings.insert_or_assign(variable, reg);
 }
 
 void Mapper::_add_memory(const il::Variable &variable, const Memory &memory) {
     _locals.erase(variable);
-    _mappings.emplace(variable, memory);
+    _mappings.insert_or_assign(variable, memory);
 }
 
 size_t Mapper::stack_size() const {

@@ -195,6 +195,8 @@ std::unique_ptr<ast::Node> Parser::_parse_block_statement() {
             result = _parse_call(consumed);
         } else if (current.type() == Token::Type::Equal) {
             result = _parse_assign(consumed);
+        } else if (current.type() == Token::Type::At) {
+            result = _parse_variable(consumed);
         }
         _consume(Token::Type::Newline);
     } else if (consumed.type() == Token::Type::If) {
@@ -265,6 +267,18 @@ std::unique_ptr<ast::Assign> Parser::_parse_assign(const Token &name) {
     auto expression = _parse_expression();
 
     return std::make_unique<ast::Assign>(identifier, std::move(expression));
+}
+
+std::unique_ptr<ast::Variable> Parser::_parse_variable(const Token &name) {
+    auto identifier = ast::Identifier(name, ast::Identifier::Kind::Variable);
+
+    auto type = _parse_type();
+
+    _consume(Token::Type::Equal);
+
+    auto expression = _parse_expression();
+
+    return std::make_unique<ast::Variable>(identifier, type, std::move(expression));
 }
 
 std::unique_ptr<ast::Call> Parser::_parse_call(const Token &name) {

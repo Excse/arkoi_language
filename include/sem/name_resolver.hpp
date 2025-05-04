@@ -32,6 +32,8 @@ private:
 
     void visit(ast::Immediate &) override {}
 
+    void visit(ast::Variable &node) override;
+
     void visit(ast::Return &node) override;
 
     void visit(ast::Binary &node) override;

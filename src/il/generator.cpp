@@ -144,6 +144,20 @@ void Generator::visit_boolean(const ast::Immediate &node) {
     _current_operand = temp;
 }
 
+void Generator::visit(ast::Variable &node) {
+    auto temp = _make_memory(node.type());
+    _allocas.emplace(node.name().symbol(), temp);
+    _current_block->emplace_back<Alloca>(temp);
+
+    // This will set _current_operand
+    node.expression()->accept(*this);
+    auto expression = _current_operand;
+
+    _current_block->emplace_back<Store>(temp, _current_operand);
+
+    _current_operand = temp;
+}
+
 void Generator::visit(ast::Return &node) {
     // This will set _current_operand
     node.expression()->accept(*this);
