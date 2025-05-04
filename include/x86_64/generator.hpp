@@ -16,9 +16,9 @@ struct ClassifiedArguments {
 
 class Generator final : il::Visitor {
 public:
-    Generator() {}
+    explicit Generator(il::Module &module);
 
-    [[nodiscard]] static std::stringstream generate(il::Module &module);
+    [[nodiscard]] std::stringstream output() const;
 
 private:
     void visit(il::Module &module) override;
@@ -186,11 +186,11 @@ private:
     static void _newline(std::vector<AssemblyItem> &output);
 
 private:
+    std::unique_ptr<Mapper> _current_mapper{};
     std::vector<AssemblyItem> _data{};
     std::vector<AssemblyItem> _text{};
-    il::Function *_current_function{};
-    Mapper _current_mapper{};
     size_t _constants{};
+    il::Module &_module;
 };
 
 } // namespace arkoi::x86_64

@@ -10,13 +10,15 @@ namespace arkoi::x86_64 {
 
 class Mapper final : il::Visitor {
 public:
-    [[nodiscard]] static Mapper map(il::Function &function);
+    explicit Mapper(il::Function &function);
 
     [[nodiscard]] Operand &operator[](const il::Variable& variable);
 
     [[nodiscard]] Operand operator[](const il::Operand &operand);
 
     [[nodiscard]] size_t stack_size() const;
+
+    [[nodiscard]] auto &function() const { return _function; }
 
     [[nodiscard]] static Register return_register(const sem::Type &target);
 
@@ -60,6 +62,7 @@ private:
 private:
     std::unordered_map<il::Operand, Operand> _mappings{};
     OrderedSet<il::Operand> _locals{};
+    il::Function &_function;
 };
 
 } // namespace arkoi::x86_64

@@ -9,8 +9,10 @@ fun ok(foo1 @f64) @bool:
     return test2(4 / 2, foo1)
 
 fun test1(foo2 @s32, bar @f64) @f32:
-    if foo2 < bar: return (bar * foo2) + (foo2 < foo2)
-    else:          return foo2 * bar
+    result @f32 = 0.0
+    if foo2 < bar: result = (bar * foo2) + (foo2 < foo2)
+    else:          result = foo2 * bar
+    return result
 
 fun test2(foo2 @s32, bar @f64) @f32:
     if foo2 < bar: return bar * foo2

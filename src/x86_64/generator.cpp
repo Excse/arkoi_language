@@ -7,14 +7,15 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-std::stringstream Generator::generate(il::Module &module) {
+Generator::Generator(il::Module &module) : _module(module) {
+    module.accept(*this);
+}
+
+std::stringstream Generator::output() const {
     std::stringstream output;
 
-    Generator generator;
-    generator.visit(module);
-
-    for (const auto &item: generator._text) output << item << "\n";
-    for (const auto &item: generator._data) output << item << "\n";
+    for (const auto &item: this->_text) output << item << "\n";
+    for (const auto &item: this->_data) output << item << "\n";
 
     return output;
 }
@@ -40,8 +41,7 @@ void Generator::visit(il::Module &module) {
 }
 
 void Generator::visit(il::Function &function) {
-    _current_mapper = Mapper::map(function);
-    _current_function = &function;
+    _current_mapper = std::make_unique<Mapper>(function);
 
     _label(function.name());
 
@@ -51,12 +51,12 @@ void Generator::visit(il::Function &function) {
 }
 
 void Generator::visit(il::BasicBlock &block) {
-    const auto stack_size = _current_mapper.stack_size();
+    const auto stack_size = _current_mapper->stack_size();
 
-    if (_current_function->entry() == &block) {
+    if (_current_mapper->function().entry() == &block) {
         // If we are in a leaf function and the stack size in less or equal to 128 bytes (redzone), we can skip the enter
         // instruction.
-        if (!_current_function->is_leaf() || stack_size > 128) _enter(stack_size, 0);
+        if (!_current_mapper->function().is_leaf() || stack_size > 128) _enter(stack_size, 0);
     } else {
         // Just a normal block.
         _label(block.label());
@@ -74,10 +74,10 @@ void Generator::visit(il::BasicBlock &block) {
         instruction.accept(*this);
     }
 
-    if (_current_function->exit() == &block) {
+    if (_current_mapper->function().exit() == &block) {
         // If the function is not a leaf or the stack size exceeds 128 bytes, we need to restore the stack using the
         // leave instruction.
-        if (!_current_function->is_leaf() || stack_size > 128) _leave();
+        if (!_current_mapper->function().is_leaf() || stack_size > 128) _leave();
 
         _ret();
         _newline(_text);
@@ -279,10 +279,7 @@ void Generator::visit(il::Cast &instruction) {
 void Generator::_float_to_float(const Operand &result, Operand source, const sem::Floating &from,
                                 const sem::Floating &to) {
     // If both are the same, a simple move will fulfill
-    if (from == to) {
-        _store(source, result, to);
-        return;
-    }
+    if (from == to) return _store(source, result, to);
 
     // Always adjust the source to a register.
     source = _adjust_to_reg(result, source, from);
@@ -299,10 +296,7 @@ void Generator::_float_to_float(const Operand &result, Operand source, const sem
 void Generator::_int_to_int(const Operand &result, Operand source, const sem::Integral &from,
                             const sem::Integral &to) {
     // If both are the same exact type, store the source in the result.
-    if (from == to) {
-        _store(source, result, to);
-        return;
-    }
+    if (from == to) return _store(source, result, to);
 
     if(from.sign() == to.sign() && !from.sign() && from.size() == Size::DWORD && to.size() == Size::QWORD) {
         // This catches the case when you want to transform a 32bit unsigned integer to a 64bit unsigned integer.
@@ -638,10 +632,10 @@ Operand Generator::_load(const il::Operand &operand) {
             return std::visit([](const auto &value) -> Immediate { return value; }, immediate);
         },
         [&](const il::Memory &memory) -> Operand {
-            return _current_mapper[memory];
+            return (*_current_mapper)[memory];
         },
         [&](const il::Variable &variable) -> Operand {
-            return _current_mapper[variable];
+            return (*_current_mapper)[variable];
         },
     }, operand);
 }

@@ -132,10 +132,10 @@ int main(int argc, char* argv[]) {
 
     std::cout << "~~~~~~~~       Generating Assembly          ~~~~~~~~" << std::endl;
 
-    auto output = x86_64::Generator::generate(module);
+    auto assembly_generator = x86_64::Generator(module);
     if (output_asm) {
         std::ofstream out_file(base_path + ".asm");
-        out_file << output.str();
+        out_file << assembly_generator.output().str();
     }
 
     return 0;

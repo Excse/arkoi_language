@@ -10,10 +10,8 @@
 using namespace arkoi::x86_64;
 using namespace arkoi;
 
-Mapper Mapper::map(il::Function &function) {
-    Mapper mapper;
-    mapper.visit(function);
-    return mapper;
+Mapper::Mapper(il::Function &function) : _function(function) {
+    function.accept(*this);
 }
 
 Operand &Mapper::operator[](const il::Variable &variable) {
